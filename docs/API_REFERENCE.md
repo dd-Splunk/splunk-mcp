@@ -23,7 +23,7 @@ curl -k -H "Authorization: Bearer <token>" \
 
 #### 1. Roles Management
 
-**Create Role**
+##### Create Role
 
 ```bash
 POST /services/authorization/roles
@@ -32,19 +32,19 @@ Content-Type: application/x-www-form-urlencoded
 name=mcp_user
 ```
 
-**List Roles**
+##### List Roles
 
 ```bash
 GET /services/authorization/roles
 ```
 
-**Get Role Details**
+##### Get Role Details
 
 ```bash
 GET /services/authorization/roles/mcp_user
 ```
 
-**Update Role**
+##### Update Role
 
 ```bash
 POST /services/authorization/roles/mcp_user
@@ -54,7 +54,7 @@ capability=accelerate_datamodel
 
 #### 2. Users Management
 
-**Create User**
+##### Create User
 
 ```bash
 POST /services/authentication/users
@@ -66,19 +66,19 @@ roles=mcp_user
 tz=Europe/Brussels
 ```
 
-**List Users**
+##### List Users
 
 ```bash
 GET /services/authentication/users
 ```
 
-**Get User Details**
+##### Get User Details
 
 ```bash
 GET /services/authentication/users/dd
 ```
 
-**Update User Password**
+##### Update User Password
 
 ```bash
 POST /services/authentication/users/dd
@@ -87,7 +87,7 @@ password=newpassword
 
 #### 3. Token Management
 
-**Create Token**
+##### Create Token
 
 ```bash
 POST /services/authorization/tokens
@@ -101,22 +101,23 @@ audience=mcp
 Response includes token in CDATA section:
 
 ```xml
-<s:key name="token"><![CDATA[eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIifQ...]]></s:key>
+<s:key name="token"><![CDATA[eyJr...]]>
+</s:key>
 ```
 
-**List Tokens**
+##### List Tokens
 
 ```bash
 GET /services/authorization/tokens
 ```
 
-**Get Token Details**
+##### Get Token Details
 
 ```bash
 GET /services/authorization/tokens/tokens
 ```
 
-**Delete Token**
+##### Delete Token
 
 ```bash
 DELETE /services/authorization/tokens/tokens
@@ -124,7 +125,7 @@ DELETE /services/authorization/tokens/tokens
 
 #### 4. Server Information
 
-**Get Server Info**
+##### Get Server Info
 
 ```bash
 GET /services/server/info
@@ -132,7 +133,7 @@ GET /services/server/info
 
 Returns server name, version, build, and status.
 
-**Get Server Status**
+##### Get Server Status
 
 ```bash
 GET /services/server/status
@@ -140,14 +141,14 @@ GET /services/server/status
 
 ### MCP Server Endpoint
 
-**MCP Services**
+#### MCP Services
 
 ```bash
 GET /services/mcp
 Authorization: Bearer <token>
 ```
 
-**Available Tools in MCP Context**
+#### Available Tools in MCP Context
 
 ```bash
 GET /services/mcp/tools
@@ -254,19 +255,21 @@ curl -k -H "Authorization: Bearer $TOKEN" \
 
 ### Troubleshooting Connection
 
-**Check if token is still valid**
+#### Check if token is still valid
 
 ```bash
 # Get token creation date
-curl -k -u admin:password https://localhost:8089/services/authorization/tokens/tokens \
+curl -k -u admin:password \
+  https://localhost:8089/services/authorization/tokens/
   | grep "eai:last_updated"
 ```
 
-**Regenerate token if expired**
+#### Regenerate token if expired
 
-Token auto-expires after 15 days. Run `make up` again to generate new token.
+Token auto-expires after 15 days. Run `make up` again to generate new
+token.
 
-**Test connection manually**
+#### Test connection manually
 
 ```bash
 curl -k -H "Authorization: Bearer <token>" \

@@ -1,6 +1,7 @@
 # Splunk MCP Server - PoC Environment
 
-> Proof of Concept environment for testing the Splunk MCP (Model Context Protocol) Server with Claude Desktop.
+> PoC for integrating Splunk MCP (Model Context Protocol) Server with
+> Claude Desktop.
 
 [![Docker](https://img.shields.io/badge/Docker-ready-blue)](#prerequisites)
 [![Splunk 10.0](https://img.shields.io/badge/Splunk-10.0-brightgreen)](#overview)
@@ -11,11 +12,11 @@
 This setup provides a complete PoC environment for Splunk MCP integration:
 
 | Component | Details |
-|-----------|---------|
-| **Splunk Enterprise** | Standalone instance (so1) with MCP Server app (v0.2.4) |
-| **Authentication** | Custom user `dd` with `mcp_user` role + JWT token (15-day validity) |
-| **Claude Integration** | Automated Claude Desktop configuration via `make claude-update` |
-| **Secrets Management** | 1Password CLI integration for secure credential handling |
+| --------- | ------- |
+| **Splunk Enterprise** | Standalone instance (so1) with MCP v0.2.4 |
+| **Authentication** | User `dd` with `mcp_user` role + JWT token |
+| **Claude Integration** | Automated Claude Desktop configuration |
+| **Secrets Management** | 1Password CLI integration |
 
 ## Quick Start
 
@@ -53,7 +54,7 @@ cat ~/Library/Application\ Support/Claude/claude_desktop_config.json | jq '.mcpS
 ## Key Commands
 
 | Command | Purpose |
-|---------|---------|
+| ------- | ------- |
 | `make help` | Show all available commands |
 | `make init` | Create `.env` with 1Password secrets |
 | `make up` | Start containers + auto-configure Claude |
@@ -82,9 +83,9 @@ cat ~/Library/Application\ Support/Claude/claude_desktop_config.json | jq '.mcpS
 ## Configuration Files
 
 | File | Purpose | Details |
-|------|---------|---------|
-| `compose.yml` | Container orchestration | Services: so1 (Splunk), splunk-init (setup) |
-| `default.yml` | Splunk default config | Mounts at `/opt/splunk/etc/system/default/` |
+| ---- | ------- | ------- |
+| Config | Config details | Mounted |
+| `default.yml` | Config | Mounted in container |
 | `tpl.env` | Environment template | Git-safe template for `.env` |
 | `.env` | Secret credentials | **Git-ignored** - created by `make init` |
 | `Makefile` | Build automation | Targets for setup, start, token management |
@@ -138,9 +139,9 @@ Vault: Private
 ## Access Information
 
 | Service | URL | Credentials |
-|---------|-----|-------------|
+| ------- | --- | ----------- |
 | **Splunk UI** | <https://localhost:8089> | admin / `$SPLUNK_PASSWORD` |
-| **MCP Endpoint** | <https://localhost:8089/services/mcp> | User: dd / Token: saved |
+| **MCP Endpoint** | <https://localhost:8089/services/mcp> | User dd / Token |
 | **Claude Desktop** | Native app | Auto-configured |
 | **Claude Logs** | Index: `claude_logs` | Automatically indexed |
 
@@ -207,7 +208,7 @@ make init
 Detailed documentation is available in the `docs/` directory:
 
 | Document | Purpose | Audience |
-|----------|---------|----------|
+| -------- | ------- | -------- |
 | [QUICK_START.md](docs/QUICK_START.md) | 5-minute reference | Everyone |
 | [INSTALLATION.md](docs/INSTALLATION.md) | Detailed setup | First-time users |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design | Developers |
@@ -239,7 +240,7 @@ SPLUNKBASE_PASSWORD=<from_1password>
 ## Version Information
 
 | Component | Version |
-|-----------|---------|
+| --------- | ------- |
 | Splunk Enterprise | 10.0 |
 | MCP Server App | 0.2.4 |
 | Docker Compose | Latest |

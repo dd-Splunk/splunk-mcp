@@ -33,7 +33,7 @@ Store these credentials in your 1Password Private vault:
 #### 2. Clone Repository
 
 ```bash
-git clone <repository-url> splunk-mcp
+git clone <repository-url>
 cd splunk-mcp
 ```
 
@@ -95,12 +95,12 @@ make logs        # View real-time logs
 make restart     # Restart container
 make down        # Stop container
 make clean       # Delete all data (destructive!)
-make help        # Show all targets
+make help        # Show all available targets
 ```
 
 ## Next Steps
 
-1. **Query Claude Logs**: Search `index=claude_logs` in Splunk Web UI to see Claude Desktop activity
+1. **Query Claude Logs**: Search `index=claude_logs` in Splunk
 2. **Explore Splunk Web UI**: Learn the interface at <https://localhost:8000>
 3. **Test Claude Integration**: Use Splunk features through Claude Desktop
 4. **Add Sample Data**: Ingest test data through Splunk UI
@@ -119,7 +119,7 @@ make down && make clean && make up  # Full reset
 
 ## File Structure
 
-```
+```text
 splunk-mcp/
 ├── compose.yml              # Docker Compose configuration
 ├── default.yml              # Splunk configuration
@@ -166,12 +166,12 @@ This removes:
 - **Architecture Details**: See ARCHITECTURE.md
 - **API Usage**: See API_REFERENCE.md
 - **Development**: See DEVELOPER_GUIDE.md
-- **Splunk Docs**: <https://docs.splunk.com/>
+- **Splunk Docs**: See official Splunk docs
 
 ## Quick Reference
 
 | Task | Command |
-|------|----------|
+| ---- | ------- |
 | Start (includes init) | `make up` |
 | Stop | `make down` |
 | Restart | `make restart` |
@@ -184,4 +184,4 @@ This removes:
 
 **Ready to explore Splunk with Claude Desktop?**
 
-Your Splunk instance is now running with MCP integration enabled. Open Claude Desktop and start using Splunk's capabilities!
+- **Splunk Docs**: See Splunk documentation
