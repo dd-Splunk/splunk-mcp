@@ -64,7 +64,7 @@
 
 ## Initialization Flow
 
-```
+```text
 make up
   ├─ make init (inject 1Password secrets → .env)
   ├─ docker compose up -d
@@ -94,7 +94,7 @@ make up
 ### User Roles
 
 | User | Role | Auth | Scope | Expiry |
-|------|------|------|-------|--------|
+| ---- | ---- | ---- | ----- | ------ |
 | `dd` | `mcp_user` | Bearer token | MCP operations | 15 days |
 | `admin` | Built-in | Password | Full admin | N/A |
 
@@ -102,7 +102,7 @@ make up
 
 Stored in `.env` (never committed):
 
-```
+```bash
 SPLUNK_IMAGE=splunk/splunk:10.0
 SPLUNK_PASSWORD=<from 1Password>
 SPLUNKBASE_USER=<from 1Password>
@@ -114,7 +114,7 @@ TZ=Europe/Brussels
 
 ### Connection Flow
 
-```
+```text
 Claude Desktop
       │
       ├─ Reads: ~/.claude_desktop_config.json

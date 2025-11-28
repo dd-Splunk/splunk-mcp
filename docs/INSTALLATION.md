@@ -7,13 +7,15 @@ Before starting, ensure you have the following installed and configured:
 ### Required Software
 
 1. **Docker Desktop**
-   - macOS: [Download from Docker Hub](https://www.docker.com/products/docker-desktop)
-   - Linux: `sudo apt-get install docker.io docker-compose-plugin`
-   - Windows: [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop)
+   - macOS: [Download from Docker Hub](
+      https://www.docker.com/products/docker-desktop)
+   - Linux: `sudo apt-get install docker.io`
+   - Windows: Docker Desktop
    - Verify: `docker --version`
 
 2. **1Password CLI (op)**
-   - Installation: <https://support.1password.com/command-line/>
+   - Installation: See 1Password CLI installation guide
+      command-line/)
    - macOS: `brew install 1password-cli`
    - Verify: `op --version`
    - Authenticate: `op account add`
@@ -27,7 +29,7 @@ Before starting, ensure you have the following installed and configured:
 4. **jq** (JSON processor)
    - macOS: `brew install jq`
    - Linux: `sudo apt-get install jq`
-   - Windows: Use WSL or [release binary](https://stedolan.github.io/jq/download/)
+   - Windows: Use WSL for jq
    - Verify: `jq --version`
 
 5. **curl** (already included on most systems)
@@ -45,7 +47,7 @@ Before starting, ensure you have the following installed and configured:
 
 ### Step 1: Create 1Password Items
 
-You need to store your credentials in 1Password. Create the following items in your **Private** vault:
+Store credentials in 1Password Private vault:
 
 #### Item 1: Splunk-MCP-PoC
 
@@ -71,7 +73,7 @@ You need to store your credentials in 1Password. Create the following items in y
 
 3. Click Save
 
-> **Note**: Splunkbase credentials are required because the setup automatically downloads the Splunk MCP Server app. If you don't have Splunkbase credentials, you can skip this step and manually install the app later.
+   - Windows: Use WSL with jq
 
 ### Step 2: Verify 1Password CLI Access
 
@@ -103,7 +105,7 @@ cd splunk-mcp
 
 Ensure you have these files:
 
-```
+```text
 splunk-mcp/
 ├── .env.example          # Template (optional)
 ├── .gitignore
@@ -127,7 +129,7 @@ cat tpl.env
 
 Example content:
 
-```sh
+```bash
 # Splunk Configuration
 SPLUNK_IMAGE=splunk/splunk:10.0
 SPLUNK_PASSWORD=op://YourVault/YourItem/password
@@ -157,7 +159,7 @@ This command:
 
 **Expected output**:
 
-```
+```text
 Starting Splunk with MCP Server app...
 
 Splunk is starting...
@@ -190,7 +192,7 @@ make status
 
 Expected output:
 
-```
+```text
 Checking Splunk container status...
 NAME           IMAGE                       COMMAND             STATUS
 so1            splunk/splunk:10.0          /sbin/entrypoint... Up 2 minutes
@@ -203,7 +205,7 @@ Splunk is ready ✓
 
 Open your browser and navigate to:
 
-```
+```text
 https://localhost:8000
 ```
 
@@ -229,7 +231,8 @@ Claude Desktop config was automatically updated during startup.
 Check that Claude Desktop configuration was created:
 
 ```bash
-cat ~/Library/Application\ Support/Claude/claude_desktop_config.json
+cat ~/Library/Application\ Support/Claude/\
+  claude_desktop_config.json
 ```
 
 Should contain:
@@ -259,18 +262,21 @@ Should contain:
 
 ### Step 9: Monitor Claude Logs (Optional)
 
-Claude Desktop logs are automatically indexed in Splunk under `index=claude_logs`. These logs capture all Claude Desktop activity for debugging and auditing.
+Claude Desktop logs are indexed in `index=claude_logs` for
+audit and debugging.
 
 **View logs in Splunk Web UI:**
 
 ```bash
 # In Splunk Web UI, use Search & Reporting:
-index=claude_logs | stats count by host, log_level
+index=claude_logs | stats count by host,\
+  log_level
 ```
 
 **Requirements:**
 
-- Claude logs must be accessible at `~/Library/Logs/Claude/` (automatically mounted in compose.yml)
+Claude Desktop logs indexed in claude_logs index.
+
 - The setup script automatically creates the `claude_logs` index during initialization
 - Log ingestion starts immediately after Splunk is ready
 

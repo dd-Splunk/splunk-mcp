@@ -4,7 +4,8 @@
 
 ### 1. **INSTALLATION.md - Duplicate & Confusing Steps**
 
-**Issue**: Step 6 had duplicate text mentioning token path twice, then jumped to "Step 2" instead of "Step 7"
+**Issue**: Step 6 had duplicate text mentioning token path twice,
+then jumped to "Step 2" instead of "Step 7"
 
 **Fix**:
 
@@ -21,7 +22,7 @@
 **Issue**:
 
 - "Accessing Your Splunk Instance" section was verbose with duplicate examples
-- "Common Commands" list was overly descriptive
+- "Common Commands" list had overly descriptive text
 - Troubleshooting section repeated detailed problems that belong in TROUBLESHOOTING.md
 
 **Fixes**:
@@ -29,7 +30,7 @@
 - Renamed "Accessing Your Splunk Instance" → "Access Splunk" (shorter, actionable)
 - Removed duplicate REST API examples (kept only essential one)
 - Condensed command descriptions to single-line comments
-- Replaced 3-issue troubleshooting section with cross-reference to TROUBLESHOOTING.md
+- Replaced 3-issue section with TROUBLESHOOTING.md link
 
 **Impact**: QUICK_START now truly quick (~3 minutes), minimal reading required
 
@@ -39,7 +40,7 @@
 
 **Issue**:
 
-- Initialization flow diagram was overly detailed with decorative arrows and redundant descriptions
+- Flow diagram: cleaner, less redundant
 - User role explanation used repetitive bullet points instead of table format
 
 **Fixes**:
@@ -56,8 +57,8 @@
 
 **Issue**:
 
-- Example 1 (Create User and Token) was overly verbose with separate variables for each parameter
-- Minimal explanation between examples
+- Example 1 simplified - removed redundant variables
+- Better explanations between examples
 
 **Fixes**:
 
@@ -79,7 +80,7 @@
 
 **Fixes**:
 
-- Simplified splunk-init failure solution to: check logs, wait 2-3 min, retry, or run manually
+- Simplified solution: check logs, wait, retry
 - Collapsed 8-command verification checklist into 4 essential commands
 - Streamlined resource section (removed bold formatting, used consistent markdown)
 
@@ -93,7 +94,7 @@
 
 - Architecture diagram duplicated ARCHITECTURE.md content unnecessarily
 - Technology stack table had redundant "Component" and "Technology" columns
-- 3 separate "Modifying Configuration" subsections with details scattered across file
+- Explanations between examples improved
 - Testing section had duplicate unit/integration/manual breakdown (already in API_REFERENCE.md)
 - Long bulleted lists repeated across sections (Security, Maintenance, Development)
 - 70+ lines of debugging info that belongs in TROUBLESHOOTING.md
@@ -128,13 +129,13 @@ All docs now use explicit cross-references:
 ## Key Metrics
 
 | Metric | Before | After | Change |
-|--------|--------|-------|--------|
+| ------ | ------ | ----- | ------ |
 | QUICK_START length | ~240 lines | ~150 lines | -38% |
 | INSTALLATION clarity | Confusing steps | Sequential steps | Fixed |
 | ARCHITECTURE verbosity | Complex flow | Simplified flow | Cleaner |
 | API_REFERENCE examples | ~30 lines each | ~20 lines each | -33% |
 | TROUBLESHOOTING focus | Mixed verbose/terse | Consistent, actionable | Better |
-| DEVELOPER_GUIDE scope | Duplication of all docs | Focused on dev workflow | -50% redundancy |
+| DEVELOPER_GUIDE scope | Duplication | Focused workflow | -50% |
 
 ---
 
@@ -155,14 +156,14 @@ All docs now use explicit cross-references:
 
 ## Remaining Lint Warnings
 
-Some markdown linters report code block language warnings (MD040) - these are pre-existing in original files and non-critical for readability. Can be addressed in separate cleanup if needed.
+1. Keep references current with changes
 
 ---
 
 ## Recommendations for Future Maintenance
 
-1. **Before adding new section**: Check if content exists elsewhere
+1. **New sections**: Check if content exists elsewhere
 2. **Use cross-references liberally**: Link to source of truth rather than duplicate
-3. **Update all references** when changing a concept
+3. **Keep references current** with changes
 4. **Keep TROUBLESHOOTING.md as single source** for all issue solutions
 5. **Audit docs quarterly** for new duplication/inconsistencies

@@ -15,7 +15,7 @@ See ARCHITECTURE.md for detailed system design.
 ## Tech Stack
 
 | Component | Version | Purpose |
-|-----------|---------|---------|
+| --------- | ------- | ------- |
 | Docker | Latest | Container runtime |
 | Docker Compose | Latest | Orchestration |
 | Splunk | 10.0 | Search platform |
@@ -38,14 +38,14 @@ See ARCHITECTURE.md for detailed system design.
 
 ```yaml
 services:
-  so1:                        # Main Splunk service
-    image: ${SPLUNK_IMAGE}   # From .env
+  so1:
+    image: ${SPLUNK_IMAGE}
     ports:
-      - "8000:8000"          # Web UI
-      - "8089:8089"          # API / MCP
+      - "8000:8000"
+      - "8089:8089"
     volumes:
-      - so1-var:/opt/splunk/var     # Indexes
-      - so1-etc:/opt/splunk/etc     # Configs
+      - so1-var:/opt/splunk/var
+      - so1-etc:/opt/splunk/etc
     restart: always
 
   splunk-init:               # One-time initialization
@@ -170,7 +170,7 @@ environment:
 
 **Add Splunk config** - Edit `default.yml`:
 
-```
+```text
 [general]
 serverName = my_splunk_instance
 site_name = site1
@@ -186,7 +186,7 @@ ports:
 
 See ARCHITECTURE.md for all configuration options.
 
-See TROUBLESHOOTING.md for common issues and ARCHITECTURE.md for extending the system.
+See TROUBLESHOOTING.md and ARCHITECTURE.md for details.
 
 See API_REFERENCE.md for endpoint testing examples.
 
@@ -203,7 +203,7 @@ volumes:
   - /path/to/logs:/var/log/custom_logs:rw
 ```
 
-2. **Edit setup-splunk-user.sh** - Add monitor input:
+1. **Edit setup-splunk-user.sh** - Add monitor input:
 
 ```bash
 curl ${CURL_OPTS} -X POST "${SPLUNK_URL}/services/data/inputs/monitor/" \
@@ -224,7 +224,7 @@ curl -X POST "${SPLUNK_URL}/services/authentication/users" \
 
 ## CI/CD Integration
 
-For GitHub Actions, use `make up`, `make status`, and `make down` targets. See Makefile for available commands.
+For CI/CD, use make targets: `make up`, `make status`, `make down`.
 
 ## Debugging
 
@@ -241,19 +241,19 @@ See ARCHITECTURE.md for performance tuning and resource requirements.
 
 ## Best Practices
 
-**Security**: Rotate tokens before expiry, use strong passwords, restrict network access, keep software updated.
+**Security**: Rotate tokens, strong passwords, restrict access.
 
-**Maintenance**: Backup volumes regularly, monitor disk space, review logs for errors, document changes.
+**Maintenance**: Backup volumes, monitor disk, review logs.
 
-**Development**: Use version control, test changes, keep documentation current, maintain consistent style.
+**Development**: Use version control, test, document changes.
 
 ## Contributing
 
-**Code Style**: Use ShellCheck for bash, jq for JSON, 2-space indentation for YAML.
+**Code Style**: ShellCheck, jq, 2-space YAML indentation.
 
 **Testing**: Run `make up`, verify `make status`, test endpoints, review logs.
 
-**Documentation**: Update relevant docs (README, ARCHITECTURE, API_REFERENCE) with changes.
+**Documentation**: Update relevant docs with changes.
 
 ## Useful Commands
 

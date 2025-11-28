@@ -553,7 +553,7 @@ docker logs so1 > splunk_logs.txt
 #### Common Log Messages
 
 | Message | Meaning | Action |
-|---------|---------|--------|
+| --------- | --------- | --------- |
 | `All pipelines have been started` | Splunk initialized | OK - ready to use |
 | `REST handler 'mcp' not found` | MCP app not installed | Reinstall app |
 | `Authentication failed` | Bad credentials | Check .env |
@@ -623,15 +623,12 @@ ls -la ~/Library/Logs/Claude/
 docker exec so1 ls -la /var/log/claude_logs
 
 # Check if index was created
-curl -k -u admin:password https://localhost:8089/services/data/indexes/claude_logs
+curl -k -u admin:password \
+  https://localhost:8089/services/data/indexes/claude_logs
 
 # View Splunk monitor input config
-curl -k -u admin:password "https://localhost:8089/services/data/inputs/monitor/?output_mode=json" | jq '.entries[] | select(.name | contains("claude"))'
-
-# If missing, manually run setup script
-./scripts/setup-splunk-user.sh
-```
-
+curl -k -u admin:password \
+  https://localhost:8089/services/data/indexes/claude_logs
 #### Issue: Claude logs stopped being indexed
 
 **Error**: Previously indexed logs, but nothing recent

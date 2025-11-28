@@ -2,7 +2,9 @@
 
 ## Overview
 
-Documentation has been updated to fully document the Claude logs onboarding feature that captures Claude Desktop logs into a dedicated `claude_logs` index in Splunk.
+Documentation has been updated to fully document the Claude logs
+onboarding feature that captures Claude Desktop logs into a dedicated
+`claude_logs` index in Splunk.
 
 ## Changes Made
 
@@ -104,13 +106,13 @@ The setup script (`setup-splunk-user.sh`) already implements:
 
 ### Advanced: Filter by Log Level
 
-```
+```spl
 index=claude_logs log_level=ERROR | stats count by host
 ```
 
 ### Advanced: Time-Based Queries
 
-```
+```spl
 index=claude_logs earliest=-1h latest=now | tail 100
 ```
 
@@ -134,7 +136,7 @@ All docs now properly reference Claude logs feature:
 ## Key Documentation Principles Applied
 
 ✅ **Actionable First**: Show what to search for before explaining how  
-✅ **Progressive Complexity**: Basic UI search → Advanced filtering → API access  
+✅ **Progressive Complexity**: Basic → Advanced → API access  
 ✅ **Problem Solving**: Added debugging section for common issues  
 ✅ **Extensibility**: Documented pattern for adding custom log indexes  
 ✅ **Cross-References**: Linked related sections instead of duplicating
