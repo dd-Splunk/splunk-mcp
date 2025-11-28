@@ -6,6 +6,9 @@
 mcp_token.txt
 *.token
 
+# Claude configuration
+.claude/
+
 # macOS
 .DS_Store
 .AppleDouble
