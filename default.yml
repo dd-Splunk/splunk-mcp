@@ -1,0 +1,10 @@
+---
+splunk:
+  connf:
+    - key: user-seed
+      value:
+        directory: /opt/splunk/etc/system/local
+        content:
+          user_info:
+            USERNAME: dd
+            PASSWORD: changeme

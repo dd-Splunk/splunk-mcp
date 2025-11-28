@@ -1,0 +1,54 @@
+services:
+  so1:
+    hostname: so1
+    container_name: so1
+    image: ${SPLUNK_IMAGE:-splunk/splunk:latest}
+    platform: linux/amd64
+    environment:
+      SPLUNK_GENERAL_TERMS: --accept-sgt-current-at-splunk-com
+      SPLUNK_START_ARGS: --accept-license
+      SPLUNK_PASSWORD: ${SPLUNK_PASSWORD}
+      SPLUNKBASE_USERNAME: ${SPLUNKBASE_USER}@splunk.com
+      SPLUNKBASE_PASSWORD: ${SPLUNKBASE_PASS}
+      SPLUNK_APPS_URL: https://splunkbase.splunk.com/app/4353/release/1.8.21/download/,https://splunkbase.splunk.com/app/7931/release/0.2.6/download/
+      TZ: ${TZ:-Europe/Brussels}
+    volumes:
+      - ./default.yml:/tmp/defaults/default.yml
+      - so1-var:/opt/splunk/var
+      - so1-etc:/opt/splunk/etc
+    ports:
+      - "8000:8000" # Splunk Web UI
+      - "8089:8089" # Splunk Management API / MCP Server
+    networks:
+      - splunk
+    restart: always
+
+  splunk-init:
+    image: alpine:latest
+    container_name: splunk-init
+    depends_on:
+      so1:
+        condition: service_healthy
+    volumes:
+      - ./scripts/setup-splunk-user.sh:/setup-splunk-user.sh
+      - ./.secrets:/output
+    environment:
+      SPLUNK_PASSWORD: ${SPLUNK_PASSWORD}
+      SPLUNK_USER: ${SPLUNK_USER:-admin}
+      SPLUNK_HOST: so1
+      SPLUNK_PORT: 8089
+      TOKEN_OUTPUT_FILE: /output/splunk-token
+    command: sh -c "apk add --no-cache curl jq && chmod +x /setup-splunk-user.sh && /setup-splunk-user.sh"
+    networks:
+      - splunk
+    restart: "no"
+
+networks:
+  splunk:
+    driver: bridge
+
+volumes:
+  so1-var:
+    name: so1-var
+  so1-etc:
+    name: so1-etc
