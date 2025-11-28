@@ -1,0 +1,29 @@
+# Environment files (contain secrets)
+.env
+
+# Token files and secrets directory
+.secrets/
+mcp_token.txt
+*.token
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Docker volumes (data stored in named volumes)
+docker-compose.override.yml
+
+# Editor directories
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+.*.tmp

@@ -1,0 +1,671 @@
+# Troubleshooting Guide
+
+## Common Issues & Solutions
+
+### Container Issues
+
+#### Issue: Docker daemon is not running
+
+**Error**: `Cannot connect to Docker daemon`
+
+**Solution**:
+
+1. Start Docker Desktop application
+2. Wait for it to fully load
+3. Verify: `docker ps`
+
+---
+
+#### Issue: Port already in use
+
+**Error**: `Address already in use` or `Bind for 0.0.0.0:8000 failed`
+
+**Symptoms**: Cannot start Splunk container
+
+**Solution**:
+
+```bash
+# Find process using port 8000
+lsof -i :8000
+
+# Find process using port 8089
+lsof -i :8089
+
+# Kill the process
+kill -9 <PID>
+
+# Or stop the conflicting service
+# Example: Stop another Docker container
+docker ps
+docker stop <container_id>
+
+# Retry
+make up
+```
+
+**Alternative**: Use different ports by modifying `compose.yml`:
+
+```yaml
+ports:
+  - "9000:8000"  # Changed from 8000
+  - "9089:8089"  # Changed from 8089
+```
+
+---
+
+#### Issue: Container exits immediately
+
+**Error**: Container starts then stops
+
+**Solution**:
+
+```bash
+# Check logs
+make logs
+
+# Common causes:
+# 1. License acceptance issue - verify SPLUNK_GENERAL_TERMS in compose.yml
+# 2. Memory issue - increase Docker memory allocation
+# 3. Disk space - ensure at least 10GB free space
+
+# Restart
+make down
+make clean  # If needed
+make up
+```
+
+---
+
+#### Issue: Splunk container stuck in starting state
+
+**Error**: Takes more than 5 minutes to start
+
+**Solution**:
+
+1. Increase Docker resource limits:
+   - Open Docker Desktop preferences
+   - Resources tab
+   - Increase CPU and Memory
+
+2. Check logs for stuck processes:
+
+   ```bash
+   make logs
+   ```
+
+3. Force restart:
+
+   ```bash
+   make down
+   docker volume rm so1-var so1-etc
+   make up
+   ```
+
+---
+
+### Environment & Configuration Issues
+
+#### Issue: `make init` fails with 1Password error
+
+**Error**: `Not currently authenticated` or `Account not found`
+
+**Solution**:
+
+```bash
+# Authenticate with 1Password
+op account add
+
+# Follow the prompts:
+# 1. Enter your 1Password account domain (e.g., my.1password.com)
+# 2. Enter your email
+# 3. Enter your master password
+# 4. Enter your secret key
+
+# Verify authentication
+op account list
+
+# Retry
+make init
+```
+
+---
+
+#### Issue: `op inject` command not found
+
+**Error**: `op: command not found`
+
+**Solution**:
+
+```bash
+# Install 1Password CLI
+# macOS
+brew install 1password-cli
+
+# Verify
+op --version
+
+# Retry
+make init
+```
+
+---
+
+#### Issue: Missing secrets in 1Password
+
+**Error**: `ERROR: item "op://YourVault/YourItem/password" not found`
+
+**Solution**:
+
+1. Verify items in 1Password:
+
+   ```bash
+   op read "op://YourVault/YourItem/password"
+   ```
+
+2. If not found, create items:
+   - See INSTALLATION.md for 1Password setup steps
+
+3. Update `tpl.env` if paths are different:
+
+   ```bash
+   cat tpl.env
+   ```
+
+---
+
+#### Issue: `.env` file not created
+
+**Error**: `Error: SPLUNK_PASSWORD not set`
+
+**Solution**:
+
+```bash
+# Manually create .env (if 1Password setup is problematic)
+cat > .env << EOF
+SPLUNK_IMAGE=splunk/splunk:10.0
+SPLUNK_PASSWORD=your_password_here
+SPLUNKBASE_USER=your_username
+SPLUNKBASE_PASS=your_password
+TZ=Europe/Brussels
+EOF
+
+# Then start
+make up
+```
+
+---
+
+### Splunk Initialization Issues
+
+#### Issue: splunk-init container fails
+
+**Error**: `splunk-init exited with code 1`
+
+**Symptoms**: Splunk running but user/role/token not created
+
+**Solution**:
+
+```bash
+# Check init logs
+docker logs splunk-init
+
+# Common issues:
+# 1. Splunk not fully ready - wait 3-5 minutes
+# 2. Credentials wrong - verify .env
+# 3. jq not installed - install jq
+# 4. Script permission issue - run manually:
+
+docker exec so1 curl -k -s https://localhost:8089/services/server/info
+
+# Manually run setup script
+./scripts/setup-splunk-user.sh
+```
+
+---
+
+#### Issue: Splunk MCP app not installed
+
+**Error**: MCP endpoint returns 404
+
+**Symptoms**: Cannot connect Claude Desktop to Splunk
+
+**Solution**:
+
+```bash
+# Check installed apps
+curl -k -u admin:password https://localhost:8089/services/appserver/apps \
+  | grep -i "mcp\|model"
+
+# If not found, check download URL in compose.yml:
+cat compose.yml | grep SPLUNK_APPS_URL
+
+# Verify Splunkbase credentials:
+op read "op://YourVault/Splunkbase/username"
+op read "op://YourVault/Splunkbase/password"
+
+# If credentials wrong, update 1Password and reinit:
+make down
+docker volume rm so1-var so1-etc
+make init
+make up
+```
+
+---
+
+### API & Connectivity Issues
+
+#### Issue: Cannot reach Splunk API
+
+**Error**: `Connection refused` or `Failed to connect`
+
+**Symptoms**: `curl` commands fail
+
+**Solution**:
+
+```bash
+# Check if container is running
+make status
+
+# Check network connectivity
+docker exec so1 curl -k https://localhost:8089/services/server/info
+
+# Check from host machine
+curl -k https://localhost:8089/services/server/info
+
+# If still failing:
+# 1. Verify ports are mapped: docker port so1
+# 2. Check firewall: disable temporarily
+# 3. Restart container: make restart
+```
+
+---
+
+#### Issue: Authentication failed
+
+**Error**: `401 Unauthorized` or `Invalid credentials`
+
+**Symptoms**: API calls fail with auth error
+
+**Solution**:
+
+```bash
+# Verify credentials in .env
+cat .env | grep SPLUNK
+
+# Test with correct credentials
+curl -k -u admin:$SPLUNK_PASSWORD https://localhost:8089/services/server/info
+
+# If credentials wrong:
+# 1. Update .env manually
+# 2. Restart container: make restart
+# 3. Or regenerate: make clean && make up
+```
+
+---
+
+#### Issue: SSL certificate error
+
+**Error**: `SSL_ERROR_SELF_SIGNED_CERT` or `certificate verify failed`
+
+**Solution**:
+
+```bash
+# For curl: use -k flag (already in scripts)
+curl -k https://localhost:8089/...
+
+# For Python: disable verification
+import urllib3
+urllib3.disable_warnings()
+
+# For Node.js: set NODE_TLS_REJECT_UNAUTHORIZED
+NODE_TLS_REJECT_UNAUTHORIZED=0 node app.js
+
+# Note: Only do this for localhost/development!
+```
+
+---
+
+### Token Issues
+
+#### Issue: Token generation fails
+
+**Error**: `Failed to create token` or error during `make token`
+
+**Solution**:
+
+```bash
+# Check Splunk is ready
+make status
+
+# Verify user exists
+curl -k -u admin:password https://localhost:8089/services/authentication/users/dd
+
+# Try manual token generation
+curl -k -X POST https://localhost:8089/services/authorization/tokens \
+  -u admin:$SPLUNK_PASSWORD \
+  -d "status=enabled" \
+  -d "name=dd" \
+  -d "audience=mcp"
+
+# If error about permissions, verify admin user still exists:
+curl -k -u admin:password https://localhost:8089/services/server/info
+```
+
+---
+
+#### Issue: Token expired
+
+**Error**: Claude Desktop disconnects after 15 days
+
+**Solution**:
+
+```bash
+# Generate new token
+make token
+
+# Update Claude Desktop config
+cat ~/Library/Application\ Support/Claude/claude_desktop_config.json
+
+# Restart Claude Desktop
+# (Fully quit and reopen)
+```
+
+---
+
+#### Issue: Cannot parse token from response
+
+**Error**: Token shows empty or malformed
+
+**Solution**:
+
+```bash
+# Check token response
+curl -k -s -X POST https://localhost:8089/services/authorization/tokens \
+  -u admin:password \
+  -d "status=enabled" \
+  -d "name=test" \
+  -d "audience=mcp" | grep -A 5 "token"
+
+# Token should be in CDATA section:
+# <s:key name="token"><![CDATA[eyJ...]]></s:key>
+
+# If CDATA format changed, update sed expression in setup script:
+# Current: sed -n 's/.*<!\[CDATA\[\(.*\)\]\].*/\1/p'
+```
+
+---
+
+### Claude Desktop Integration Issues
+
+#### Issue: Claude Desktop cannot connect to Splunk
+
+**Error**: "MCP server connection failed" or timeout
+
+**Symptoms**: No Splunk tools available in Claude
+
+**Solution**:
+
+1. **Verify config file**:
+
+   ```bash
+   cat ~/Library/Application\ Support/Claude/claude_desktop_config.json
+   
+   # Should contain:
+   # - "splunk-mcp-server"
+   # - "https://localhost:8089/services/mcp"
+   # - Valid Bearer token
+   ```
+
+2. **Restart Claude Desktop**:
+   - Force quit: Cmd+Q
+   - Wait 2 seconds
+   - Reopen from Applications
+
+3. **Check token validity**:
+
+   ```bash
+   # Token should be recent
+   curl -k -u admin:password https://localhost:8089/services/authorization/tokens
+   ```
+
+4. **Test connection manually**:
+
+   ```bash
+   TOKEN="your_token_here"
+   curl -k -H "Authorization: Bearer $TOKEN" \
+     https://localhost:8089/services/mcp
+   ```
+
+5. **Check Claude logs**:
+
+   ```bash
+   log stream --predicate 'process == "Claude"' --level debug
+   ```
+
+---
+
+#### Issue: npx not found
+
+**Error**: `Error: command not found: npx` (in Claude Desktop logs)
+
+**Symptoms**: Claude cannot spawn mcp-remote
+
+**Solution**:
+
+```bash
+# Install Node.js and npm
+# macOS
+brew install node
+
+# Verify
+node --version
+npm --version
+npx --version
+
+# Restart Claude Desktop
+```
+
+---
+
+#### Issue: mcp-remote not found
+
+**Error**: `Module not found: mcp-remote`
+
+**Solution**:
+
+```bash
+# Install mcp-remote globally
+npm install -g mcp-remote
+
+# Or npx will auto-download with -y flag (already in config)
+
+# Restart Claude Desktop
+```
+
+---
+
+### Data & Volume Issues
+
+#### Issue: Data lost after container restart
+
+**Error**: Splunk has no data/configs after restarting
+
+**Symptoms**: Volumes not persisting
+
+**Solution**:
+
+```bash
+# Check volume exists
+docker volume ls | grep so1
+
+# If missing, volumes weren't created properly:
+docker volume create so1-var
+docker volume create so1-etc
+
+# Inspect volume
+docker volume inspect so1-var
+
+# Check mount points in container
+docker exec so1 df -h | grep opt/splunk
+
+# Backup data before cleanup:
+docker run --rm -v so1-var:/data -v ~/backup:/backup \
+  alpine tar czf /backup/backup-$(date +%s).tar.gz -C /data .
+```
+
+---
+
+#### Issue: Disk space error
+
+**Error**: `No space left on device` or volume full
+
+**Solution**:
+
+```bash
+# Check disk usage
+docker volume inspect so1-var
+du -sh /var/lib/docker/volumes/so1-*
+
+# Check container logs
+make logs | grep -i "space\|disk"
+
+# Solutions:
+# 1. Delete old indexes
+# 2. Increase disk space
+# 3. Clean up Docker: docker system prune -a
+# 4. Move volumes to larger disk
+```
+
+---
+
+### Log Analysis
+
+#### Viewing Logs
+
+```bash
+# Real-time logs
+make logs
+
+# Last 100 lines
+docker logs --tail 100 so1
+
+# Logs with timestamps
+docker logs --timestamps so1
+
+# Follow specific search
+docker logs so1 | grep -i "error\|warning\|MCP"
+
+# Save to file
+docker logs so1 > splunk_logs.txt
+```
+
+#### Common Log Messages
+
+| Message | Meaning | Action |
+|---------|---------|--------|
+| `All pipelines have been started` | Splunk initialized | OK - ready to use |
+| `REST handler 'mcp' not found` | MCP app not installed | Reinstall app |
+| `Authentication failed` | Bad credentials | Check .env |
+| `role="mcp_user" does not exist` | Role creation failed | Run setup manually |
+| `License not found` | License issue | Accept license again |
+
+---
+
+## Verification Checklist
+
+Use this checklist to verify everything is working:
+
+```bash
+# 1. Containers running
+docker compose ps
+
+# 2. Splunk API accessible
+curl -k -u admin:password https://localhost:8089/services/server/info
+
+# 3. User exists
+curl -k -u admin:password https://localhost:8089/services/authentication/users/dd
+
+# 4. Role exists
+curl -k -u admin:password https://localhost:8089/services/authorization/roles/mcp_user
+
+# 5. Token exists
+curl -k -u admin:password https://localhost:8089/services/authorization/tokens/tokens
+
+# 6. MCP endpoint reachable
+TOKEN="your_token"
+curl -k -H "Authorization: Bearer $TOKEN" https://localhost:8089/services/mcp
+
+# 7. Claude config exists
+test -f ~/Library/Application\ Support/Claude/claude_desktop_config.json && echo "OK" || echo "Missing"
+
+# 8. Claude config valid
+cat ~/Library/Application\ Support/Claude/claude_desktop_config.json | jq .
+```
+
+## Getting Help
+
+### Collect Diagnostic Information
+
+```bash
+#!/bin/bash
+# Save this as diagnose.sh and run: bash diagnose.sh
+
+echo "=== System Info ===" > diagnosis.txt
+uname -a >> diagnosis.txt
+
+echo -e "\n=== Docker Info ===" >> diagnosis.txt
+docker --version >> diagnosis.txt
+docker compose version >> diagnosis.txt
+
+echo -e "\n=== Container Status ===" >> diagnosis.txt
+docker compose ps >> diagnosis.txt
+
+echo -e "\n=== Container Logs ===" >> diagnosis.txt
+docker logs so1 >> diagnosis.txt
+
+echo -e "\n=== Environment ===" >> diagnosis.txt
+cat .env | grep -v "PASSWORD\|PASS" >> diagnosis.txt
+
+echo -e "\n=== Network ===" >> diagnosis.txt
+docker network inspect splunk >> diagnosis.txt
+
+echo "Diagnostics saved to diagnosis.txt"
+```
+
+### Resources
+
+- **Splunk Documentation**: <https://docs.splunk.com/>
+- **MCP Protocol**: <https://modelcontextprotocol.io/>
+- **Docker Docs**: <https://docs.docker.com/>
+- **1Password CLI**: <https://developer.1password.com/docs/cli/>
+
+## Debug Mode
+
+### Enable Verbose Output
+
+```bash
+# In make commands
+set -x
+make up
+
+# In Docker
+docker compose up --verbose
+
+# In curl
+curl -v -k https://localhost:8089/services/server/info
+
+# In shell scripts
+bash -x scripts/setup-splunk-user.sh
+```
+
+### Interactive Debugging
+
+```bash
+# Enter container shell
+docker exec -it so1 /bin/bash
+
+# Test commands inside container
+curl -k https://localhost:8089/services/server/info
+ps aux | grep splunk
+tail -f /opt/splunk/var/log/splunk/splunkd.log
+```
