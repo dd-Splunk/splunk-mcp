@@ -60,6 +60,7 @@ clean:
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
 		docker compose down -v; \
 		rm -f .env; \
+		rm -f .secrets/splunk-token; \
 		echo "Cleanup complete."; \
 	else \
 		echo "Cleanup cancelled."; \

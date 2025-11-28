@@ -16,6 +16,7 @@ services:
       - ./default.yml:/tmp/defaults/default.yml
       - so1-var:/opt/splunk/var
       - so1-etc:/opt/splunk/etc
+      - ${HOME}/Library/Logs/Claude:/var/log/claude_logs:rw
     ports:
       - "8000:8000" # Splunk Web UI
       - "8089:8089" # Splunk Management API / MCP Server
@@ -30,8 +31,8 @@ services:
       so1:
         condition: service_healthy
     volumes:
-      - ./scripts/setup-splunk-user.sh:/setup-splunk-user.sh
-      - ./.secrets:/output
+      - ./scripts/setup-splunk-user.sh:/setup-splunk-user.sh:rw
+      - ./.secrets:/output:rw
     environment:
       SPLUNK_PASSWORD: ${SPLUNK_PASSWORD}
       SPLUNK_USER: ${SPLUNK_USER:-admin}

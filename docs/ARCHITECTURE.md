@@ -25,7 +25,7 @@
 #### Named Volumes
 
 - **so1-var**: Stores Splunk variable data
-  - Indexes
+  - Indexes (including `claude_logs`)
   - Logs
   - KV Store data
   
@@ -34,6 +34,12 @@
   - App configurations
   - Authorization settings
 
+#### Bind Mounts
+
+- **Claude Logs Directory**: `~/Library/Logs/Claude/ → /var/log/claude_logs`
+  - Automatically monitored and indexed into `claude_logs` index
+  - Enables real-time Claude Desktop activity tracking
+
 #### Local Files
 
 - **compose.yml**: Docker Compose configuration
@@ -41,7 +47,16 @@
 - **tpl.env**: Template for environment variables
 - **.env**: Runtime environment variables (git-ignored)
 
-### 4. Network
+### 4. Claude Logs Index
+
+- **Index Name**: `claude_logs`
+- **Data Source**: `~/Library/Logs/Claude/` (macOS)
+- **Purpose**: Capture Claude Desktop activity and errors
+- **Monitoring**: Automatic via Splunk input monitor
+- **Retention**: Follows Splunk default retention policies
+- **Searchable**: Available immediately after indexing
+
+### 5. Network
 
 - **Type**: Bridge network (`splunk`)
 - **Services**: so1, splunk-init
@@ -50,39 +65,19 @@
 ## Initialization Flow
 
 ```
-User runs 'make up'
-        │
-        ▼
-    make init
-        │
-    Injects secrets from 1Password into .env
-        │
-        ▼
-docker compose up -d
-        │
-        ├─────────────────────────────┐
-        │                             │
-        ▼                             ▼
-    so1 starts                   splunk-init waits
-        │                             │
-        │ Pulls image                 │
-        ├─ Starts container           │
-        ├─ Runs entrypoint script     │
-        ├─ Installs MCP Server app    │
-        ├─ Waits for healthcheck      │
-        │                             │
-        └────────────────┬────────────┘
-                         │ so1 is healthy
-                         ▼
-                  splunk-init runs
-                         │
-                  setup-splunk-user.sh
-                         │
-        ┌────────────────┼────────────────┐
-        │                │                │
-        ▼                ▼                ▼
-    Create role      Create user      Generate token
-    (mcp_user)       (dd)            Configure Claude
+make up
+  ├─ make init (inject 1Password secrets → .env)
+  ├─ docker compose up -d
+  │  ├─ so1 (Splunk)
+  │  │  ├─ Pull image
+  │  │  ├─ Start container
+  │  │  ├─ Install MCP app
+  │  │  └─ Wait for health
+  │  └─ splunk-init (waits for so1 healthy)
+  └─ setup-splunk-user.sh (on so1 health)
+     ├─ Create role: mcp_user
+     ├─ Create user: dd
+     └─ Generate token & update Claude config
 ```
 
 ## Security Architecture
@@ -98,20 +93,10 @@ docker compose up -d
 
 ### User Roles
 
-#### User: `dd`
-
-- **Role**: `mcp_user`
-- **Authentication**: Token-based (Bearer)
-- **Scope**: MCP Server operations only
-- **Capabilities**: Limited to search and API access
-- **Tokens**: Auto-expiry after 15 days
-
-#### User: `admin`
-
-- **Role**: Built-in admin
-- **Authentication**: Password-based
-- **Scope**: Full Splunk administration
-- **Used for**: Container initialization only
+| User | Role | Auth | Scope | Expiry |
+|------|------|------|-------|--------|
+| `dd` | `mcp_user` | Bearer token | MCP operations | 15 days |
+| `admin` | Built-in | Password | Full admin | N/A |
 
 ### Environment Variables
 

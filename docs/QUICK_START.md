@@ -37,20 +37,7 @@ git clone <repository-url> splunk-mcp
 cd splunk-mcp
 ```
 
-#### 3. Initialize Environment
-
-```bash
-make init
-```
-
-Expected output:
-
-```
-Initializing environment...
-Environment initialized. Secrets injected from 1Password.
-```
-
-#### 4. Start Splunk
+#### 3. Start Splunk
 
 ```bash
 make up
@@ -66,130 +53,69 @@ make status
 
 Should show `Splunk is ready ✓`
 
-#### 6. Generate Token & Configure Claude
+Claude logs are automatically indexed in the `claude_logs` index. Search them anytime:
 
 ```bash
-make token
+# View Claude logs in Splunk Web UI
+# Navigate to: Search & Reporting → index=claude_logs
 ```
 
-This automatically:
+#### 6. Verify Token Generated
 
-- Creates user `dd` with role `mcp_user`
-- Generates 15-day authentication token
-- Updates Claude Desktop configuration file
+The token was auto-generated during `make up`. Verify it:
+
+```bash
+ls -la .secrets/splunk-token
+```
 
 #### 7. Restart Claude Desktop
 
-- Quit Claude Desktop completely
-- Reopen it
-- Splunk MCP server should now be available
+- Quit Claude Desktop completely: Cmd+Q
+- Reopen from Applications folder
+- Splunk MCP server should now be available in tools
 
-## Accessing Your Splunk Instance
+## Access Splunk
 
-### Splunk Web UI
+### Web UI
 
 - URL: <https://localhost:8000>
-- Username: `admin`
-- Password: (from 1Password)
+- Credentials: `admin` / (your 1Password password)
 
 ### REST API
 
 ```bash
-# Get server info
 curl -k -u admin:<password> https://localhost:8089/services/server/info
-
-# Test MCP endpoint
-curl -k -H "Authorization: Bearer <token>" https://localhost:8089/services/mcp
 ```
 
-## Common Commands
+## Commands
 
 ```bash
-# Show all available commands
-make help
-
-# Stop Splunk
-make down
-
-# Restart Splunk
-make restart
-
-# View logs
-make logs
-
-# Check container status
-make status
-
-# Generate new token
-make token
-
-# Completely reset (deletes all data!)
-make clean
+make status      # Check if ready
+make logs        # View real-time logs
+make restart     # Restart container
+make down        # Stop container
+make clean       # Delete all data (destructive!)
+make help        # Show all targets
 ```
 
 ## Next Steps
 
-1. **Explore Splunk Web UI**: Learn the interface at <https://localhost:8000>
-2. **Add Sample Data**: Ingest test data through Splunk UI
+1. **Query Claude Logs**: Search `index=claude_logs` in Splunk Web UI to see Claude Desktop activity
+2. **Explore Splunk Web UI**: Learn the interface at <https://localhost:8000>
 3. **Test Claude Integration**: Use Splunk features through Claude Desktop
-4. **Customize Configuration**: Edit `default.yml` for your specific needs
-5. **Review ARCHITECTURE.md**: Understand the system components
-6. **Check API_REFERENCE.md**: Learn the REST API endpoints
+4. **Add Sample Data**: Ingest test data through Splunk UI
+5. **Customize Configuration**: Edit `default.yml` for your specific needs
+6. **Review ARCHITECTURE.md**: Understand the system components
 
 ## Troubleshooting
 
-### Issue: Splunk not starting
+See **TROUBLESHOOTING.md** for detailed solutions. Quick checks:
 
 ```bash
-# Check logs
-make logs | tail -100
-
-# Check container status
-docker ps
-
-# Try full reset
-make down
-make clean
-make up
+make status      # Verify Splunk is ready
+make logs        # Check for errors
+make down && make clean && make up  # Full reset
 ```
-
-### Issue: Token generation failed
-
-```bash
-# Make sure Splunk is ready
-make status
-
-# Check Splunk logs
-make logs | grep -i error
-
-# Manually verify user exists
-curl -k -u admin:<password> https://localhost:8089/services/authentication/users/dd
-```
-
-### Issue: Claude not connecting
-
-1. Verify configuration exists:
-
-   ```bash
-   cat ~/Library/Application\ Support/Claude/claude_desktop_config.json | jq .
-   ```
-
-2. Test endpoint manually:
-
-   ```bash
-   TOKEN="<your_token>"
-   curl -k -H "Authorization: Bearer $TOKEN" https://localhost:8089/services/mcp
-   ```
-
-3. Check Claude logs:
-
-   ```bash
-   log stream --predicate 'process == "Claude"' --level debug
-   ```
-
-4. Restart Claude: Force quit and reopen
-
-See TROUBLESHOOTING.md for more detailed solutions.
 
 ## File Structure
 
@@ -245,14 +171,12 @@ This removes:
 ## Quick Reference
 
 | Task | Command |
-|------|---------|
-| Setup | `make init` |
-| Start | `make up` |
+|------|----------|
+| Start (includes init) | `make up` |
 | Stop | `make down` |
 | Restart | `make restart` |
 | View logs | `make logs` |
 | Check status | `make status` |
-| Generate token | `make token` |
 | Help | `make help` |
 | Clean all | `make clean` |
 

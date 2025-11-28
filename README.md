@@ -142,6 +142,7 @@ Vault: Private
 | **Splunk UI** | <https://localhost:8089> | admin / `$SPLUNK_PASSWORD` |
 | **MCP Endpoint** | <https://localhost:8089/services/mcp> | User: dd / Token: saved |
 | **Claude Desktop** | Native app | Auto-configured |
+| **Claude Logs** | Index: `claude_logs` | Automatically indexed |
 
 ## Common Tasks
 
