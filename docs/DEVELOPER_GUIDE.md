@@ -10,48 +10,19 @@ This is a proof-of-concept environment that integrates:
 - **1Password**: Credential management
 - **Docker Compose**: Container orchestration
 
-## Architecture Diagram
+See ARCHITECTURE.md for detailed system design.
 
-```
-┌─────────────────────────────────────────────────┐
-│            Claude Desktop                        │
-│  (via npx mcp-remote with Bearer token)         │
-└──────────────────┬──────────────────────────────┘
-                   │ HTTPS + JWT Bearer Token
-                   │
-                   ▼
-┌─────────────────────────────────────────────────┐
-│    Splunk Enterprise (Docker Container)          │
-│                                                  │
-│  ┌────────────────────────────────────────────┐ │
-│  │  Splunk MCP Server App (v0.2.4)           │ │
-│  │  /services/mcp endpoint                   │ │
-│  └────────────────────────────────────────────┘ │
-│                                                  │
-│  ┌────────────────────────────────────────────┐ │
-│  │  User: dd                                  │ │
-│  │  Role: mcp_user                           │ │
-│  │  Auth: Bearer token (15-day expiry)       │ │
-│  └────────────────────────────────────────────┘ │
-│                                                  │
-│  Volumes:                                        │
-│  - so1-var (indexes, logs)                     │
-│  - so1-etc (configurations)                    │
-└─────────────────────────────────────────────────┘
-```
+## Tech Stack
 
-## Technology Stack
-
-| Component | Technology | Version | Purpose |
-|-----------|-----------|---------|---------|
-| Container Runtime | Docker | Latest | Isolate Splunk |
-| Orchestration | Docker Compose | Latest | Define services |
-| Splunk | splunk/splunk | 10.0 | Search platform |
-| MCP App | Splunk MCP Server | 0.2.4 | Protocol integration |
-| Init Container | curlimages/curl | Latest | Lightweight HTTP client |
-| Auth | 1Password CLI | Latest | Secret management |
-| Build | Make | Latest | Task automation |
-| JSON | jq | Latest | Configuration management |
+| Component | Version | Purpose |
+|-----------|---------|---------|
+| Docker | Latest | Container runtime |
+| Docker Compose | Latest | Orchestration |
+| Splunk | 10.0 | Search platform |
+| MCP App | 0.2.4 | Protocol integration |
+| 1Password CLI | Latest | Secrets |
+| Make | Latest | Automation |
+| jq | Latest | JSON processing |
 
 ## File Structure Explanation
 
@@ -188,385 +159,116 @@ claude-config:   # Show Claude config
    make logs
    ```
 
-### Modifying Configuration
+### Customize Configuration
 
-#### Change Splunk Image
-
-Edit `compose.yml`:
+**Change Splunk version** - Edit `compose.yml`:
 
 ```yaml
 environment:
-  SPLUNK_IMAGE: splunk/splunk:9.1  # Change version
+  SPLUNK_IMAGE: splunk/splunk:9.1
 ```
 
-Or override with environment variable:
-
-```bash
-SPLUNK_IMAGE=splunk/splunk:9.1 make up
-```
-
-#### Add Splunk Configuration
-
-Edit `default.yml`:
+**Add Splunk config** - Edit `default.yml`:
 
 ```
-# Add custom settings
 [general]
 serverName = my_splunk_instance
 site_name = site1
 ```
 
-#### Modify User Permissions
-
-Edit `scripts/setup-splunk-user.sh`:
-
-```bash
-# Add capabilities to role
-curl ... -d "capability=accelerate_datamodel" \
-         -d "capability=admin_all_objects"
-```
-
-#### Change Port Mappings
-
-Edit `compose.yml`:
+**Change port mappings** - Edit `compose.yml`:
 
 ```yaml
 ports:
-  - "9000:8000"     # Changed from 8000
-  - "9089:8089"     # Changed from 8089
+  - "9000:8000"     # Web UI
+  - "9089:8089"     # API
 ```
 
-### Adding Dependencies
+See ARCHITECTURE.md for all configuration options.
 
-#### Add Python Library
+See TROUBLESHOOTING.md for common issues and ARCHITECTURE.md for extending the system.
 
-1. Create `requirements.txt`
-2. Modify `scripts/setup-splunk-user.sh` to install
-3. Test with `docker exec so1 python -m pip install -r requirements.txt`
-
-#### Add Node.js Package
-
-1. Install globally: `npm install -g package-name`
-2. Or modify container startup to install
-
-### Testing
-
-#### Unit Tests
-
-Test individual components:
-
-```bash
-# Test API connectivity
-curl -k -u admin:password https://localhost:8089/services/server/info
-
-# Test user creation
-curl -k -u admin:password https://localhost:8089/services/authentication/users/dd
-
-# Test token generation
-curl -k -H "Authorization: Bearer $TOKEN" https://localhost:8089/services/mcp
-```
-
-#### Integration Tests
-
-Test full workflow:
-
-```bash
-#!/bin/bash
-set -e
-
-# Start fresh
-make clean
-make up
-
-# Wait for readiness
-sleep 120
-
-# Check all components
-make status
-
-# Test endpoints
-TOKEN=$(curl -k -s -u admin:password https://localhost:8089/services/authorization/tokens | grep -o 'token.*' | sed 's/.*<!\[CDATA\[\(.*\)\]\].*/\1/' | head -1)
-
-curl -k -H "Authorization: Bearer $TOKEN" https://localhost:8089/services/mcp | jq .
-
-echo "✓ All tests passed"
-```
-
-#### Manual Testing
-
-```bash
-# Start containers
-make up
-
-# In separate terminal, watch logs
-make logs
-
-# Test in another terminal
-curl -k -u admin:password https://localhost:8089/services/server/info
-
-# Test Claude Desktop connection
-# Open Claude and verify Splunk MCP is available
-```
+See API_REFERENCE.md for endpoint testing examples.
 
 ## Extending the System
 
-### Adding Custom MCP Tools
+### Add Custom Log Index
 
-1. **Inside Splunk container**
+To monitor additional log sources (similar to Claude logs):
 
-   ```bash
-   docker exec -it so1 /bin/bash
-   ```
+1. **Edit compose.yml** - Add new bind mount:
 
-2. **Navigate to MCP app**
+```yaml
+volumes:
+  - /path/to/logs:/var/log/custom_logs:rw
+```
 
-   ```bash
-   cd /opt/splunk/etc/apps/splunk_mcp_server/
-   ```
+2. **Edit setup-splunk-user.sh** - Add monitor input:
 
-3. **Add custom tool definition**
-   - Create new tool JSON
-   - Register in MCP configuration
+```bash
+curl ${CURL_OPTS} -X POST "${SPLUNK_URL}/services/data/inputs/monitor/" \
+  -u "${SPLUNK_USER}:${SPLUNK_PASSWORD}" \
+  -d "name=/var/log/custom_logs" \
+  -d "index=custom_index"
+```
 
-### Adding a Secondary User
+### Add Additional Users
 
 Edit `scripts/setup-splunk-user.sh`:
 
 ```bash
-# Create another user
-curl ${CURL_OPTS} -X POST "${SPLUNK_URL}/services/authentication/users" \
+curl -X POST "${SPLUNK_URL}/services/authentication/users" \
   -u "${SPLUNK_USER}:${SPLUNK_PASSWORD}" \
-  -d "name=user2" \
-  -d "password=password2" \
-  -d "roles=mcp_user"
-
-# Generate token for user2
-curl ${CURL_OPTS} -X POST "${SPLUNK_URL}/services/authorization/tokens" \
-  -u "${SPLUNK_USER}:${SPLUNK_PASSWORD}" \
-  -d "status=enabled" \
-  -d "name=user2" \
-  -d "audience=mcp"
+  -d "name=user2" -d "password=pass" -d "roles=mcp_user"
 ```
 
-### Integrating with CI/CD
+## CI/CD Integration
 
-#### GitHub Actions Example
-
-```yaml
-name: Test Splunk Setup
-
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v2
-      
-      - name: Start Splunk
-        run: make up
-        
-      - name: Wait for ready
-        run: sleep 120
-        
-      - name: Check status
-        run: make status
-        
-      - name: Run tests
-        run: bash test.sh
-        
-      - name: Cleanup
-        run: make down
-```
+For GitHub Actions, use `make up`, `make status`, and `make down` targets. See Makefile for available commands.
 
 ## Debugging
 
-### Enable Debug Logging
+See TROUBLESHOOTING.md for common issues. Quick debugging:
 
 ```bash
-# In setup script
-bash -x scripts/setup-splunk-user.sh
-
-# In Docker Compose
-docker compose up --verbose
+make logs | tail -100         # View recent logs
+bash -x script.sh             # Run with debug output
+docker exec -it so1 /bin/bash # Interactive shell
+curl -v -k https://...        # Verbose curl
 ```
 
-### Inspect Container State
-
-```bash
-# Enter container
-docker exec -it so1 /bin/bash
-
-# Check Splunk logs
-tail -f /opt/splunk/var/log/splunk/splunkd.log
-
-# Check file permissions
-ls -la /opt/splunk/etc/
-
-# Test connectivity
-curl -k https://localhost:8089/services/server/info
-```
-
-### Check Volume Contents
-
-```bash
-# List volume contents
-docker run --rm -v so1-var:/data alpine ls -la /data/
-
-# Extract config file
-docker run --rm -v so1-etc:/data alpine cat /data/system/default/limits.conf
-```
-
-### Network Debugging
-
-```bash
-# Check bridge network
-docker network inspect splunk
-
-# Test DNS resolution
-docker exec so1 nslookup so1
-
-# Check routing
-docker exec so1 route -n
-```
-
-## Performance Tuning
-
-### Resource Allocation
-
-Edit Docker Desktop preferences:
-
-- CPU: Allocate 4+ cores
-- Memory: Allocate 8GB+
-- Disk: Ensure 20GB+ available
-
-### Splunk Tuning
-
-In `default.yml`:
-
-```
-[httpServer]
-maxThreads = 256
-maxSockets = 256
-
-[scheduler]
-max_searches_per_cpu = 4
-
-[search]
-dispatch_dir_warning_threshold = 75
-```
+See ARCHITECTURE.md for performance tuning and resource requirements.
 
 ## Best Practices
 
-### Security
+**Security**: Rotate tokens before expiry, use strong passwords, restrict network access, keep software updated.
 
-1. **Rotate tokens**: Generate new tokens before expiry
-2. **Use strong passwords**: Don't use `changeme` in production
-3. **Restrict network access**: Use firewall rules
-4. **Update regularly**: Keep Splunk and Docker current
-5. **Audit access**: Review logs and user permissions
+**Maintenance**: Backup volumes regularly, monitor disk space, review logs for errors, document changes.
 
-### Maintenance
-
-1. **Backup volumes**: Regularly backup `so1-var` and `so1-etc`
-2. **Monitor disk space**: Splunk indexes grow over time
-3. **Review logs**: Check `splunkd.log` for errors
-4. **Clean old data**: Implement index retention policies
-5. **Document changes**: Track configuration modifications
-
-### Development
-
-1. **Use version control**: Commit all code changes
-2. **Test before deploying**: Verify in dev environment
-3. **Document APIs**: Keep endpoint documentation updated
-4. **Follow conventions**: Maintain consistent code style
-5. **Comment code**: Add comments to complex logic
+**Development**: Use version control, test changes, keep documentation current, maintain consistent style.
 
 ## Contributing
 
-### Code Style
+**Code Style**: Use ShellCheck for bash, jq for JSON, 2-space indentation for YAML.
 
-- **Bash scripts**: Use ShellCheck for validation
-- **JSON**: Use `jq` for formatting
-- **Markdown**: Follow standard conventions
-- **YAML**: Use 2-space indentation
+**Testing**: Run `make up`, verify `make status`, test endpoints, review logs.
 
-### Testing Requirements
+**Documentation**: Update relevant docs (README, ARCHITECTURE, API_REFERENCE) with changes.
 
-Before submitting changes:
-
-1. Run `make up` and verify startup
-2. Run `make status` and verify health
-3. Test API endpoints manually
-4. Review logs for errors
-5. Run `make down && make clean` to reset
-
-### Documentation
-
-Update documentation when making changes:
-
-- Update README.md for user-facing changes
-- Update ARCHITECTURE.md for system changes
-- Update API_REFERENCE.md for API changes
-- Add entries to CHANGELOG.md (if exists)
-
-## Useful Development Commands
+## Useful Commands
 
 ```bash
-# Full test cycle
-make clean && make up && sleep 120 && make status && make logs
-
-# Watch logs in real-time
-make logs | grep -i "error\|warning\|mcp"
-
-# Test specific endpoint
-curl -v -k -u admin:password https://localhost:8089/services/server/info
-
-# Interactive container
-docker exec -it so1 bash
-
-# Check resource usage
-docker stats
-
-# View volume structure
-docker volume inspect so1-var
-
-# Save debug info
-bash diagnose.sh > debug.txt
+make clean && make up && sleep 120 && make status  # Full test cycle
+make logs | grep -i error                          # Filter errors
+docker exec -it so1 bash                           # Container shell
+docker stats                                        # Resource usage
 ```
 
-## Learning Resources
+## Resources
 
-### Splunk
+- Splunk API: <https://docs.splunk.com/Documentation/Splunk/latest/RESTREF>
+- Docker: <https://docs.docker.com/>
+- MCP: <https://modelcontextprotocol.io/>
+- 1Password CLI: <https://developer.1password.com/docs/cli/>
 
-- [Official Splunk Documentation](https://docs.splunk.com/)
-- [REST API Reference](https://docs.splunk.com/Documentation/Splunk/latest/RESTREF)
-- [Admin Manual](https://docs.splunk.com/Documentation/Splunk/latest/Admin)
-
-### Docker
-
-- [Docker Documentation](https://docs.docker.com/)
-- [Docker Compose](https://docs.docker.com/compose/)
-- [Best Practices](https://docs.docker.com/develop/dev-best-practices/)
-
-### MCP Protocol
-
-- [MCP Specification](https://modelcontextprotocol.io/)
-- [Protocol Details](https://modelcontextprotocol.io/docs/concepts/architecture)
-
-### 1Password
-
-- [1Password CLI Documentation](https://developer.1password.com/docs/cli/)
-- [Secret Injection](https://developer.1password.com/docs/cli/secret-template-syntax/)
-
-## Troubleshooting Development Issues
-
-See TROUBLESHOOTING.md for common issues and solutions.
-
-## Getting Help
-
-- Check existing issues in the repository
-- Review documentation in this project
-- Consult Splunk official documentation
-- Test with minimal reproducible example
-- Collect diagnostic information (see TROUBLESHOOTING.md)
+See TROUBLESHOOTING.md for solutions to common issues.

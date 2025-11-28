@@ -60,18 +60,14 @@ ports:
 **Solution**:
 
 ```bash
-# Check logs
-make logs
+make logs  # Check for errors
 
 # Common causes:
-# 1. License acceptance issue - verify SPLUNK_GENERAL_TERMS in compose.yml
-# 2. Memory issue - increase Docker memory allocation
-# 3. Disk space - ensure at least 10GB free space
+# 1. License acceptance - verify SPLUNK_GENERAL_TERMS in compose.yml
+# 2. Insufficient memory - increase Docker resources
+# 3. Disk space - ensure 10GB free
 
-# Restart
-make down
-make clean  # If needed
-make up
+make down && make clean && make up
 ```
 
 ---
@@ -206,18 +202,13 @@ make up
 **Solution**:
 
 ```bash
-# Check init logs
-docker logs splunk-init
+docker logs splunk-init  # Check error
+make logs | tail -50     # Check Splunk readiness
 
-# Common issues:
-# 1. Splunk not fully ready - wait 3-5 minutes
-# 2. Credentials wrong - verify .env
-# 3. jq not installed - install jq
-# 4. Script permission issue - run manually:
+# Wait 2-3 minutes for Splunk initialization, then retry:
+make down && make up
 
-docker exec so1 curl -k -s https://localhost:8089/services/server/info
-
-# Manually run setup script
+# If still failing, run manually:
 ./scripts/setup-splunk-user.sh
 ```
 
@@ -573,33 +564,17 @@ docker logs so1 > splunk_logs.txt
 
 ## Verification Checklist
 
-Use this checklist to verify everything is working:
-
 ```bash
-# 1. Containers running
-docker compose ps
+make status                  # Check containers
+make logs | tail -20         # Check for errors
 
-# 2. Splunk API accessible
+# Manual verification:
 curl -k -u admin:password https://localhost:8089/services/server/info
-
-# 3. User exists
 curl -k -u admin:password https://localhost:8089/services/authentication/users/dd
-
-# 4. Role exists
 curl -k -u admin:password https://localhost:8089/services/authorization/roles/mcp_user
 
-# 5. Token exists
-curl -k -u admin:password https://localhost:8089/services/authorization/tokens/tokens
-
-# 6. MCP endpoint reachable
-TOKEN="your_token"
-curl -k -H "Authorization: Bearer $TOKEN" https://localhost:8089/services/mcp
-
-# 7. Claude config exists
-test -f ~/Library/Application\ Support/Claude/claude_desktop_config.json && echo "OK" || echo "Missing"
-
-# 8. Claude config valid
-cat ~/Library/Application\ Support/Claude/claude_desktop_config.json | jq .
+# Verify Claude config:
+cat ~/Library/Application\ Support/Claude/claude_desktop_config.json | jq '.mcpServers'
 ```
 
 ## Getting Help
@@ -632,12 +607,57 @@ docker network inspect splunk >> diagnosis.txt
 echo "Diagnostics saved to diagnosis.txt"
 ```
 
+### Claude Logs Debugging
+
+#### Issue: No Claude logs in Splunk
+
+**Error**: `index=claude_logs` returns no results
+
+**Solution**:
+
+```bash
+# Check if Claude logs directory exists
+ls -la ~/Library/Logs/Claude/
+
+# Verify directory is mounted
+docker exec so1 ls -la /var/log/claude_logs
+
+# Check if index was created
+curl -k -u admin:password https://localhost:8089/services/data/indexes/claude_logs
+
+# View Splunk monitor input config
+curl -k -u admin:password "https://localhost:8089/services/data/inputs/monitor/?output_mode=json" | jq '.entries[] | select(.name | contains("claude"))'
+
+# If missing, manually run setup script
+./scripts/setup-splunk-user.sh
+```
+
+#### Issue: Claude logs stopped being indexed
+
+**Error**: Previously indexed logs, but nothing recent
+
+**Solution**:
+
+```bash
+# Check monitor status
+curl -k -u admin:password "https://localhost:8089/services/data/inputs/monitor"
+
+# Verify Claude app is running
+log stream --predicate 'process == "Claude"' --level debug | head -20
+
+# Restart Splunk
+make restart
+
+# Wait 2-3 minutes and retry query:
+# index=claude_logs | stats count
+```
+
 ### Resources
 
-- **Splunk Documentation**: <https://docs.splunk.com/>
-- **MCP Protocol**: <https://modelcontextprotocol.io/>
-- **Docker Docs**: <https://docs.docker.com/>
-- **1Password CLI**: <https://developer.1password.com/docs/cli/>
+- Splunk API: <https://docs.splunk.com/Documentation/Splunk/latest/RESTREF>
+- MCP Protocol: <https://modelcontextprotocol.io/>
+- Docker: <https://docs.docker.com/>
+- 1Password CLI: <https://developer.1password.com/docs/cli/>
 
 ## Debug Mode
 

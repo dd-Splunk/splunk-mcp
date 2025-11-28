@@ -140,27 +140,7 @@ TZ=Europe/Brussels
 
 ## Starting the Environment
 
-### Step 1: Initialize (First Time Only)
-
-```bash
-make init
-```
-
-This command:
-
-- Checks for 1Password CLI
-- Reads secrets from 1Password
-- Creates `.env` file with injected secrets
-- Validates all required variables
-
-**Expected output**:
-
-```
-Initializing environment...
-Environment initialized. Secrets injected from 1Password.
-```
-
-### Step 2: Start Splunk
+### Step 1: Start Splunk
 
 ```bash
 make up
@@ -188,7 +168,7 @@ Wait for Splunk to be ready (this may take 2-3 minutes), then run:
   make token
 ```
 
-### Step 3: Wait for Initialization
+### Step 2: Initialize Environment
 
 Wait 2-3 minutes for Splunk to fully start and initialize. You can monitor progress:
 
@@ -202,7 +182,7 @@ Look for messages like:
 - `Executing setup scripts`
 - `Splunk is ready`
 
-### Step 4: Verify Splunk is Ready
+### Step 3: Wait for Initialization
 
 ```bash
 make status
@@ -219,7 +199,7 @@ splunk-init    curlimages/curl:latest      sh -c ...          Exited (0)
 Splunk is ready ✓
 ```
 
-### Step 5: Access Splunk Web UI
+### Step 4: Verify Splunk is Ready
 
 Open your browser and navigate to:
 
@@ -234,39 +214,17 @@ Accept the self-signed certificate warning (localhost only).
 
 ## Claude Desktop Configuration
 
-### Step 1: Generate Token and Configuration
+### Step 5: Access Splunk Web UI
 
-The token is automatically generated during `make up`. To view it again:
-
-```bash
-# Generate/view configuration
-make claude-config
-```
-
-Or manually:
+The token is automatically generated during `make up`. Verify it exists:
 
 ```bash
-./scripts/setup-splunk-user.sh
+ls -la .secrets/splunk-token
 ```
 
-You'll see output like:
+Claude Desktop config was automatically updated during startup.
 
-```
-✅ Setup complete!
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Splunk Configuration:
-  User: dd
-  Role: mcp_user
-  Token: eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAi...
-
-Claude Desktop Configuration:
-  Config File: /Users/dodessy/Library/Application Support/Claude/claude_desktop_config.json
-  MCP Endpoint: https://localhost:8089/services/mcp
-
-⚠️  IMPORTANT: Restart Claude Desktop for changes to take effect
-```
-
-### Step 2: Verify Configuration File
+### Step 6: Verify Token Generated
 
 Check that Claude Desktop configuration was created:
 
@@ -293,11 +251,28 @@ Should contain:
 }
 ```
 
-### Step 3: Restart Claude Desktop
+### Step 8: Restart Claude Desktop
 
-1. Quit Claude Desktop completely
-2. Reopen Claude Desktop
-3. Wait for it to connect to MCP servers
+1. Quit Claude Desktop completely: Cmd+Q
+2. Reopen from Applications folder
+3. Splunk MCP should now be available
+
+### Step 9: Monitor Claude Logs (Optional)
+
+Claude Desktop logs are automatically indexed in Splunk under `index=claude_logs`. These logs capture all Claude Desktop activity for debugging and auditing.
+
+**View logs in Splunk Web UI:**
+
+```bash
+# In Splunk Web UI, use Search & Reporting:
+index=claude_logs | stats count by host, log_level
+```
+
+**Requirements:**
+
+- Claude logs must be accessible at `~/Library/Logs/Claude/` (automatically mounted in compose.yml)
+- The setup script automatically creates the `claude_logs` index during initialization
+- Log ingestion starts immediately after Splunk is ready
 
 ## Verify Everything Works
 
@@ -393,26 +368,15 @@ After successful installation:
 4. **Customize Configuration**: Modify `default.yml` for your needs
 5. **Backup Configuration**: Save your volumes and configs
 
-## Useful Commands After Setup
+## Useful Commands
 
 ```bash
-# View real-time logs
-make logs
-
-# Check status
-make status
-
-# Restart Splunk
-make restart
-
-# Stop Splunk
-make down
-
-# Generate new token
-make token
-
-# Completely reset (WARNING: deletes all data)
-make clean
+make help        # List all commands
+make status      # Check if ready
+make logs        # View logs
+make restart     # Restart container
+make down        # Stop container
+make clean       # Reset all (WARNING: destructive)
 ```
 
 ## System Requirements

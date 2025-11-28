@@ -5,14 +5,15 @@
 set -e
 
 # Splunk connection details
+SPLUNK_HOME="${SPLUNK_HOME:-/opt/splunk}"
 SPLUNK_HOST="${SPLUNK_HOST:-localhost}"
 SPLUNK_PORT="${SPLUNK_PORT:-8089}"
 SPLUNK_USER="${SPLUNK_USER:-admin}"
 SPLUNK_PASSWORD="${SPLUNK_PASSWORD}"
 SPLUNK_URL="https://${SPLUNK_HOST}:${SPLUNK_PORT}"
 
-# Claude Desktop configuration details
-CLAUDE_CONFIG_DIR="/Users/dodessy/Library/Application Support/Claude"
+# Claude Desktop configuration details (macOS)
+CLAUDE_CONFIG_DIR="${HOME}/Library/Application Support/Claude"
 CLAUDE_CONFIG_FILE="${CLAUDE_CONFIG_DIR}/claude_desktop_config.json"
 SPLUNK_MCP_ENDPOINT="${SPLUNK_MCP_ENDPOINT:-https://localhost:8089/services/mcp}"
 
@@ -27,6 +28,22 @@ curl ${CURL_OPTS} -X POST "${SPLUNK_URL}/servicesNS/nobody/Splunk_MCP_Server//co
   -u "${SPLUNK_USER}:${SPLUNK_PASSWORD}" \
   -d "ssl_verify=false" \
   -H "Content-Type: application/x-www-form-urlencoded" 2>/dev/null && echo "✅ SSL verification disabled" || echo "⚠️  SSL verification setting may already be disabled"
+
+echo " Create Index for Claude logs"
+curl ${CURL_OPTS} -X POST "${SPLUNK_URL}/services/data/indexes" \
+  -u "${SPLUNK_USER}:${SPLUNK_PASSWORD}" \
+  -d "name=claude_logs" \
+  -d "homePath=$SPLUNK_HOME/var/lib/splunk/claude_logs/db" \
+  -d "coldPath=$SPLUNK_HOME/var/lib/splunk/claude_logs/colddb" \
+  -d "thawedPath=$SPLUNK_HOME/var/lib/splunk/claude_logs/thaweddb" \
+  -H "Content-Type: application/x-www-form-urlencoded" 2>/dev/null || echo "⚠️  Index 'claude_logs' may already exist"
+
+echo " Monitor Claude logs directory"
+curl ${CURL_OPTS} -X POST "${SPLUNK_URL}/services/data/inputs/monitor/" \
+  -u "${SPLUNK_USER}:${SPLUNK_PASSWORD}" \
+  -d "name=/var/log/claude_logs" \
+  -d "index=claude_logs" \
+  -H "Content-Type: application/x-www-form-urlencoded" 2>/dev/null || echo "⚠️  Monitor for 'claude_logs' may already exist"
 
 echo "🔄 Setting up Splunk user 'dd' and role 'mcp_user'..."
 

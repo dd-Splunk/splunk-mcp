@@ -160,40 +160,29 @@ Authorization: Bearer <token>
 
 ```bash
 #!/bin/bash
-
-HOST="localhost"
-PORT="8089"
+HOST="localhost:8089"
 ADMIN_USER="admin"
 ADMIN_PASS="password"
-NEW_USER="dd"
-NEW_PASSWORD="changeme"
 
 # Create role
-curl -k -X POST https://$HOST:$PORT/services/authorization/roles \
-  -u "$ADMIN_USER:$ADMIN_PASS" \
-  -d "name=mcp_user"
+curl -k -X POST https://$HOST/services/authorization/roles \
+  -u "$ADMIN_USER:$ADMIN_PASS" -d "name=mcp_user"
 
 # Create user
-curl -k -X POST https://$HOST:$PORT/services/authentication/users \
+curl -k -X POST https://$HOST/services/authentication/users \
   -u "$ADMIN_USER:$ADMIN_PASS" \
-  -d "name=$NEW_USER" \
-  -d "password=$NEW_PASSWORD" \
-  -d "roles=mcp_user"
+  -d "name=dd" -d "password=changeme" -d "roles=mcp_user"
 
 # Create token
-TOKEN_RESPONSE=$(curl -k -s -X POST https://$HOST:$PORT/services/authorization/tokens \
+TOKEN=$(curl -k -s -X POST https://$HOST/services/authorization/tokens \
   -u "$ADMIN_USER:$ADMIN_PASS" \
-  -d "status=enabled" \
-  -d "name=$NEW_USER" \
-  -d "audience=mcp")
-
-# Extract token
-TOKEN=$(echo "$TOKEN_RESPONSE" | sed -n 's/.*<!\[CDATA\[\(.*\)\]\].*/\1/p')
+  -d "status=enabled" -d "name=dd" -d "audience=mcp" | \
+  sed -n 's/.*<![CDATA[/p')
 
 echo "Token: $TOKEN"
 ```
 
-### Example 2: Test MCP Endpoint
+### Example 2: Search Query
 
 ```bash
 #!/bin/bash
@@ -275,9 +264,7 @@ curl -k -u admin:password https://localhost:8089/services/authorization/tokens/t
 
 **Regenerate token if expired**
 
-```bash
-make token
-```
+Token auto-expires after 15 days. Run `make up` again to generate new token.
 
 **Test connection manually**
 
@@ -368,6 +355,40 @@ Many endpoints support JSON responses with `output_mode=json` parameter:
 ```bash
 curl -k -u admin:password \
   "https://localhost:8089/services/server/info?output_mode=json"
+```
+
+## Claude Logs Index
+
+### Query Claude Logs
+
+**Search all Claude logs:**
+
+```bash
+curl -k -u admin:password \
+  "https://localhost:8089/services/search/jobs" \
+  -d "search=index=claude_logs" \
+  -d "output_mode=json"
+```
+
+**Search by log level:**
+
+```bash
+index=claude_logs log_level=ERROR | stats count
+```
+
+**Search by time:**
+
+```bash
+index=claude_logs earliest=-1h | tail 20
+```
+
+### Index Statistics
+
+**Get claude_logs index stats:**
+
+```bash
+curl -k -u admin:password \
+  "https://localhost:8089/services/data/indexes/claude_logs"
 ```
 
 ## Debugging API Calls
