@@ -14,7 +14,7 @@
 
 ### 2. Splunk Initialization Container (splunk-init)
 
-- **Image**: `curlimages/curl:latest` (lightweight)
+- **Image**: `alpine:latest` (installs `curl` and `jq` at container start)
 - **Purpose**: Runs initialization setup script after Splunk is healthy
 - **Dependency**: Waits for `so1` service to be healthy
 - **Restart Policy**: No (runs once and stops)
@@ -43,9 +43,9 @@
 #### Local Files
 
 - **compose.yml**: Docker Compose configuration
-- **default.yml**: Splunk default configuration
-- **tpl.env**: Template for environment variables
-- **.env**: Runtime environment variables (git-ignored)
+- **tpl.env**: Template for environment variables (often with `op://` references)
+- **.env**: Runtime environment variables (git-ignored), produced by `make init`
+- **SA-S4R/**: Bundled sample Splunk app (bind-mounted into `$SPLUNK_HOME/etc/apps`)
 
 ### 4. Claude Logs Index
 
@@ -74,10 +74,10 @@ make up
   │  │  ├─ Install MCP app
   │  │  └─ Wait for health
   │  └─ splunk-init (waits for so1 healthy)
-  └─ setup-splunk-user.sh (on so1 health)
-     ├─ Create role: mcp_user
+  └─ setup-splunk-user.sh (after so1 healthy)
+     ├─ Create role: mcp_tool_execute
      ├─ Create user: dd
-     └─ Generate token & update Claude config
+     └─ Generate encrypted MCP token → .secrets/splunk-token
 ```
 
 ## Security Architecture
@@ -93,10 +93,12 @@ make up
 
 ### User Roles
 
-| User | Role | Auth | Scope | Expiry |
-| ---- | ---- | ---- | ----- | ------ |
-| `dd` | `mcp_user` | Bearer token | MCP operations | 15 days |
+| User | Role(s) | Auth | Scope | Expiry |
+| ---- | ------- | ---- | ----- | ------ |
+| `dd` | `user`, `admin`, `mcp_tool_execute` | Bearer token (MCP) | MCP + broad (PoC) | Per Splunk MCP / token policy |
 | `admin` | Built-in | Password | Full admin | N/A |
+
+The setup script assigns **`mcp_tool_execute`** for MCP tooling; **`admin` on `dd` is convenient for PoC only**—tighten for real deployments.
 
 ### Environment Variables
 
@@ -117,7 +119,7 @@ TZ=Europe/Brussels
 ```text
 Claude Desktop
       │
-      ├─ Reads: ~/.claude_desktop_config.json
+      ├─ Reads: ~/Library/Application Support/Claude/claude_desktop_config.json (macOS)
       │
       ├─ Spawns: npx mcp-remote
       │
@@ -133,12 +135,10 @@ Claude Desktop
 
 ### Token Management
 
-- **Generation**: Automatic during `make up`
-- **Storage**:
-  - Splunk database (permanent)
-  - `claude_desktop_config.json` (runtime)
-- **Expiry**: 15 days from creation
-- **Renewal**: Run `make up` again to generate new token
+- **Generation**: `splunk-init` runs `setup-splunk-user.sh`, which calls the Splunk MCP Server app’s **`mcp_token`** endpoint for user `dd`.
+- **Storage**: Host file `.secrets/splunk-token`; Claude/Cursor configs reference it via `make claude-update` / `make cursor-mcp`.
+- **Expiry**: Depends on Splunk MCP app and token settings (docs may cite ~15 days as a rule of thumb—verify in your build).
+- **Renewal**: Regenerate token and refresh client config (`make claude-update`, `make cursor-mcp`).
 
 ## Configuration Files
 
@@ -149,15 +149,9 @@ Claude Desktop
 - Network configuration
 - Environment variables
 
-### default.yml
-
-- Splunk configuration defaults
-- Mounted at `/tmp/defaults/default.yml`
-- Merged with Splunk default configs
-
 ### setup-splunk-user.sh
 
-- Creates `mcp_user` role
+- Creates `mcp_tool_execute` role
 - Creates `dd` user
 - Generates authentication token
 - Configures Claude Desktop
