@@ -435,6 +435,37 @@ curl -k -s -X POST https://localhost:8089/services/authorization/tokens \
 
 ---
 
+#### Issue: mcp-remote fails with `405`, `SseError`, or `Using custom headers: {"Authorization":""}`
+
+**Cause**: The shell split your `--header` value into multiple words. `mcp-remote` only reads the **next** argument after `--header`. If you run:
+
+```bash
+npx -y mcp-remote https://localhost:8089/services/mcp --header Authorization: Bearer YOUR_TOKEN
+```
+
+then the first header argument is the word `Authorization:` (with nothing after the colon), so the parsed header is `Authorization` with an **empty** value. Logs will show `Using custom headers: {"Authorization":""}`. Without a Bearer token, the client then mis-handles errors (often HTML) and you may see `405`, OAuth parse errors, or SSE failures.
+
+**Fix**: Pass the header as **one** argument (quoted):
+
+```bash
+TOKEN=$(tr -d '\n' < .secrets/splunk-token)
+export NODE_TLS_REJECT_UNAUTHORIZED=0   # dev only; matches .cursor/mcp.json
+npx -y mcp-remote "https://localhost:8089/services/mcp" \
+  --header "Authorization: Bearer ${TOKEN}"
+```
+
+**Cursor / Claude** configs use JSON `args` with two strings (`--header` and `Authorization: Bearer …`) — that is already correct. This mistake mainly happens when you copy-paste a manual `npx` command into a terminal.
+
+**Verify**: From the repo root, with Splunk up:
+
+```bash
+make verify-mcp-remote
+```
+
+You should see `OK: mcp-remote connected to Splunk (Streamable HTTP).`
+
+---
+
 #### Issue: npx not found
 
 **Error**: `Error: command not found: npx` (in Claude Desktop logs)
