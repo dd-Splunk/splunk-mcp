@@ -56,13 +56,6 @@ services:
       - ./scripts/setup-splunk-user.sh:/setup-splunk-user.sh
 ```
 
-#### `default.yml`
-
-- Splunk configuration defaults
-- Mounted at `/tmp/defaults/default.yml`
-- Gets merged with Splunk defaults during startup
-- Can be customized for specific requirements
-
 #### `tpl.env`
 
 - Template for environment variables
@@ -80,28 +73,19 @@ services:
 
 #### `scripts/setup-splunk-user.sh`
 
-Main initialization script. Steps:
+Main initialization script (runs in `splunk-init`). Steps:
 
-1. **Creates role `mcp_user`**
-   - Makes REST API call to `/services/authorization/roles`
-   - Minimal capabilities for MCP operations
+1. **MCP server dev settings** — POST `ssl_verify=false` on the Splunk MCP app config (local dev only).
 
-2. **Creates user `dd`**
-   - Makes REST API call to `/services/authentication/users`
-   - Assigns `mcp_user` role
-   - Uses password from environment
+2. **Creates role `mcp_tool_execute`** via `/services/authorization/roles` (idempotent).
 
-3. **Generates authentication token**
-   - Makes REST API call to `/services/authorization/tokens`
-   - Status: enabled
-   - Audience: mcp
-   - Extracts token from CDATA response
+3. **Creates user `dd`** via `/services/authentication/users` with roles including `mcp_tool_execute` (PoC also assigns `user` and `admin`—tighten for real use).
 
-4. **Configures Claude Desktop**
-   - Reads existing Claude config (if any)
-   - Uses `jq` to safely update JSON
-   - Inserts token into MCP server configuration
-   - Creates directory if needed
+4. **Encrypted MCP token** — GET `/servicesNS/admin/Splunk_MCP_Server/mcp_token?username=dd&output_mode=json`; writes token to `TOKEN_OUTPUT_FILE` (`.secrets/splunk-token`).
+
+5. **Claude log index** — Ensures `claude_logs` index and monitor for `/var/log/claude_logs` when applicable.
+
+Host-side **Claude** / **Cursor** config is updated by `update-claude-config.sh` and `update-cursor-config.sh`, not by this script inside the container.
 
 **Error Handling:**
 
@@ -118,14 +102,14 @@ Key targets:
 
 ```makefile
 init:            # 1Password injection → .env
-up:              # Start containers and wait
+up:              # Start containers, wait for token, claude-update
 down:            # Stop containers
 restart:         # Restart containers
 clean:           # Remove everything (destructive)
 logs:            # Follow container logs
 status:          # Check health
-token:           # Generate new token
-claude-config:   # Show Claude config
+claude-update:   # Merge token into Claude Desktop MCP config
+cursor-mcp:      # Merge token into .cursor/mcp.json
 ```
 
 ## Development Workflow
@@ -166,14 +150,6 @@ claude-config:   # Show Claude config
 ```yaml
 environment:
   SPLUNK_IMAGE: splunk/splunk:9.1
-```
-
-**Add Splunk config** - Edit `default.yml`:
-
-```text
-[general]
-serverName = my_splunk_instance
-site_name = site1
 ```
 
 **Change port mappings** - Edit `compose.yml`:
@@ -219,7 +195,7 @@ Edit `scripts/setup-splunk-user.sh`:
 ```bash
 curl -X POST "${SPLUNK_URL}/services/authentication/users" \
   -u "${SPLUNK_USER}:${SPLUNK_PASSWORD}" \
-  -d "name=user2" -d "password=pass" -d "roles=mcp_user"
+  -d "name=user2" -d "password=pass" -d "roles=mcp_tool_execute"
 ```
 
 ## CI/CD Integration

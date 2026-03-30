@@ -320,7 +320,7 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 node app.js
 
 #### Issue: Token generation fails
 
-**Error**: `Failed to create token` or error during `make token`
+**Error**: `Failed to create token` or splunk-init exits non-zero
 
 **Solution**:
 
@@ -331,12 +331,9 @@ make status
 # Verify user exists
 curl -k -u admin:password https://localhost:8089/services/authentication/users/dd
 
-# Try manual token generation
-curl -k -X POST https://localhost:8089/services/authorization/tokens \
-  -u admin:$SPLUNK_PASSWORD \
-  -d "status=enabled" \
-  -d "name=dd" \
-  -d "audience=mcp"
+# Try manual encrypted MCP token (matches setup-splunk-user.sh)
+curl -skS -u admin:$SPLUNK_PASSWORD \
+  "https://localhost:8089/servicesNS/admin/Splunk_MCP_Server/mcp_token?username=dd&output_mode=json" | jq .
 
 # If error about permissions, verify admin user still exists:
 curl -k -u admin:password https://localhost:8089/services/server/info
@@ -352,7 +349,10 @@ curl -k -u admin:password https://localhost:8089/services/server/info
 
 ```bash
 # Generate new token
-make token
+make up
+# or re-run token generation manually:
+# curl -skS -u admin:$SPLUNK_PASSWORD \
+#   "https://localhost:8089/servicesNS/admin/Splunk_MCP_Server/mcp_token?username=dd&output_mode=json" | jq -r .token > .secrets/splunk-token
 
 # Update Claude Desktop config
 cat ~/Library/Application\ Support/Claude/claude_desktop_config.json
@@ -557,7 +557,7 @@ docker logs so1 > splunk_logs.txt
 | `All pipelines have been started` | Splunk initialized | OK - ready to use |
 | `REST handler 'mcp' not found` | MCP app not installed | Reinstall app |
 | `Authentication failed` | Bad credentials | Check .env |
-| `role="mcp_user" does not exist` | Role creation failed | Run setup manually |
+| `role="mcp_tool_execute" does not exist` | Role creation failed | Run `setup-splunk-user.sh` / `make up` again |
 | `License not found` | License issue | Accept license again |
 
 ---
@@ -571,7 +571,7 @@ make logs | tail -20         # Check for errors
 # Manual verification:
 curl -k -u admin:password https://localhost:8089/services/server/info
 curl -k -u admin:password https://localhost:8089/services/authentication/users/dd
-curl -k -u admin:password https://localhost:8089/services/authorization/roles/mcp_user
+curl -k -u admin:password https://localhost:8089/services/authorization/roles/mcp_tool_execute
 
 # Verify Claude config:
 cat ~/Library/Application\ Support/Claude/claude_desktop_config.json | jq '.mcpServers'

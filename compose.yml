@@ -8,14 +8,14 @@ services:
       SPLUNK_GENERAL_TERMS: --accept-sgt-current-at-splunk-com
       SPLUNK_START_ARGS: --accept-license
       SPLUNK_PASSWORD: ${SPLUNK_PASSWORD}
-      SPLUNKBASE_USERNAME: ${SPLUNKBASE_USER}@splunk.com
+      SPLUNKBASE_USERNAME: ${SPLUNKBASE_USER}
       SPLUNKBASE_PASSWORD: ${SPLUNKBASE_PASS}
-      SPLUNK_APPS_URL: https://splunkbase.splunk.com/app/4353/release/1.8.21/download/,https://splunkbase.splunk.com/app/7931/release/0.2.6/download/
+      SPLUNK_APPS_URL: https://splunkbase.splunk.com/app/1924/release/8.2.1/download/,https://splunkbase.splunk.com/app/4353/release/1.8.24/download/,https://splunkbase.splunk.com/app/7931/release/1.0.5/download/
       TZ: ${TZ:-Europe/Brussels}
     volumes:
-      - ./default.yml:/tmp/defaults/default.yml
       - so1-var:/opt/splunk/var
       - so1-etc:/opt/splunk/etc
+      - ./SA-S4R:/opt/splunk/etc/apps/SA-S4R:rw
       - ${HOME}/Library/Logs/Claude:/var/log/claude_logs:rw
     ports:
       - "8000:8000" # Splunk Web UI

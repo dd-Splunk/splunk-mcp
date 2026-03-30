@@ -1,0 +1,5 @@
+addtocart
+changequantity
+purchase
+remove
+view

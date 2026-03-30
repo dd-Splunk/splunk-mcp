@@ -1,0 +1,22 @@
+Mozilla/5.0 (Linux; Android 12.0.0; SM-A546B Build/A546BXXU1AWB7) AppleWebKit/537.36 Chrome/114.0.5735.61 Mobile Safari/537.36 (compatible; Googlebot/2.1; http://www.google.com/bot.html)
+Mozilla/5.0 (Linux; Android 12.0.0; SM-S901B Build/S908EXXU2BVJA) AppleWebKit/537.36 Chrome/114.0.5735.131 Mobile Safari/537.36
+Mozilla/5.0 (Linux; Android 13.0.0; Pixel Build/TQ1A.230205.001.D2) AppleWebKit/537.36 Chrome/100.0.4896.127 Mobile Safari/537.36
+Mozilla/5.0 (Linux; Android 13.0.0; Pixel Build/TQ3A.230705.001.A1) AppleWebKit/537.36 Chrome/106.0.5249.118 Mobile Safari/537.36
+Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 Chrome/107.0.5304.122 Safari/537.36
+Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 Chrome/114.0.5735.106 Safari/537.36
+Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 Chrome/117.0.5857.0 Safari/537.36 OPR/43.0.2431.0 (Edition developer)
+Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/602.2.14 Version/10.0.1 Safari/602.2.14
+Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 Chrome/102.0.5005.63 Safari/537.36
+Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/112.0.5615.87 Safari/537.36
+Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/117.0.5857.0 Safari/537.36 OPR/43.0.2431.0 (Edition developer)
+Mozilla/5.0 (Windows; WOW64) AppleWebKit/534.27 Version/5.0.4 Safari/533.20.27
+Mozilla/5.0 (Windows; WOW64) AppleWebKit/537.36 Chrome/102.0.5005.63 Safari/537.36
+Mozilla/5.0 (Windows; WOW64) AppleWebKit/537.36 Chrome/109.0.5414.120 Safari/537.36
+Mozilla/5.0 (Windows; WOW64) AppleWebKit/537.36 Chrome/110.0.5481.78 Safari/537.36
+Mozilla/5.0 (Windows; WOW64) AppleWebKit/537.36 Chrome/113.0.5672.92 Safari/537.36
+Mozilla/5.0 (Windows; WOW64) AppleWebKit/537.36 Chrome/114.0.5735.134 Safari/537.36
+Mozilla/5.0 (Windows; WOW64; rv:109.0) Gecko/20100101 Firefox/115.0
+Mozilla/5.0 (iPhone; CPU iPhone OS 13_0 like Mac OS X) AppleWebKit/605.1.15 Version/13.0 Mobile/15E148 Safari/604.1 BingPreview/1.0b
+Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/603.1.30 Version/14.0 Mobile/15A5370a Safari/602.1 (compatible; bingbot/2.0; http://www.bing.com/bingbot.htm)
+Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 Version/15.0 Mobile/19A346 Safari/602.1
+Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 Version/16.0 Mobile/20A5312g Safari/604.1

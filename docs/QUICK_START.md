@@ -104,7 +104,7 @@ make help        # Show all available targets
 2. **Explore Splunk Web UI**: Learn the interface at <https://localhost:8000>
 3. **Test Claude Integration**: Use Splunk features through Claude Desktop
 4. **Add Sample Data**: Ingest test data through Splunk UI
-5. **Customize Configuration**: Edit `default.yml` for your specific needs
+5. **Customize**: Edit `compose.yml`, `tpl.env`, or the `SA-S4R` app as needed
 6. **Review ARCHITECTURE.md**: Understand the system components
 
 ## Troubleshooting
@@ -122,18 +122,15 @@ make down && make clean && make up  # Full reset
 ```text
 splunk-mcp/
 ├── compose.yml              # Docker Compose configuration
-├── default.yml              # Splunk configuration
 ├── Makefile                 # Automation targets
 ├── README.md                # Main documentation
-├── ARCHITECTURE.md          # System design
-├── INSTALLATION.md          # Detailed setup guide
-├── API_REFERENCE.md         # REST API documentation
-├── TROUBLESHOOTING.md       # Common issues
-├── QUICK_START.md           # This file
-├── DEVELOPER_GUIDE.md       # For development
-├── tpl.env                  # 1Password template
+├── docs/                    # Extended documentation
+├── tpl.env                  # 1Password template → .env
+├── SA-S4R/                  # Sample Splunk app (Eventgen)
 ├── scripts/
-│   └── setup-splunk-user.sh # Initialization script
+│   ├── setup-splunk-user.sh
+│   ├── update-claude-config.sh
+│   └── update-cursor-config.sh
 └── .env                     # Runtime config (git-ignored)
 ```
 

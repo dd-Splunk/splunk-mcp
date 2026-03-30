@@ -1,5 +1,7 @@
 # API Reference & MCP Integration
 
+**This repository** creates Splunk role **`mcp_tool_execute`** and user **`dd`**, then obtains an **encrypted MCP token** from the Splunk MCP Server app (`GET .../Splunk_MCP_Server/mcp_token?username=dd`). Older examples that use plain JWTs from `/services/authorization/tokens` may not work with `/services/mcp` depending on app version—follow `scripts/setup-splunk-user.sh` as the source of truth.
+
 ## Splunk REST API Endpoints
 
 ### Authentication
@@ -29,7 +31,7 @@ curl -k -H "Authorization: Bearer <token>" \
 POST /services/authorization/roles
 Content-Type: application/x-www-form-urlencoded
 
-name=mcp_user
+name=mcp_tool_execute
 ```
 
 ##### List Roles
@@ -41,13 +43,13 @@ GET /services/authorization/roles
 ##### Get Role Details
 
 ```bash
-GET /services/authorization/roles/mcp_user
+GET /services/authorization/roles/mcp_tool_execute
 ```
 
 ##### Update Role
 
 ```bash
-POST /services/authorization/roles/mcp_user
+POST /services/authorization/roles/mcp_tool_execute
 capability=search
 capability=accelerate_datamodel
 ```
@@ -62,7 +64,7 @@ Content-Type: application/x-www-form-urlencoded
 
 name=dd
 password=changeme
-roles=mcp_user
+roles=mcp_tool_execute
 tz=Europe/Brussels
 ```
 
@@ -167,12 +169,12 @@ ADMIN_PASS="password"
 
 # Create role
 curl -k -X POST https://$HOST/services/authorization/roles \
-  -u "$ADMIN_USER:$ADMIN_PASS" -d "name=mcp_user"
+  -u "$ADMIN_USER:$ADMIN_PASS" -d "name=mcp_tool_execute"
 
 # Create user
 curl -k -X POST https://$HOST/services/authentication/users \
   -u "$ADMIN_USER:$ADMIN_PASS" \
-  -d "name=dd" -d "password=changeme" -d "roles=mcp_user"
+  -d "name=dd" -d "password=changeme" -d "roles=mcp_tool_execute"
 
 # Create token
 TOKEN=$(curl -k -s -X POST https://$HOST/services/authorization/tokens \
@@ -315,7 +317,7 @@ log stream --predicate 'process == "Claude"' --level debug
 
 ### User Permissions
 
-- `mcp_user` role: Read-only search capabilities
+- `mcp_tool_execute` role: MCP tooling (see Splunk MCP Server app docs for capabilities)
 - Cannot modify Splunk configuration
 - Cannot access other users' data
 - Cannot create/delete other users

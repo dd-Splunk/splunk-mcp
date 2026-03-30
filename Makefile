@@ -1,4 +1,4 @@
-.PHONY: help init up down clean logs claude-update status restart
+.PHONY: help init up down clean logs claude-update cursor-mcp status restart
 
 help:
 	@echo "Splunk MCP Server - PoC Environment"
@@ -12,6 +12,7 @@ help:
 	@echo "  make logs           - Follow Splunk container logs"
 	@echo "  make status         - Check Splunk container status"
 	@echo "  make claude-update  - Update Claude Desktop config with saved token"
+	@echo "  make cursor-mcp     - Write .cursor/mcp.json for Splunk MCP (from .secrets/splunk-token)"
 	@echo ""
 
 init:
@@ -79,3 +80,7 @@ status:
 claude-update:
 	@chmod +x scripts/update-claude-config.sh
 	@./scripts/update-claude-config.sh .secrets/splunk-token
+
+cursor-mcp:
+	@chmod +x scripts/update-cursor-config.sh
+	@./scripts/update-cursor-config.sh .secrets/splunk-token
