@@ -17,6 +17,13 @@ mcp_token.txt
 # Docker volumes (data stored in named volumes)
 docker-compose.override.yml
 
+# Cursor MCP (contains Bearer token)
+.cursor/mcp.json
+
+# Cursor / Windsurf local rules (any path in repo)
+**/.cursor/rules/
+**/.windsurf/rules/
+
 # Editor directories
 .vscode/
 .idea/
@@ -30,3 +37,7 @@ docker-compose.override.yml
 # Temporary files
 *.tmp
 .*.tmp
+
+# Splunk App
+
+**/local/

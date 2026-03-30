@@ -107,16 +107,17 @@ Ensure you have these files:
 
 ```text
 splunk-mcp/
-├── .env.example          # Template (optional)
 ├── .gitignore
 ├── Makefile
 ├── README.md
 ├── compose.yml
-├── default.yml
 ├── tpl.env              # 1Password template
+├── SA-S4R/              # Sample app
 ├── scripts/
-│   └── setup-splunk-user.sh
-└── ...
+│   ├── setup-splunk-user.sh
+│   ├── update-claude-config.sh
+│   └── update-cursor-config.sh
+└── docs/
 ```
 
 ### Step 3: Review Configuration
@@ -166,8 +167,7 @@ Splunk is starting...
 Web UI will be available at: https://localhost:8000
 MCP Server API: https://localhost:8089/services/mcp
 
-Wait for Splunk to be ready (this may take 2-3 minutes), then run:
-  make token
+Wait for Splunk to be ready (this may take 2-3 minutes). The Makefile waits for `.secrets/splunk-token` and then runs `make claude-update` when possible.
 ```
 
 ### Step 2: Initialize Environment
@@ -196,7 +196,7 @@ Expected output:
 Checking Splunk container status...
 NAME           IMAGE                       COMMAND             STATUS
 so1            splunk/splunk:10.0          /sbin/entrypoint... Up 2 minutes
-splunk-init    curlimages/curl:latest      sh -c ...          Exited (0)
+splunk-init    alpine:latest               sh -c ...          Exited (0)
 
 Splunk is ready ✓
 ```
@@ -371,7 +371,7 @@ After successful installation:
 1. **Explore Splunk Web UI**: Learn the interface
 2. **Test MCP Integration**: Use Splunk through Claude Desktop
 3. **Add Data**: Ingest sample data into Splunk
-4. **Customize Configuration**: Modify `default.yml` for your needs
+4. **Customize Configuration**: Adjust `compose.yml`, `tpl.env`, or the `SA-S4R` app as needed
 5. **Backup Configuration**: Save your volumes and configs
 
 ## Useful Commands

@@ -24,7 +24,7 @@ CURL_OPTS="-k"
 TOKEN_OUTPUT_FILE="${TOKEN_OUTPUT_FILE:-}"
 
 echo "🔐 Disabling MCP server SSL verification for local development..."
-curl ${CURL_OPTS} -X POST "${SPLUNK_URL}/servicesNS/nobody/Splunk_MCP_Server//configs/conf-mcp/server" \
+curl ${CURL_OPTS} -X POST "${SPLUNK_URL}/servicesNS/nobody/Splunk_MCP_Server/configs/conf-mcp/server" \
   -u "${SPLUNK_USER}:${SPLUNK_PASSWORD}" \
   -d "ssl_verify=false" \
   -H "Content-Type: application/x-www-form-urlencoded" 2>/dev/null && echo "✅ SSL verification disabled" || echo "⚠️  SSL verification setting may already be disabled"
@@ -51,7 +51,7 @@ echo "🔄 Setting up Splunk user 'dd' and role 'mcp_user'..."
 echo "📋 Creating role 'mcp_user'..."
 curl ${CURL_OPTS} -X POST "${SPLUNK_URL}/services/authorization/roles" \
   -u "${SPLUNK_USER}:${SPLUNK_PASSWORD}" \
-  -d "name=mcp_user" \
+  -d "name=mcp_tool_execute" \
   -H "Content-Type: application/x-www-form-urlencoded" 2>/dev/null || echo "⚠️  Role may already exist"
 
 # 2. Create the user "dd"
@@ -62,24 +62,23 @@ curl ${CURL_OPTS} -X POST "${SPLUNK_URL}/services/authentication/users" \
   -d "password=${SPLUNK_PASSWORD}" \
   -d roles="user" \
   -d roles="admin" \
-  -d roles="mcp_user" \
+  -d roles="mcp_tool_execute" \
   -d tz="Europe/Brussels" \
   -H "Content-Type: application/x-www-form-urlencoded" 2>/dev/null || echo "⚠️  User may already exist"
 
-# 3. Assign capabilities to role "mcp_user"
-# 4. Create authentication token for user "dd" valid for 15 days
-echo "🔑 Creating authentication token for user 'dd' (audience=mcp, 15 days validity)..."
-TOKEN_RESPONSE=$(curl ${CURL_OPTS} -s -X POST "${SPLUNK_URL}/services/authorization/tokens" \
-  -u "${SPLUNK_USER}:${SPLUNK_PASSWORD}" \
-  -d "status=enabled" \
-  -d "name=dd" \
-  -d "audience=mcp" \
-  -H "Content-Type: application/x-www-form-urlencoded")
+# 3. Encrypted MCP token (Splunk MCP Server 1.x+; plain /authorization/tokens JWTs are rejected by /services/mcp)
+echo "🔑 Creating encrypted MCP token for user 'dd' (Splunk MCP app mcp_token REST handler)..."
+TOKEN_RESPONSE=$(curl ${CURL_OPTS} -s -u "${SPLUNK_USER}:${SPLUNK_PASSWORD}" \
+  "${SPLUNK_URL}/servicesNS/${SPLUNK_USER}/Splunk_MCP_Server/mcp_token?username=dd&output_mode=json")
 
-TOKEN=$(echo "${TOKEN_RESPONSE}" | sed -n 's/.*<!\[CDATA\[\(.*\)\]\].*/\1/p' | head -1)
+if command -v jq >/dev/null 2>&1; then
+  TOKEN=$(echo "${TOKEN_RESPONSE}" | jq -r '.token // empty')
+else
+  TOKEN=$(echo "${TOKEN_RESPONSE}" | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')
+fi
 
 if [ -z "$TOKEN" ]; then
-    echo "❌ Failed to create token"
+    echo "❌ Failed to create encrypted MCP token"
     echo "Response: ${TOKEN_RESPONSE}"
     exit 1
 fi

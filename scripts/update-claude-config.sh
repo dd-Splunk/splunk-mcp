@@ -4,6 +4,11 @@
 
 set -e
 
+if ! command -v jq >/dev/null 2>&1; then
+    echo "❌ jq is required for this script (merge JSON). Install with: brew install jq"
+    exit 1
+fi
+
 TOKEN_FILE="${1:-.secrets/splunk-token}"
 SPLUNK_HOST="${SPLUNK_HOST:-localhost}"
 SPLUNK_PORT="${SPLUNK_PORT:-8089}"
