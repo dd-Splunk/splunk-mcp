@@ -31,7 +31,7 @@ The sample compose file mounts:
 ${HOME}/Library/Logs/Claude:/var/log/claude_logs
 ```
 
-If you are not on macOS or that path does not exist, adjust or remove this mount; the setup script creates a monitor input for `/var/log/claude_logs` inside the container.
+If you are not on macOS or that path does not exist, adjust or remove this mount. The setup script only creates a monitor input when `/var/log/claude_logs` exists inside the container.
 
 ### Service `splunk-init`
 
@@ -88,9 +88,12 @@ Runs **inside** `splunk-init` with `SPLUNK_HOST=so1`. It:
 
 1. Sets MCP server `ssl_verify=false` via REST (dev convenience).
 2. Ensures index `claude_logs` and a monitor for `/var/log/claude_logs` (idempotent).
-3. Creates role **`mcp_tool_execute`** and user **`dd`** with required roles.
+3. Creates role **`mcp_tool_execute`** and ensures it has capability `mcp_tool_execute` (required by MCP).
+4. Creates user **`dd`** with roles `user` and `mcp_tool_execute` (no `admin` by default).
 4. Requests an **encrypted MCP token** from `.../Splunk_MCP_Server/mcp_token?username=dd&output_mode=json`.
 5. Writes the token to `TOKEN_OUTPUT_FILE` (`.secrets/splunk-token` on the host).
+
+The init script also generates a dedicated password for `dd` if `DD_PASSWORD` is not provided and persists it to `$(dirname TOKEN_OUTPUT_FILE)/dd-password` (git-ignored).
 
 ## Claude Desktop configuration
 

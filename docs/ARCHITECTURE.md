@@ -95,10 +95,10 @@ make up
 
 | User | Role(s) | Auth | Scope | Expiry |
 | ---- | ------- | ---- | ----- | ------ |
-| `dd` | `user`, `admin`, `mcp_tool_execute` | Bearer token (MCP) | MCP + broad (PoC) | Per Splunk MCP / token policy |
+| `dd` | `user`, `mcp_tool_execute` (admin optional) | Bearer token (MCP) | MCP (PoC) | Per Splunk MCP / token policy |
 | `admin` | Built-in | Password | Full admin | N/A |
 
-The setup script assigns **`mcp_tool_execute`** for MCP tooling; **`admin` on `dd` is convenient for PoC only**—tighten for real deployments.
+The setup script assigns role **`mcp_tool_execute`** and ensures capability `mcp_tool_execute` is present; `admin` on `dd` is optional (enable via `ADD_ADMIN_ROLE=1` only if you need it).
 
 ### Environment Variables
 
