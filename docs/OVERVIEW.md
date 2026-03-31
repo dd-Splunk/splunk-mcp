@@ -67,7 +67,7 @@ with **`NODE_TLS_REJECT_UNAUTHORIZED=0`** to accept Splunk’s default self-sign
 | ----- | --------- | ----- |
 | Splunk admin | Username/password (`admin` + `SPLUNK_PASSWORD`) | Used in setup script REST calls |
 | MCP client (Claude/Cursor) | Bearer token | Token from Splunk MCP app’s encrypted token endpoint for user `dd` |
-| User `dd` | Password same as admin in script; roles include `mcp_tool_execute` | Created idempotently; see `scripts/setup-splunk.sh` |
+| User `dd` | Dedicated password (saved to `.secrets/dd-password` by init unless provided); roles include `mcp_tool_execute` | Created idempotently; see `scripts/setup-splunk.sh` |
 
 The setup script creates Splunk role **`mcp_tool_execute`** (not a generic `mcp_user` name) and assigns it to user **`dd`**.
 
@@ -83,7 +83,8 @@ make up
   → splunk-init runs setup-splunk.sh
       → POST mcp server ssl_verify=false (dev)
       → create index claude_logs + monitor (if not present)
-      → create role mcp_tool_execute, user dd
+      → create role mcp_tool_execute, ensure capability mcp_tool_execute
+      → create user dd (roles: user + mcp_tool_execute; admin optional)
       → GET encrypted mcp token → .secrets/splunk-token
   → Makefile loop: when token file exists → make claude-update
 
