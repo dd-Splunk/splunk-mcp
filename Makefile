@@ -41,7 +41,7 @@ up: init
 			$(MAKE) claude-update; \
 			exit 0; \
 		fi; \
-		echo -n "."; \
+		printf "."; \
 		sleep 2; \
 	done; \
 	echo ""; \
