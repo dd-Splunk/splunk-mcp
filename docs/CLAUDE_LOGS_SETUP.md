@@ -60,7 +60,7 @@ onboarding feature that captures Claude Desktop logs into a dedicated
 - Added **Add Custom Log Index** subsection:
   - Shows how to monitor additional log sources
   - Provides compose.yml example
-  - Shows setup-splunk-user.sh modification pattern
+  - Shows setup-splunk.sh modification pattern
 - Kept "Add Additional Users" section
 
 ### 7. **README.md**
@@ -70,7 +70,7 @@ onboarding feature that captures Claude Desktop logs into a dedicated
 
 ## Technical Implementation (Already in Place)
 
-The setup script (`setup-splunk-user.sh`) already implements:
+The setup script (`setup-splunk.sh`) already implements:
 
 1. **Index Creation**:
 
@@ -152,6 +152,6 @@ All docs now properly reference Claude logs feature:
 
 ✅ Claude logs directory exists: `~/Library/Logs/Claude/`  
 ✅ Docker volume mounting configured in compose.yml  
-✅ Index creation automated in setup-splunk-user.sh  
-✅ Monitor input configured in setup-splunk-user.sh  
+✅ Index creation automated in setup-splunk.sh  
+✅ Monitor input configured in setup-splunk.sh
 ✅ Documentation comprehensive across all 6 doc files

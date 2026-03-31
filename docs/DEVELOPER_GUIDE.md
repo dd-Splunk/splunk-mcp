@@ -53,7 +53,7 @@ services:
       so1:
         condition: service_healthy
     volumes:
-      - ./scripts/setup-splunk-user.sh:/setup-splunk-user.sh
+      - ./scripts/setup-splunk.sh:/setup-splunk.sh
 ```
 
 #### `tpl.env`
@@ -71,7 +71,7 @@ services:
 
 ### Scripts
 
-#### `scripts/setup-splunk-user.sh`
+#### `scripts/setup-splunk.sh`
 
 Main initialization script (runs in `splunk-init`). Steps:
 
@@ -179,7 +179,7 @@ volumes:
   - /path/to/logs:/var/log/custom_logs:rw
 ```
 
-1. **Edit setup-splunk-user.sh** - Add monitor input:
+1. **Edit setup-splunk.sh** - Add monitor input:
 
 ```bash
 curl ${CURL_OPTS} -X POST "${SPLUNK_URL}/services/data/inputs/monitor/" \
@@ -190,7 +190,7 @@ curl ${CURL_OPTS} -X POST "${SPLUNK_URL}/services/data/inputs/monitor/" \
 
 ### Add Additional Users
 
-Edit `scripts/setup-splunk-user.sh`:
+Edit `scripts/setup-splunk.sh`:
 
 ```bash
 curl -X POST "${SPLUNK_URL}/services/authentication/users" \

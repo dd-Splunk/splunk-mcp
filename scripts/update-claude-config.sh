@@ -70,7 +70,6 @@ fi
 # Use mcp-remote with NODE_TLS_REJECT_UNAUTHORIZED=0 to allow self-signed certs
 splunk_mcp_config=$(cat <<EOF
 {
-  "command": "npx",
   "args": [
     "-y",
     "mcp-remote",
@@ -78,6 +77,7 @@ splunk_mcp_config=$(cat <<EOF
     "--header",
     "Authorization: Bearer ${TOKEN}"
   ],
+  "command": "npx",
   "env": {
     "NODE_TLS_REJECT_UNAUTHORIZED": "0"
   }

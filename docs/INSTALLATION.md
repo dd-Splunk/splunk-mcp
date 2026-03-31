@@ -114,7 +114,7 @@ splunk-mcp/
 ├── tpl.env              # 1Password template
 ├── SA-S4R/              # Sample app
 ├── scripts/
-│   ├── setup-splunk-user.sh
+│   ├── setup-splunk.sh
 │   ├── update-claude-config.sh
 │   └── update-cursor-config.sh
 └── docs/

@@ -35,12 +35,12 @@ The [Model Context Protocol](https://modelcontextprotocol.io/) lets a client (Cl
 
 - Runs **once** after `so1` is healthy.
 - Image: **Alpine** (installs `curl` and `jq` at runtime).
-- Executes **`scripts/setup-splunk-user.sh`** with environment pointing at Splunk on the Docker network (`SPLUNK_HOST=so1`).
+- Executes **`scripts/setup-splunk.sh`** with environment pointing at Splunk on the Docker network (`SPLUNK_HOST=so1`).
 - Writes the MCP token to **`.secrets/splunk-token`** on the host (mode `600`).
 
 ### Splunkbase applications
 
-`compose.yml` sets `SPLUNK_APPS_URL` to a comma-separated list of Splunkbase download URLs. At build/start, Splunk pulls these apps. The stack expects the **Splunk MCP Server** app (namespace `Splunk_MCP_Server`) to be present so REST calls in `setup-splunk-user.sh` succeed.
+`compose.yml` sets `SPLUNK_APPS_URL` to a comma-separated list of Splunkbase download URLs. At build/start, Splunk pulls these apps. The stack expects the **Splunk MCP Server** app (namespace `Splunk_MCP_Server`) to be present so REST calls in `setup-splunk.sh` succeed.
 
 You need valid **Splunkbase** credentials in `.env` (`SPLUNKBASE_USERNAME` / `SPLUNKBASE_PASSWORD`).
 
@@ -67,7 +67,7 @@ with **`NODE_TLS_REJECT_UNAUTHORIZED=0`** to accept Splunk’s default self-sign
 | ----- | --------- | ----- |
 | Splunk admin | Username/password (`admin` + `SPLUNK_PASSWORD`) | Used in setup script REST calls |
 | MCP client (Claude/Cursor) | Bearer token | Token from Splunk MCP app’s encrypted token endpoint for user `dd` |
-| User `dd` | Password same as admin in script; roles include `mcp_tool_execute` | Created idempotently; see `scripts/setup-splunk-user.sh` |
+| User `dd` | Password same as admin in script; roles include `mcp_tool_execute` | Created idempotently; see `scripts/setup-splunk.sh` |
 
 The setup script creates Splunk role **`mcp_tool_execute`** (not a generic `mcp_user` name) and assigns it to user **`dd`**.
 
@@ -80,7 +80,7 @@ make init
 make up
   → docker compose up -d
   → so1 starts Splunk, downloads apps, becomes healthy
-  → splunk-init runs setup-splunk-user.sh
+  → splunk-init runs setup-splunk.sh
       → POST mcp server ssl_verify=false (dev)
       → create index claude_logs + monitor (if not present)
       → create role mcp_tool_execute, user dd

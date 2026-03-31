@@ -128,7 +128,7 @@ splunk-mcp/
 ├── tpl.env                  # 1Password template → .env
 ├── SA-S4R/                  # Sample Splunk app (Eventgen)
 ├── scripts/
-│   ├── setup-splunk-user.sh
+│   ├── setup-splunk.sh
 │   ├── update-claude-config.sh
 │   └── update-cursor-config.sh
 └── .env                     # Runtime config (git-ignored)

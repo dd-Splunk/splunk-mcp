@@ -31,7 +31,7 @@ services:
       so1:
         condition: service_healthy
     volumes:
-      - ./scripts/setup-splunk-user.sh:/setup-splunk-user.sh:rw
+      - ./scripts/setup-splunk.sh:/setup-splunk.sh:rw
       - ./.secrets:/output:rw
     environment:
       SPLUNK_PASSWORD: ${SPLUNK_PASSWORD}
@@ -39,7 +39,7 @@ services:
       SPLUNK_HOST: so1
       SPLUNK_PORT: 8089
       TOKEN_OUTPUT_FILE: /output/splunk-token
-    command: sh -c "apk add --no-cache curl jq && chmod +x /setup-splunk-user.sh && /setup-splunk-user.sh"
+    command: sh -c "apk add --no-cache curl jq && chmod +x /setup-splunk.sh && /setup-splunk.sh"
     networks:
       - splunk
     restart: "no"
