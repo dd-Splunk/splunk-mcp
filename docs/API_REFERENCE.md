@@ -1,6 +1,6 @@
 # API Reference & MCP Integration
 
-**This repository** creates Splunk role **`mcp_tool_execute`** and user **`dd`**, then obtains an **encrypted MCP token** from the Splunk MCP Server app (`GET .../Splunk_MCP_Server/mcp_token?username=dd`). Older examples that use plain JWTs from `/services/authorization/tokens` may not work with `/services/mcp` depending on app version—follow `scripts/setup-splunk-user.sh` as the source of truth.
+**This repository** creates Splunk role **`mcp_tool_execute`** and user **`dd`**, then obtains an **encrypted MCP token** from the Splunk MCP Server app (`GET .../Splunk_MCP_Server/mcp_token?username=dd`). Older examples that use plain JWTs from `/services/authorization/tokens` may not work with `/services/mcp` depending on app version—follow `scripts/setup-splunk.sh` as the source of truth.
 
 ## Splunk REST API Endpoints
 

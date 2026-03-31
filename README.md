@@ -72,7 +72,7 @@ splunk-mcp/
 ├── compose.yml              # Splunk + one-shot init container
 ├── Makefile                 # init, up, client config helpers
 ├── tpl.env                  # Template for op inject → .env (not secrets by itself)
-├── scripts/                 # setup-splunk-user.sh, Claude/Cursor MCP writers
+├── scripts/                 # setup-splunk.sh, Claude/Cursor MCP writers
 ├── SA-S4R/                  # Sample Splunk app (Eventgen demo data)
 ├── .secrets/                # splunk-token (git-ignored, chmod 600)
 └── docs/                    # Extended documentation
