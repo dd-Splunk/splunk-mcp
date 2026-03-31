@@ -1,91 +1,101 @@
-.PHONY: help init up down clean logs claude-update cursor-mcp verify-mcp-remote status restart
+SHELL := /bin/bash
+.SHELLFLAGS := -eu -o pipefail -c
+
+DC ?= docker compose
+TOKEN_FILE ?= .secrets/splunk-token
+
+.PHONY: help init up wait-token down clean logs claude-update cursor-mcp verify-mcp-remote status restart
 
 help:
 	@echo "Splunk MCP Server - PoC Environment"
 	@echo ""
 	@echo "Available targets:"
-	@echo "  make init           - Initialize environment (inject 1Password secrets)"
-	@echo "  make up             - Start Splunk and configure Claude Desktop"
+	@echo "  make init           - Create .env (op inject) if missing"
+	@echo "  make init FORCE=1   - Re-generate .env (op inject)"
+	@echo "  make up             - Start Splunk and configure Claude Desktop (waits for token)"
+	@echo "  make wait-token     - Wait for $(TOKEN_FILE) to appear"
 	@echo "  make down           - Stop Splunk container"
 	@echo "  make restart        - Restart Splunk container"
 	@echo "  make clean          - Remove containers and volumes (destructive)"
 	@echo "  make logs           - Follow Splunk container logs"
 	@echo "  make status         - Check Splunk container status"
 	@echo "  make claude-update  - Update Claude Desktop config with saved token"
-	@echo "  make cursor-mcp     - Write .cursor/mcp.json for Splunk MCP (from .secrets/splunk-token)"
+	@echo "  make cursor-mcp     - Write .cursor/mcp.json for Splunk MCP (from $(TOKEN_FILE))"
 	@echo "  make verify-mcp-remote - Smoke-test mcp-remote → Splunk (correct header quoting)"
 	@echo ""
 
 init:
-	@echo "Initializing environment..."
-	@if ! command -v op > /dev/null 2>&1; then \
-		echo "Error: 1Password CLI (op) not found. Please install it first."; \
-		exit 1; \
+	@if [[ -f .env && "${FORCE:-0}" != "1" ]]; then \
+		echo ".env already exists; skipping (set FORCE=1 to re-generate)."; \
+		exit 0; \
 	fi
+	@echo "Initializing environment (.env via 1Password op inject)..."
+	@command -v op >/dev/null 2>&1 || { echo "Error: 1Password CLI (op) not found. Install it or create .env manually."; exit 1; }
 	@op inject -i tpl.env -o .env
-	@echo "Environment initialized. Secrets injected from 1Password."
+	@echo "Environment initialized: .env written."
 
 up: init
 	@echo "Starting Splunk with MCP Server app..."
-	@docker compose up -d
+	@$(DC) up -d
 	@echo ""
 	@echo "Splunk is starting..."
 	@echo "Web UI will be available at: https://localhost:8000"
 	@echo "MCP Server API: https://localhost:8089/services/mcp"
 	@echo ""
+	@$(MAKE) wait-token
+	@echo "✅ Token generated! Configuring Claude Desktop..."
+	@$(MAKE) claude-update
+
+wait-token:
 	@echo "Waiting for token generation (this may take 2-3 minutes)..."
 	@for i in {1..60}; do \
-		if [ -f .secrets/splunk-token ]; then \
+		if [[ -f "$(TOKEN_FILE)" ]]; then \
 			echo ""; \
-			echo "✅ Token generated! Configuring Claude Desktop..."; \
-			$(MAKE) claude-update; \
 			exit 0; \
 		fi; \
 		printf "."; \
 		sleep 2; \
 	done; \
 	echo ""; \
-	echo "⚠️  Token not generated within timeout. Run 'make claude-update' manually once ready."
+	echo "⚠️  Token not generated within timeout: $(TOKEN_FILE)"; \
+	exit 1
 
 down:
 	@echo "Stopping Splunk container..."
-	@docker compose down
+	@$(DC) down
 
 restart:
 	@echo "Restarting Splunk container..."
-	@docker compose restart
+	@$(DC) restart
 
 clean:
 	@echo "WARNING: This will remove all containers, volumes, and .env file (data will be lost)."
 	@read -p "Are you sure? [y/N] " -n 1 -r; \
 	echo; \
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
-		docker compose down -v; \
+		$(DC) down -v; \
 		rm -f .env; \
-		rm -f .secrets/splunk-token; \
+		rm -f "$(TOKEN_FILE)"; \
 		echo "Cleanup complete."; \
 	else \
 		echo "Cleanup cancelled."; \
 	fi
 
 logs:
-	@docker compose logs -f so1
+	@$(DC) logs -f so1
 
 status:
 	@echo "Checking Splunk container status..."
-	@docker compose ps
+	@$(DC) ps
 	@echo ""
-	@docker compose exec so1 curl -k -s https://localhost:8089/services/server/info 2>/dev/null | grep -q serverName && \
+	@$(DC) exec so1 curl -k -s https://localhost:8089/services/server/info 2>/dev/null | grep -q serverName && \
 		echo "Splunk is ready ✓" || echo "Splunk is not ready yet..."
 
 claude-update:
-	@chmod +x scripts/update-claude-config.sh
-	@./scripts/update-claude-config.sh .secrets/splunk-token
+	@./scripts/update-claude-config.sh "$(TOKEN_FILE)"
 
 cursor-mcp:
-	@chmod +x scripts/update-cursor-config.sh
-	@./scripts/update-cursor-config.sh .secrets/splunk-token
+	@./scripts/update-cursor-config.sh "$(TOKEN_FILE)"
 
 verify-mcp-remote:
-	@chmod +x scripts/verify-mcp-remote.sh
-	@./scripts/verify-mcp-remote.sh .secrets/splunk-token
+	@./scripts/verify-mcp-remote.sh "$(TOKEN_FILE)"
