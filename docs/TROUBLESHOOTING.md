@@ -209,7 +209,7 @@ make logs | tail -50     # Check Splunk readiness
 make down && make up
 
 # If still failing, run manually:
-./scripts/setup-splunk-user.sh
+./scripts/setup-splunk.sh
 ```
 
 ---
@@ -331,7 +331,7 @@ make status
 # Verify user exists
 curl -k -u admin:password https://localhost:8089/services/authentication/users/dd
 
-# Try manual encrypted MCP token (matches setup-splunk-user.sh)
+# Try manual encrypted MCP token (matches setup-splunk.sh)
 curl -skS -u admin:$SPLUNK_PASSWORD \
   "https://localhost:8089/servicesNS/admin/Splunk_MCP_Server/mcp_token?username=dd&output_mode=json" | jq .
 
@@ -588,7 +588,7 @@ docker logs so1 > splunk_logs.txt
 | `All pipelines have been started` | Splunk initialized | OK - ready to use |
 | `REST handler 'mcp' not found` | MCP app not installed | Reinstall app |
 | `Authentication failed` | Bad credentials | Check .env |
-| `role="mcp_tool_execute" does not exist` | Role creation failed | Run `setup-splunk-user.sh` / `make up` again |
+| `role="mcp_tool_execute" does not exist` | Role creation failed | Run `setup-splunk.sh` / `make up` again |
 | `License not found` | License issue | Accept license again |
 
 ---
@@ -703,7 +703,7 @@ docker compose up --verbose
 curl -v -k https://localhost:8089/services/server/info
 
 # In shell scripts
-bash -x scripts/setup-splunk-user.sh
+bash -x scripts/setup-splunk.sh
 ```
 
 ### Interactive Debugging

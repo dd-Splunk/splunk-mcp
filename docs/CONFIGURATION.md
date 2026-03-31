@@ -35,9 +35,9 @@ If you are not on macOS or that path does not exist, adjust or remove this mount
 
 ### Service `splunk-init`
 
-Runs after `so1` is **healthy**. Uses Alpine, installs `curl` and `jq`, then runs `setup-splunk-user.sh`. Mounts:
+Runs after `so1` is **healthy**. Uses Alpine, installs `curl` and `jq`, then runs `setup-splunk.sh`. Mounts:
 
-- `scripts/setup-splunk-user.sh` → `/setup-splunk-user.sh`
+- `scripts/setup-splunk.sh` → `/setup-splunk.sh`
 - `./.secrets` → `/output` (token written to `splunk-token`)
 
 ### Network and volumes
@@ -82,7 +82,7 @@ Requires `op` signed in and access to the referenced items.
 | `cursor-mcp` | Runs `scripts/update-cursor-config.sh` → `.cursor/mcp.json` |
 | `down` / `restart` / `logs` / `status` / `clean` | As labeled in `make help` |
 
-## scripts/setup-splunk-user.sh
+## scripts/setup-splunk.sh
 
 Runs **inside** `splunk-init` with `SPLUNK_HOST=so1`. It:
 

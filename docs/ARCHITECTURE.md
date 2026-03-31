@@ -18,7 +18,7 @@
 - **Purpose**: Runs initialization setup script after Splunk is healthy
 - **Dependency**: Waits for `so1` service to be healthy
 - **Restart Policy**: No (runs once and stops)
-- **Script**: `scripts/setup-splunk-user.sh`
+- **Script**: `scripts/setup-splunk.sh`
 
 ### 3. Data Persistence
 
@@ -74,7 +74,7 @@ make up
   │  │  ├─ Install MCP app
   │  │  └─ Wait for health
   │  └─ splunk-init (waits for so1 healthy)
-  └─ setup-splunk-user.sh (after so1 healthy)
+  └─ setup-splunk.sh (after so1 healthy)
      ├─ Create role: mcp_tool_execute
      ├─ Create user: dd
      └─ Generate encrypted MCP token → .secrets/splunk-token
@@ -135,7 +135,7 @@ Claude Desktop
 
 ### Token Management
 
-- **Generation**: `splunk-init` runs `setup-splunk-user.sh`, which calls the Splunk MCP Server app’s **`mcp_token`** endpoint for user `dd`.
+- **Generation**: `splunk-init` runs `setup-splunk.sh`, which calls the Splunk MCP Server app’s **`mcp_token`** endpoint for user `dd`.
 - **Storage**: Host file `.secrets/splunk-token`; Claude/Cursor configs reference it via `make claude-update` / `make cursor-mcp`.
 - **Expiry**: Depends on Splunk MCP app and token settings (docs may cite ~15 days as a rule of thumb—verify in your build).
 - **Renewal**: Regenerate token and refresh client config (`make claude-update`, `make cursor-mcp`).
@@ -149,7 +149,7 @@ Claude Desktop
 - Network configuration
 - Environment variables
 
-### setup-splunk-user.sh
+### setup-splunk.sh
 
 - Creates `mcp_tool_execute` role
 - Creates `dd` user
@@ -176,7 +176,7 @@ Claude Desktop
 ### Initialization
 
 1. splunk-init waits for healthcheck to pass
-2. Runs setup-splunk-user.sh
+2. Runs setup-splunk.sh
 3. Creates role and user via REST API
 4. Generates token for MCP operations
 5. Updates Claude Desktop config
