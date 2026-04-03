@@ -2,6 +2,17 @@
 
 Use this page to choose the right document. The root [README.md](../README.md) stays short on purpose; detail lives here.
 
+## Source of truth
+
+When docs disagree with the repo, trust **in order**:
+
+1. [`Makefile`](../Makefile) — how Compose is invoked (`op run` vs `.env`), targets, env file names  
+2. [`compose.yml`](../compose.yml) — services, ports, `SPLUNK_APPS_URL`, mounts  
+3. [`scripts/setup-splunk.sh`](../scripts/setup-splunk.sh) — Splunk REST bootstrap, user `dd`, token file  
+4. [`AGENTS.md`](../AGENTS.md) — contributor rules and verification commands  
+
+Splunk **version** is not hard-coded in git beyond the Docker **image tag** (default `latest`) and Splunkbase **app URLs**—confirm the running build in Splunk or via `services/server/info`.
+
 ## Getting started
 
 | Document | Use when |
@@ -31,8 +42,9 @@ Use this page to choose the right document. The root [README.md](../README.md) s
 
 | Document | Notes |
 | -------- | ----- |
-| [CLAUDE_LOGS_SETUP.md](CLAUDE_LOGS_SETUP.md) | Claude log ingestion details (if present) |
-| [DOCUMENTATION_IMPROVEMENTS.md](DOCUMENTATION_IMPROVEMENTS.md) | Changelog-style notes from doc cleanups |
+| [DOCUMENTATION_IMPROVEMENTS.md](DOCUMENTATION_IMPROVEMENTS.md) | Historical changelog of doc edits |
+
+Claude log ingestion: see **Claude logs** in [CONFIGURATION.md](CONFIGURATION.md) and [QUICK_START.md](QUICK_START.md) (optional bind mount).
 
 ## Suggested reading order
 

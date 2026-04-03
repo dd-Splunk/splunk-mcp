@@ -56,10 +56,13 @@ with **`NODE_TLS_REJECT_UNAUTHORIZED=0`** to accept Splunk’s default self-sign
 
 ### Secrets flow
 
-1. **`tpl.env`**: placeholders and/or `op://` references for 1Password CLI.
-2. **`make init`** runs `op inject -i tpl.env -o .env`.
-3. **Docker Compose** reads `.env` for `SPLUNK_PASSWORD`, Splunkbase credentials, etc.
-4. **Token file** `.secrets/splunk-token` is created by init; **`make claude-update`** / **`make cursor-mcp`** read it to patch client JSON.
+1. **`tpl.env`**: checked-in template with `op://vault/item/field` references (and non-secret defaults). **You must align paths with your vault**; documentation examples use illustrative item names.
+2. **Preferred (`make up` without `.env`)**: the Makefile runs Compose under  
+   `op run --env-file=tpl.env -- docker compose …`  
+   so variables are injected **at process invocation** and nothing is written to `.env`.
+3. **Optional (`make init`)**: runs `op inject -i tpl.env -o .env` for a materialized `.env` (some users or CI prefer a file on disk).
+4. **Compose** supplies `SPLUNK_PASSWORD`, Splunkbase credentials, and related env vars to the `so1` and `splunk-init` services.
+5. **Token file** `.secrets/splunk-token` is created by `splunk-init` / `setup-splunk.sh`. **`make claude-update`** and **`make cursor-mcp`** read it to patch client JSON.
 
 ## Authentication model (as implemented)
 
@@ -74,19 +77,19 @@ The setup script creates Splunk role **`mcp_tool_execute`** (not a generic `mcp_
 ## End-to-end flow
 
 ```text
-make init
-  → op inject → .env
-
 make up
-  → docker compose up -d
+  → docker compose up -d (env from .env if present, else op run --env-file=tpl.env)
   → so1 starts Splunk, downloads apps, becomes healthy
   → splunk-init runs setup-splunk.sh
       → POST mcp server ssl_verify=false (dev)
-      → create index claude_logs + monitor (if not present)
+      → create index claude_logs + monitor (if path exists in container)
       → create role mcp_tool_execute, ensure capability mcp_tool_execute
-      → create user dd (roles: user + mcp_tool_execute; admin optional)
+      → create user dd (roles: user + mcp_tool_execute; admin only if ADD_ADMIN_ROLE=1)
       → GET encrypted mcp token → .secrets/splunk-token
-  → Makefile loop: when token file exists → make claude-update
+  → Makefile: wait for token file → make claude-update
+
+Optional: make init
+  → op inject → .env  (then make up uses .env like any Compose project)
 
 User restarts Claude Desktop or Cursor
   → mcp-remote connects to https://localhost:8089/services/mcp with Bearer token

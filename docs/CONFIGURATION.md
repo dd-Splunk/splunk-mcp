@@ -8,7 +8,7 @@
 | `platform: linux/amd64` | Run x86 image on ARM via emulation when needed |
 | `SPLUNK_GENERAL_TERMS` | Accepts Splunk general terms non-interactively |
 | `SPLUNK_START_ARGS` | License acceptance |
-| `SPLUNK_PASSWORD` | Admin password from `.env` |
+| `SPLUNK_PASSWORD` | Admin password (from `.env` and/or `op run` / shell env) |
 | `SPLUNKBASE_USERNAME` / `SPLUNKBASE_PASSWORD` | Splunkbase downloads |
 | `SPLUNK_APPS_URL` | Comma-separated Splunkbase package URLs |
 | `TZ` | Container timezone (default `Europe/Brussels` in template) |
@@ -53,13 +53,13 @@ Runs after `so1` is **healthy**. Uses Alpine, installs `curl` and `jq`, then run
 - Contains `op://` references for 1Password CLI **or** plain values for local testing (avoid committing real secrets).
 - You must align vault names, item titles, and field names with your 1Password layout. The example paths in a cloned repo may not match your account.
 
-### Generating .env
+### Generating `.env` (optional)
 
 ```bash
 make init   # runs: op inject -i tpl.env -o .env
 ```
 
-Requires `op` signed in and access to the referenced items.
+Requires `op` signed in and access to the referenced items. If you skip this, use **`make up`** without `.env` so the Makefile runs Compose via `op run --env-file=tpl.env` (see `Makefile`).
 
 ### Typical variables
 
@@ -70,17 +70,17 @@ Requires `op` signed in and access to the referenced items.
 | `SPLUNKBASE_USER` / `SPLUNKBASE_PASS` | Splunkbase (names in `compose.yml` map these) |
 | `TZ` | Timezone |
 
-**Note:** `compose.yml` expects `SPLUNKBASE_USER` and `SPLUNKBASE_PASS` in the environment; ensure `tpl.env` defines names that match (the Makefile injects into `.env` which Compose loads).
+**Note:** `compose.yml` expects `SPLUNKBASE_USER` and `SPLUNKBASE_PASS` in the environment. Define them in `tpl.env` (and/or `.env` after `make init`). Variable **names** must match what Compose references.
 
 ## Makefile targets
 
 | Target | Behavior |
 | ------ | -------- |
-| `init` | `op inject` only |
-| `up` | `init`, `docker compose up -d`, wait up to ~2 min for `.secrets/splunk-token`, then `claude-update` |
+| `init` | Optional: `op inject -i tpl.env -o .env` (skip if `.env` exists unless `FORCE=1`) |
+| `up` | `docker compose up -d` (via `op run --env-file=tpl.env` when `.env` is absent), wait for `.secrets/splunk-token`, then `claude-update` |
 | `claude-update` | Runs `scripts/update-claude-config.sh` |
 | `cursor-mcp` | Runs `scripts/update-cursor-config.sh` → `.cursor/mcp.json` |
-| `down` / `restart` / `logs` / `status` / `clean` | As labeled in `make help` |
+| `down` / `restart` / `logs` / `status` / `clean` | Same Compose env rules as `up`; see `make help` |
 
 ## scripts/setup-splunk.sh
 
@@ -89,9 +89,9 @@ Runs **inside** `splunk-init` with `SPLUNK_HOST=so1`. It:
 1. Sets MCP server `ssl_verify=false` via REST (dev convenience).
 2. Ensures index `claude_logs` and a monitor for `/var/log/claude_logs` (idempotent).
 3. Creates role **`mcp_tool_execute`** and ensures it has capability `mcp_tool_execute` (required by MCP).
-4. Creates user **`dd`** with roles `user` and `mcp_tool_execute` (no `admin` by default).
-4. Requests an **encrypted MCP token** from `.../Splunk_MCP_Server/mcp_token?username=dd&output_mode=json`.
-5. Writes the token to `TOKEN_OUTPUT_FILE` (`.secrets/splunk-token` on the host).
+4. Creates user **`dd`** with roles `user` and `mcp_tool_execute` (no `admin` unless `ADD_ADMIN_ROLE=1`).
+5. Requests an **encrypted MCP token** from `.../Splunk_MCP_Server/mcp_token?username=dd&output_mode=json`.
+6. Writes the token to `TOKEN_OUTPUT_FILE` (`.secrets/splunk-token` on the host).
 
 The init script also generates a dedicated password for `dd` if `DD_PASSWORD` is not provided and persists it to `$(dirname TOKEN_OUTPUT_FILE)/dd-password` (git-ignored).
 

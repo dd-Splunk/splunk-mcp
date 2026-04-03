@@ -36,25 +36,24 @@
 
 #### Bind Mounts
 
-- **Claude Logs Directory**: `~/Library/Logs/Claude/ → /var/log/claude_logs`
-  - Automatically monitored and indexed into `claude_logs` index
-  - Enables real-time Claude Desktop activity tracking
+- **Claude logs (optional)**: In `compose.yml`, uncomment  
+  `${HOME}/Library/Logs/Claude:/var/log/claude_logs`  
+  on macOS so logs are visible inside the container. The setup script creates a monitor only when `/var/log/claude_logs` exists **inside** `so1`.
 
 #### Local Files
 
 - **compose.yml**: Docker Compose configuration
-- **tpl.env**: Template for environment variables (often with `op://` references)
-- **.env**: Runtime environment variables (git-ignored), produced by `make init`
+- **tpl.env**: Template for environment variables (`op://` references and defaults)
+- **.env**: Optional runtime file (git-ignored), produced by **`make init`**
 - **SA-S4R/**: Bundled sample Splunk app (bind-mounted into `$SPLUNK_HOME/etc/apps`)
 
 ### 4. Claude Logs Index
 
-- **Index Name**: `claude_logs`
-- **Data Source**: `~/Library/Logs/Claude/` (macOS)
-- **Purpose**: Capture Claude Desktop activity and errors
-- **Monitoring**: Automatic via Splunk input monitor
+- **Index Name**: `claude_logs` (created by `setup-splunk.sh`)
+- **Data Source**: Host path mounted into the container **only if** you enable the bind mount above
+- **Purpose**: Optional capture of Claude Desktop logs into Splunk
+- **Monitoring**: Created when the directory exists in-container; not enabled by default out of the box
 - **Retention**: Follows Splunk default retention policies
-- **Searchable**: Available immediately after indexing
 
 ### 5. Network
 
@@ -66,18 +65,19 @@
 
 ```text
 make up
-  ├─ make init (inject 1Password secrets → .env)
-  ├─ docker compose up -d
+  ├─ docker compose up -d (secrets: .env if present, else op run --env-file=tpl.env)
   │  ├─ so1 (Splunk)
   │  │  ├─ Pull image
   │  │  ├─ Start container
-  │  │  ├─ Install MCP app
+  │  │  ├─ Install apps from SPLUNK_APPS_URL
   │  │  └─ Wait for health
   │  └─ splunk-init (waits for so1 healthy)
   └─ setup-splunk.sh (after so1 healthy)
      ├─ Create role: mcp_tool_execute
      ├─ Create user: dd
      └─ Generate encrypted MCP token → .secrets/splunk-token
+
+Optional: make init → op inject → .env (then Compose loads .env automatically)
 ```
 
 ## Security Architecture
@@ -100,17 +100,19 @@ make up
 
 The setup script assigns role **`mcp_tool_execute`** and ensures capability `mcp_tool_execute` is present; `admin` on `dd` is optional (enable via `ADD_ADMIN_ROLE=1` only if you need it).
 
-### Environment Variables
+### Environment variables
 
-Stored in `.env` (never committed):
+Supplied to Compose via **`.env`** (after `make init`) **or** **`op run --env-file=tpl.env`** (default `make up` when `.env` is absent). Example shape:
 
 ```bash
-SPLUNK_IMAGE=splunk/splunk:10.0
-SPLUNK_PASSWORD=<from 1Password>
-SPLUNKBASE_USER=<from 1Password>
-SPLUNKBASE_PASS=<from 1Password>
+SPLUNK_IMAGE=splunk/splunk:latest
+SPLUNK_PASSWORD=<secret>
+SPLUNKBASE_USER=<splunkbase user>
+SPLUNKBASE_PASS=<splunkbase password>
 TZ=Europe/Brussels
 ```
+
+**Splunk Enterprise build** is determined by the Docker image tag (default `latest` resolves to whatever you last pulled—verify with Splunk Web **Settings → Server settings** or `services/server/info`). **Splunk MCP Server** app builds are pinned by **`SPLUNK_APPS_URL`** in `compose.yml` (Splunkbase download URLs).
 
 ## Claude Desktop Integration
 
@@ -152,10 +154,12 @@ Claude Desktop
 ### setup-splunk.sh
 
 - Creates `mcp_tool_execute` role
-- Creates `dd` user
-- Generates authentication token
-- Configures Claude Desktop
-- Dependencies: curl, jq
+- Creates `dd` user (optional `admin` only if `ADD_ADMIN_ROLE=1`)
+- Requests encrypted MCP token and writes `.secrets/splunk-token`
+- Ensures `claude_logs` index and monitor when applicable
+- Dependencies: `curl`, `jq` (installed in `splunk-init`)
+
+Host **Claude** / **Cursor** configs are updated by **`make claude-update`** / **`make cursor-mcp`**, not by this script.
 
 ### Makefile
 
@@ -178,9 +182,9 @@ Claude Desktop
 1. splunk-init waits for healthcheck to pass
 2. Runs setup-splunk.sh
 3. Creates role and user via REST API
-4. Generates token for MCP operations
-5. Updates Claude Desktop config
-6. Container exits (restart: no)
+4. Generates token for MCP operations (written to `.secrets/splunk-token` on the host)
+5. Makefile runs `claude-update` on the host when the token file appears
+6. splunk-init container exits (`restart: "no"`)
 
 ### MCP Operation
 

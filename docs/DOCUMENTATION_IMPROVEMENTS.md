@@ -167,3 +167,11 @@ All docs now use explicit cross-references:
 3. **Keep references current** with changes
 4. **Keep TROUBLESHOOTING.md as single source** for all issue solutions
 5. **Audit docs quarterly** for new duplication/inconsistencies
+
+---
+
+## 2026 — Makefile / `op run` alignment (major doc refresh)
+
+**Drivers**: `make up` no longer implies `make init`; Compose can run with `op run --env-file=tpl.env` when `.env` is absent. Docs had drift (README “common commands”, OVERVIEW secrets flow, DEVELOPER_GUIDE versions and `dd` admin claim, QUICK_START / INSTALLATION 1Password examples, ARCHITECTURE init diagram).
+
+**Updates** (summary): Root `README.md`, `AGENTS.md`, `docs/OVERVIEW.md`, `docs/CONFIGURATION.md`, `docs/ARCHITECTURE.md`, `docs/QUICK_START.md`, `docs/INSTALLATION.md`, `docs/DEVELOPER_GUIDE.md`, `docs/README.md` — aligned bootstrap narrative, optional `.env`, illustrative vs committed `tpl.env` paths, optional Claude log mount, removed stale Splunk `10.0` / MCP `0.2.4` pins, corrected `dd` role / `ADD_ADMIN_ROLE`, added “source of truth” index section.
