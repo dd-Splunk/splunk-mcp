@@ -169,25 +169,35 @@ make init
 
 ---
 
-#### Issue: `.env` file not created
+#### Issue: `.env` file not created / `SPLUNK_PASSWORD` not set
 
-**Error**: `Error: SPLUNK_PASSWORD not set`
+**Context**: `make up` uses **`op run --env-file=tpl.env`** when `.env` is missing. If `op` cannot resolve secrets, Compose will not get passwords.
+
+**Error**: `Error: SPLUNK_PASSWORD not set` (or similar from Compose)
 
 **Solution**:
 
-```bash
-# Manually create .env (if 1Password setup is problematic)
-cat > .env << EOF
-SPLUNK_IMAGE=splunk/splunk:10.0
-SPLUNK_PASSWORD=your_password_here
-SPLUNKBASE_USER=your_username
-SPLUNKBASE_PASS=your_password
-TZ=Europe/Brussels
-EOF
+1. Sign in: `op signin` (or use desktop integration) and confirm `op read` works for every path in **`tpl.env`**.
+2. Or **materialize `.env`** after fixing `tpl.env`:
 
-# Then start
-make up
-```
+   ```bash
+   make init
+   make up
+   ```
+
+3. Or create **`.env` manually** (dev only; do not commit):
+
+   ```bash
+   cat > .env << 'EOF'
+   SPLUNK_IMAGE=splunk/splunk:latest
+   SPLUNK_PASSWORD=your_password_here
+   SPLUNKBASE_USER=your_username
+   SPLUNKBASE_PASS=your_password
+   TZ=Europe/Brussels
+   EOF
+
+   make up
+   ```
 
 ---
 

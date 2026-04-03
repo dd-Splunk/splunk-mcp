@@ -12,17 +12,15 @@ This is a proof-of-concept environment that integrates:
 
 See ARCHITECTURE.md for detailed system design.
 
-## Tech Stack
+## Tech stack (pinning)
 
-| Component | Version | Purpose |
-| --------- | ------- | ------- |
-| Docker | Latest | Container runtime |
-| Docker Compose | Latest | Orchestration |
-| Splunk | 10.0 | Search platform |
-| MCP App | 0.2.4 | Protocol integration |
-| 1Password CLI | Latest | Secrets |
-| Make | Latest | Automation |
-| jq | Latest | JSON processing |
+| Component | Source of truth | Notes |
+| --------- | ---------------- | ----- |
+| Splunk Enterprise | `SPLUNK_IMAGE` in `tpl.env` / `.env` (default `splunk/splunk:latest`) | **Build** is whatever that tag resolves to when pulled—verify at runtime (`services/server/info`). |
+| Splunk MCP Server app | `SPLUNK_APPS_URL` in `compose.yml` (Splunkbase URLs, e.g. app `1924`) | Package **release** is in the URL path, not a separate semver in this repo. |
+| Docker / Compose | Host installation | Use recent versions; see [INSTALLATION.md](INSTALLATION.md). |
+| 1Password CLI | `op` | Used for `op run` / `op inject`. |
+| `make`, `jq`, `curl` | Host | Required by Makefile and scripts. |
 
 ## File Structure Explanation
 
@@ -59,15 +57,14 @@ services:
 #### `tpl.env`
 
 - Template for environment variables
-- Uses 1Password references: `op://vault/item/field`
-- Processed by `make init` to create `.env`
+- Uses 1Password references: `op://vault/item/field` (must match **your** vault)
+- Consumed by **`op run --env-file=tpl.env`** (default `make up` when `.env` is absent) or by **`make init`** → `.env`
 
-#### `.env` (git-ignored)
+#### `.env` (git-ignored, optional)
 
-- Runtime environment variables
-- Contains secrets from 1Password
-- Never committed to version control
-- Generated during `make init`
+- Runtime file produced by **`make init`** (`op inject`)
+- If present, Compose loads it automatically; if absent, the Makefile uses `op run` instead
+- Never commit to version control
 
 ### Scripts
 
@@ -79,7 +76,7 @@ Main initialization script (runs in `splunk-init`). Steps:
 
 2. **Creates role `mcp_tool_execute`** via `/services/authorization/roles` (idempotent).
 
-3. **Creates user `dd`** via `/services/authentication/users` with roles including `mcp_tool_execute` (PoC also assigns `user` and `admin`—tighten for real use).
+3. **Creates user `dd`** via `/services/authentication/users` with roles **`user`** and **`mcp_tool_execute`**. The **`admin`** role is **not** added unless **`ADD_ADMIN_ROLE=1`** (use only when you understand the privilege increase).
 
 4. **Encrypted MCP token** — GET `/servicesNS/admin/Splunk_MCP_Server/mcp_token?username=dd&output_mode=json`; writes token to `TOKEN_OUTPUT_FILE` (`.secrets/splunk-token`).
 
@@ -101,9 +98,9 @@ Host-side **Claude** / **Cursor** config is updated by `update-claude-config.sh`
 Key targets:
 
 ```makefile
-init:            # 1Password injection → .env
-up:              # Start containers, wait for token, claude-update
-down:            # Stop containers
+init:            # Optional: op inject -i tpl.env -o .env
+up:              # docker compose up (op run if no .env), wait for token, claude-update
+down:            # Stop containers (same env resolution as up)
 restart:         # Restart containers
 clean:           # Remove everything (destructive)
 logs:            # Follow container logs
@@ -145,12 +142,13 @@ cursor-mcp:      # Merge token into .cursor/mcp.json
 
 ### Customize Configuration
 
-**Change Splunk version** - Edit `compose.yml`:
+**Change Splunk image tag** — set in **`tpl.env`** / **`.env`** (variable `SPLUNK_IMAGE`), e.g.:
 
-```yaml
-environment:
-  SPLUNK_IMAGE: splunk/splunk:9.1
+```bash
+SPLUNK_IMAGE=splunk/splunk:9.4
 ```
+
+`compose.yml` references `${SPLUNK_IMAGE:-splunk/splunk:latest}` on the `so1` service `image:` key—not under `environment:`.
 
 **Change port mappings** - Edit `compose.yml`:
 

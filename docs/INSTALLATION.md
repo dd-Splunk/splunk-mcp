@@ -14,11 +14,10 @@ Before starting, ensure you have the following installed and configured:
    - Verify: `docker --version`
 
 2. **1Password CLI (op)**
-   - Installation: See 1Password CLI installation guide
-      command-line/)
+   - Documentation: [1Password CLI](https://developer.1password.com/docs/cli/)
    - macOS: `brew install 1password-cli`
    - Verify: `op --version`
-   - Authenticate: `op account add`
+   - Authenticate: `op account add` or use desktop app integration
 
 3. **Make Utility**
    - macOS: Pre-installed (part of Xcode)
@@ -73,9 +72,16 @@ Store credentials in 1Password Private vault:
 
 3. Click Save
 
-   - Windows: Use WSL with jq
+### Step 2: Align `tpl.env`
 
-### Step 2: Verify 1Password CLI Access
+The **`tpl.env`** file in this repository must reference vault items **you** can read with `op`. Item titles and vault names in this guide (`Splunk-MCP-PoC`, `Private`, etc.) are **examples**. Either:
+
+- Create items that match the `op://` paths in **`tpl.env`**, or  
+- Edit **`tpl.env`** so each `op://vault/item/field` matches your account.
+
+Without that alignment, `make init` and `make up` (which uses `op run` when `.env` is absent) will fail.
+
+### Step 3: Verify 1Password CLI Access
 
 Test that the CLI can access these items:
 
@@ -90,7 +96,7 @@ op read "op://Private/Splunkbase/username"
 op read "op://Private/Splunkbase/password"
 ```
 
-Each command should return the stored value without errors.
+Each command should return the stored value without errors. If you use different item paths, substitute those in the `op read` tests to match **`tpl.env`**.
 
 ## Repository Setup
 
@@ -128,11 +134,11 @@ Check `tpl.env` to understand what secrets are needed:
 cat tpl.env
 ```
 
-Example content:
+Example shape (paths **must** match your vault; see **Step 2** above):
 
 ```bash
 # Splunk Configuration
-SPLUNK_IMAGE=splunk/splunk:10.0
+SPLUNK_IMAGE=splunk/splunk:latest
 SPLUNK_PASSWORD=op://Private/Splunk-MCP-PoC/password
 SPLUNKBASE_USER=op://Private/Splunkbase/username
 SPLUNKBASE_PASS=op://Private/Splunkbase/password
@@ -151,12 +157,12 @@ make up
 
 This command:
 
-- Initializes environment if not done
-- Pulls Splunk image (if needed)
-- Starts `so1` container
-- Starts `splunk-init` container
-- Waits for Splunk to be ready
-- Runs initialization script
+- Runs **`docker compose up -d`** with secrets from **`.env`** (if present) or **`op run --env-file=tpl.env`** (if `.env` is absent)
+- Pulls the Splunk image when needed
+- Starts **`so1`**, then **`splunk-init`** after Splunk is healthy
+- Waits for **`.secrets/splunk-token`**, then runs **`make claude-update`**
+
+Optional: run **`make init`** first to create **`.env`** via `op inject` (see [CONFIGURATION.md](CONFIGURATION.md)).
 
 **Expected output**:
 
@@ -170,7 +176,7 @@ MCP Server API: https://localhost:8089/services/mcp
 Wait for Splunk to be ready (this may take 2-3 minutes). The Makefile waits for `.secrets/splunk-token` and then runs `make claude-update` when possible.
 ```
 
-### Step 2: Initialize Environment
+### Step 2: Monitor startup
 
 Wait 2-3 minutes for Splunk to fully start and initialize. You can monitor progress:
 
@@ -195,7 +201,7 @@ Expected output:
 ```text
 Checking Splunk container status...
 NAME           IMAGE                       COMMAND             STATUS
-so1            splunk/splunk:10.0          /sbin/entrypoint... Up 2 minutes
+so1            splunk/splunk:latest        /sbin/entrypoint... Up 2 minutes
 splunk-init    alpine:latest               sh -c ...          Exited (0)
 
 Splunk is ready ✓
@@ -260,25 +266,15 @@ Should contain:
 2. Reopen from Applications folder
 3. Splunk MCP should now be available
 
-### Step 9: Monitor Claude Logs (Optional)
+### Step 9: Claude logs in Splunk (optional)
 
-Claude Desktop logs are indexed in `index=claude_logs` for
-audit and debugging.
+The **`claude_logs`** index is created during setup, but **log files are only ingested** if Claude’s log directory is mounted into **`so1`** (see commented bind mount in **`compose.yml`**). Uncomment the macOS path, ensure it exists on the host, then recreate the stack.
 
-**View logs in Splunk Web UI:**
+**Search (when data is present):**
 
-```bash
-# In Splunk Web UI, use Search & Reporting:
-index=claude_logs | stats count by host,\
-  log_level
+```splunk
+index=claude_logs
 ```
-
-**Requirements:**
-
-Claude Desktop logs indexed in claude_logs index.
-
-- The setup script automatically creates the `claude_logs` index during initialization
-- Log ingestion starts immediately after Splunk is ready
 
 ## Verify Everything Works
 
