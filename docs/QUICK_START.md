@@ -1,184 +1,111 @@
-# Quick Start Guide
+# Quick Start
 
-## 5-Minute Setup
+Minimal steps to run the stack. For full detail see [INSTALLATION.md](INSTALLATION.md) and [CONFIGURATION.md](CONFIGURATION.md).
 
-### Prerequisites
+## Prerequisites
 
 ```bash
-# Verify these are installed
-docker --version        # Docker Desktop
-op --version           # 1Password CLI
-make --version         # Make utility
-jq --version          # JSON processor
-curl --version        # cURL (usually pre-installed)
+docker --version
+op --version              # 1Password CLI (signed in)
+make --version
+jq --version
+curl --version
 ```
 
-If any are missing, see INSTALLATION.md for details.
+## 1. Configure secrets (`tpl.env`)
 
-### Setup Steps
+1. Open **`tpl.env`** in the repo root.
+2. Set **`SPLUNK_IMAGE`** if you need a pinned Splunk tag (default `splunk/splunk:latest`).
+3. Replace every **`op://…`** path with references that exist **in your** 1Password vault (vault name, item title, field labels).
 
-#### 1. Configure 1Password (First Time Only)
+Documentation and quick-start examples often use item names like `Splunk-MCP-PoC` or vault `Private`; **those are illustrative**. The committed `tpl.env` may use different paths—**your file must match your vault**.
 
-Store these credentials in your 1Password Private vault:
+Verify reads work:
 
-- **Item 1: Splunk-MCP-PoC**
-  - Title: `Splunk-MCP-PoC`
-  - Password field: Your desired Splunk admin password
+```bash
+op read "op://YourVault/YourItem/password"
+```
 
-- **Item 2: Splunkbase**
-  - Title: `Splunkbase`
-  - Username field: Your Splunkbase username
-  - Password field: Your Splunkbase password
-
-#### 2. Clone Repository
+## 2. Clone and start
 
 ```bash
 git clone <repository-url>
 cd splunk-mcp
-```
-
-#### 3. Start Splunk
-
-```bash
 make up
 ```
 
-Wait 2-3 minutes for Splunk to fully initialize.
+- **`make up`** does **not** require `make init` first. If `.env` is missing, the Makefile runs Compose with `op run --env-file=tpl.env`.
+- Wait **2–3 minutes** for Splunk and `splunk-init` to finish; the Makefile waits for `.secrets/splunk-token` then runs `claude-update`.
 
-#### 5. Verify It Works
+**Optional:** materialize a `.env` file:
 
 ```bash
-make status
+make init    # op inject → .env
+make up
 ```
 
-Should show `Splunk is ready ✓`
-
-Claude logs are automatically indexed in the `claude_logs` index. Search them anytime:
+## 3. Verify
 
 ```bash
-# View Claude logs in Splunk Web UI
-# Navigate to: Search & Reporting → index=claude_logs
-```
-
-#### 6. Verify Token Generated
-
-The token was auto-generated during `make up`. Verify it:
-
-```bash
+make status          # Expect "Splunk is ready ✓" when healthy
 ls -la .secrets/splunk-token
 ```
 
-#### 7. Restart Claude Desktop
+**Splunk Web:** `https://localhost:8000` — `admin` / password from your `SPLUNK_PASSWORD` source.
 
-- Quit Claude Desktop completely: Cmd+Q
-- Reopen from Applications folder
-- Splunk MCP server should now be available in tools
-
-## Access Splunk
-
-### Web UI
-
-- URL: <https://localhost:8000>
-- Credentials: `admin` / (your 1Password password)
-
-### REST API
+**REST smoke test:**
 
 ```bash
-curl -k -u admin:<password> https://localhost:8089/services/server/info
+curl -k -u "admin:${SPLUNK_PASSWORD}" https://localhost:8089/services/server/info
 ```
 
-## Commands
+(Or paste your admin password; do not commit it.)
+
+## 4. Claude Desktop
+
+1. Quit Claude completely (e.g. **Cmd+Q** on macOS).
+2. Relaunch. The repo runs **`make claude-update`** after the token exists; that merges the Splunk MCP entry into  
+   `~/Library/Application Support/Claude/claude_desktop_config.json`.
+
+## 5. Cursor
+
+After `.secrets/splunk-token` exists:
 
 ```bash
-make status      # Check if ready
-make logs        # View real-time logs
-make restart     # Restart container
-make down        # Stop container
-make clean       # Delete all data (destructive!)
-make help        # Show all available targets
+make cursor-mcp
 ```
 
-## Next Steps
+Restart Cursor or reload MCP servers.
 
-1. **Query Claude Logs**: Search `index=claude_logs` in Splunk
-2. **Explore Splunk Web UI**: Learn the interface at <https://localhost:8000>
-3. **Test Claude Integration**: Use Splunk features through Claude Desktop
-4. **Add Sample Data**: Ingest test data through Splunk UI
-5. **Customize**: Edit `compose.yml`, `tpl.env`, or the `SA-S4R` app as needed
-6. **Review ARCHITECTURE.md**: Understand the system components
+## Claude logs in Splunk (optional)
 
-## Troubleshooting
+Indexing Claude Desktop logs into **`claude_logs`** is **not** enabled unless:
 
-See **TROUBLESHOOTING.md** for detailed solutions. Quick checks:
+1. You **uncomment** the Claude logs bind mount in **`compose.yml`** (macOS path shown in comments), **and**
+2. The path exists on the host so `/var/log/claude_logs` appears inside `so1`.
+
+Then `setup-splunk.sh` can create the monitor input. Search: `index=claude_logs`.
+
+## Common commands
 
 ```bash
-make status      # Verify Splunk is ready
-make logs        # Check for errors
-make down && make clean && make up  # Full reset
+make help
+make status
+make logs
+make restart
+make down
+make verify-mcp-remote
+make clean            # destructive; prompts for confirmation
 ```
 
-## File Structure
+## Next steps
 
-```text
-splunk-mcp/
-├── compose.yml              # Docker Compose configuration
-├── Makefile                 # Automation targets
-├── README.md                # Main documentation
-├── docs/                    # Extended documentation
-├── tpl.env                  # 1Password template → .env
-├── SA-S4R/                  # Sample Splunk app (Eventgen)
-├── scripts/
-│   ├── setup-splunk.sh
-│   ├── update-claude-config.sh
-│   └── update-cursor-config.sh
-└── .env                     # Runtime config (git-ignored)
-```
+- [CONFIGURATION.md](CONFIGURATION.md) — ports, env vars, clients  
+- [OVERVIEW.md](OVERVIEW.md) — architecture  
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — failures  
 
-## Important Notes
+## Notes
 
-- **`.env` file**: Contains secrets - never commit to git
-- **Token expiry**: Tokens expire after 15 days
-- **Port usage**: Uses ports 8000 and 8089 (change if needed in compose.yml)
-- **Data persistence**: Uses named volumes (preserved on container restart)
-- **Self-signed certificates**: OK for localhost development only
-
-## Cleanup
-
-To completely remove Splunk (deletes all data):
-
-```bash
-make clean
-```
-
-This removes:
-
-- Docker containers
-- Named volumes (so1-var, so1-etc)
-- .env file
-
-## Getting More Help
-
-- **Full Setup Guide**: See INSTALLATION.md
-- **Troubleshooting**: See TROUBLESHOOTING.md
-- **Architecture Details**: See ARCHITECTURE.md
-- **API Usage**: See API_REFERENCE.md
-- **Development**: See DEVELOPER_GUIDE.md
-- **Splunk Docs**: See official Splunk docs
-
-## Quick Reference
-
-| Task | Command |
-| ---- | ------- |
-| Start (includes init) | `make up` |
-| Stop | `make down` |
-| Restart | `make restart` |
-| View logs | `make logs` |
-| Check status | `make status` |
-| Help | `make help` |
-| Clean all | `make clean` |
-
----
-
-**Ready to explore Splunk with Claude Desktop?**
-
-- **Splunk Docs**: See Splunk documentation
+- **`.env`**: git-ignored; never commit. Prefer `op run` / `make up` without a file if you want fewer secrets on disk.
+- **MCP token lifetime**: depends on Splunk MCP Server app and Splunk settings; regenerate by re-running setup or documented flows if clients fail with 401.
+- **Self-signed TLS**: local dev only; see [SECURITY.md](SECURITY.md).

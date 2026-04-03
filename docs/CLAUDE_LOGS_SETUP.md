@@ -1,5 +1,7 @@
 # Claude Logs Onboarding Documentation Update
 
+> **Note:** This file is a **historical changelog** of documentation edits. For current behavior (optional bind mount, `claude_logs` index), see [CONFIGURATION.md](CONFIGURATION.md) and [QUICK_START.md](QUICK_START.md).
+
 ## Overview
 
 Documentation has been updated to fully document the Claude logs
