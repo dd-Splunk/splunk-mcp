@@ -1,6 +1,6 @@
 # splunk-mcp
 
-Local **proof-of-concept** for running **Splunk Enterprise** with the **Splunk MCP Server** app and connecting **Claude Desktop** or **Cursor** via the Model Context Protocol (MCP), using Docker Compose and the **1Password CLI** (`op`) for secrets.
+Local **proof-of-concept** for running **Splunk Enterprise** with the **Splunk MCP Server** app and connecting **Claude Desktop**, **Cursor**, or **Goose** via the Model Context Protocol (MCP), using Docker Compose and the **1Password CLI** (`op`) for secrets.
 
 ## What you get
 
@@ -47,6 +47,14 @@ make cursor-mcp    # merges token into .cursor/mcp.json
 
 Restart Cursor or reload MCP servers.
 
+**Goose:** after `.secrets/splunk-token` exists:
+
+```bash
+make goose-update  # configures ~/.config/goose/config.yaml with splunk-mcp-server extension
+```
+
+Restart Goose for changes to take effect.
+
 ## Common commands
 
 | Command | Purpose |
@@ -58,6 +66,7 @@ Restart Cursor or reload MCP servers.
 | `make logs` | Follow Splunk (`so1`) logs |
 | `make status` | Compose status + quick API readiness |
 | `make claude-update` | Merge Splunk MCP into Claude Desktop config |
+| `make goose-update` | Configure Goose with Splunk MCP extension (`.config/goose/config.yaml`) |
 | `make cursor-mcp` | Merge Splunk MCP into `.cursor/mcp.json` |
 | `make verify-mcp-remote` | Smoke-test `mcp-remote` → Splunk MCP |
 | `make clean` | Destructive: remove volumes and `.env` / token (prompts first) |
