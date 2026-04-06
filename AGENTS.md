@@ -5,7 +5,7 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`.
 ## What this repo is
 
 - **Purpose**: local PoC that runs **Splunk Enterprise** in Docker and exposes **Splunk MCP Server** on `https://localhost:8089/services/mcp`.
-- **Client bridge**: Cursor/Claude connect via `npx mcp-remote` (see `make cursor-mcp`, `make claude-update`).
+- **Client bridge**: Claude Desktop, Cursor, or Goose connect via `npx mcp-remote` (see `make claude-update`, `make cursor-mcp`, `make goose-update`).
 
 ## Golden rules (don’t break these)
 
@@ -13,6 +13,7 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`.
   - `.env` (admin password, Splunkbase creds)
   - `.secrets/*` (encrypted MCP token, generated `dd` password)
   - `.cursor/mcp.json` if it contains a live Bearer token
+  - `.config/goose/config.yaml` (contains token in extension config)
 - **Do not paste tokens/passwords into issues/PRs/logs**.
 - **Keep changes idempotent**: `make up`/`splunk-init` should be safe to run repeatedly.
 
@@ -38,7 +39,13 @@ This script performs one-time-ish setup via Splunk REST:
   - Creates user `dd` with roles `user` + `mcp_tool_execute` (admin is **not** granted by default).
   - Generates an **encrypted MCP token** for `dd` and writes it to `.secrets/splunk-token`.
   - If `DD_PASSWORD` isn’t provided, generates one and persists it to `.secrets/dd-password` (git-ignored).
+## Client configuration scripts
 
+After token generation, client config can be updated via:
+
+- **`scripts/update-claude-config.sh`**: Updates `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS).
+- **`scripts/update-cursor-config.sh`**: Updates `.cursor/mcp.json` with Splunk MCP server config.
+- **`scripts/update-goose-config.sh`**: Updates `~/.config/goose/config.yaml` with Splunk MCP extension (Goose uses `type: stdio` extensions, not `mcpServers`).
 ## Quick verification commands
 
 - **Is Splunk up?**
