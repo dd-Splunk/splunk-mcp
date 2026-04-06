@@ -4,7 +4,7 @@ This repository packages a **repeatable local environment** for:
 
 1. Running **Splunk Enterprise** in Docker with the **Splunk MCP Server** application from Splunkbase.
 2. Provisioning a dedicated Splunk user and **encrypted MCP token** suitable for the MCP HTTP endpoint.
-3. Wiring **Claude Desktop** or **Cursor** to that endpoint via **`mcp-remote`** (stdio bridge to remote HTTP MCP).
+3. Wiring **Claude Desktop**, **Cursor**, or **Goose** to that endpoint via **`mcp-remote`** (stdio bridge to remote HTTP MCP).
 
 It is a **proof-of-concept**: fast iteration on Splunk + LLM tooling, not a production deployment template.
 
@@ -46,7 +46,7 @@ You need valid **Splunkbase** credentials in `.env` (`SPLUNKBASE_USERNAME` / `SP
 
 ### Client bridge (`mcp-remote`)
 
-Claude and Cursor do not speak HTTP MCP natively in the same process as the editor; configuration uses:
+Claude, Cursor, and Goose do not speak HTTP MCP natively in the same process as the editor; configuration uses:
 
 ```text
 npx -y mcp-remote https://localhost:8089/services/mcp --header "Authorization: Bearer <token>"
@@ -62,7 +62,7 @@ with **`NODE_TLS_REJECT_UNAUTHORIZED=0`** to accept Splunk’s default self-sign
    so variables are injected **at process invocation** and nothing is written to `.env`.
 3. **Optional (`make init`)**: runs `op inject -i tpl.env -o .env` for a materialized `.env` (some users or CI prefer a file on disk).
 4. **Compose** supplies `SPLUNK_PASSWORD`, Splunkbase credentials, and related env vars to the `so1` and `splunk-init` services.
-5. **Token file** `.secrets/splunk-token` is created by `splunk-init` / `setup-splunk.sh`. **`make claude-update`** and **`make cursor-mcp`** read it to patch client JSON.
+5. **Token file** `.secrets/splunk-token` is created by `splunk-init` / `setup-splunk.sh`. **`make claude-update`**, **`make cursor-mcp`**, and **`make goose-update`** read it to patch client config.
 
 ## Authentication model (as implemented)
 
@@ -91,7 +91,10 @@ make up
 Optional: make init
   → op inject → .env  (then make up uses .env like any Compose project)
 
-User restarts Claude Desktop or Cursor
+Optional: make cursor-mcp, make goose-update
+  → update Cursor or Goose client config with the token
+
+User restarts Claude Desktop, Cursor, or Goose
   → mcp-remote connects to https://localhost:8089/services/mcp with Bearer token
 ```
 

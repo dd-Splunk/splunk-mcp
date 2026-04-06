@@ -79,6 +79,7 @@ Requires `op` signed in and access to the referenced items. If you skip this, us
 | `init` | Optional: `op inject -i tpl.env -o .env` (skip if `.env` exists unless `FORCE=1`) |
 | `up` | `docker compose up -d` (via `op run --env-file=tpl.env` when `.env` is absent), wait for `.secrets/splunk-token`, then `claude-update` |
 | `claude-update` | Runs `scripts/update-claude-config.sh` |
+| `goose-update` | Runs `scripts/update-goose-config.sh` → `~/.config/goose/config.yaml` |
 | `cursor-mcp` | Runs `scripts/update-cursor-config.sh` → `.cursor/mcp.json` |
 | `down` / `restart` / `logs` / `status` / `clean` | Same Compose env rules as `up`; see `make help` |
 
@@ -106,6 +107,14 @@ The init script also generates a dedicated password for `dd` if `DD_PASSWORD` is
 - Default output: **`.cursor/mcp.json`** (override with `CURSOR_MCP_JSON`).
 - `update-cursor-config.sh` merges **`splunk-mcp-server`** the same way as Claude.
 - Example placeholder without secrets: **`.cursor/mcp.json.example`**.
+
+## Goose configuration
+
+- Path: **`~/.config/goose/config.yaml`** (Unix/Linux and macOS).
+- Goose uses **extensions** with `type: stdio` for MCP server configuration (different from Claude's format).
+- `update-goose-config.sh` adds `splunk-mcp-server` as an extension entry under `extensions` section.
+- Idempotent: safely updates or creates the extension without corrupting existing config.
+- Requires Python 3 for YAML regex manipulation.
 
 ## Environment overrides (optional)
 
