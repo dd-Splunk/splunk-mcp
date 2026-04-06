@@ -39,6 +39,7 @@ This script performs one-time-ish setup via Splunk REST:
   - Creates user `dd` with roles `user` + `mcp_tool_execute` (admin is **not** granted by default).
   - Generates an **encrypted MCP token** for `dd` and writes it to `.secrets/splunk-token`.
   - If `DD_PASSWORD` isn’t provided, generates one and persists it to `.secrets/dd-password` (git-ignored).
+
 ## Client configuration scripts
 
 After token generation, client config can be updated via:
@@ -46,6 +47,7 @@ After token generation, client config can be updated via:
 - **`scripts/update-claude-config.sh`**: Updates `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS).
 - **`scripts/update-cursor-config.sh`**: Updates `.cursor/mcp.json` with Splunk MCP server config.
 - **`scripts/update-goose-config.sh`**: Updates `~/.config/goose/config.yaml` with Splunk MCP extension (Goose uses `type: stdio` extensions, not `mcpServers`).
+
 ## Quick verification commands
 
 - **Is Splunk up?**
