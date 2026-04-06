@@ -22,13 +22,13 @@ define DC_CMD
 	fi
 endef
 
-.PHONY: help init up wait-token down clean logs claude-update cursor-mcp verify-mcp-remote status status-exec-check restart
+.PHONY: help init up wait-token down clean logs claude-update goose-update cursor-mcp verify-mcp-remote status status-exec-check restart
 
 help:
 	@echo "Splunk MCP Server - PoC Environment"
 	@echo ""
 	@echo "Available targets:"
-	@echo "  make up             - Start Splunk and configure Claude Desktop (waits for token)"
+	@echo "  make up             - Start Splunk and configure Claude Desktop and Goose (waits for token)"
 	@echo "                       (prefers in-memory env via 1Password; falls back to $(ENV_OUT) if present)"
 	@echo "  make init           - [legacy/optional] Write $(ENV_OUT) from $(ENV_FILE) (op inject)"
 	@echo "  make init FORCE=1   - Re-generate $(ENV_OUT) (op inject)"
@@ -39,6 +39,7 @@ help:
 	@echo "  make logs           - Follow Splunk container logs"
 	@echo "  make status         - Check Splunk container status"
 	@echo "  make claude-update  - Update Claude Desktop config with saved token"
+	@echo "  make goose-update   - Update Goose config with Splunk MCP extension"
 	@echo "  make cursor-mcp     - Write .cursor/mcp.json for Splunk MCP (from $(TOKEN_FILE))"
 	@echo "  make verify-mcp-remote - Smoke-test mcp-remote → Splunk (correct header quoting)"
 	@echo ""
@@ -124,6 +125,9 @@ status:
 
 claude-update:
 	@./scripts/update-claude-config.sh "$(TOKEN_FILE)"
+
+goose-update:
+	@./scripts/update-goose-config.sh "$(TOKEN_FILE)"
 
 cursor-mcp:
 	@./scripts/update-cursor-config.sh "$(TOKEN_FILE)"
