@@ -29,7 +29,7 @@ define DC_LITE
 	@$(DC) $(1)
 endef
 
-.PHONY: help init up wait-token down clean logs claude-update goose-update cursor-mcp verify-mcp-remote status status-exec-check restart lint-md lint-md-fix
+.PHONY: help init check-env-for-up up wait-token down clean logs claude-update goose-update cursor-mcp verify-mcp-remote status status-exec-check restart lint-md lint-md-fix
 
 help:
 	@echo "Splunk MCP Server - PoC Environment"
@@ -71,7 +71,26 @@ init:
 	@"$(OP)" inject -i "$(ENV_FILE)" -o "$(ENV_OUT)"
 	@echo "Environment initialized: $(ENV_OUT) written."
 
-up:
+# Ensures Splunk will receive real secrets at create time (avoids empty SPLUNKBASE_* / ansible failure).
+check-env-for-up:
+	@if [[ -f "$(ENV_OUT)" ]]; then \
+		echo "Using $(ENV_OUT) for Compose (verify SPLUNK_* and SPLUNKBASE_* are set)."; \
+	else \
+		command -v "$(OP)" >/dev/null 2>&1 || { \
+			echo "Error: $(ENV_OUT) not found and 1Password CLI (op) not available."; \
+			echo "Create $(ENV_OUT) (e.g. make init) or install/sign in to op before make up."; \
+			exit 1; \
+		}; \
+		"$(OP)" run --env-file="$(ENV_FILE)" -- sh -c ' \
+			if [ -z "$$SPLUNK_PASSWORD" ] || [ -z "$$SPLUNKBASE_USER" ] || [ -z "$$SPLUNKBASE_PASS" ]; then \
+				echo "Error: SPLUNK_PASSWORD, SPLUNKBASE_USER, and SPLUNKBASE_PASS must be non-empty after op run."; \
+				echo "Fix op:// paths in $(ENV_FILE) (item names with spaces must match exactly). Test with: op read \"op://...\""; \
+				echo "Do not start the stack with plain docker compose up without these env vars."; \
+				exit 1; \
+			fi'; \
+	fi
+
+up: check-env-for-up
 	@echo "Starting Splunk with MCP Server app..."
 	@$(call DC_CMD,up -d)
 	@echo ""
@@ -118,16 +137,19 @@ clean:
 		echo "Cleanup cancelled."; \
 	fi
 
+# Use docker logs (not docker compose logs) so missing host .env does not print misleading
+# "variable is not set" warnings; credentials are only needed at container create (make up).
 logs:
-	@$(call DC_LITE,logs -f so1)
+	@docker logs -f so1 2>&1 || { echo "Hint: container so1 not found. Is the stack up? Try: make up"; exit 1; }
 
-# Used by status: DC_LITE must not be embedded in another shell line (Make expands it to a full recipe block).
+# Used by status: avoid compose exec without env (same as logs).
 status-exec-check:
-	@$(call DC_LITE,exec so1 curl -k -s https://localhost:8089/services/server/info 2>/dev/null | grep -q serverName)
+	@docker exec so1 curl -k -s https://localhost:8089/services/server/info 2>/dev/null | grep -q serverName
 
 status:
 	@echo "Checking Splunk container status..."
-	@$(call DC_LITE,ps)
+	@docker ps -a --filter "name=so1" --format "table {{.Names}}\t{{.Status}}\t{{.Image}}" 2>/dev/null || true
+	@docker ps -a --filter "name=splunk-init" --format "table {{.Names}}\t{{.Status}}\t{{.Image}}" 2>/dev/null || true
 	@echo ""
 	@$(MAKE) status-exec-check && echo "Splunk is ready ✓" || echo "Splunk is not ready yet..."
 

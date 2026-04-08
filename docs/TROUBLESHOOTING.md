@@ -201,6 +201,30 @@ make init
 
 ---
 
+#### Issue: Splunk logs show `Invalid Splunkbase credentials` / ansible inventory errors
+
+**Cause**: The **`so1`** container was created with **empty** `SPLUNKBASE_USER` / `SPLUNKBASE_PASS` (and often `SPLUNK_PASSWORD`). That happens if you run **`docker compose up -d`** without a **`.env`** file and without **`op run --env-file=tpl.env`**—Compose substitutes blank strings, and Splunk’s entrypoint refuses Splunkbase downloads.
+
+**Fix**:
+
+1. Prefer **`make up`**, which injects secrets via **`op run`** (or uses **`.env`**). Do not rely on plain **`docker compose up`** unless **`.env`** exists and is populated.
+2. Verify 1Password paths in **`tpl.env`** (item titles with **spaces** must match exactly). Test:
+
+   ```bash
+   op read "op://YourVault/YourItem/password"
+   ```
+
+3. After changing secrets, reset volumes so the container is **recreated** with new env:
+
+   ```bash
+   make clean   # or: make down && docker volume rm so1-var so1-etc
+   make up
+   ```
+
+**Note**: **`make logs`** uses **`docker logs so1`** (not `docker compose logs`) so you do not see misleading host-side warnings about unset variables when **`.env`** is absent; those warnings do not fix a container that was already started without credentials.
+
+---
+
 ### Splunk Initialization Issues
 
 #### Issue: splunk-init container fails
