@@ -1,5 +1,7 @@
 ## compose.yml
 
+**Optional:** copy **`docker-compose.override.yml.example`** to **`docker-compose.override.yml`** (gitignored) to change host ports or add bind mounts without editing the main file. **`SPLUNK_APPS_URL`** in **`compose.yml`** includes comments identifying each Splunkbase app ID.
+
 ### Service `so1` (Splunk)
 
 | Setting | Meaning |

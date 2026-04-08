@@ -2,6 +2,15 @@
 
 Local **proof-of-concept** for running **Splunk Enterprise** with the **Splunk MCP Server** app and connecting **Claude Desktop**, **Cursor**, or **Goose** via the Model Context Protocol (MCP), using Docker Compose and the **1Password CLI** (`op`) for secrets.
 
+## Audience
+
+- **Engineers** standing up a local Splunk + MCP stack.
+- **Presales / SEs** running a repeatable customer or internal demo—see **[docs/PRESALES.md](docs/PRESALES.md)** (checklist, timing, talking points, handoff).
+
+## New SE / demo takeover
+
+Use **[docs/PRESALES.md](docs/PRESALES.md)** as the single entry point: secrets (**1Password** or plain **`.env`**), Splunkbase/network requirements, **identity** (admin vs `dd` vs Bearer token), sample SPL, LLM steps, and greenfield vs **`make clean`**. **`compose.yml`** documents **`SPLUNK_APPS_URL`** app IDs; **`docker-compose.override.yml.example`** shows optional port and mount overrides (copy to **`docker-compose.override.yml`**, gitignored).
+
 ## What you get
 
 - Splunk Web at `https://localhost:8000` and the management API (including MCP) on `https://localhost:8089/services/mcp`
@@ -12,7 +21,7 @@ Local **proof-of-concept** for running **Splunk Enterprise** with the **Splunk M
 ## Requirements
 
 - Docker Desktop (or compatible engine) with Compose
-- **1Password CLI** (`op`), signed in (`op signin` or desktop integration), with access to the vault items referenced in **`tpl.env`**
+- **Secrets:** either **1Password CLI** (`op`) with vault items matching **`tpl.env`**, **or** a local **`.env`** file (git-ignored) with the same variables—see [docs/PRESALES.md](docs/PRESALES.md)
 - `make`, `bash`, `curl`, `jq`
 - Node/npm for `npx mcp-remote` (Claude / Cursor MCP client configs)
 
@@ -37,7 +46,7 @@ Local **proof-of-concept** for running **Splunk Enterprise** with the **Splunk M
    make up
    ```
 
-4. Restart **Claude Desktop** so it loads `~/Library/Application Support/Claude/claude_desktop_config.json` (updated when the token appears).
+4. Restart **Claude Desktop** so it loads `~/Library/Application Support/Claude/claude_desktop_config.json` (updated when the token appears). **`make up` runs `make claude-update` for you** once the token file exists.
 
 **Cursor:** after `.secrets/splunk-token` exists:
 
@@ -86,6 +95,9 @@ Restart Goose for changes to take effect.
 | [docs/API_REFERENCE.md](docs/API_REFERENCE.md) | REST / MCP endpoints |
 | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common failures |
 | [docs/SA-S4R-APP.md](docs/SA-S4R-APP.md) | Bundled sample app and Eventgen |
+| [docs/PRESALES.md](docs/PRESALES.md) | Demos, checklist, handoff for presales |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute; verification; secrets policy |
+| [LICENSE](LICENSE) | MIT |
 
 ## Security
 
@@ -95,13 +107,14 @@ This repo targets **local development**: self-signed TLS, `NODE_TLS_REJECT_UNAUT
 
 ```text
 splunk-mcp/
-├── compose.yml              # Splunk + one-shot init container
-├── Makefile                 # Compose wrappers (op run or .env), client helpers
-├── tpl.env                  # Template: op:// references and non-secret defaults
-├── scripts/                 # setup-splunk.sh, Claude/Cursor MCP writers
-├── SA-S4R/                  # Sample Splunk app (Eventgen demo data)
-├── .secrets/                # splunk-token, dd-password (git-ignored)
-└── docs/                    # Extended documentation
+├── compose.yml                        # Splunk + one-shot init container
+├── docker-compose.override.yml.example  # Optional: copy to docker-compose.override.yml
+├── Makefile                           # Compose wrappers (op run or .env), client helpers
+├── tpl.env                            # Template: op:// references and non-secret defaults
+├── scripts/                           # setup-splunk.sh, Claude/Cursor MCP writers
+├── SA-S4R/                            # Sample Splunk app (Eventgen demo data)
+├── .secrets/                          # splunk-token, dd-password (git-ignored)
+└── docs/                              # Extended documentation
 ```
 
-**Source of truth** for behavior: `Makefile`, `compose.yml`, `scripts/setup-splunk.sh`. **Authoritative** contributor notes: [AGENTS.md](AGENTS.md).
+**Source of truth** for behavior: `Makefile`, `compose.yml`, `scripts/setup-splunk.sh`. **Authoritative** contributor notes: [AGENTS.md](AGENTS.md). **Contributing:** [CONTRIBUTING.md](CONTRIBUTING.md) · **License:** [LICENSE](LICENSE) (MIT).
