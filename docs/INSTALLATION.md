@@ -1,397 +1,158 @@
-# Installation & Setup Guide
+# Installation & setup
+
+Step-by-step install. For a short path, use [QUICK_START.md](QUICK_START.md). If anything fails, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 ## Prerequisites
 
-Before starting, ensure you have the following installed and configured:
+### System
 
-### Required Software
+| Tier | CPUs | RAM | Disk (free) |
+| ---- | ---- | --- | ----------- |
+| Minimum | 2 | 4 GB | ~10 GB |
+| Recommended | 4 | 8 GB | ~20 GB |
 
-1. **Docker Desktop**
-   - macOS: [Download from Docker Hub](
-      https://www.docker.com/products/docker-desktop)
-   - Linux: `sudo apt-get install docker.io`
-   - Windows: Docker Desktop
-   - Verify: `docker --version`
+### Software
 
-2. **1Password CLI (op)**
-   - Documentation: [1Password CLI](https://developer.1password.com/docs/cli/)
-   - macOS: `brew install 1password-cli`
-   - Verify: `op --version`
-   - Authenticate: `op account add` or use desktop app integration
+| Tool | Purpose | Verify |
+| ---- | ------- | ------ |
+| Docker + Compose | Splunk containers | `docker --version` |
+| 1Password CLI (`op`) | Secrets from `tpl.env` | `op --version` (sign in: `op account add` or desktop integration) |
+| `make`, `bash` | `Makefile` workflows | `make --version` |
+| `curl`, `jq` | Scripts / REST | `curl --version`, `jq --version` |
+| Node/npm | `npx mcp-remote` for MCP clients | `node --version` |
 
-3. **Make Utility**
-   - macOS: Pre-installed (part of Xcode)
-   - Linux: `sudo apt-get install make`
-   - Windows: Use WSL or alternatives (e.g., `choco install make`)
-   - Verify: `make --version`
+Optional: **Git** to clone; an editor (e.g. VS Code) to edit `tpl.env` and `compose.yml`.
 
-4. **jq** (JSON processor)
-   - macOS: `brew install jq`
-   - Linux: `sudo apt-get install jq`
-   - Windows: Use WSL for jq
-   - Verify: `jq --version`
+**Windows:** Prefer **WSL2** with Docker so `make` and paths behave like the docs (macOS/Linux).
 
-5. **curl** (already included on most systems)
-   - Verify: `curl --version`
+**Without 1Password:** you can still run the stack with a git-ignored **`.env`** file containing plain values for `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, and optional `SPLUNK_IMAGE` / `TZ`. See **[PRESALES.md](PRESALES.md)** (Path B).
 
-### Optional Tools
+## 1Password
 
-- **Git**: For cloning the repository
-  - Verify: `git --version`
+### Create items (example names)
 
-- **VS Code**: For editing configuration files
-  - URL: <https://code.visualstudio.com>
+Use any vault you control. Names below are **illustrative**—they must match whatever you put in **`tpl.env`**.
 
-## 1Password Setup
+1. **Splunk admin password** — e.g. a Login item whose **password** field holds the Splunk `admin` password.
+2. **Splunkbase** — a Login item with **username** and **password** for [Splunkbase](https://splunkbase.splunk.com/) (required for app downloads at container start).
 
-### Step 1: Create 1Password Items
+### Align `tpl.env`
 
-Store credentials in 1Password Private vault:
+Either create items that match each `op://vault/item/field` in **`tpl.env`**, or edit **`tpl.env`** so every path resolves in your vault. Without that, `make up` (with `op run`) and `make init` will fail.
 
-#### Item 1: Splunk-MCP-PoC
+### Test reads
 
-1. Open 1Password
-2. Click the `+` button to create a new item
-3. Select "Login" as the type
-4. Set the following:
-   - **Title**: `Splunk-MCP-PoC`
-   - **Username**: `admin` (or leave empty)
-   - **Password**: Your desired Splunk admin password
-   - **Vault**: Private
-
-5. Click Save
-
-#### Item 2: Splunkbase
-
-1. Create another "Login" item
-2. Set the following:
-   - **Title**: `Splunkbase`
-   - **Username**: Your Splunkbase username
-   - **Password**: Your Splunkbase password
-   - **Vault**: Private
-
-3. Click Save
-
-### Step 2: Align `tpl.env`
-
-The **`tpl.env`** file in this repository must reference vault items **you** can read with `op`. Item titles and vault names in this guide (`Splunk-MCP-PoC`, `Private`, etc.) are **examples**. Either:
-
-- Create items that match the `op://` paths in **`tpl.env`**, or  
-- Edit **`tpl.env`** so each `op://vault/item/field` matches your account.
-
-Without that alignment, `make init` and `make up` (which uses `op run` when `.env` is absent) will fail.
-
-### Step 3: Verify 1Password CLI Access
-
-Test that the CLI can access these items:
+Substitute paths to match **`tpl.env`**:
 
 ```bash
-# Test Splunk-MCP-PoC password
 op read "op://YourVault/YourItem/password"
-
-# Test Splunkbase username
 op read "op://YourVault/Splunkbase/username"
-
-# Test Splunkbase password
 op read "op://YourVault/Splunkbase/password"
 ```
 
-Each command should return the stored value without errors. If you use different item paths, substitute those in the `op read` tests to match **`tpl.env`**.
-
-## Repository Setup
-
-### Step 1: Clone Repository
+## Clone and configure
 
 ```bash
 git clone <repository-url> splunk-mcp
 cd splunk-mcp
 ```
 
-### Step 2: Verify File Structure
-
-Ensure you have these files:
-
-```text
-splunk-mcp/
-├── .gitignore
-├── Makefile
-├── README.md
-├── compose.yml
-├── tpl.env              # 1Password template
-├── SA-S4R/              # Sample app
-├── scripts/
-│   ├── setup-splunk.sh
-│   ├── update-claude-config.sh
-│   └── update-cursor-config.sh
-└── docs/
-```
-
-### Step 3: Review Configuration
-
-Check `tpl.env` to understand what secrets are needed:
+Review secrets template:
 
 ```bash
 cat tpl.env
 ```
 
-Example shape (paths **must** match your vault; see **Step 2** above):
+Example shape (paths must be yours):
 
 ```bash
-# Splunk Configuration
 SPLUNK_IMAGE=splunk/splunk:latest
 SPLUNK_PASSWORD=op://YourVault/YourItem/password
 SPLUNKBASE_USER=op://YourVault/Splunkbase/username
 SPLUNKBASE_PASS=op://YourVault/Splunkbase/password
-
-# Timezone
 TZ=Europe/Brussels
 ```
 
-## Starting the Environment
+Expected layout includes `Makefile`, `compose.yml`, `tpl.env`, `scripts/` (including `setup-splunk.sh`, `update-*-config.sh`, `verify-mcp-remote.sh`), and `SA-S4R/`. See root [README.md](../README.md) for the full picture.
 
-### Step 1: Start Splunk
+## Start the stack
 
 ```bash
 make up
 ```
 
-This command:
+This runs **`docker compose up -d`** using **`.env`** if present, otherwise **`op run --env-file=tpl.env`**. It starts **`so1`**, runs **`splunk-init`** after Splunk is healthy, waits for **`.secrets/splunk-token`**, then runs **`make claude-update`** (Claude Desktop config on macOS).
 
-- Runs **`docker compose up -d`** with secrets from **`.env`** (if present) or **`op run --env-file=tpl.env`** (if `.env` is absent)
-- Pulls the Splunk image when needed
-- Starts **`so1`**, then **`splunk-init`** after Splunk is healthy
-- Waits for **`.secrets/splunk-token`**, then runs **`make claude-update`**
+Optional file-based env:
 
-Optional: run **`make init`** first to create **`.env`** via `op inject` (see [CONFIGURATION.md](CONFIGURATION.md)).
-
-**Expected output**:
-
-```text
-Starting Splunk with MCP Server app...
-
-Splunk is starting...
-Web UI will be available at: https://localhost:8000
-MCP Server API: https://localhost:8089/services/mcp
-
-Wait for Splunk to be ready (this may take 2-3 minutes). The Makefile waits for `.secrets/splunk-token` and then runs `make claude-update` when possible.
+```bash
+make init    # op inject: tpl.env → .env
+make up
 ```
 
-### Step 2: Monitor startup
-
-Wait 2-3 minutes for Splunk to fully start and initialize. You can monitor progress:
+Allow **several minutes** on first run (image pull, Splunk, Splunkbase downloads). Watch progress:
 
 ```bash
 make logs
+make status    # expect "Splunk is ready ✓" when healthy
 ```
 
-Look for messages like:
+## Splunk Web
 
-- `Splunk initialized`
-- `Executing setup scripts`
-- `Splunk is ready`
+1. Open `https://localhost:8000`.
+2. Log in as **admin** with the password from your secret store (not committed in git).
+3. Accept the self-signed certificate warning (local dev only).
 
-### Step 3: Wait for Initialization
+REST smoke test (replace `<password>`):
 
 ```bash
-make status
+curl -k -u "admin:<password>" https://localhost:8089/services/server/info
 ```
 
-Expected output:
+## MCP clients
 
-```text
-Checking Splunk container status...
-NAME           IMAGE                       COMMAND             STATUS
-so1            splunk/splunk:latest        /sbin/entrypoint... Up 2 minutes
-splunk-init    alpine:latest               sh -c ...          Exited (0)
+After **`.secrets/splunk-token`** exists:
 
-Splunk is ready ✓
-```
+| Client | Action |
+| ------ | ------ |
+| **Claude Desktop** (macOS) | Already updated by **`make up`** via **`make claude-update`**. Quit Claude fully (**Cmd+Q**), then reopen. Config: `~/Library/Application Support/Claude/claude_desktop_config.json`. |
+| **Cursor** | `make cursor-mcp` then restart Cursor or reload MCP servers. |
+| **Goose** | `make goose-update` then restart Goose. |
 
-### Step 4: Verify Splunk is Ready
-
-Open your browser and navigate to:
-
-```text
-https://localhost:8000
-```
-
-- **Username**: `admin`
-- **Password**: (the password you set in 1Password)
-
-Accept the self-signed certificate warning (localhost only).
-
-## Claude Desktop Configuration
-
-### Step 5: Access Splunk Web UI
-
-The token is automatically generated during `make up`. Verify it exists:
+Shell smoke test:
 
 ```bash
-ls -la .secrets/splunk-token
+make verify-mcp-remote
 ```
 
-Claude Desktop config was automatically updated during startup.
+## Optional: Claude logs in Splunk
 
-### Step 6: Verify Token Generated
+Setup creates index **`claude_logs`**. Log **files** are ingested only if you uncomment the Claude log bind mount in **`compose.yml`**, point it at a real path on your host, and recreate the stack. Then search: `index=claude_logs`. Details: [CONFIGURATION.md](CONFIGURATION.md).
 
-Check that Claude Desktop configuration was created:
+## Confirm MCP endpoint
+
+Replace `<token>` with the contents of **`.secrets/splunk-token`** (treat it as a secret; do not commit it):
 
 ```bash
-cat ~/Library/Application\ Support/Claude/\
-  claude_desktop_config.json
-```
-
-Should contain:
-
-```json
-{
-  "mcpServers": {
-    "splunk-mcp-server": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "mcp-remote",
-        "https://localhost:8089/services/mcp",
-        "--header",
-        "Authorization: Bearer eyJraWQiOi..."
-      ]
-    }
-  }
-}
-```
-
-### Step 8: Restart Claude Desktop
-
-1. Quit Claude Desktop completely: Cmd+Q
-2. Reopen from Applications folder
-3. Splunk MCP should now be available
-
-### Step 9: Claude logs in Splunk (optional)
-
-The **`claude_logs`** index is created during setup, but **log files are only ingested** if Claude’s log directory is mounted into **`so1`** (see commented bind mount in **`compose.yml`**). Uncomment the macOS path, ensure it exists on the host, then recreate the stack.
-
-**Search (when data is present):**
-
-```splunk
-index=claude_logs
-```
-
-## Verify Everything Works
-
-### Test Splunk API
-
-```bash
-# Get Splunk server info
-curl -k -u admin:<password> https://localhost:8089/services/server/info
-
-# Test MCP endpoint
 curl -k -H "Authorization: Bearer <token>" https://localhost:8089/services/mcp
 ```
 
-### Test Claude Desktop Connection
+In Claude Desktop, open a chat and confirm **splunk-mcp-server** tools appear.
 
-1. Open Claude Desktop
-2. Start a new conversation
-3. You should see the Splunk MCP server listed in the available tools
+## Troubleshooting
 
-## Troubleshooting Installation
+Use **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** for Docker, ports, `op` auth, Splunkbase downloads, and token timeouts. Common quick checks: `make logs`, `make status`, confirm **`tpl.env`** paths and Splunkbase credentials.
 
-### Issue: Docker not found
+## Security (local PoC)
 
-```bash
-Error: command not found: docker
-```
+This setup targets **trusted localhost** use: self-signed TLS, dev-oriented MCP settings. Do not treat it as production-ready. See [SECURITY.md](SECURITY.md). Do not commit **`.env`**, **`.secrets/`**, or client files containing live tokens.
 
-**Solution**: Install Docker Desktop from <https://www.docker.com/products/docker-desktop>
+## Next steps
 
-### Issue: 1Password CLI authentication failed
+- [CONFIGURATION.md](CONFIGURATION.md) — ports, env vars, clients  
+- [OVERVIEW.md](OVERVIEW.md) — architecture  
+- [SA-S4R-APP.md](SA-S4R-APP.md) — bundled sample app  
 
 ```bash
-Error: Not currently authenticated. Use `op account add` to authenticate
+make help
 ```
-
-**Solution**:
-
-```bash
-op account add
-# Follow the prompts to sign in
-```
-
-### Issue: Splunk container crashes
-
-**Solution**: Check logs
-
-```bash
-make logs
-
-# If still crashing:
-make down
-docker volume rm so1-var so1-etc
-make up  # This will reinitialize
-```
-
-### Issue: Port 8000 or 8089 already in use
-
-**Solution**: Stop conflicting services
-
-```bash
-# Find process using port 8000
-lsof -i :8000
-
-# Kill the process
-kill -9 <PID>
-
-# Or change Splunk ports in compose.yml
-```
-
-### Issue: jq not found
-
-```bash
-Error: jq is not installed. Please install jq to proceed.
-```
-
-**Solution**: Install jq
-
-```bash
-# macOS
-brew install jq
-
-# Linux
-sudo apt-get install jq
-```
-
-## Next Steps
-
-After successful installation:
-
-1. **Explore Splunk Web UI**: Learn the interface
-2. **Test MCP Integration**: Use Splunk through Claude Desktop
-3. **Add Data**: Ingest sample data into Splunk
-4. **Customize Configuration**: Adjust `compose.yml`, `tpl.env`, or the `SA-S4R` app as needed
-5. **Backup Configuration**: Save your volumes and configs
-
-## Useful Commands
-
-```bash
-make help        # List all commands
-make status      # Check if ready
-make logs        # View logs
-make restart     # Restart container
-make down        # Stop container
-make clean       # Reset all (WARNING: destructive)
-```
-
-## System Requirements
-
-- **Minimum**: 2 CPU cores, 4GB RAM, 10GB disk space
-- **Recommended**: 4 CPU cores, 8GB RAM, 20GB disk space
-- **Optimal**: 8 CPU cores, 16GB RAM, 50GB disk space
-
-## Security Reminders
-
-1. Change default passwords in production
-2. Don't commit `.env` file to version control
-3. Rotate tokens regularly
-4. Use proper certificates for production
-5. Restrict network access to Splunk ports
-6. Review and audit user roles and permissions
