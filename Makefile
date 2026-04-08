@@ -7,7 +7,7 @@ ENV_FILE ?= tpl.env
 ENV_OUT ?= .env
 OP ?= op
 
-# Helper: run docker compose with either existing .env or 1Password-injected env
+# Secrets-backed Compose: only needed when interpolating tpl.env / .env into the stack (make up).
 # Usage: $(call DC_CMD,<compose args>)
 define DC_CMD
 	@if [[ -f "$(ENV_OUT)" ]]; then \
@@ -22,6 +22,13 @@ define DC_CMD
 	fi
 endef
 
+# Lifecycle Compose (down/logs/ps/restart/exec): does not need SPLUNK_* or Splunkbase secrets—only
+# the project name from this directory. Avoids requiring `op` when .env is absent.
+# Usage: $(call DC_LITE,<compose args>)
+define DC_LITE
+	@$(DC) $(1)
+endef
+
 .PHONY: help init up wait-token down clean logs claude-update goose-update cursor-mcp verify-mcp-remote status status-exec-check restart lint-md lint-md-fix
 
 help:
@@ -29,14 +36,14 @@ help:
 	@echo ""
 	@echo "Available targets:"
 	@echo "  make up             - Start Splunk; wait for token; run claude-update (Cursor/Goose: see make cursor-mcp / goose-update)"
-	@echo "                       (prefers in-memory env via 1Password; falls back to $(ENV_OUT) if present)"
+	@echo "                       (needs secrets: $(ENV_OUT) or op + $(ENV_FILE); see below)"
 	@echo "  make init           - [legacy/optional] Write $(ENV_OUT) from $(ENV_FILE) (op inject)"
 	@echo "  make init FORCE=1   - Re-generate $(ENV_OUT) (op inject)"
 	@echo "  make wait-token     - Wait for $(TOKEN_FILE) to appear"
-	@echo "  make down           - Stop Splunk container"
-	@echo "  make restart        - Restart Splunk container"
-	@echo "  make clean          - Remove containers and volumes (destructive)"
-	@echo "  make logs           - Follow Splunk container logs"
+	@echo "  make down           - Stop stack (no 1Password required)"
+	@echo "  make restart        - Restart Splunk container (no 1Password required)"
+	@echo "  make clean          - Remove containers and volumes (destructive; no 1Password required)"
+	@echo "  make logs           - Follow Splunk logs (no 1Password required)"
 	@echo "  make status         - Check Splunk container status"
 	@echo "  make claude-update  - Update Claude Desktop config with saved token"
 	@echo "  make goose-update   - Update Goose config with Splunk MCP extension"
@@ -92,27 +99,18 @@ wait-token:
 
 down:
 	@echo "Stopping Splunk container..."
-	@$(call DC_CMD,down)
+	@$(call DC_LITE,down)
 
 restart:
 	@echo "Restarting Splunk container..."
-	@$(call DC_CMD,restart)
+	@$(call DC_LITE,restart)
 
 clean:
 	@echo "WARNING: This will remove all containers, volumes, and .env file (data will be lost)."
 	@read -p "Are you sure? [y/N] " -n 1 -r; \
 	echo; \
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
-		if [[ -f "$(ENV_OUT)" ]]; then \
-			$(DC) down -v; \
-		else \
-			command -v "$(OP)" >/dev/null 2>&1 || { \
-				echo "Error: $(ENV_OUT) not found and 1Password CLI (op) not available."; \
-				echo "Either run 'make init' to write $(ENV_OUT) or install/authenticate 1Password CLI."; \
-				exit 1; \
-			}; \
-			"$(OP)" run --env-file="$(ENV_FILE)" -- $(DC) down -v; \
-		fi; \
+		$(DC) down -v; \
 		rm -f "$(ENV_OUT)"; \
 		rm -f "$(TOKEN_FILE)"; \
 		echo "Cleanup complete."; \
@@ -121,15 +119,15 @@ clean:
 	fi
 
 logs:
-	@$(call DC_CMD,logs -f so1)
+	@$(call DC_LITE,logs -f so1)
 
-# Used by status: DC_CMD must not be embedded in another shell line (Make expands it to a full recipe block).
+# Used by status: DC_LITE must not be embedded in another shell line (Make expands it to a full recipe block).
 status-exec-check:
-	@$(call DC_CMD,exec so1 curl -k -s https://localhost:8089/services/server/info 2>/dev/null | grep -q serverName)
+	@$(call DC_LITE,exec so1 curl -k -s https://localhost:8089/services/server/info 2>/dev/null | grep -q serverName)
 
 status:
 	@echo "Checking Splunk container status..."
-	@$(call DC_CMD,ps)
+	@$(call DC_LITE,ps)
 	@echo ""
 	@$(MAKE) status-exec-check && echo "Splunk is ready ✓" || echo "Splunk is not ready yet..."
 

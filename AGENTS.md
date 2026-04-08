@@ -22,6 +22,7 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`.
 - `make up` (default path): runs **`docker compose up -d`** with secrets from **either**:
   - **`.env`** on disk if it exists (e.g. after `make init`), **or**
   - **`op run --env-file=tpl.env`** if `.env` is absent (no `.env` write; requires signed-in `op`).
+- **`make down`**, **`make logs`**, **`make restart`**, **`make status`**, **`make clean`** use plain **`docker compose`** and do **not** require `op` or secrets—only the project from this directory.
 - `make init` (**optional**): runs `op inject -i tpl.env -o .env` for users who want a materialized `.env` (CI, tooling that expects a file). Skips if `.env` exists unless `FORCE=1`.
 - `make up`: waits for `.secrets/splunk-token`, then runs `make claude-update`.
 - `splunk-init` runs `scripts/setup-splunk.sh` **after** `so1` is healthy.

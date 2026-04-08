@@ -83,7 +83,8 @@ Requires `op` signed in and access to the referenced items. If you skip this, us
 | `claude-update` | Runs `scripts/update-claude-config.sh` |
 | `goose-update` | Runs `scripts/update-goose-config.sh` → `~/.config/goose/config.yaml` |
 | `cursor-mcp` | Runs `scripts/update-cursor-config.sh` → `.cursor/mcp.json` |
-| `down` / `restart` / `logs` / `status` / `clean` | Same Compose env rules as `up`; see `make help` |
+| `down` / `restart` / `logs` / `status` | Plain `docker compose` (no `op` or `.env` required—lifecycle only) |
+| `clean` | `docker compose down -v` then remove `.env` / token file (no `op` required) |
 
 ## scripts/setup-splunk.sh
 
