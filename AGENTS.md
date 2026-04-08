@@ -79,3 +79,4 @@ After token generation, client config can be updated via:
 
 - Prefer small commits that keep `make up`, `make status`, and `make verify-mcp-remote` working.
 - When updating setup logic, update docs in `docs/CONFIGURATION.md`, `docs/OVERVIEW.md`, and/or `docs/TROUBLESHOOTING.md`.
+- Human contributors: see **[CONTRIBUTING.md](CONTRIBUTING.md)** and **[LICENSE](LICENSE)** (MIT).

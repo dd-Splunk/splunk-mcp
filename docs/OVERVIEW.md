@@ -42,7 +42,7 @@ The [Model Context Protocol](https://modelcontextprotocol.io/) lets a client (Cl
 
 `compose.yml` sets `SPLUNK_APPS_URL` to a comma-separated list of Splunkbase download URLs. At build/start, Splunk pulls these apps. The stack expects the **Splunk MCP Server** app (namespace `Splunk_MCP_Server`) to be present so REST calls in `setup-splunk.sh` succeed.
 
-You need valid **Splunkbase** credentials in `.env` (`SPLUNKBASE_USERNAME` / `SPLUNKBASE_PASSWORD`).
+You need valid **Splunkbase** credentials supplied via **`tpl.env`** (or a materialized `.env`): define **`SPLUNKBASE_USER`** and **`SPLUNKBASE_PASS`**; Compose maps them to the container variables `SPLUNKBASE_USERNAME` / `SPLUNKBASE_PASSWORD`.
 
 ### Client bridge (`mcp-remote`)
 

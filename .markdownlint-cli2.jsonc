@@ -1,0 +1,11 @@
+{
+  // Scope: project documentation only (not editor rule copies under .cursor / .windsurf)
+  "config": ".markdownlint.json",
+  "globs": [
+    "docs/**/*.md",
+    "README.md",
+    "AGENTS.md",
+    "CONTRIBUTING.md",
+    ".github/**/*.md"
+  ]
+}
