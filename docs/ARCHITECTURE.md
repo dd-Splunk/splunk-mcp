@@ -77,7 +77,7 @@ make up
      ├─ Create user: dd
      └─ Generate encrypted MCP token → .secrets/splunk-token
 
-Optional: make init → op inject → .env (then Compose loads .env automatically)
+Optional: make init → op run + materialize-env.sh → .env (then Compose loads .env automatically)
 ```
 
 ## Security Architecture

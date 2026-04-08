@@ -24,7 +24,7 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`.
   - **`op run --env-file=tpl.env`** if `.env` is absent (no `.env` write; requires signed-in `op`).
 - **`make down`**, **`make logs`**, **`make restart`**, **`make status`**, **`make clean`** use plain **`docker`** / **`docker compose`** and do **not** require `op` or secrets for lifecycle—only the project/container names from this repo.
 - **`make up`** runs **`check-env-for-up`** first when **`.env`** is absent: verifies **`op run`** yields non-empty **`SPLUNK_PASSWORD`**, **`SPLUNKBASE_USER`**, **`SPLUNKBASE_PASS`** so Splunk is not started with blank Splunkbase credentials.
-- `make init` (**optional**): runs `op inject -i tpl.env -o .env` for users who want a materialized `.env` (CI, tooling that expects a file). Skips if `.env` exists unless `FORCE=1`.
+- `make init` (**optional**): runs `op run --env-file=tpl.env -- scripts/materialize-env.sh .env` (same secret resolution as `make up`). Skips if `.env` exists unless `FORCE=1`.
 - `make up`: waits for `.secrets/splunk-token`, then runs `make claude-update`.
 - `splunk-init` runs `scripts/setup-splunk.sh` **after** `so1` is healthy.
 

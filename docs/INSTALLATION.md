@@ -86,7 +86,7 @@ This runs **`docker compose up -d`** using **`.env`** if present, otherwise **`o
 Optional file-based env:
 
 ```bash
-make init    # op inject: tpl.env → .env
+make init    # tpl.env → .env (op run + scripts/materialize-env.sh)
 make up
 ```
 

@@ -126,7 +126,7 @@ make init
 
 ---
 
-#### Issue: `op inject` command not found
+#### Issue: `op` command not found
 
 **Error**: `op: command not found`
 
@@ -143,6 +143,15 @@ op --version
 # Retry
 make init
 ```
+
+---
+
+#### Issue: `make init` fails even though `op read "op://…"` works
+
+**Common causes**:
+
+1. **Extra quotes in `tpl.env`** — Use `VAR=op://vault/item/field` (no surrounding `"`…`"`). If the value is `"op://…"`, `op run` may leave quotes in the value and **`scripts/materialize-env.sh`** will fail with “must be set”.
+2. **Spaces in vault paths** — **`make init`** uses the same resolution as **`make up`** (`op run` + **`materialize-env.sh`**), not **`op inject`**. Prefer this path if your `op://` references include spaces in the item title.
 
 ---
 
