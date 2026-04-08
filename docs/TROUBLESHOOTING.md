@@ -146,6 +146,20 @@ make init
 
 ---
 
+#### Issue: `tpl.env` not found (fresh clone)
+
+**Error** (from `make up` or `make init`): `tpl.env missing` / `copy the example…`
+
+**Solution**: Create a local file from the tracked template (once per clone):
+
+```bash
+cp tpl.env.example tpl.env
+```
+
+Edit **`tpl.env`** with your `op://` paths. **`tpl.env`** is gitignored—do not commit it.
+
+---
+
 #### Issue: `make init` fails even though `op read "op://…"` works
 
 **Common causes**:

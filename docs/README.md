@@ -27,7 +27,7 @@ Splunk **version** is not hard-coded in git beyond the Docker **image tag** (def
 | Document | Use when |
 | -------- | -------- |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | You need containers, volumes, networks, and init order |
-| [CONFIGURATION.md](CONFIGURATION.md) | You are editing `compose.yml`, `tpl.env`, MCP client JSON, or paths |
+| [CONFIGURATION.md](CONFIGURATION.md) | You are editing `compose.yml`, `tpl.env` / `tpl.env.example`, MCP client JSON, or paths |
 | [../docker-compose.override.yml.example](../docker-compose.override.yml.example) | Optional local port/mount overrides (copy to `docker-compose.override.yml`) |
 | [SECURITY.md](SECURITY.md) | You are assessing risk, tokens, TLS, or production gaps |
 | [SA-S4R-APP.md](SA-S4R-APP.md) | You are working with the bundled sample app / Eventgen data |

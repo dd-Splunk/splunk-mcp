@@ -1,5 +1,7 @@
 # Environment files (contain secrets)
 .env
+# Local copy of tpl.env.example — edit op:// paths here (never commit)
+tpl.env
 
 # Token files and secrets directory
 .secrets/

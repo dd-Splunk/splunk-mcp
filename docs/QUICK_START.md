@@ -12,13 +12,20 @@ jq --version
 curl --version
 ```
 
-## 1. Configure secrets (`tpl.env`)
+## 1. Clone
 
-1. Open **`tpl.env`** in the repo root.
+```bash
+git clone <repository-url>
+cd splunk-mcp
+```
+
+## 2. Configure secrets (`tpl.env`)
+
+1. **`cp tpl.env.example tpl.env`** (local file; gitignored).
 2. Set **`SPLUNK_IMAGE`** if you need a pinned Splunk tag (default `splunk/splunk:latest`).
 3. Replace every **`op://…`** path with references that exist **in your** 1Password vault (vault name, item title, field labels).
 
-Documentation and quick-start examples often use item names like `Splunk-MCP-PoC` or vault `Private`; **those are illustrative**. The committed `tpl.env` may use different paths—**your file must match your vault**.
+Documentation often uses item names like `Splunk-MCP-PoC` or vault `Private`; **those are illustrative**. **`tpl.env.example`** uses placeholders—**your `tpl.env` must match your vault**.
 
 Verify reads work:
 
@@ -26,15 +33,13 @@ Verify reads work:
 op read "op://YourVault/YourItem/password"
 ```
 
-## 2. Clone and start
+## 3. Start
 
 ```bash
-git clone <repository-url>
-cd splunk-mcp
 make up
 ```
 
-- **`make up`** does **not** require `make init` first. If `.env` is missing, the Makefile runs Compose with `op run --env-file=tpl.env`.
+- **`make up`** does **not** require `make init` first. If `.env` is missing, the Makefile runs Compose with `op run --env-file=tpl.env` (requires **`tpl.env`** from the step above).
 - Wait **2–3 minutes** for Splunk and `splunk-init` to finish; the Makefile waits for `.secrets/splunk-token` then runs `claude-update`.
 
 **Optional:** materialize a `.env` file:
@@ -44,7 +49,7 @@ make init    # tpl.env → .env (op run + scripts/materialize-env.sh)
 make up
 ```
 
-## 3. Verify
+## 4. Verify
 
 ```bash
 make status          # Expect "Splunk is ready ✓" when healthy
@@ -61,13 +66,13 @@ curl -k -u "admin:${SPLUNK_PASSWORD}" https://localhost:8089/services/server/inf
 
 (Or paste your admin password; do not commit it.)
 
-## 4. Claude Desktop
+## 5. Claude Desktop
 
 1. Quit Claude completely (e.g. **Cmd+Q** on macOS).
 2. Relaunch. The repo runs **`make claude-update`** after the token exists; that merges the Splunk MCP entry into  
    `~/Library/Application Support/Claude/claude_desktop_config.json`.
 
-## 5. Cursor
+## 6. Cursor
 
 After `.secrets/splunk-token` exists:
 
@@ -106,6 +111,7 @@ make clean            # destructive; prompts for confirmation
 
 ## Notes
 
+- **`tpl.env`**: git-ignored (copy from **`tpl.env.example`**); never commit.
 - **`.env`**: git-ignored; never commit. Prefer `op run` / `make up` without a file if you want fewer secrets on disk.
 - **MCP token lifetime**: depends on Splunk MCP Server app and Splunk settings; regenerate by re-running setup or documented flows if clients fail with 401.
 - **Self-signed TLS**: local dev only; see [SECURITY.md](SECURITY.md).
