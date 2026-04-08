@@ -10,6 +10,12 @@ services:
       SPLUNK_PASSWORD: ${SPLUNK_PASSWORD}
       SPLUNKBASE_USERNAME: ${SPLUNKBASE_USER}
       SPLUNKBASE_PASSWORD: ${SPLUNKBASE_PASS}
+      # Splunkbase: comma-separated package URLs (requires valid SPLUNKBASE_*). Order here:
+      #   app/1924  = Splunk Eventgen (sample data / Eventgen modinput)
+      #   app/4353  = Config Explorer (optional UI utility)
+      #   app/7931  = Splunk MCP Server (required for /services/mcp)
+      # If a download fails (404, etc.), replace the /release/VERSION/ segment with a current
+      # release for that app from https://splunkbase.splunk.com/app/<id> .
       SPLUNK_APPS_URL: https://splunkbase.splunk.com/app/1924/release/8.2.2/download/,https://splunkbase.splunk.com/app/4353/release/1.8.24/download/,https://splunkbase.splunk.com/app/7931/release/1.1.0/download/
       TZ: ${TZ:-Europe/Brussels}
     volumes:
