@@ -43,7 +43,7 @@
 #### Local Files
 
 - **compose.yml**: Docker Compose configuration
-- **tpl.env**: Template for environment variables (`op://` references and defaults)
+- **tpl.env.example**: Tracked template; copy to **tpl.env** (gitignored) for real `op://` paths
 - **.env**: Optional runtime file (git-ignored), produced by **`make init`**
 - **SA-S4R/**: Bundled sample Splunk app (bind-mounted into `$SPLUNK_HOME/etc/apps`)
 
@@ -65,7 +65,7 @@
 
 ```text
 make up
-  ├─ docker compose up -d (secrets: .env if present, else op run --env-file=tpl.env)
+  ├─ docker compose up -d (secrets: .env if present, else op run --env-file=tpl.env; create tpl.env via cp tpl.env.example tpl.env)
   │  ├─ so1 (Splunk)
   │  │  ├─ Pull image
   │  │  ├─ Start container
@@ -102,7 +102,7 @@ The setup script assigns role **`mcp_tool_execute`** and ensures capability `mcp
 
 ### Environment variables
 
-Supplied to Compose via **`.env`** (after `make init`) **or** **`op run --env-file=tpl.env`** (default `make up` when `.env` is absent). Example shape:
+Supplied to Compose via **`.env`** (after `make init`) **or** **`op run --env-file=tpl.env`** (default `make up` when `.env` is absent; **`tpl.env`** is local, from **`cp tpl.env.example tpl.env`**). Example shape:
 
 ```bash
 SPLUNK_IMAGE=splunk/splunk:latest

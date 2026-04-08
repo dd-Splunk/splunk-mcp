@@ -16,7 +16,7 @@ See ARCHITECTURE.md for detailed system design.
 
 | Component | Source of truth | Notes |
 | --------- | ---------------- | ----- |
-| Splunk Enterprise | `SPLUNK_IMAGE` in `tpl.env` / `.env` (default `splunk/splunk:latest`) | **Build** is whatever that tag resolves to when pulled—verify at runtime (`services/server/info`). |
+| Splunk Enterprise | `SPLUNK_IMAGE` in local `tpl.env` / `.env` (default `splunk/splunk:latest` in **`tpl.env.example`**) | **Build** is whatever that tag resolves to when pulled—verify at runtime (`services/server/info`). |
 | Splunk MCP Server app | `SPLUNK_APPS_URL` in `compose.yml` (Splunkbase URLs, e.g. app `1924`) | Package **release** is in the URL path, not a separate semver in this repo. |
 | Docker / Compose | Host installation | Use recent versions; see [INSTALLATION.md](INSTALLATION.md). |
 | 1Password CLI | `op` | Used for `op run` (including `make up` / `make init`). |
@@ -54,10 +54,10 @@ services:
       - ./scripts/setup-splunk.sh:/setup-splunk.sh
 ```
 
-#### `tpl.env`
+#### `tpl.env.example` and `tpl.env`
 
-- Template for environment variables
-- Uses 1Password references: `op://vault/item/field` (must match **your** vault)
+- **`tpl.env.example`**: Tracked placeholder template (copy to **`tpl.env`**; **`tpl.env`** is gitignored).
+- Uses 1Password references: `op://vault/item/field` (must match **your** vault).
 - Consumed by **`op run --env-file=tpl.env`** (default `make up` when `.env` is absent) or by **`make init`** → `.env`
 
 #### `.env` (git-ignored, optional)
@@ -142,7 +142,7 @@ cursor-mcp:      # Merge token into .cursor/mcp.json
 
 ### Customize Configuration
 
-**Change Splunk image tag** — set in **`tpl.env`** / **`.env`** (variable `SPLUNK_IMAGE`), e.g.:
+**Change Splunk image tag** — set in local **`tpl.env`** / **`.env`** (variable `SPLUNK_IMAGE`), e.g.:
 
 ```bash
 SPLUNK_IMAGE=splunk/splunk:9.4

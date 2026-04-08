@@ -21,13 +21,13 @@ Use **[docs/PRESALES.md](docs/PRESALES.md)** as the single entry point: secrets 
 ## Requirements
 
 - Docker Desktop (or compatible engine) with Compose
-- **Secrets:** either **1Password CLI** (`op`) with vault items matching **`tpl.env`**, **or** a local **`.env`** file (git-ignored) with the same variables—see [docs/PRESALES.md](docs/PRESALES.md)
+- **Secrets:** either **1Password CLI** (`op`) with vault items matching your local **`tpl.env`** (copy from **`tpl.env.example`** first), **or** a local **`.env`** file (git-ignored) with the same variables—see [docs/PRESALES.md](docs/PRESALES.md)
 - `make`, `bash`, `curl`, `jq`
 - Node/npm for `npx mcp-remote` (Claude / Cursor MCP client configs)
 
 ## Quick start
 
-1. **Edit `tpl.env`** so every `op://vault/item/field` path matches **your** 1Password items (the examples in docs are illustrative; your vault layout will differ).
+1. **Create and edit `tpl.env`** (one-time): `cp tpl.env.example tpl.env`, then set every `op://vault/item/field` path to match **your** 1Password items (docs use illustrative names; your vault layout will differ).
 
 2. **Start the stack** (recommended — does **not** write a `.env` file on disk):
 
@@ -37,7 +37,7 @@ Use **[docs/PRESALES.md](docs/PRESALES.md)** as the single entry point: secrets 
 
    If **no** `.env` exists, the Makefile runs Compose via  
    `op run --env-file=tpl.env -- docker compose …`  
-   so secrets are resolved at invocation time. If `.env` **does** exist (e.g. after `make init`), Compose uses that file as usual.
+   (requires a local **`tpl.env`** from the step above). If `.env` **does** exist (e.g. after `make init`), Compose uses that file as usual.
 
 3. **Optional — materialize `.env`** (legacy / CI / users who prefer a file):
 
@@ -70,7 +70,7 @@ Restart Goose for changes to take effect.
 | -------- | -------- |
 | `make help` | List all targets |
 | `make up` | `docker compose up -d` (with `op run` or `.env`), wait for token, run `claude-update` |
-| `make init` | Optional: write `.env` from `tpl.env` (`op run` + `scripts/materialize-env.sh`) |
+| `make init` | Optional: write `.env` from local `tpl.env` (`op run` + `scripts/materialize-env.sh`) |
 | `make down` | Stop the stack (does **not** require `op` or `.env`) |
 | `make restart` | Restart Splunk container (does **not** require `op` or `.env`) |
 | `make logs` | Follow **`so1`** logs via `docker logs` (no `op`; avoids misleading Compose env warnings) |
@@ -88,7 +88,7 @@ Restart Goose for changes to take effect.
 | [docs/README.md](docs/README.md) | Index and reading order |
 | [AGENTS.md](AGENTS.md) | Short contributor / agent reference |
 | [docs/OVERVIEW.md](docs/OVERVIEW.md) | Architecture, flows, components |
-| [docs/CONFIGURATION.md](docs/CONFIGURATION.md) | `compose.yml`, `tpl.env`, Makefile, clients |
+| [docs/CONFIGURATION.md](docs/CONFIGURATION.md) | `compose.yml`, `tpl.env` / `tpl.env.example`, Makefile, clients |
 | [docs/SECURITY.md](docs/SECURITY.md) | Dev-only risks and hardening notes |
 | [docs/QUICK_START.md](docs/QUICK_START.md) | Minimal checklist |
 | [docs/INSTALLATION.md](docs/INSTALLATION.md) | Detailed install and verification |
@@ -111,7 +111,7 @@ splunk-mcp/
 ├── compose.yml                        # Splunk + one-shot init container
 ├── docker-compose.override.yml.example  # Optional: copy to docker-compose.override.yml
 ├── Makefile                           # Compose wrappers (op run or .env), client helpers
-├── tpl.env                            # Template: op:// references and non-secret defaults
+├── tpl.env.example                    # Tracked template — copy to tpl.env (gitignored) and edit op://
 ├── scripts/                           # setup-splunk.sh, Claude/Cursor MCP writers
 ├── SA-S4R/                            # Sample Splunk app (Eventgen demo data)
 ├── .secrets/                          # splunk-token, dd-password (git-ignored)

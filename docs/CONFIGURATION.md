@@ -49,11 +49,12 @@ Runs after `so1` is **healthy**. Uses Alpine, installs `curl` and `jq`, then run
 
 ## tpl.env and .env
 
-### tpl.env
+### `tpl.env.example` and `tpl.env`
 
-- Checked into git as a **template**.
-- Contains `op://` references for 1Password CLI **or** plain values for local testing (avoid committing real secrets).
-- You must align vault names, item titles, and field names with your 1Password layout. The example paths in a cloned repo may not match your account.
+- **`tpl.env.example`** is the **tracked** template (placeholder `op://` paths, safe to commit).
+- **`tpl.env`** is **gitignored**. Create it once: `cp tpl.env.example tpl.env`, then edit paths for **your** vault.
+- May use `op://` references for 1Password CLI **or** plain values for local testing—**never commit `tpl.env`**.
+- Align vault names, item titles, and field names with your 1Password layout.
 
 ### Generating `.env` (optional)
 
@@ -61,7 +62,7 @@ Runs after `so1` is **healthy**. Uses Alpine, installs `curl` and `jq`, then run
 make init   # runs: op run --env-file=tpl.env -- scripts/materialize-env.sh .env
 ```
 
-Requires `op` signed in and access to the referenced items. If you skip this, use **`make up`** without `.env` so the Makefile runs Compose via `op run --env-file=tpl.env` (see `Makefile`).
+Requires a local **`tpl.env`**, `op` signed in, and access to the referenced items. If you skip this, use **`make up`** without `.env` so the Makefile runs Compose via `op run --env-file=tpl.env` (see `Makefile`).
 
 ### Typical variables
 

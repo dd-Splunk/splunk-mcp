@@ -11,6 +11,7 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`.
 
 - **Never commit secrets**:
   - `.env` (admin password, Splunkbase creds)
+  - **`tpl.env`** (local `op://` paths to **your** vault—gitignored; use tracked **`tpl.env.example`** as the starting point)
   - `.secrets/*` (encrypted MCP token, generated `dd` password)
   - `.cursor/mcp.json` if it contains a live Bearer token
   - `.config/goose/config.yaml` (contains token in extension config)
@@ -62,7 +63,8 @@ After token generation, client config can be updated via:
 ## Makefile knobs you can rely on
 
 - **`TOKEN_FILE`**: path to token file (default `.secrets/splunk-token`)
-- **`ENV_FILE`**: template passed to `op run` (default `tpl.env`)
+- **`ENV_FILE`**: local file passed to `op run` (default `tpl.env`; create with `cp tpl.env.example tpl.env`)
+- **`ENV_EXAMPLE`**: tracked example (default `tpl.env.example`)
 - **`ENV_OUT`**: optional materialized env file (default `.env`)
 - **`OP`**: 1Password CLI binary (default `op`)
 - **`DC`**: docker compose command (default `docker compose`)

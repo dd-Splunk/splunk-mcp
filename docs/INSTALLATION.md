@@ -16,12 +16,12 @@ Step-by-step install. For a short path, use [QUICK_START.md](QUICK_START.md). If
 | Tool | Purpose | Verify |
 | ---- | ------- | ------ |
 | Docker + Compose | Splunk containers | `docker --version` |
-| 1Password CLI (`op`) | Secrets from `tpl.env` | `op --version` (sign in: `op account add` or desktop integration) |
+| 1Password CLI (`op`) | Secrets from local `tpl.env` | `op --version` (sign in: `op account add` or desktop integration) |
 | `make`, `bash` | `Makefile` workflows | `make --version` |
 | `curl`, `jq` | Scripts / REST | `curl --version`, `jq --version` |
 | Node/npm | `npx mcp-remote` for MCP clients | `node --version` |
 
-Optional: **Git** to clone; an editor (e.g. VS Code) to edit `tpl.env` and `compose.yml`.
+Optional: **Git** to clone; an editor (e.g. VS Code) to edit `tpl.env` (from **`tpl.env.example`**) and `compose.yml`.
 
 **Windows:** Prefer **WSL2** with Docker so `make` and paths behave like the docs (macOS/Linux).
 
@@ -55,15 +55,16 @@ op read "op://YourVault/Splunkbase/password"
 ```bash
 git clone <repository-url> splunk-mcp
 cd splunk-mcp
+cp tpl.env.example tpl.env
 ```
 
-Review secrets template:
+Edit **`tpl.env`** (gitignored) so every `op://` path matches your vault. Review the tracked example anytime:
 
 ```bash
-cat tpl.env
+cat tpl.env.example
 ```
 
-Example shape (paths must be yours):
+Example shape (paths must be yours in **`tpl.env`**):
 
 ```bash
 SPLUNK_IMAGE=splunk/splunk:latest
@@ -73,7 +74,7 @@ SPLUNKBASE_PASS=op://YourVault/Splunkbase/password
 TZ=Europe/Brussels
 ```
 
-Expected layout includes `Makefile`, `compose.yml`, `tpl.env`, `scripts/` (including `setup-splunk.sh`, `update-*-config.sh`, `verify-mcp-remote.sh`), and `SA-S4R/`. See root [README.md](../README.md) for the full picture.
+Expected layout includes `Makefile`, `compose.yml`, `tpl.env.example`, local `tpl.env` (after copy), `scripts/` (including `setup-splunk.sh`, `update-*-config.sh`, `verify-mcp-remote.sh`), and `SA-S4R/`. See root [README.md](../README.md) for the full picture.
 
 ## Start the stack
 

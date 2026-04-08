@@ -20,7 +20,7 @@ The [Model Context Protocol](https://modelcontextprotocol.io/) lets a client (Cl
 
 ### Splunk container (`so1`)
 
-- Image: `splunk/splunk` (tag from `SPLUNK_IMAGE` in `.env`, default `latest` in `tpl.env`).
+- Image: `splunk/splunk` (tag from `SPLUNK_IMAGE` in `.env`, default `latest` in `tpl.env.example` / local `tpl.env`).
 - Platform: `linux/amd64` (required for Apple Silicon Macs running x86 Splunk images).
 - Ports:
   - **8000**: Splunk Web.
@@ -42,7 +42,7 @@ The [Model Context Protocol](https://modelcontextprotocol.io/) lets a client (Cl
 
 `compose.yml` sets `SPLUNK_APPS_URL` to a comma-separated list of Splunkbase download URLs. At build/start, Splunk pulls these apps. The stack expects the **Splunk MCP Server** app (namespace `Splunk_MCP_Server`) to be present so REST calls in `setup-splunk.sh` succeed.
 
-You need valid **Splunkbase** credentials supplied via **`tpl.env`** (or a materialized `.env`): define **`SPLUNKBASE_USER`** and **`SPLUNKBASE_PASS`**; Compose maps them to the container variables `SPLUNKBASE_USERNAME` / `SPLUNKBASE_PASSWORD`.
+You need valid **Splunkbase** credentials supplied via **local `tpl.env`** (copy from **`tpl.env.example`**) or a materialized **`.env`**: define **`SPLUNKBASE_USER`** and **`SPLUNKBASE_PASS`**; Compose maps them to the container variables `SPLUNKBASE_USERNAME` / `SPLUNKBASE_PASSWORD`.
 
 ### Client bridge (`mcp-remote`)
 
@@ -56,7 +56,7 @@ with **`NODE_TLS_REJECT_UNAUTHORIZED=0`** to accept Splunk’s default self-sign
 
 ### Secrets flow
 
-1. **`tpl.env`**: checked-in template with `op://vault/item/field` references (and non-secret defaults). **You must align paths with your vault**; documentation examples use illustrative item names.
+1. **`tpl.env.example`** (tracked) → copy to **`tpl.env`** (gitignored): `op://vault/item/field` references and non-secret defaults. **Align paths with your vault**; documentation examples use illustrative item names.
 2. **Preferred (`make up` without `.env`)**: the Makefile runs Compose under  
    `op run --env-file=tpl.env -- docker compose …`  
    so variables are injected **at process invocation** and nothing is written to `.env`.
