@@ -6,7 +6,7 @@ Use this page to choose the right document. The root [README.md](../README.md) s
 
 When docs disagree with the repo, trust **in order**:
 
-1. [`Makefile`](../Makefile) — how Compose is invoked (`op run` vs `.env`), targets, env file names  
+1. [`Makefile`](../Makefile) — `make up` uses `op run` or `.env`; lifecycle targets (`down`, `logs`, `status`, `clean`, …) use plain `docker compose` without secrets  
 2. [`compose.yml`](../compose.yml) — services, ports, `SPLUNK_APPS_URL`, mounts  
 3. [`scripts/setup-splunk.sh`](../scripts/setup-splunk.sh) — Splunk REST bootstrap, user `dd`, token file  
 4. [`AGENTS.md`](../AGENTS.md) — contributor rules and verification commands  

@@ -71,14 +71,15 @@ Restart Goose for changes to take effect.
 | `make help` | List all targets |
 | `make up` | `docker compose up -d` (with `op run` or `.env`), wait for token, run `claude-update` |
 | `make init` | Optional: `op inject -i tpl.env -o .env` |
-| `make down` | Stop the stack |
-| `make logs` | Follow Splunk (`so1`) logs |
-| `make status` | Compose status + quick API readiness |
+| `make down` | Stop the stack (does **not** require `op` or `.env`) |
+| `make restart` | Restart Splunk container (does **not** require `op` or `.env`) |
+| `make logs` | Follow Splunk (`so1`) logs (does **not** require `op` or `.env`) |
+| `make status` | Compose status + quick API readiness (does **not** require `op` or `.env`) |
 | `make claude-update` | Merge Splunk MCP into Claude Desktop config |
 | `make goose-update` | Configure Goose with Splunk MCP extension (`.config/goose/config.yaml`) |
 | `make cursor-mcp` | Merge Splunk MCP into `.cursor/mcp.json` |
 | `make verify-mcp-remote` | Smoke-test `mcp-remote` → Splunk MCP |
-| `make clean` | Destructive: remove volumes and `.env` / token (prompts first) |
+| `make clean` | Destructive: remove volumes and `.env` / token (prompts first; does **not** require `op`) |
 
 ## Documentation
 
