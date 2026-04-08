@@ -73,7 +73,7 @@ Restart Goose for changes to take effect.
 | `make init` | Optional: `op inject -i tpl.env -o .env` |
 | `make down` | Stop the stack (does **not** require `op` or `.env`) |
 | `make restart` | Restart Splunk container (does **not** require `op` or `.env`) |
-| `make logs` | Follow Splunk (`so1`) logs (does **not** require `op` or `.env`) |
+| `make logs` | Follow **`so1`** logs via `docker logs` (no `op`; avoids misleading Compose env warnings) |
 | `make status` | Compose status + quick API readiness (does **not** require `op` or `.env`) |
 | `make claude-update` | Merge Splunk MCP into Claude Desktop config |
 | `make goose-update` | Configure Goose with Splunk MCP extension (`.config/goose/config.yaml`) |
