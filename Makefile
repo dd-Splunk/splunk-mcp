@@ -22,13 +22,13 @@ define DC_CMD
 	fi
 endef
 
-.PHONY: help init up wait-token down clean logs claude-update goose-update cursor-mcp verify-mcp-remote status status-exec-check restart
+.PHONY: help init up wait-token down clean logs claude-update goose-update cursor-mcp verify-mcp-remote status status-exec-check restart lint-md lint-md-fix
 
 help:
 	@echo "Splunk MCP Server - PoC Environment"
 	@echo ""
 	@echo "Available targets:"
-	@echo "  make up             - Start Splunk and configure Claude Desktop and Goose (waits for token)"
+	@echo "  make up             - Start Splunk; wait for token; run claude-update (Cursor/Goose: see make cursor-mcp / goose-update)"
 	@echo "                       (prefers in-memory env via 1Password; falls back to $(ENV_OUT) if present)"
 	@echo "  make init           - [legacy/optional] Write $(ENV_OUT) from $(ENV_FILE) (op inject)"
 	@echo "  make init FORCE=1   - Re-generate $(ENV_OUT) (op inject)"
@@ -42,7 +42,17 @@ help:
 	@echo "  make goose-update   - Update Goose config with Splunk MCP extension"
 	@echo "  make cursor-mcp     - Write .cursor/mcp.json for Splunk MCP (from $(TOKEN_FILE))"
 	@echo "  make verify-mcp-remote - Smoke-test mcp-remote → Splunk (correct header quoting)"
+	@echo "  make lint-md        - Run markdownlint-cli2 on docs (see .markdownlint.json)"
+	@echo "  make lint-md-fix    - Same, with --fix for auto-fixable issues"
 	@echo ""
+
+lint-md:
+	@command -v npx >/dev/null 2>&1 || { echo "Error: npx (Node) required for markdownlint-cli2."; exit 1; }
+	@npx --yes markdownlint-cli2
+
+lint-md-fix:
+	@command -v npx >/dev/null 2>&1 || { echo "Error: npx (Node) required for markdownlint-cli2."; exit 1; }
+	@npx --yes markdownlint-cli2 --fix
 
 init:
 	@if [[ -f "$(ENV_OUT)" && "${FORCE:-0}" != "1" ]]; then \
