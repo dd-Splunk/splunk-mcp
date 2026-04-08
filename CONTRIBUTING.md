@@ -10,8 +10,8 @@ Thanks for helping improve this repo. It is a **local PoC** for Splunk Enterpris
 
 ## Secrets and config
 
-- **Never commit** `.env`, `.secrets/*`, live Bearer tokens in `.cursor/mcp.json`, or similar.
-- **`tpl.env`** in git must stay a **template** (placeholder `op://` paths only).
+- **Never commit** `.env`, **`tpl.env`**, `.secrets/*`, live Bearer tokens in `.cursor/mcp.json`, or similar.
+- **`tpl.env.example`** in git is the **only** checked-in env template (placeholder `op://` paths). Contributors copy it to **`tpl.env`** locally (gitignored) and edit paths there.
 - Do not paste passwords or tokens into issues, PR descriptions, or logs.
 
 ## How to verify locally

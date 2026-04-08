@@ -4,7 +4,7 @@ This repo is a **local proof-of-concept** for showing Splunk Enterprise with the
 
 ## New SE takeover (start here)
 
-1. **Secrets:** Edit **`tpl.env`** so every `op://` path resolves in **your** vault, **or** use **Path B** (no 1Password) below.
+1. **Secrets:** **`cp tpl.env.example tpl.env`**, then edit **`tpl.env`** so every `op://` path resolves in **your** vault, **or** use **Path B** (no 1Password) below.
 2. **Network:** Host must reach **Splunkbase** (`splunkbase.splunk.com`) and Docker Hub (or your mirror) for pulls—corporate VPN/firewall/proxy can block installs.
 3. **Time:** First cold start can take **many minutes** (pull, Splunk, three Splunkbase downloads, init). For a live meeting, run **`make up`** well in advance or warm volumes the day before.
 4. **Artifacts:** Read **`compose.yml`** comments for **`SPLUNK_APPS_URL`** (which app each ID is). Optional port overrides: **`docker-compose.override.yml.example`**.
@@ -14,7 +14,7 @@ This repo is a **local proof-of-concept** for showing Splunk Enterprise with the
 
 | Path | When to use | What to do |
 | ---- | ----------- | ---------- |
-| **A — `op`** | You use 1Password and `op` is signed in | Edit **`tpl.env`** with valid `op://vault/item/field` paths. Run **`make up`** (no `.env` file needed; Makefile uses `op run`). |
+| **A — `op`** | You use 1Password and `op` is signed in | **`cp tpl.env.example tpl.env`**, edit **`tpl.env`** with valid `op://vault/item/field` paths. Run **`make up`** (no `.env` file needed; Makefile uses `op run`). |
 | **B — no `op`** | No 1Password, CI, or air-gapped-style workflow | Create **`.env`** in the repo root (git-ignored) with **plain** values for `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, `SPLUNK_IMAGE`, `TZ`. Same variable names as **`tpl.env`**. Then run **`make up`**. **Never commit `.env`.** |
 
 Optional: **`make init`** writes **`.env`** from **`tpl.env`** using **`op run`** (same as **`make up`**, not **`op inject`**), for CI or hosts that want a file on disk.
@@ -105,14 +105,14 @@ Smoke-test from the shell: **`make verify-mcp-remote`**.
 
 ## Talking points / boundaries
 
-- **Secrets:** Admin password and Splunkbase credentials never belong in git; use **`tpl.env`** + `op` or a local `.env` (git-ignored). See [AGENTS.md](../AGENTS.md).
+- **Secrets:** Admin password and Splunkbase credentials never belong in git; use local **`tpl.env`** (from **`tpl.env.example`**) + `op` or a local `.env` (git-ignored). See [AGENTS.md](../AGENTS.md).
 - **Not for untrusted networks:** Default setup uses self-signed TLS and dev-oriented MCP SSL settings; see [SECURITY.md](SECURITY.md).
-- **Splunk version:** Image tag is controlled by **`SPLUNK_IMAGE`** (see `tpl.env`). Pin a version for reproducible demos.
+- **Splunk version:** Image tag is controlled by **`SPLUNK_IMAGE`** (see **`tpl.env.example`** / your **`tpl.env`**). Pin a version for reproducible demos.
 - **Licensing:** This stack uses Splunk’s Docker image defaults for dev/PoC; enterprise licensing and air-gapped installs are out of scope for this repo—position accordingly.
 
 ## Handoff to another presales engineer
 
-1. Clone the repo; do **not** reuse someone else’s **`tpl.env`** if it contains their `op://` paths—use the committed template and map to your vault (or use **Path B** `.env`).
+1. Clone the repo; **`cp tpl.env.example tpl.env`** and map **`op://`** paths to **your** vault—do not reuse another engineer’s **`tpl.env`** (or use **Path B** `.env`).
 2. Ensure Splunkbase credentials work: without them, app downloads from **`SPLUNK_APPS_URL`** fail and MCP setup will not complete.
 3. Read [QUICK_START.md](QUICK_START.md) → [CONFIGURATION.md](CONFIGURATION.md) → [TROUBLESHOOTING.md](TROUBLESHOOTING.md) in that order when something breaks.
 
@@ -120,7 +120,7 @@ Smoke-test from the shell: **`make verify-mcp-remote`**.
 
 Before making the repo public or wide-internal:
 
-- Keep **`tpl.env`** free of real **`op://`** vault/item IDs and passwords (template-only).
+- **`tpl.env.example`** stays placeholder-only; real vault paths live in gitignored **`tpl.env`**.
 - Confirm **`.gitignore`** excludes `.env`, `.secrets/`, and client configs with tokens ([AGENTS.md](../AGENTS.md)).
 - This repo includes **[LICENSE](../LICENSE)** (MIT); confirm it matches your org’s policy before wide distribution.
 - Optionally set GitHub **Topics** from [.github/TOPICS.md](../.github/TOPICS.md).

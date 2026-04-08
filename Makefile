@@ -7,7 +7,10 @@ ENV_FILE ?= tpl.env
 ENV_OUT ?= .env
 OP ?= op
 
-# Secrets-backed Compose: only needed when interpolating tpl.env / .env into the stack (make up).
+# Local env template: copy from repo example once, then edit op:// paths (see README).
+ENV_EXAMPLE ?= tpl.env.example
+
+# Secrets-backed Compose: only needed when interpolating $(ENV_FILE) / .env into the stack (make up).
 # Usage: $(call DC_CMD,<compose args>)
 define DC_CMD
 	@if [[ -f "$(ENV_OUT)" ]]; then \
@@ -15,7 +18,7 @@ define DC_CMD
 	else \
 		command -v "$(OP)" >/dev/null 2>&1 || { \
 			echo "Error: $(ENV_OUT) not found and 1Password CLI (op) not available."; \
-			echo "Either run 'make init' to write $(ENV_OUT) or install/authenticate 1Password CLI."; \
+			echo "Either create $(ENV_FILE) (cp $(ENV_EXAMPLE) $(ENV_FILE)), run 'make init' to write $(ENV_OUT), or install/authenticate 1Password CLI."; \
 			exit 1; \
 		}; \
 		"$(OP)" run --env-file="$(ENV_FILE)" -- $(DC) $(1); \
@@ -62,6 +65,12 @@ lint-md-fix:
 	@npx --yes markdownlint-cli2 --fix
 
 init:
+	@if [[ ! -f "$(ENV_FILE)" ]]; then \
+		echo "Error: $(ENV_FILE) not found. Create it from the tracked example:"; \
+		echo "  cp $(ENV_EXAMPLE) $(ENV_FILE)"; \
+		echo "Then set your op://vault/item/field paths in $(ENV_FILE)."; \
+		exit 1; \
+	fi
 	@if [[ -f "$(ENV_OUT)" && "${FORCE:-0}" != "1" ]]; then \
 		echo "$(ENV_OUT) already exists; skipping (set FORCE=1 to re-generate)."; \
 		exit 0; \
@@ -76,6 +85,12 @@ check-env-for-up:
 	@if [[ -f "$(ENV_OUT)" ]]; then \
 		echo "Using $(ENV_OUT) for Compose (verify SPLUNK_* and SPLUNKBASE_* are set)."; \
 	else \
+		if [[ ! -f "$(ENV_FILE)" ]]; then \
+			echo "Error: $(ENV_OUT) not found and $(ENV_FILE) missing."; \
+			echo "Copy the example and edit op:// paths, then retry:"; \
+			echo "  cp $(ENV_EXAMPLE) $(ENV_FILE)"; \
+			exit 1; \
+		fi; \
 		command -v "$(OP)" >/dev/null 2>&1 || { \
 			echo "Error: $(ENV_OUT) not found and 1Password CLI (op) not available."; \
 			echo "Create $(ENV_OUT) (e.g. make init) or install/sign in to op before make up."; \
