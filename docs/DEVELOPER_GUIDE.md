@@ -19,7 +19,7 @@ See ARCHITECTURE.md for detailed system design.
 | Splunk Enterprise | `SPLUNK_IMAGE` in `tpl.env` / `.env` (default `splunk/splunk:latest`) | **Build** is whatever that tag resolves to when pulled—verify at runtime (`services/server/info`). |
 | Splunk MCP Server app | `SPLUNK_APPS_URL` in `compose.yml` (Splunkbase URLs, e.g. app `1924`) | Package **release** is in the URL path, not a separate semver in this repo. |
 | Docker / Compose | Host installation | Use recent versions; see [INSTALLATION.md](INSTALLATION.md). |
-| 1Password CLI | `op` | Used for `op run` / `op inject`. |
+| 1Password CLI | `op` | Used for `op run` (including `make up` / `make init`). |
 | `make`, `jq`, `curl` | Host | Required by Makefile and scripts. |
 
 ## File Structure Explanation
@@ -62,7 +62,7 @@ services:
 
 #### `.env` (git-ignored, optional)
 
-- Runtime file produced by **`make init`** (`op inject`)
+- Runtime file produced by **`make init`** (`op run` + **`scripts/materialize-env.sh`**)
 - If present, Compose loads it automatically; if absent, the Makefile uses `op run` instead
 - Never commit to version control
 
@@ -98,7 +98,7 @@ Host-side **Claude** / **Cursor** config is updated by `update-claude-config.sh`
 Key targets:
 
 ```makefile
-init:            # Optional: op inject -i tpl.env -o .env
+init:            # Optional: op run --env-file=tpl.env -- scripts/materialize-env.sh .env
 up:              # docker compose up (op run if no .env), wait for token, claude-update
 down:            # Stop containers (same env resolution as up)
 restart:         # Restart containers

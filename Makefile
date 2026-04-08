@@ -37,8 +37,8 @@ help:
 	@echo "Available targets:"
 	@echo "  make up             - Start Splunk; wait for token; run claude-update (Cursor/Goose: see make cursor-mcp / goose-update)"
 	@echo "                       (needs secrets: $(ENV_OUT) or op + $(ENV_FILE); see below)"
-	@echo "  make init           - [legacy/optional] Write $(ENV_OUT) from $(ENV_FILE) (op inject)"
-	@echo "  make init FORCE=1   - Re-generate $(ENV_OUT) (op inject)"
+	@echo "  make init           - [optional] Write $(ENV_OUT) from $(ENV_FILE) (op run + scripts/materialize-env.sh)"
+	@echo "  make init FORCE=1   - Re-generate $(ENV_OUT)"
 	@echo "  make wait-token     - Wait for $(TOKEN_FILE) to appear"
 	@echo "  make down           - Stop stack (no 1Password required)"
 	@echo "  make restart        - Restart Splunk container (no 1Password required)"
@@ -66,9 +66,9 @@ init:
 		echo "$(ENV_OUT) already exists; skipping (set FORCE=1 to re-generate)."; \
 		exit 0; \
 	fi
-	@echo "Initializing environment ($(ENV_OUT) via 1Password op inject)..."
+	@echo "Materializing $(ENV_OUT) via op run + scripts/materialize-env.sh (same op:// resolution as make up)..."
 	@command -v "$(OP)" >/dev/null 2>&1 || { echo "Error: 1Password CLI (op) not found. Install it or create $(ENV_OUT) manually."; exit 1; }
-	@"$(OP)" inject -i "$(ENV_FILE)" -o "$(ENV_OUT)"
+	@"$(OP)" run --env-file="$(ENV_FILE)" -- ./scripts/materialize-env.sh "$(ENV_OUT)"
 	@echo "Environment initialized: $(ENV_OUT) written."
 
 # Ensures Splunk will receive real secrets at create time (avoids empty SPLUNKBASE_* / ansible failure).

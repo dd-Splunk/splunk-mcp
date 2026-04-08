@@ -60,7 +60,7 @@ with **`NODE_TLS_REJECT_UNAUTHORIZED=0`** to accept Splunk’s default self-sign
 2. **Preferred (`make up` without `.env`)**: the Makefile runs Compose under  
    `op run --env-file=tpl.env -- docker compose …`  
    so variables are injected **at process invocation** and nothing is written to `.env`.
-3. **Optional (`make init`)**: runs `op inject -i tpl.env -o .env` for a materialized `.env` (some users or CI prefer a file on disk).
+3. **Optional (`make init`)**: materializes **`.env`** via **`op run --env-file=tpl.env`** and **`scripts/materialize-env.sh`** (same resolution as `make up`; avoids `op inject` edge cases with spaces in `op://` paths).
 4. **Compose** supplies `SPLUNK_PASSWORD`, Splunkbase credentials, and related env vars to the `so1` and `splunk-init` services.
 5. **Token file** `.secrets/splunk-token` is created by `splunk-init` / `setup-splunk.sh`. **`make claude-update`**, **`make cursor-mcp`**, and **`make goose-update`** read it to patch client config.
 
@@ -89,7 +89,7 @@ make up
   → Makefile: wait for token file → make claude-update
 
 Optional: make init
-  → op inject → .env  (then make up uses .env like any Compose project)
+  → op run + materialize-env.sh → .env  (then make up uses .env like any Compose project)
 
 Optional: make cursor-mcp, make goose-update
   → update Cursor or Goose client config with the token
