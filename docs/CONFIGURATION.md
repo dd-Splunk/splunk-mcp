@@ -58,7 +58,7 @@ Runs after `so1` is **healthy**. Uses Alpine, installs `curl` and `jq`, then run
 ### Generating `.env` (optional)
 
 ```bash
-make init   # runs: op inject -i tpl.env -o .env
+make init   # runs: op run --env-file=tpl.env -- scripts/materialize-env.sh .env
 ```
 
 Requires `op` signed in and access to the referenced items. If you skip this, use **`make up`** without `.env` so the Makefile runs Compose via `op run --env-file=tpl.env` (see `Makefile`).
@@ -78,7 +78,7 @@ Requires `op` signed in and access to the referenced items. If you skip this, us
 
 | Target | Behavior |
 | ------ | -------- |
-| `init` | Optional: `op inject -i tpl.env -o .env` (skip if `.env` exists unless `FORCE=1`) |
+| `init` | Optional: materialize `.env` via `op run` + `scripts/materialize-env.sh` (skip if `.env` exists unless `FORCE=1`) |
 | `up` | `docker compose up -d` (via `op run --env-file=tpl.env` when `.env` is absent), wait for `.secrets/splunk-token`, then `claude-update` |
 | `claude-update` | Runs `scripts/update-claude-config.sh` |
 | `goose-update` | Runs `scripts/update-goose-config.sh` → `~/.config/goose/config.yaml` |

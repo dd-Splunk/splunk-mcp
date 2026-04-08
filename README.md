@@ -42,7 +42,7 @@ Use **[docs/PRESALES.md](docs/PRESALES.md)** as the single entry point: secrets 
 3. **Optional — materialize `.env`** (legacy / CI / users who prefer a file):
 
    ```bash
-   make init          # op inject: tpl.env → .env
+   make init          # tpl.env → .env (via op run + scripts/materialize-env.sh)
    make up
    ```
 
@@ -70,7 +70,7 @@ Restart Goose for changes to take effect.
 | -------- | -------- |
 | `make help` | List all targets |
 | `make up` | `docker compose up -d` (with `op run` or `.env`), wait for token, run `claude-update` |
-| `make init` | Optional: `op inject -i tpl.env -o .env` |
+| `make init` | Optional: write `.env` from `tpl.env` (`op run` + `scripts/materialize-env.sh`) |
 | `make down` | Stop the stack (does **not** require `op` or `.env`) |
 | `make restart` | Restart Splunk container (does **not** require `op` or `.env`) |
 | `make logs` | Follow **`so1`** logs via `docker logs` (no `op`; avoids misleading Compose env warnings) |

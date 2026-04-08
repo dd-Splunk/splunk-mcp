@@ -40,7 +40,7 @@ make up
 **Optional:** materialize a `.env` file:
 
 ```bash
-make init    # op inject → .env
+make init    # tpl.env → .env (op run + scripts/materialize-env.sh)
 make up
 ```
 

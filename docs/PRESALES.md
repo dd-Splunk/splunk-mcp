@@ -17,7 +17,7 @@ This repo is a **local proof-of-concept** for showing Splunk Enterprise with the
 | **A — `op`** | You use 1Password and `op` is signed in | Edit **`tpl.env`** with valid `op://vault/item/field` paths. Run **`make up`** (no `.env` file needed; Makefile uses `op run`). |
 | **B — no `op`** | No 1Password, CI, or air-gapped-style workflow | Create **`.env`** in the repo root (git-ignored) with **plain** values for `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, `SPLUNK_IMAGE`, `TZ`. Same variable names as **`tpl.env`**. Then run **`make up`**. **Never commit `.env`.** |
 
-Optional: **`make init`** runs `op inject` from **`tpl.env`** → **`.env`** if you prefer `op` but want a file on disk.
+Optional: **`make init`** writes **`.env`** from **`tpl.env`** using **`op run`** (same as **`make up`**, not **`op inject`**), for CI or hosts that want a file on disk.
 
 ## Splunkbase and network (hard dependencies)
 
