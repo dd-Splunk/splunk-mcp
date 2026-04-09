@@ -158,13 +158,17 @@ logs:
 	@docker logs -f so1 2>&1 || { echo "Hint: container so1 not found. Is the stack up? Try: make up"; exit 1; }
 
 # Used by status: avoid compose exec without env (same as logs).
+# Splunk answers /services/server/info with 401 when unauthenticated (no serverName in body); 200 with auth. Both mean the mgmt API is up.
 status-exec-check:
-	@docker exec so1 curl -k -s https://localhost:8089/services/server/info 2>/dev/null | grep -q serverName
+	@code="$$(docker exec so1 curl -k -s -o /dev/null -w "%{http_code}" https://localhost:8089/services/server/info 2>/dev/null)"; \
+	[ "$$code" = "200" ] || [ "$$code" = "401" ]
 
 status:
 	@echo "Checking Splunk container status..."
 	@docker ps -a --filter "name=so1" --format "table {{.Names}}\t{{.Status}}\t{{.Image}}" 2>/dev/null || true
 	@docker ps -a --filter "name=splunk-init" --format "table {{.Names}}\t{{.Status}}\t{{.Image}}" 2>/dev/null || true
+	@echo ""
+	@echo "splunk-init Exited (0) is normal: one-time setup finished."
 	@echo ""
 	@$(MAKE) status-exec-check && echo "Splunk is ready ✓" || echo "Splunk is not ready yet..."
 
