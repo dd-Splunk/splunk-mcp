@@ -16,7 +16,7 @@ OUT="${CURSOR_MCP_JSON:-.cursor/mcp.json}"
 if [[ ! -f "$TOKEN_FILE" ]]; then
   echo "Token file not found: $TOKEN_FILE"
   echo "Generate one with setup-splunk-user / make up, or:"
-  echo "  curl -skS -u admin:PASSWORD \"https://${SPLUNK_HOST}:${SPLUNK_PORT}/servicesNS/admin/Splunk_MCP_Server/mcp_token?username=dd&output_mode=json\" | jq -r .token > .secrets/splunk-token"
+  echo "  curl -skS -u admin:PASSWORD \"https://${SPLUNK_HOST}:${SPLUNK_PORT}/servicesNS/admin/Splunk_MCP_Server/mcp_token?username=splunker&output_mode=json\" | jq -r .token > .secrets/splunk-token"
   exit 1
 fi
 

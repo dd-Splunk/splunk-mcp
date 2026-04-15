@@ -36,7 +36,7 @@ The [Model Context Protocol](https://modelcontextprotocol.io/) lets a client (Cl
 - Runs **once** after `so1` is healthy.
 - Image: **Alpine** (installs `curl` and `jq` at runtime).
 - Executes **`scripts/setup-splunk.sh`** with environment pointing at Splunk on the Docker network (`SPLUNK_HOST=so1`).
-- Writes the MCP token to **`.secrets/splunk-token`** on the host (mode `600`).
+- Writes the MCP token to **`.secrets/splunk-token`** and (by default) a generated **`splunker`** password to **`.secrets/splunker-password`** on the host (mode `600`), via paths under the `/output` bind mount in **`compose.yml`**.
 
 ### Splunkbase applications
 
@@ -69,10 +69,10 @@ with **`NODE_TLS_REJECT_UNAUTHORIZED=0`** to accept Splunk’s default self-sign
 | Actor | Mechanism | Notes |
 | ----- | --------- | ----- |
 | Splunk admin | Username/password (`admin` + `SPLUNK_PASSWORD`) | Used in setup script REST calls |
-| MCP client (Claude/Cursor) | Bearer token | Token from Splunk MCP app’s encrypted token endpoint for user `dd` |
-| User `dd` | Dedicated password (saved to `.secrets/dd-password` by init unless provided); roles include `mcp_tool_execute` | Created idempotently; see `scripts/setup-splunk.sh` |
+| MCP client (Claude/Cursor) | Bearer token | Token from Splunk MCP app’s encrypted token endpoint for user **`splunker`** (override with `MCP_TOKEN_USERNAME`) |
+| User **`splunker`** | Password file **`.secrets/splunker-password`** (unless you pre-create it or set `SPLUNKER_PASSWORD_FILE`); Splunk roles **`user`** + **`mcp_user`** | Created idempotently; see `scripts/setup-splunk.sh` |
 
-The setup script creates Splunk role **`mcp_tool_execute`** (not a generic `mcp_user` name) and assigns it to user **`dd`**.
+The setup script creates Splunk role **`mcp_user`** and assigns capability **`mcp_tool_execute`** to that role (the MCP app checks the **capability**, not the role name).
 
 ## End-to-end flow
 
@@ -81,10 +81,10 @@ make up
   → docker compose up -d (env from .env if present, else op run --env-file=tpl.env)
   → so1 starts Splunk, downloads apps, becomes healthy
   → splunk-init runs setup-splunk.sh
+      → enable SA-Eventgen default modinput (when app present)
       → POST mcp server ssl_verify=false (dev)
-      → create index claude_logs + monitor (if path exists in container)
-      → create role mcp_tool_execute, ensure capability mcp_tool_execute
-      → create user dd (roles: user + mcp_tool_execute; admin only if ADD_ADMIN_ROLE=1)
+      → create/update role mcp_user with capability mcp_tool_execute
+      → create user splunker (roles: user + mcp_user)
       → GET encrypted mcp token → .secrets/splunk-token
   → Makefile: wait for token file → make claude-update
 

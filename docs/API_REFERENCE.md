@@ -1,6 +1,6 @@
 # API Reference & MCP Integration
 
-**This repository** creates Splunk role **`mcp_tool_execute`** and user **`dd`**, then obtains an **encrypted MCP token** from the Splunk MCP Server app (`GET .../Splunk_MCP_Server/mcp_token?username=dd`). Older examples that use plain JWTs from `/services/authorization/tokens` may not work with `/services/mcp` depending on app version—follow `scripts/setup-splunk.sh` as the source of truth.
+**This repository** creates Splunk role **`mcp_user`** (capability **`mcp_tool_execute`**) and user **`splunker`**, then obtains an **encrypted MCP token** from the Splunk MCP Server app (`GET .../Splunk_MCP_Server/mcp_token?username=splunker`). For MCP HTTP access, use that token flow—**`scripts/setup-splunk.sh`** is the source of truth (not ad-hoc JWT minting from `/services/authorization/tokens`).
 
 ## Splunk REST API Endpoints
 
@@ -31,7 +31,8 @@ curl -k -H "Authorization: Bearer <token>" \
 POST /services/authorization/roles
 Content-Type: application/x-www-form-urlencoded
 
-name=mcp_tool_execute
+name=mcp_user
+capabilities=mcp_tool_execute
 ```
 
 ##### List Roles
@@ -43,15 +44,14 @@ GET /services/authorization/roles
 ##### Get Role Details
 
 ```bash
-GET /services/authorization/roles/mcp_tool_execute
+GET /services/authorization/roles/mcp_user
 ```
 
 ##### Update Role
 
 ```bash
-POST /services/authorization/roles/mcp_tool_execute
-capability=search
-capability=accelerate_datamodel
+POST /services/authorization/roles/mcp_user
+capabilities=mcp_tool_execute
 ```
 
 #### 2. Users Management
@@ -62,9 +62,10 @@ capability=accelerate_datamodel
 POST /services/authentication/users
 Content-Type: application/x-www-form-urlencoded
 
-name=dd
+name=splunker
 password=changeme
-roles=mcp_tool_execute
+roles=user
+roles=mcp_user
 tz=Europe/Brussels
 ```
 
@@ -77,13 +78,13 @@ GET /services/authentication/users
 ##### Get User Details
 
 ```bash
-GET /services/authentication/users/dd
+GET /services/authentication/users/splunker
 ```
 
 ##### Update User Password
 
 ```bash
-POST /services/authentication/users/dd
+POST /services/authentication/users/splunker
 password=newpassword
 ```
 
@@ -96,7 +97,7 @@ POST /services/authorization/tokens
 Content-Type: application/x-www-form-urlencoded
 
 status=enabled
-name=dd
+name=splunker
 audience=mcp
 ```
 
@@ -167,19 +168,19 @@ HOST="localhost:8089"
 ADMIN_USER="admin"
 ADMIN_PASS="password"
 
-# Create role
+# Create role (matches setup-splunk.sh)
 curl -k -X POST https://$HOST/services/authorization/roles \
-  -u "$ADMIN_USER:$ADMIN_PASS" -d "name=mcp_tool_execute"
+  -u "$ADMIN_USER:$ADMIN_PASS" -d "name=mcp_user" -d "capabilities=mcp_tool_execute"
 
 # Create user
 curl -k -X POST https://$HOST/services/authentication/users \
   -u "$ADMIN_USER:$ADMIN_PASS" \
-  -d "name=dd" -d "password=changeme" -d "roles=mcp_tool_execute"
+  -d "name=splunker" -d "password=changeme" -d "roles=user" -d "roles=mcp_user"
 
 # Create token
 TOKEN=$(curl -k -s -X POST https://$HOST/services/authorization/tokens \
   -u "$ADMIN_USER:$ADMIN_PASS" \
-  -d "status=enabled" -d "name=dd" -d "audience=mcp" | \
+  -d "status=enabled" -d "name=splunker" -d "audience=mcp" | \
   sed -n 's/.*<![CDATA[/p')
 
 echo "Token: $TOKEN"
@@ -317,7 +318,7 @@ log stream --predicate 'process == "Claude"' --level debug
 
 ### User Permissions
 
-- `mcp_tool_execute` role: MCP tooling (see Splunk MCP Server app docs for capabilities)
+- **`mcp_tool_execute`** capability (granted via Splunk role **`mcp_user`** in this repo): MCP tooling (see Splunk MCP Server app docs)
 - Cannot modify Splunk configuration
 - Cannot access other users' data
 - Cannot create/delete other users

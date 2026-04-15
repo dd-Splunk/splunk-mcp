@@ -25,7 +25,7 @@
 #### Named Volumes
 
 - **so1-var**: Stores Splunk variable data
-  - Indexes (including `claude_logs`)
+  - Indexes (add **`claude_logs`** yourself if you want Claude Desktop log ingestion)
   - Logs
   - KV Store data
   
@@ -38,7 +38,7 @@
 
 - **Claude logs (optional)**: In `compose.yml`, uncomment  
   `${HOME}/Library/Logs/Claude:/var/log/claude_logs`  
-  on macOS so logs are visible inside the container. The setup script creates a monitor only when `/var/log/claude_logs` exists **inside** `so1`.
+  on macOS so logs are visible inside the container. The minimal **`setup-splunk.sh`** does **not** create the index or monitor; configure those in Splunk if you enable this mount.
 
 #### Local Files
 
@@ -49,10 +49,10 @@
 
 ### 4. Claude Logs Index
 
-- **Index Name**: `claude_logs` (created by `setup-splunk.sh`)
+- **Index Name**: `claude_logs` — create in Splunk if you want this data (`setup-splunk.sh` does not create it)
 - **Data Source**: Host path mounted into the container **only if** you enable the bind mount above
 - **Purpose**: Optional capture of Claude Desktop logs into Splunk
-- **Monitoring**: Created when the directory exists in-container; not enabled by default out of the box
+- **Monitoring**: Add a Splunk **monitor** input on `/var/log/claude_logs` after the mount is active
 - **Retention**: Follows Splunk default retention policies
 
 ### 5. Network
@@ -73,8 +73,9 @@ make up
   │  │  └─ Wait for health
   │  └─ splunk-init (waits for so1 healthy)
   └─ setup-splunk.sh (after so1 healthy)
-     ├─ Create role: mcp_tool_execute
-     ├─ Create user: dd
+     ├─ Enable Eventgen modinput (if SA-Eventgen present)
+     ├─ Create/update role: mcp_user (capability mcp_tool_execute)
+     ├─ Create user: splunker
      └─ Generate encrypted MCP token → .secrets/splunk-token
 
 Optional: make init → op run + materialize-env.sh → .env (then Compose loads .env automatically)
@@ -87,7 +88,7 @@ Optional: make init → op run + materialize-env.sh → .env (then Compose loads
 1. **Container to Container**: Network isolation via bridge network
 2. **API Authentication**:
    - Admin operations: Username/password (admin user)
-   - MCP operations: Bearer token (dd user)
+   - MCP operations: Bearer token (**`splunker`** user by default)
 3. **Transport Security**: HTTPS with self-signed certificates (localhost only)
 4. **Credential Management**: 1Password CLI integration
 
@@ -95,10 +96,10 @@ Optional: make init → op run + materialize-env.sh → .env (then Compose loads
 
 | User | Role(s) | Auth | Scope | Expiry |
 | ---- | ------- | ---- | ----- | ------ |
-| `dd` | `user`, `mcp_tool_execute` (admin optional) | Bearer token (MCP) | MCP (PoC) | Per Splunk MCP / token policy |
+| `splunker` | `user`, `mcp_user` (holds `mcp_tool_execute` capability) | Bearer token (MCP) | MCP (PoC) | Per Splunk MCP / token policy |
 | `admin` | Built-in | Password | Full admin | N/A |
 
-The setup script assigns role **`mcp_tool_execute`** and ensures capability `mcp_tool_execute` is present; `admin` on `dd` is optional (enable via `ADD_ADMIN_ROLE=1` only if you need it).
+The setup script assigns Splunk role **`mcp_user`** and ensures capability **`mcp_tool_execute`** is present on that role. It does **not** grant **`admin`** to the MCP user (add manually in Splunk only if you accept the risk).
 
 ### Environment variables
 
@@ -137,7 +138,7 @@ Claude Desktop
 
 ### Token Management
 
-- **Generation**: `splunk-init` runs `setup-splunk.sh`, which calls the Splunk MCP Server app’s **`mcp_token`** endpoint for user `dd`.
+- **Generation**: `splunk-init` runs `setup-splunk.sh`, which calls the Splunk MCP Server app’s **`mcp_token`** endpoint for user **`splunker`** (or `MCP_TOKEN_USERNAME`).
 - **Storage**: Host file `.secrets/splunk-token`; Claude/Cursor configs reference it via `make claude-update` / `make cursor-mcp`.
 - **Expiry**: Depends on Splunk MCP app and token settings (docs may cite ~15 days as a rule of thumb—verify in your build).
 - **Renewal**: Regenerate token and refresh client config (`make claude-update`, `make cursor-mcp`).
@@ -153,10 +154,10 @@ Claude Desktop
 
 ### setup-splunk.sh
 
-- Creates `mcp_tool_execute` role
-- Creates `dd` user (optional `admin` only if `ADD_ADMIN_ROLE=1`)
-- Requests encrypted MCP token and writes `.secrets/splunk-token`
-- Ensures `claude_logs` index and monitor when applicable
+- Creates or updates Splunk role **`mcp_user`** with capability **`mcp_tool_execute`**
+- Creates **`splunker`** user (`SPLUNKER_USERNAME`) with roles **`user`** + **`mcp_user`**
+- Requests encrypted MCP token and writes `.secrets/splunk-token`; may generate **`.secrets/splunker-password`**
+- Enables SA-Eventgen default modinput when the app is installed
 - Dependencies: `curl`, `jq` (installed in `splunk-init`)
 
 Host **Claude** / **Cursor** configs are updated by **`make claude-update`** / **`make cursor-mcp`**, not by this script.

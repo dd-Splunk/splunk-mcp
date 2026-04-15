@@ -72,15 +72,19 @@ services:
 
 Main initialization script (runs in `splunk-init`). Steps:
 
-1. **MCP server dev settings** — POST `ssl_verify=false` on the Splunk MCP app config (local dev only).
+1. **SA-Eventgen** — Enables the default Eventgen modular input when the app is installed.
 
-2. **Creates role `mcp_tool_execute`** via `/services/authorization/roles` (idempotent).
+2. **MCP server dev settings** — POST `ssl_verify=false` on the Splunk MCP app config (local dev only).
 
-3. **Creates user `dd`** via `/services/authentication/users` with roles **`user`** and **`mcp_tool_execute`**. The **`admin`** role is **not** added unless **`ADD_ADMIN_ROLE=1`** (use only when you understand the privilege increase).
+3. **Role `mcp_user`** — Creates or updates `/services/authorization/roles/mcp_user` with capability **`mcp_tool_execute`**.
 
-4. **Encrypted MCP token** — GET `/servicesNS/admin/Splunk_MCP_Server/mcp_token?username=dd&output_mode=json`; writes token to `TOKEN_OUTPUT_FILE` (`.secrets/splunk-token`).
+4. **User `splunker`** — Creates or updates via `/services/authentication/users` with Splunk roles **`user`** and **`mcp_user`** (override with **`SPLUNKER_USERNAME`**). Does **not** grant **`admin`**.
 
-5. **Claude log index** — Ensures `claude_logs` index and monitor for `/var/log/claude_logs` when applicable.
+5. **Encrypted MCP token** — GET `/servicesNS/admin/Splunk_MCP_Server/mcp_token?username=splunker&output_mode=json` (or **`MCP_TOKEN_USERNAME`**); writes token to `TOKEN_OUTPUT_FILE` (`.secrets/splunk-token`).
+
+6. **Password file** — May generate **`.secrets/splunker-password`** (see **`SPLUNKER_PASSWORD_FILE`**).
+
+**Not** in this minimal script: **`claude_logs`** index/monitor automation.
 
 Host-side **Claude** / **Cursor** config is updated by `update-claude-config.sh` and `update-cursor-config.sh`, not by this script inside the container.
 
@@ -193,7 +197,7 @@ Edit `scripts/setup-splunk.sh`:
 ```bash
 curl -X POST "${SPLUNK_URL}/services/authentication/users" \
   -u "${SPLUNK_USER}:${SPLUNK_PASSWORD}" \
-  -d "name=user2" -d "password=pass" -d "roles=mcp_tool_execute"
+  -d "name=user2" -d "password=pass" -d "roles=user" -d "roles=mcp_user"
 ```
 
 ## CI/CD Integration

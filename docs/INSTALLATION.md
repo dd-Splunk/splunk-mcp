@@ -128,7 +128,7 @@ make verify-mcp-remote
 
 ## Optional: Claude logs in Splunk
 
-Setup creates index **`claude_logs`**. Log **files** are ingested only if you uncomment the Claude log bind mount in **`compose.yml`**, point it at a real path on your host, and recreate the stack. Then search: `index=claude_logs`. Details: [CONFIGURATION.md](CONFIGURATION.md).
+If you want a **`claude_logs`** index, create it in Splunk (UI or REST). Log **files** are ingested only if you uncomment the Claude log bind mount in **`compose.yml`**, point it at a real path on your host, and add a monitor input. Then search: `index=claude_logs`. Details: [CONFIGURATION.md](CONFIGURATION.md).
 
 ## Confirm MCP endpoint
 

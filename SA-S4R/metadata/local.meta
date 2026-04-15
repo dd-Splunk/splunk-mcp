@@ -6,14 +6,14 @@ modtime = 1774879190.657022000
 
 [app/ui]
 owner = admin
-version = 10.2.1
-modtime = 1774879362.941689000
+version = 10.2.2
+modtime = 1775804425.292406000
 
 [app/launcher]
 owner = admin
-version = 10.2.1
-modtime = 1774879362.945338000
+version = 10.2.2
+modtime = 1775804425.296002000
 
 [app/package/check_for_updates]
-version = 10.2.1
-modtime = 1774879362.946763000
+version = 10.2.2
+modtime = 1775804425.298250000

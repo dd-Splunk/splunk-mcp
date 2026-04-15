@@ -9,14 +9,14 @@ Local **proof-of-concept** for running **Splunk Enterprise** with the **Splunk M
 
 ## New SE / demo takeover
 
-Use **[docs/PRESALES.md](docs/PRESALES.md)** as the single entry point: secrets (**1Password** or plain **`.env`**), Splunkbase/network requirements, **identity** (admin vs `dd` vs Bearer token), sample SPL, LLM steps, and greenfield vs **`make clean`**. **`compose.yml`** documents **`SPLUNK_APPS_URL`** app IDs; **`docker-compose.override.yml.example`** shows optional port and mount overrides (copy to **`docker-compose.override.yml`**, gitignored).
+Use **[docs/PRESALES.md](docs/PRESALES.md)** as the single entry point: secrets (**1Password** or plain **`.env`**), Splunkbase/network requirements, **identity** (admin vs MCP user **`splunker`** vs Bearer token), sample SPL, LLM steps, and greenfield vs **`make clean`**. **`compose.yml`** documents **`SPLUNK_APPS_URL`** app IDs; **`docker-compose.override.yml.example`** shows optional port and mount overrides (copy to **`docker-compose.override.yml`**, gitignored).
 
 ## What you get
 
 - Splunk Web at `https://localhost:8000` and the management API (including MCP) on `https://localhost:8089/services/mcp`
 - Splunkbase apps pulled at container start (including Splunk MCP Server)
-- A one-shot init container that configures MCP for local dev, creates Splunk user `dd`, and writes an encrypted MCP token to `.secrets/splunk-token`
-- Optional indexing of Claude Desktop logs into the `claude_logs` index (requires enabling the bind mount in `compose.yml`—see [docs/CONFIGURATION.md](docs/CONFIGURATION.md))
+- A one-shot init container that configures MCP for local dev, creates Splunk user **`splunker`** (role **`mcp_user`** with capability **`mcp_tool_execute`**), and writes an encrypted MCP token to `.secrets/splunk-token` (and a generated password to `.secrets/splunker-password` unless you supply one)
+- Optional indexing of Claude Desktop logs into a **`claude_logs`** index: enable the bind mount in `compose.yml`, then create the index and monitor yourself or follow [docs/CONFIGURATION.md](docs/CONFIGURATION.md)—the minimal `setup-splunk.sh` does **not** create that index
 
 ## Requirements
 
@@ -39,7 +39,7 @@ Use **[docs/PRESALES.md](docs/PRESALES.md)** as the single entry point: secrets 
    `op run --env-file=tpl.env -- docker compose …`  
    (requires a local **`tpl.env`** from the step above). If `.env` **does** exist (e.g. after `make init`), Compose uses that file as usual.
 
-3. **Optional — materialize `.env`** (legacy / CI / users who prefer a file):
+3. **Optional — materialize `.env`** (e.g. CI or when you want secrets in a file on disk):
 
    ```bash
    make init          # tpl.env → .env (via op run + scripts/materialize-env.sh)
@@ -97,7 +97,6 @@ Restart Goose for changes to take effect.
 | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common failures |
 | [docs/SA-S4R-APP.md](docs/SA-S4R-APP.md) | Bundled sample app and Eventgen |
 | [docs/PRESALES.md](docs/PRESALES.md) | Demos, checklist, handoff for presales |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute; verification; secrets policy |
 | [LICENSE](LICENSE) | MIT |
 
 ## Security
@@ -114,8 +113,8 @@ splunk-mcp/
 ├── tpl.env.example                    # Tracked template — copy to tpl.env (gitignored) and edit op://
 ├── scripts/                           # setup-splunk.sh, Claude/Cursor MCP writers
 ├── SA-S4R/                            # Sample Splunk app (Eventgen demo data)
-├── .secrets/                          # splunk-token, dd-password (git-ignored)
+├── .secrets/                          # splunk-token, splunker-password (git-ignored)
 └── docs/                              # Extended documentation
 ```
 
-**Source of truth** for behavior: `Makefile`, `compose.yml`, `scripts/setup-splunk.sh`. **Authoritative** contributor notes: [AGENTS.md](AGENTS.md). **Contributing:** [CONTRIBUTING.md](CONTRIBUTING.md) · **License:** [LICENSE](LICENSE) (MIT).
+**Source of truth** for behavior: `Makefile`, `compose.yml`, `scripts/setup-splunk.sh`. **Contributor / agent notes:** [AGENTS.md](AGENTS.md). **License:** [LICENSE](LICENSE) (MIT).
