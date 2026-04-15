@@ -5,7 +5,6 @@
     "docs/**/*.md",
     "README.md",
     "AGENTS.md",
-    "CONTRIBUTING.md",
     ".github/**/*.md"
   ]
 }

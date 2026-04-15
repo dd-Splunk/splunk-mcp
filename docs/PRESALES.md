@@ -36,7 +36,7 @@ Optional: **`make init`** writes **`.env`** from **`tpl.env`** using **`op run`*
 | Actor | Purpose | Where it comes from |
 | ----- | ------- | ------------------- |
 | **`admin`** | Splunk Web login; REST in **`setup-splunk.sh`** | Password = **`SPLUNK_PASSWORD`** (secret store or `.env`) |
-| **`dd`** | Least-privilege Splunk user for MCP (`mcp_tool_execute`) | Created by init; password in **`.secrets/dd-password`** if not set via env |
+| **`splunker`** | Least-privilege Splunk user for MCP (role **`mcp_user`**, capability **`mcp_tool_execute`**) | Created by init; password in **`.secrets/splunker-password`** unless you supply one |
 | **Bearer token** | MCP HTTP clients (`mcp-remote`) | File **`.secrets/splunk-token`** (encrypted token from Splunk MCP Server app) |
 
 Do **not** use the **`admin`** password as the MCP Bearer token—the assistant uses the **token file** content.
@@ -62,7 +62,7 @@ If nothing returns yet, confirm apps in **Manage apps**, Eventgen enabled, and s
 ## What this demo proves
 
 - Splunk MCP exposes tools over **`https://localhost:8089/services/mcp`** (after apps and setup complete).
-- A least-privilege Splunk user (`dd`) with **`mcp_tool_execute`** can drive MCP without admin.
+- A least-privilege Splunk user (`splunker`) with the **`mcp_tool_execute`** capability can drive MCP without admin.
 - Standard MCP clients connect via **`mcp-remote`** and a bearer token generated at init.
 
 It does **not** replace production architecture, security review, or Splunk Cloud / customer-specific networking.

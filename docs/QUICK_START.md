@@ -89,7 +89,7 @@ Indexing Claude Desktop logs into **`claude_logs`** is **not** enabled unless:
 1. You **uncomment** the Claude logs bind mount in **`compose.yml`** (macOS path shown in comments), **and**
 2. The path exists on the host so `/var/log/claude_logs` appears inside `so1`.
 
-Then `setup-splunk.sh` can create the monitor input. Search: `index=claude_logs`.
+Then create the **`claude_logs`** index and a **monitor** input on `/var/log/claude_logs` in Splunk. Search: `index=claude_logs`.
 
 ## Common commands
 

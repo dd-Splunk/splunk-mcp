@@ -34,15 +34,15 @@ Confirm validity dates, key size (for RSA, at least 2048 bits; prefer modern cur
 
 - **Binding**: Compose publishes **8000** and **8089** to the host. Any process on the machine—or on the LAN if the host firewall allows—could reach those ports.
 - **Do not** port-forward these services to the public Internet without authentication hardening, reverse proxy, and network ACLs.
-- MCP over HTTP(S) should be treated as **privileged**: the token grants access consistent with Splunk roles assigned to user `dd`.
+- MCP over HTTP(S) should be treated as **privileged**: the token grants access consistent with Splunk roles assigned to the MCP user (default **`splunker`**).
 
 ## Splunk roles and least privilege
 
-The proof-of-concept script assigns user **`dd`** roles including **`admin`** in addition to **`mcp_tool_execute`**. That is convenient for PoC but **over-privileged** for real use.
+**`scripts/setup-splunk.sh`** does **not** grant **`admin`** to **`splunker`**. Do not add **`admin`** to MCP-capable accounts outside tightly controlled dev scenarios.
 
 For stricter experiments:
 
-- Reduce `dd` to the minimum roles/capabilities required by the Splunk MCP Server app documentation.
+- Reduce **`splunker`** (or your MCP user) to the minimum roles/capabilities required by the Splunk MCP Server app documentation.
 - Use a dedicated service account per environment.
 
 ## Token lifecycle

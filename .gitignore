@@ -3,7 +3,7 @@
 # Local copy of tpl.env.example — edit op:// paths here (never commit)
 tpl.env
 
-# Token files and secrets directory
+# Entire host secrets directory (tokens, generated passwords, etc.)
 .secrets/
 mcp_token.txt
 *.token
