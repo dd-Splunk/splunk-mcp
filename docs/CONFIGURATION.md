@@ -25,22 +25,22 @@
 - Named volumes `so1-var` and `so1-etc` persist Splunk data and config.
 - `./SA-S4R` is bind-mounted read-write into `/opt/splunk/etc/apps/SA-S4R`.
 
-**Claude logs (macOS)**
+**Claude logs (macOS, optional)**
 
-The sample compose file mounts:
+The sample `compose.yml` has this bind mount **commented out**. When enabled, it looks like:
 
 ```text
 ${HOME}/Library/Logs/Claude:/var/log/claude_logs
 ```
 
-If you are not on macOS or that path does not exist, adjust or remove this mount. The setup script only creates a monitor input when `/var/log/claude_logs` exists inside the container.
+If you are not on macOS or that path does not exist, adjust or remove this mount. **`scripts/setup-splunk.sh`** does **not** create a `claude_logs` index or monitor; add those via Splunk UI or REST if you want host log ingestion.
 
 ### Service `splunk-init`
 
 Runs after `so1` is **healthy**. Uses Alpine, installs `curl` and `jq`, then runs `setup-splunk.sh`. Mounts:
 
 - `scripts/setup-splunk.sh` → `/setup-splunk.sh`
-- `./.secrets` → `/output` (token written to `splunk-token`)
+- `./.secrets` → `/output` (token written to **`splunk-token`**, MCP user password to **`splunker-password`** when generated—see `TOKEN_OUTPUT_FILE` / `SPLUNKER_PASSWORD_FILE` in **`compose.yml`**)
 
 ### Network and volumes
 
@@ -89,16 +89,18 @@ Requires a local **`tpl.env`**, `op` signed in, and access to the referenced ite
 
 ## scripts/setup-splunk.sh
 
+Full behavior, diagrams, and REST details: **[SETUP_SPLUNK_SCRIPT.md](SETUP_SPLUNK_SCRIPT.md)**.
+
 Runs **inside** `splunk-init` with `SPLUNK_HOST=so1`. It:
 
-1. Sets MCP server `ssl_verify=false` via REST (dev convenience).
-2. Ensures index `claude_logs` and a monitor for `/var/log/claude_logs` (idempotent).
-3. Creates role **`mcp_tool_execute`** and ensures it has capability `mcp_tool_execute` (required by MCP).
-4. Creates user **`dd`** with roles `user` and `mcp_tool_execute` (no `admin` unless `ADD_ADMIN_ROLE=1`).
-5. Requests an **encrypted MCP token** from `.../Splunk_MCP_Server/mcp_token?username=dd&output_mode=json`.
-6. Writes the token to `TOKEN_OUTPUT_FILE` (`.secrets/splunk-token` on the host).
+1. Enables the **SA-Eventgen** default modular input when the app is installed.
+2. Sets MCP server `ssl_verify=false` via REST (dev convenience).
+3. Ensures Splunk role **`mcp_user`** exists with capability **`mcp_tool_execute`** (required by MCP).
+4. Creates user **`splunker`** (defaults; override with **`SPLUNKER_USERNAME`**) with Splunk roles **`user`** + **`mcp_user`**.
+5. Requests an **encrypted MCP token** from `.../Splunk_MCP_Server/mcp_token?username=<MCP_TOKEN_USERNAME>&output_mode=json` (default **`splunker`**).
+6. Writes the token to **`TOKEN_OUTPUT_FILE`** (`.secrets/splunk-token` on the host).
 
-The init script also generates a dedicated password for `dd` if `DD_PASSWORD` is not provided and persists it to `$(dirname TOKEN_OUTPUT_FILE)/dd-password` (git-ignored).
+Password handling: if **`SPLUNKER_PASSWORD_FILE`** is missing or empty, a password is generated and written there (default **`.secrets/splunker-password`**; **`splunk-init`** sets **`/output/splunker-password`** so it persists on the host). Set **`FORCE_SPLUNKER_PASSWORD=1`** to rotate when the file already exists.
 
 ## Claude Desktop configuration
 
@@ -126,6 +128,10 @@ The init script also generates a dedicated password for `dd` if `DD_PASSWORD` is
 | -------- | ------- | ------- |
 | `SPLUNK_HOST` | Client scripts | Default `localhost` |
 | `SPLUNK_PORT` | Client scripts | Default `8089` |
+| `SPLUNKER_USERNAME` | `setup-splunk.sh` | Splunk account to create/update (default `splunker`) |
+| `MCP_TOKEN_USERNAME` | `setup-splunk.sh` | User name passed to `mcp_token` (default `splunker`; must match the MCP user) |
+| `SPLUNKER_PASSWORD_FILE` | `setup-splunk.sh` | Host path for generated or supplied password (init: `/output/splunker-password` → `.secrets/splunker-password`) |
+| `TOKEN_OUTPUT_FILE` / `FORCE_MCP_TOKEN` | `setup-splunk.sh` | Token output path and optional regeneration |
 | `CURSOR_MCP_JSON` | `update-cursor-config.sh` | Output path |
 
 ## See also

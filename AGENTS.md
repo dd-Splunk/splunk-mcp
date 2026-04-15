@@ -11,76 +11,65 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`.
 
 - **Never commit secrets**:
   - `.env` (admin password, Splunkbase creds)
-  - **`tpl.env`** (local `op://` paths to **your** vault—gitignored; use tracked **`tpl.env.example`** as the starting point)
-  - `.secrets/*` (encrypted MCP token, generated `dd` password)
+  - **`tpl.env`** (local `op://` paths to **your** vault—gitignored; start from tracked **`tpl.env.example`**)
+  - `.secrets/*` (encrypted MCP token, **`splunker`** password file)
   - `.cursor/mcp.json` if it contains a live Bearer token
-  - `.config/goose/config.yaml` (contains token in extension config)
-- **Do not paste tokens/passwords into issues/PRs/logs**.
-- **Keep changes idempotent**: `make up`/`splunk-init` should be safe to run repeatedly.
+  - `~/.config/goose/config.yaml` (token in extension config)
+- **Do not paste tokens/passwords** into issues, PRs, or logs.
+- **Keep changes idempotent**: `make up` / `splunk-init` should be safe to run repeatedly.
 
 ## How the stack boots
 
-- `make up` (default path): runs **`docker compose up -d`** with secrets from **either**:
-  - **`.env`** on disk if it exists (e.g. after `make init`), **or**
-  - **`op run --env-file=tpl.env`** if `.env` is absent (no `.env` write; requires signed-in `op`).
-- **`make down`**, **`make logs`**, **`make restart`**, **`make status`**, **`make clean`** use plain **`docker`** / **`docker compose`** and do **not** require `op` or secrets for lifecycle—only the project/container names from this repo.
-- **`make up`** runs **`check-env-for-up`** first when **`.env`** is absent: verifies **`op run`** yields non-empty **`SPLUNK_PASSWORD`**, **`SPLUNKBASE_USER`**, **`SPLUNKBASE_PASS`** so Splunk is not started with blank Splunkbase credentials.
-- `make init` (**optional**): runs `op run --env-file=tpl.env -- scripts/materialize-env.sh .env` (same secret resolution as `make up`). Skips if `.env` exists unless `FORCE=1`.
-- `make up`: waits for `.secrets/splunk-token`, then runs `make claude-update`.
-- `splunk-init` runs `scripts/setup-splunk.sh` **after** `so1` is healthy.
+- **`make up`**: **`docker compose up -d`** with secrets from **either** a gitignored **`.env`** on disk **or** **`op run --env-file=tpl.env`** when `.env` is absent (requires signed-in `op`). See **`Makefile`** for exact behavior.
+- **`make down`**, **`make logs`**, **`make restart`**, **`make status`**, **`make clean`**: plain **`docker`** / **`docker compose`** only—no `op` or project secrets required.
+- When **`.env`** is absent, **`make up`** runs **`check-env-for-up`** so **`op run`** yields non-empty **`SPLUNK_PASSWORD`**, **`SPLUNKBASE_USER`**, **`SPLUNKBASE_PASS`** before Splunk starts.
+- **`make init`** (optional): `op run --env-file=tpl.env -- scripts/materialize-env.sh .env`—skipped if `.env` exists unless **`FORCE=1`**.
+- **`make up`**: waits for **`.secrets/splunk-token`**, then runs **`make claude-update`**.
+- **`splunk-init`** runs **`scripts/setup-splunk.sh`** after **`so1`** is healthy.
 
-## What `scripts/setup-splunk.sh` is responsible for
+## What `scripts/setup-splunk.sh` does
 
-This script performs one-time-ish setup via Splunk REST:
+Splunk REST bootstrap (see **`docs/SETUP_SPLUNK_SCRIPT.md`** for detail):
 
-- **MCP dev config**: sets `ssl_verify=false` in the Splunk MCP Server app config (dev-only).
-- **Claude logs index + monitor**:
-  - Ensures index `claude_logs`.
-  - Creates a monitor for `/var/log/claude_logs` **only if that directory exists inside the container** (bind mount is optional in `compose.yml`).
-- **MCP execution identity**:
-  - Ensures role `mcp_tool_execute` exists **and** has capability `mcp_tool_execute` (required by MCP).
-  - Creates user `dd` with roles `user` + `mcp_tool_execute` (admin is **not** granted by default).
-  - Generates an **encrypted MCP token** for `dd` and writes it to `.secrets/splunk-token`.
-  - If `DD_PASSWORD` isn’t provided, generates one and persists it to `.secrets/dd-password` (git-ignored).
+- MCP dev: **`ssl_verify=false`** on the Splunk MCP Server app (local dev only).
+- **SA-Eventgen**: enables the default modular input when the app is installed.
+- **Identity**: Splunk role **`mcp_user`** with capability **`mcp_tool_execute`**; user **`splunker`** (overridable via **`SPLUNKER_USERNAME`** / **`MCP_TOKEN_USERNAME`**) with roles **`user`** + **`mcp_user`**.
+- **Token**: encrypted MCP token from the app’s **`mcp_token`** endpoint → **`TOKEN_OUTPUT_FILE`** (host **`.secrets/splunk-token`** when using **`compose.yml`**).
+- **Password**: generated or read from **`SPLUNKER_PASSWORD_FILE`** (default **`.secrets/splunker-password`**; **`splunk-init`** uses **`/output/splunker-password`**).
+
+**Not** in this script: **`claude_logs`** index or file monitors. Optional ingestion: enable the bind mount in **`compose.yml`**, create the index and monitor in Splunk—**`docs/CONFIGURATION.md`**.
 
 ## Client configuration scripts
 
-After token generation, client config can be updated via:
+- **`scripts/update-claude-config.sh`** → `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
+- **`scripts/update-cursor-config.sh`** → **`.cursor/mcp.json`**
+- **`scripts/update-goose-config.sh`** → **`~/.config/goose/config.yaml`** (stdio extension entry)
 
-- **`scripts/update-claude-config.sh`**: Updates `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS).
-- **`scripts/update-cursor-config.sh`**: Updates `.cursor/mcp.json` with Splunk MCP server config.
-- **`scripts/update-goose-config.sh`**: Updates `~/.config/goose/config.yaml` with Splunk MCP extension (Goose uses `type: stdio` extensions, not `mcpServers`).
+## Quick verification
 
-## Quick verification commands
+| Question | Command / check |
+| -------- | ----------------- |
+| Splunk up? | `make status` |
+| MCP client path OK? | `make verify-mcp-remote` |
+| Eventgen modinput? | `curl -k -u admin:<password> "https://localhost:8089/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default?output_mode=json"` |
 
-- **Is Splunk up?**
-  - `make status`
-- **Is MCP reachable from the client side?**
-  - `make verify-mcp-remote`
-- **Is Eventgen modinput enabled?**
-  - `curl -k -u admin:<password> "https://localhost:8089/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default?output_mode=json"`
+## Makefile knobs
 
-## Makefile knobs you can rely on
+- **`TOKEN_FILE`**: token path (default **`.secrets/splunk-token`**)
+- **`ENV_FILE`**: file for `op run` (default **`tpl.env`**)
+- **`ENV_EXAMPLE`**: tracked template (default **`tpl.env.example`**)
+- **`ENV_OUT`**: materialized env (default **`.env`**)
+- **`OP`**, **`DC`**: 1Password CLI and docker compose command
+- **`make wait-token`**: waits on **`$(TOKEN_FILE)`** (used by **`make up`**)
 
-- **`TOKEN_FILE`**: path to token file (default `.secrets/splunk-token`)
-- **`ENV_FILE`**: local file passed to `op run` (default `tpl.env`; create with `cp tpl.env.example tpl.env`)
-- **`ENV_EXAMPLE`**: tracked example (default `tpl.env.example`)
-- **`ENV_OUT`**: optional materialized env file (default `.env`)
-- **`OP`**: 1Password CLI binary (default `op`)
-- **`DC`**: docker compose command (default `docker compose`)
-- **`make wait-token`**: waits for `$(TOKEN_FILE)` and fails on timeout (used by `make up`)
+## Common failure modes
 
-## Common failure modes (and what to check)
+- **“User lacks required mcp_tool_execute capability”** — Role **`mcp_user`** missing the capability. Re-run setup or POST **`capabilities=mcp_tool_execute`** to **`/services/authorization/roles/mcp_user`** (see **`scripts/setup-splunk.sh`**).
+- **No data in `claude_logs`** — This repo does not create that index or inputs. Confirm bind mount, index, and monitor in Splunk (**`docs/CONFIGURATION.md`**).
 
-- **MCP returns “User lacks required mcp_tool_execute capability”**
-  - The role exists but is missing the capability.
-  - Fix is in `scripts/setup-splunk.sh`: ensure `capabilities=mcp_tool_execute`.
-- **Claude logs monitor creation fails**
-  - `/var/log/claude_logs` isn’t mounted into the container.
-  - Enable the bind mount in `compose.yml` (macOS path) or change it for your OS.
+## Change discipline
 
-## Suggested change discipline
-
-- Prefer small commits that keep `make up`, `make status`, and `make verify-mcp-remote` working.
-- When updating setup logic, update docs in `docs/CONFIGURATION.md`, `docs/OVERVIEW.md`, and/or `docs/TROUBLESHOOTING.md`.
-- Human contributors: see **[CONTRIBUTING.md](CONTRIBUTING.md)** and **[LICENSE](LICENSE)** (MIT).
+- Prefer small commits; keep **`make up`**, **`make status`**, **`make verify-mcp-remote`** working.
+- When changing **`Makefile`**, **`compose.yml`**, or **`scripts/setup-splunk.sh`**, update **`docs/CONFIGURATION.md`**, **`docs/OVERVIEW.md`**, and/or **`docs/TROUBLESHOOTING.md`** as needed.
+- Markdown edits: **`make lint-md`** (or **`make lint-md-fix`**) — see **`.markdownlint-cli2.jsonc`**.
+- **License:** contributions are under **[LICENSE](LICENSE)** (MIT).
