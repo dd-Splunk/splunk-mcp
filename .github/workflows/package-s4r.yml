@@ -12,8 +12,12 @@ on:
       - "SA-S4R/**"
       - ".github/workflows/package-s4r.yml"
 
+concurrency:
+  group: package-s4r-latest-release
+  cancel-in-progress: false
+
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   package:
@@ -32,3 +36,19 @@ jobs:
           path: ${{ format('{0}.spl', env.SPLUNK_APP_DIR) }}
           if-no-files-found: error
           retention-days: 7
+
+      - name: Publish GitHub Release (latest)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          SPL="${SPLUNK_APP_DIR}.spl"
+          gh release delete latest --cleanup-tag --yes 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -fa latest -m "PoC latest (${GITHUB_SHA:0:7})"
+          git push origin "refs/tags/latest" --force
+          gh release create latest "$SPL" \
+            --title "SA-S4R (latest)" \
+            --notes "PoC (unversioned) build from \`${GITHUB_SHA:0:7}\` on \`${GITHUB_REF_NAME}\`." \
+            --latest
