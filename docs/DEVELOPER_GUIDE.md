@@ -103,14 +103,14 @@ Key targets:
 
 ```makefile
 init:            # Optional: op run --env-file=tpl.env -- scripts/materialize-env.sh .env
-up:              # docker compose up (op run if no .env), wait for token, claude-update
+up:              # docker compose up (op run if no .env), wait for token, update-claude-config
 down:            # Stop containers (same env resolution as up)
 restart:         # Restart containers
 clean:           # Remove everything (destructive)
 logs:            # Follow container logs
 status:          # Check health
-claude-update:   # Merge token into Claude Desktop MCP config
-cursor-mcp:      # Merge token into .cursor/mcp.json
+update-claude-config:   # Merge token into Claude Desktop MCP config
+update-cursor-config:   # Merge token into .cursor/mcp.json
 ```
 
 ## Development Workflow

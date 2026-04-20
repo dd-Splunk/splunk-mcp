@@ -40,7 +40,7 @@ make up
 ```
 
 - **`make up`** does **not** require `make init` first. If `.env` is missing, the Makefile runs Compose with `op run --env-file=tpl.env` (requires **`tpl.env`** from the step above).
-- Wait **2–3 minutes** for Splunk and `splunk-init` to finish; the Makefile waits for `.secrets/splunk-token` then runs `claude-update`.
+- Wait **2–3 minutes** for Splunk and `splunk-init` to finish; the Makefile waits for `.secrets/splunk-token` then runs `update-claude-config`.
 
 **Optional:** materialize a `.env` file:
 
@@ -69,7 +69,7 @@ curl -k -u "admin:${SPLUNK_PASSWORD}" https://localhost:8089/services/server/inf
 ## 5. Claude Desktop
 
 1. Quit Claude completely (e.g. **Cmd+Q** on macOS).
-2. Relaunch. The repo runs **`make claude-update`** after the token exists; that merges the Splunk MCP entry into  
+2. Relaunch. The repo runs **`make update-claude-config`** after the token exists; that merges the Splunk MCP entry into  
    `~/Library/Application Support/Claude/claude_desktop_config.json`.
 
 ## 6. Cursor
@@ -77,7 +77,7 @@ curl -k -u "admin:${SPLUNK_PASSWORD}" https://localhost:8089/services/server/inf
 After `.secrets/splunk-token` exists:
 
 ```bash
-make cursor-mcp
+make update-cursor-config
 ```
 
 Restart Cursor or reload MCP servers.

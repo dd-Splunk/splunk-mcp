@@ -139,9 +139,9 @@ Claude Desktop
 ### Token Management
 
 - **Generation**: `splunk-init` runs `setup-splunk.sh`, which calls the Splunk MCP Server app’s **`mcp_token`** endpoint for user **`splunker`** (or `MCP_TOKEN_USERNAME`).
-- **Storage**: Host file `.secrets/splunk-token`; Claude/Cursor configs reference it via `make claude-update` / `make cursor-mcp`.
+- **Storage**: Host file `.secrets/splunk-token`; Claude/Cursor configs reference it via `make update-claude-config` / `make update-cursor-config`.
 - **Expiry**: Depends on Splunk MCP app and token settings (docs may cite ~15 days as a rule of thumb—verify in your build).
-- **Renewal**: Regenerate token and refresh client config (`make claude-update`, `make cursor-mcp`).
+- **Renewal**: Regenerate token and refresh client config (`make update-claude-config`, `make update-cursor-config`).
 
 ## Configuration Files
 
@@ -160,7 +160,7 @@ Claude Desktop
 - Enables SA-Eventgen default modinput when the app is installed
 - Dependencies: `curl`, `jq` (installed in `splunk-init`)
 
-Host **Claude** / **Cursor** configs are updated by **`make claude-update`** / **`make cursor-mcp`**, not by this script.
+Host **Claude** / **Cursor** configs are updated by **`make update-claude-config`** / **`make update-cursor-config`**, not by this script.
 
 ### Makefile
 
@@ -184,7 +184,7 @@ Host **Claude** / **Cursor** configs are updated by **`make claude-update`** / *
 2. Runs setup-splunk.sh
 3. Creates role and user via REST API
 4. Generates token for MCP operations (written to `.secrets/splunk-token` on the host)
-5. Makefile runs `claude-update` on the host when the token file appears
+5. Makefile runs `update-claude-config` on the host when the token file appears
 6. splunk-init container exits (`restart: "no"`)
 
 ### MCP Operation
