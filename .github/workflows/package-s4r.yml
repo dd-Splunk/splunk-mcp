@@ -3,7 +3,6 @@ name: Package S4R app
 # App directory in the repo; package is ${SPLUNK_APP_DIR}.spl (e.g. SA-S4R.spl).
 # Note: on.push.paths must list the same directory; GHA does not support env there.
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   SPLUNK_APP_DIR: SA-S4R
 
 on:
@@ -27,7 +26,7 @@ jobs:
           COPYFILE_DISABLE=1 tar --format ustar -czf "${SPLUNK_APP_DIR}.spl" "$SPLUNK_APP_DIR"
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ format('{0}.spl', env.SPLUNK_APP_DIR) }}
           path: ${{ format('{0}.spl', env.SPLUNK_APP_DIR) }}
