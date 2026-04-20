@@ -31,6 +31,7 @@ Splunk **version** is not hard-coded in git beyond the Docker **image tag** (def
 | [SETUP_SPLUNK_SCRIPT.md](SETUP_SPLUNK_SCRIPT.md) | You need flowcharts and REST details for `scripts/setup-splunk.sh` |
 | [../docker-compose.override.yml.example](../docker-compose.override.yml.example) | Optional local port/mount overrides (copy to `docker-compose.override.yml`) |
 | [SECURITY.md](SECURITY.md) | You are assessing risk, tokens, TLS, or production gaps |
+| [CI_CD.md](CI_CD.md) | You want GitHub Actions workflows, artifacts, and PoC limits |
 | [SA-S4R-APP.md](SA-S4R-APP.md) | You are working with the bundled sample app / Eventgen data |
 
 ## API and development
