@@ -23,7 +23,7 @@ jobs:
 
       - name: Build Splunk app package
         run: |
-          tar -czf "${SPLUNK_APP_DIR}.spl" "$SPLUNK_APP_DIR"
+          COPYFILE_DISABLE=1 tar --format ustar -czf "${SPLUNK_APP_DIR}.spl" "$SPLUNK_APP_DIR"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
