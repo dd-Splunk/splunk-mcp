@@ -27,7 +27,7 @@ fi
 export NODE_TLS_REJECT_UNAUTHORIZED="${NODE_TLS_REJECT_UNAUTHORIZED:-0}"
 
 TMP=$(mktemp)
-# shellcheck disable=SC2329
+# shellcheck disable=SC2329,SC2317
 cleanup() { rm -f "$TMP"; }
 trap cleanup EXIT
 
