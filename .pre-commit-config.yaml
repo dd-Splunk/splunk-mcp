@@ -1,0 +1,20 @@
+# Install: pip install pre-commit && pre-commit install
+# Requires: Node/npx (for make lint-md). Shellcheck is provided by shellcheck-py below.
+# Run manually: pre-commit run --all-files
+# Mirrors .github/workflows/ci.yml: shellcheck then make lint-md
+repos:
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        args: [-x]
+        files: ^scripts/.*\.sh$
+
+  - repo: local
+    hooks:
+      - id: make-lint-md
+        name: make lint-md
+        entry: make lint-md
+        language: system
+        pass_filenames: false
+        files: ^(.*\.(md|markdown)|\.markdownlint.*|\.markdownlint-cli2\.jsonc)$
