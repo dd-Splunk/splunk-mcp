@@ -76,4 +76,4 @@ Splunk REST bootstrap (see **`docs/SETUP_SPLUNK_SCRIPT.md`** for detail):
 
 ## CI
 
-GitHub Actions (**`.github/workflows/ci.yml`**) runs on pushes and pull requests to **`main`** / **`master`**: **shellcheck** on **`scripts/*.sh`** and **`make lint-md`**. Match that locally before pushing (install [shellcheck](https://github.com/koalaman/shellcheck) for the script step).
+GitHub Actions: **`ci.yml`** (**shellcheck**, **`make lint-md`**) on pushes/PRs to **`main`** / **`master`**; **`package-s4r.yml`** builds **`SA-S4R.spl`** and publishes a PoC **`latest`** release when **`SA-S4R/`** or that workflow changes (or on **`workflow_dispatch`**). See **`docs/CI_CD.md`** for triggers, permissions, and PoC limitations.
