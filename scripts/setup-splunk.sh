@@ -11,7 +11,7 @@ set -eu
 SPLUNK_HOST="${SPLUNK_HOST:-localhost}"
 SPLUNK_PORT="${SPLUNK_PORT:-8089}"
 SPLUNK_USER="${SPLUNK_USER:-admin}"
-SPLUNK_PASSWORD="${SPLUNK_PASSWORD}"
+: "${SPLUNK_PASSWORD:?SPLUNK_PASSWORD must be set}"
 SPLUNK_URL="https://${SPLUNK_HOST}:${SPLUNK_PORT}"
 
 # Dedicated MCP user to create/maintain and mint the encrypted MCP token for.
@@ -29,7 +29,6 @@ FORCE_MCP_TOKEN="${FORCE_MCP_TOKEN:-0}"
 
 CURL_OPTS="-k"
 
-LAST_HTTP_CODE=""
 LAST_BODY_FILE=""
 
 auth_curl() { # $@ = curl args excluding auth
@@ -47,7 +46,6 @@ auth_curl() { # $@ = curl args excluding auth
   else
     code="000"
   fi
-  LAST_HTTP_CODE="${code}"
   LAST_BODY_FILE="${tmp_body}"
   case "${code}" in
     2??|3??)
@@ -75,7 +73,6 @@ cleanup_last_body() {
     rm -f "${LAST_BODY_FILE}" || true
   fi
   LAST_BODY_FILE=""
-  LAST_HTTP_CODE=""
 }
 
 must() {

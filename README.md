@@ -103,10 +103,15 @@ Restart Goose for changes to take effect.
 
 This repo targets **local development**: self-signed TLS, `NODE_TLS_REJECT_UNAUTHORIZED=0` for `mcp-remote`, and secrets supplied via `op` or `.env` / `.secrets`. Do not expose the stack to untrusted networks without redesign. See [docs/SECURITY.md](docs/SECURITY.md).
 
+## CI
+
+Pushes and pull requests to **`main`** or **`master`** run [`.github/workflows/ci.yml`](.github/workflows/ci.yml): **shellcheck** on `scripts/*.sh` and **`make lint-md`**. Run the same checks locally before pushing ([shellcheck](https://github.com/koalaman/shellcheck) for scripts; Node/`npx` for markdownlint via the Makefile).
+
 ## Repository layout (high level)
 
 ```text
 splunk-mcp/
+├── .github/workflows/ci.yml           # shellcheck + markdownlint (on push/PR)
 ├── compose.yml                        # Splunk + one-shot init container
 ├── docker-compose.override.yml.example  # Optional: copy to docker-compose.override.yml
 ├── Makefile                           # Compose wrappers (op run or .env), client helpers

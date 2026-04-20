@@ -28,6 +28,7 @@ fi
 
 if [ ! -r "${TOKEN_FILE}" ]; then
     echo "❌ Token file is not readable: ${TOKEN_FILE}"
+    # shellcheck disable=SC2012
     echo "   Permissions: $(ls -l "${TOKEN_FILE}" | awk '{print $1}')"
     exit 1
 fi
@@ -86,25 +87,19 @@ EOF
 )
 
 # Update or create mcpServers section with jq
-updated_config=$(echo "${current_config}" | jq \
+if ! updated_config=$(echo "${current_config}" | jq \
   --argjson splunk_mcp "${splunk_mcp_config}" \
-  '.mcpServers |= (. // {}) | .mcpServers["splunk-mcp-server"] = $splunk_mcp')
-
-# Check if jq succeeded
-if [ $? -ne 0 ]; then
+  '.mcpServers |= (. // {}) | .mcpServers["splunk-mcp-server"] = $splunk_mcp'); then
     echo "❌ Failed to update JSON configuration"
     exit 1
 fi
 
 # Write updated configuration back to file
-echo "${updated_config}" | jq '.' > "${CLAUDE_CONFIG_FILE}"
-
-if [ $? -eq 0 ]; then
-    echo "✅ Claude Desktop configuration updated successfully!"
-    echo "📍 Config file: ${CLAUDE_CONFIG_FILE}"
-    echo ""
-    echo "⚠️  IMPORTANT: Restart Claude Desktop for changes to take effect"
-else
+if ! echo "${updated_config}" | jq '.' > "${CLAUDE_CONFIG_FILE}"; then
     echo "❌ Failed to write Claude Desktop configuration"
     exit 1
 fi
+echo "✅ Claude Desktop configuration updated successfully!"
+echo "📍 Config file: ${CLAUDE_CONFIG_FILE}"
+echo ""
+echo "⚠️  IMPORTANT: Restart Claude Desktop for changes to take effect"

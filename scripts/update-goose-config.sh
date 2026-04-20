@@ -26,6 +26,7 @@ fi
 
 if [ ! -r "${TOKEN_FILE}" ]; then
     echo "❌ Token file is not readable: ${TOKEN_FILE}"
+    # shellcheck disable=SC2012
     echo "   Permissions: $(ls -l "${TOKEN_FILE}" | awk '{print $1}')"
     exit 1
 fi

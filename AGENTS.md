@@ -73,3 +73,7 @@ Splunk REST bootstrap (see **`docs/SETUP_SPLUNK_SCRIPT.md`** for detail):
 - When changing **`Makefile`**, **`compose.yml`**, or **`scripts/setup-splunk.sh`**, update **`docs/CONFIGURATION.md`**, **`docs/OVERVIEW.md`**, and/or **`docs/TROUBLESHOOTING.md`** as needed.
 - Markdown edits: **`make lint-md`** (or **`make lint-md-fix`**) — see **`.markdownlint-cli2.jsonc`**.
 - **License:** contributions are under **[LICENSE](LICENSE)** (MIT).
+
+## CI
+
+GitHub Actions (**`.github/workflows/ci.yml`**) runs on pushes and pull requests to **`main`** / **`master`**: **shellcheck** on **`scripts/*.sh`** and **`make lint-md`**. Match that locally before pushing (install [shellcheck](https://github.com/koalaman/shellcheck) for the script step).
