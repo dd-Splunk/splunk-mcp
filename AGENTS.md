@@ -5,7 +5,7 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`.
 ## What this repo is
 
 - **Purpose**: local PoC that runs **Splunk Enterprise** in Docker and exposes **Splunk MCP Server** on `https://localhost:8089/services/mcp`.
-- **Client bridge**: Claude Desktop, Cursor, or Goose connect via `npx mcp-remote` (see `make claude-update`, `make cursor-mcp`, `make goose-update`).
+- **Client bridge**: Claude Desktop, Cursor, or Goose connect via `npx mcp-remote` (see `make update-claude-config`, `make update-cursor-config`, `make update-goose-config`).
 
 ## Golden rules (don’t break these)
 
@@ -24,7 +24,7 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`.
 - **`make down`**, **`make logs`**, **`make restart`**, **`make status`**, **`make clean`**: plain **`docker`** / **`docker compose`** only—no `op` or project secrets required.
 - When **`.env`** is absent, **`make up`** runs **`check-env-for-up`** so **`op run`** yields non-empty **`SPLUNK_PASSWORD`**, **`SPLUNKBASE_USER`**, **`SPLUNKBASE_PASS`** before Splunk starts.
 - **`make init`** (optional): `op run --env-file=tpl.env -- scripts/materialize-env.sh .env`—skipped if `.env` exists unless **`FORCE=1`**.
-- **`make up`**: waits for **`.secrets/splunk-token`**, then runs **`make claude-update`**.
+- **`make up`**: waits for **`.secrets/splunk-token`**, then runs **`make update-claude-config`**.
 - **`splunk-init`** runs **`scripts/setup-splunk.sh`** after **`so1`** is healthy.
 
 ## What `scripts/setup-splunk.sh` does
