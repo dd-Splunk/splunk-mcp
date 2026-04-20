@@ -97,9 +97,9 @@ It does **not** replace production architecture, security review, or Splunk Clou
 
 | Client | After `make up` |
 | ------ | ---------------- |
-| **Claude Desktop** | `make up` runs **`make claude-update`** automatically; user must **restart Claude** (e.g. Cmd+Q on macOS). |
-| **Cursor** | Run **`make cursor-mcp`** after `.secrets/splunk-token` exists; restart Cursor or reload MCP. |
-| **Goose** | Run **`make goose-update`**; restart Goose. |
+| **Claude Desktop** | `make up` runs **`make update-claude-config`** automatically; user must **restart Claude** (e.g. Cmd+Q on macOS). |
+| **Cursor** | Run **`make update-cursor-config`** after `.secrets/splunk-token` exists; restart Cursor or reload MCP. |
+| **Goose** | Run **`make update-goose-config`**; restart Goose. |
 
 Smoke-test from the shell: **`make verify-mcp-remote`**.
 

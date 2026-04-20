@@ -15,7 +15,7 @@ Use **[docs/PRESALES.md](docs/PRESALES.md)** as the single entry point: secrets 
 
 - Splunk Web at `https://localhost:8000` and the management API (including MCP) on `https://localhost:8089/services/mcp`
 - Splunkbase apps pulled at container start (including Splunk MCP Server)
-- A one-shot init container that configures MCP for local dev, creates Splunk user **`splunker`** (role **`mcp_user`** with capability **`mcp_tool_execute`**), and writes an encrypted MCP token to `.secrets/splunk-token` (and a generated password to `.secrets/splunker-password` unless you supply one)
+- A one-shot init container that configures MCP for local dev, creates Splunk user **`splunker`** (role **`mcp_user`** with capability **`mcp_tool_execute`**), and writes an encrypted MCP token (used by `make update-claude-config`, `make update-cursor-config`, and `make update-goose-config`)
 - Optional indexing of Claude Desktop logs into a **`claude_logs`** index: enable the bind mount in `compose.yml`, then create the index and monitor yourself or follow [docs/CONFIGURATION.md](docs/CONFIGURATION.md)—the minimal `setup-splunk.sh` does **not** create that index
 
 ## Requirements
@@ -46,20 +46,20 @@ Use **[docs/PRESALES.md](docs/PRESALES.md)** as the single entry point: secrets 
    make up
    ```
 
-4. Restart **Claude Desktop** so it loads `~/Library/Application Support/Claude/claude_desktop_config.json` (updated when the token appears). **`make up` runs `make claude-update` for you** once the token file exists.
+4. Restart **Claude Desktop** so it loads `~/Library/Application Support/Claude/claude_desktop_config.json` (updated when the token appears). **`make up` runs `make update-claude-config` for you** once the token file exists.
 
-**Cursor:** after `.secrets/splunk-token` exists:
+**Cursor:** run:
 
 ```bash
-make cursor-mcp    # merges token into .cursor/mcp.json
+make update-cursor-config    # writes/updates .cursor/mcp.json from the generated token
 ```
 
 Restart Cursor or reload MCP servers.
 
-**Goose:** after `.secrets/splunk-token` exists:
+**Goose:** run:
 
 ```bash
-make goose-update  # configures ~/.config/goose/config.yaml with splunk-mcp-server extension
+make update-goose-config  # configures ~/.config/goose/config.yaml from the generated token
 ```
 
 Restart Goose for changes to take effect.
@@ -69,15 +69,15 @@ Restart Goose for changes to take effect.
 | Command | Purpose |
 | -------- | -------- |
 | `make help` | List all targets |
-| `make up` | `docker compose up -d` (with `op run` or `.env`), wait for token, run `claude-update` |
+| `make up` | `docker compose up -d` (with `op run` or `.env`), wait for token, run `update-claude-config` |
 | `make init` | Optional: write `.env` from local `tpl.env` (`op run` + `scripts/materialize-env.sh`) |
 | `make down` | Stop the stack (does **not** require `op` or `.env`) |
 | `make restart` | Restart Splunk container (does **not** require `op` or `.env`) |
 | `make logs` | Follow **`so1`** logs via `docker logs` (no `op`; avoids misleading Compose env warnings) |
 | `make status` | Compose status + quick API readiness (does **not** require `op` or `.env`) |
-| `make claude-update` | Merge Splunk MCP into Claude Desktop config |
-| `make goose-update` | Configure Goose with Splunk MCP extension (`.config/goose/config.yaml`) |
-| `make cursor-mcp` | Merge Splunk MCP into `.cursor/mcp.json` |
+| `make update-claude-config` | Merge Splunk MCP into Claude Desktop config |
+| `make update-goose-config` | Configure Goose with Splunk MCP extension (`.config/goose/config.yaml`) |
+| `make update-cursor-config` | Merge Splunk MCP into `.cursor/mcp.json` |
 | `make verify-mcp-remote` | Smoke-test `mcp-remote` → Splunk MCP |
 | `make clean` | Destructive: remove volumes and `.env` / token (prompts first; does **not** require `op`) |
 

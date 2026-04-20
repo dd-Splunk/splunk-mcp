@@ -80,10 +80,10 @@ Requires a local **`tpl.env`**, `op` signed in, and access to the referenced ite
 | Target | Behavior |
 | ------ | -------- |
 | `init` | Optional: materialize `.env` via `op run` + `scripts/materialize-env.sh` (skip if `.env` exists unless `FORCE=1`) |
-| `up` | `docker compose up -d` (via `op run --env-file=tpl.env` when `.env` is absent), wait for `.secrets/splunk-token`, then `claude-update` |
-| `claude-update` | Runs `scripts/update-claude-config.sh` |
-| `goose-update` | Runs `scripts/update-goose-config.sh` → `~/.config/goose/config.yaml` |
-| `cursor-mcp` | Runs `scripts/update-cursor-config.sh` → `.cursor/mcp.json` |
+| `up` | `docker compose up -d` (via `op run --env-file=tpl.env` when `.env` is absent), wait for `.secrets/splunk-token`, then `update-claude-config` |
+| `update-claude-config` | Runs `scripts/update-claude-config.sh` |
+| `update-goose-config` | Runs `scripts/update-goose-config.sh` → `~/.config/goose/config.yaml` |
+| `update-cursor-config` | Runs `scripts/update-cursor-config.sh` → `.cursor/mcp.json` |
 | `down` / `restart` / `logs` / `status` | Plain `docker compose` (no `op` or `.env` required—lifecycle only) |
 | `clean` | `docker compose down -v` then remove `.env` / token file (no `op` required) |
 

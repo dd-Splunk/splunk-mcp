@@ -62,7 +62,7 @@ with **`NODE_TLS_REJECT_UNAUTHORIZED=0`** to accept Splunk’s default self-sign
    so variables are injected **at process invocation** and nothing is written to `.env`.
 3. **Optional (`make init`)**: materializes **`.env`** via **`op run --env-file=tpl.env`** and **`scripts/materialize-env.sh`** (same resolution as `make up`; avoids `op inject` edge cases with spaces in `op://` paths).
 4. **Compose** supplies `SPLUNK_PASSWORD`, Splunkbase credentials, and related env vars to the `so1` and `splunk-init` services.
-5. **Token file** `.secrets/splunk-token` is created by `splunk-init` / `setup-splunk.sh`. **`make claude-update`**, **`make cursor-mcp`**, and **`make goose-update`** read it to patch client config.
+5. **Token file** `.secrets/splunk-token` is created by `splunk-init` / `setup-splunk.sh`. **`make update-claude-config`**, **`make update-cursor-config`**, and **`make update-goose-config`** read it to patch client config.
 
 ## Authentication model (as implemented)
 
@@ -86,12 +86,12 @@ make up
       → create/update role mcp_user with capability mcp_tool_execute
       → create user splunker (roles: user + mcp_user)
       → GET encrypted mcp token → .secrets/splunk-token
-  → Makefile: wait for token file → make claude-update
+  → Makefile: wait for token file → make update-claude-config
 
 Optional: make init
   → op run + materialize-env.sh → .env  (then make up uses .env like any Compose project)
 
-Optional: make cursor-mcp, make goose-update
+Optional: make update-cursor-config, make update-goose-config
   → update Cursor or Goose client config with the token
 
 User restarts Claude Desktop, Cursor, or Goose

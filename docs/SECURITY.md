@@ -48,7 +48,7 @@ For stricter experiments:
 ## Token lifecycle
 
 - Tokens may be **time-limited** (see Splunk MCP app behavior and Splunk auth settings). Plan to **regenerate** via the documented REST flow or by re-running init when expired.
-- Rotating the token requires updating **Claude** / **Cursor** config again (`make claude-update`, `make cursor-mcp`).
+- Rotating the token requires updating **Claude** / **Cursor** config again (`make update-claude-config`, `make update-cursor-config`).
 
 ## Logging and privacy
 
