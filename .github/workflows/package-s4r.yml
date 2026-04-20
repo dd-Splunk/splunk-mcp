@@ -1,0 +1,34 @@
+name: Package S4R app
+
+# App directory in the repo; package is ${SPLUNK_APP_DIR}.spl (e.g. SA-S4R.spl).
+# Note: on.push.paths must list the same directory; GHA does not support env there.
+env:
+  SPLUNK_APP_DIR: SA-S4R
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "SA-S4R/**"
+      - ".github/workflows/package-s4r.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build Splunk app package
+        run: |
+          tar -czf "${SPLUNK_APP_DIR}.spl" "$SPLUNK_APP_DIR"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ format('{0}.spl', env.SPLUNK_APP_DIR) }}
+          path: ${{ format('{0}.spl', env.SPLUNK_APP_DIR) }}
+          if-no-files-found: error
+          retention-days: 7
