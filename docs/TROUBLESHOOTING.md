@@ -287,6 +287,9 @@ curl -k -u admin:password https://localhost:8089/services/appserver/apps \
 # If not found, check download URL in compose.yml:
 cat compose.yml | grep SPLUNK_APPS_URL
 
+# Expected Splunkbase apps (IDs and names) are listed in CONFIGURATION.md under compose.yml.
+# If a 404 on download, update the /release/VERSION/ segment in SPLUNK_APPS_URL for that app.
+
 # Verify Splunkbase credentials:
 op read "op://Private/Splunkbase/username"
 op read "op://Private/Splunkbase/password"
