@@ -39,7 +39,7 @@ help:
 	@echo ""
 	@echo "Available targets:"
 	@echo "  make up             - Start Splunk; wait for token; update Claude config (Cursor/Goose: see update-cursor-config / update-goose-config)"
-	@echo "                       (needs secrets: $(ENV_OUT) from .env.example, or op + $(ENV_FILE))"
+	@echo "                       (needs: $(ENV_OUT) on disk, OR $(OP) + $(ENV_FILE) — see tpl.env.example)"
 	@echo "  make init           - [optional] Write $(ENV_OUT) from $(ENV_FILE) (op run + scripts/materialize-env.sh)"
 	@echo "  make init FORCE=1   - Re-generate $(ENV_OUT)"
 	@echo "  make wait-token     - Wait for $(TOKEN_FILE) to appear"
@@ -84,11 +84,11 @@ init:
 check-env-for-up:
 	@if [[ -f "$(ENV_OUT)" ]]; then \
 		set -a; \
-		. "$(ENV_OUT)" || { echo "Error: could not read $(ENV_OUT). Use KEY=value lines (see .env.example)."; exit 1; }; \
+		. "$(ENV_OUT)" || { echo "Error: could not read $(ENV_OUT). Use KEY=value lines (see .env.example or materialize from tpl.env)."; exit 1; }; \
 		set +a; \
 		if [ -z "$$SPLUNK_PASSWORD" ] || [ -z "$$SPLUNKBASE_USER" ] || [ -z "$$SPLUNKBASE_PASS" ]; then \
 			echo "Error: $(ENV_OUT) must set non-empty SPLUNK_PASSWORD, SPLUNKBASE_USER, and SPLUNKBASE_PASS."; \
-			echo "Splunkbase credentials are required for app downloads (SPLUNK_APPS_URL). See .env.example."; \
+			echo "Splunkbase credentials are required for app downloads (SPLUNK_APPS_URL). See tpl.env.example / .env.example."; \
 			exit 1; \
 		fi; \
 		echo "Using $(ENV_OUT) for Compose (Splunkbase credentials from file)."; \

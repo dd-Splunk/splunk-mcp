@@ -8,7 +8,7 @@ services:
       SPLUNK_GENERAL_TERMS: --accept-sgt-current-at-splunk-com
       SPLUNK_START_ARGS: --accept-license
       SPLUNK_PASSWORD: ${SPLUNK_PASSWORD}
-      # Splunkbase: set SPLUNKBASE_USER / SPLUNKBASE_PASS in project .env (see .env.example) or export via op run + tpl.env
+      # Splunkbase: set SPLUNKBASE_USER / SPLUNKBASE_PASS in project .env (see .env.example) or op run --env-file=tpl.env
       SPLUNKBASE_USERNAME: ${SPLUNKBASE_USER}
       SPLUNKBASE_PASSWORD: ${SPLUNKBASE_PASS}
       # Splunkbase: comma-separated package URLs (requires valid SPLUNKBASE_*). Order here:
