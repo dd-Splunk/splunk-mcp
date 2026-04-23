@@ -1,6 +1,14 @@
 ## compose.yml
 
-**Optional:** copy **`docker-compose.override.yml.example`** to **`docker-compose.override.yml`** (gitignored) to change host ports or add bind mounts without editing the main file. **`SPLUNK_APPS_URL`** in **`compose.yml`** includes comments identifying each Splunkbase app ID.
+**Optional:** copy **`docker-compose.override.yml.example`** to **`docker-compose.override.yml`** (gitignored) to change host ports or add bind mounts without editing the main file. **`SPLUNK_APPS_URL`** in **`compose.yml`** is a comma-separated list of Splunkbase download URLs; the **`compose.yml`** comments identify each app. Current entries (app ID → name):
+
+| App ID | App |
+| ------ | --- |
+| 1924 | SA-Eventgen (sample data / Eventgen modinput) |
+| 4353 | Config Explorer (optional UI utility) |
+| 7931 | Splunk MCP Server (required for `/services/mcp`) |
+| 7245 | Splunk AI Assistant for SPL |
+| 2890 | Splunk AI Toolkit |
 
 ### Service `so1` (Splunk)
 
