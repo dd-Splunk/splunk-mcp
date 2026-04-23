@@ -1,125 +1,85 @@
 # splunk-mcp
 
-Local **proof-of-concept** for running **Splunk Enterprise** with the **Splunk MCP Server** app and connecting **Claude Desktop**, **Cursor**, or **Goose** via the Model Context Protocol (MCP), using Docker Compose and the **1Password CLI** (`op`) for secrets.
+Local **proof-of-concept**: run **Splunk Enterprise** in Docker with the **Splunk MCP Server** app, and connect an LLM client (**Cursor**, **Claude Desktop**, or **Goose**) over the Model Context Protocol (MCP) using **`npx mcp-remote`**. Secrets come from the **1Password CLI** (`op` + `tpl.env`) or a git-ignored **`.env`** (no 1Password required).
 
-## Audience
+## First time here? (Presales / SE demo)
 
-- **Engineers** standing up a local Splunk + MCP stack.
-- **Presales / SEs** running a repeatable customer or internal demo—see **[docs/PRESALES.md](docs/PRESALES.md)** (checklist, timing, talking points, handoff).
+1. Read **[docs/PRESALES.md](docs/PRESALES.md)** end-to-end—it is the **demo runbook** (secrets, time budget, Cursor-first steps, checklist, handoff).
+2. Copy **`tpl.env.example` → `tpl.env`** and fix every `op://` path, **or** copy **`.env.example` → `.env`** and fill plain values (see PRESALES **Path A / Path B**).
+3. Run **`make up`**, then **`make update-cursor-config`** (restart Cursor) and **`make verify-mcp-remote`**.
 
-## New SE / demo takeover
-
-Use **[docs/PRESALES.md](docs/PRESALES.md)** as the single entry point: secrets (**1Password** or plain **`.env`**), Splunkbase/network requirements, **identity** (admin vs MCP user **`splunker`** vs Bearer token), sample SPL, LLM steps, and greenfield vs **`make clean`**. **`compose.yml`** documents **`SPLUNK_APPS_URL`** app IDs; **`docker-compose.override.yml.example`** shows optional port and mount overrides (copy to **`docker-compose.override.yml`**, gitignored).
+Do not block a live meeting on a cold start: **first `make up` can take many minutes** (pulls, Splunk, Splunkbase apps, init).
 
 ## What you get
 
-- Splunk Web at `https://localhost:8000` and the management API (including MCP) on `https://localhost:8089/services/mcp`
-- Splunkbase apps pulled at container start (including Splunk MCP Server)
-- A one-shot init container that configures MCP for local dev, creates Splunk user **`splunker`** (role **`mcp_user`** with capability **`mcp_tool_execute`**), and writes an encrypted MCP token (used by `make update-claude-config`, `make update-cursor-config`, and `make update-goose-config`)
-- Optional indexing of Claude Desktop logs into a **`claude_logs`** index: enable the bind mount in `compose.yml`, then create the index and monitor yourself or follow [docs/CONFIGURATION.md](docs/CONFIGURATION.md)—the minimal `setup-splunk.sh` does **not** create that index
+| Endpoint | Use |
+| -------- | --- |
+| `https://localhost:8000` | Splunk Web |
+| `https://localhost:8089/services/mcp` | Splunk MCP Server (Bearer token in **`.secrets/splunk-token`**) |
+
+Splunkbase apps (see **`compose.yml`** for IDs, including **Splunk MCP Server**) install at container start. A one-shot init configures MCP for local dev, creates user **`splunker`** (role **`mcp_user`**, capability **`mcp_tool_execute`), and writes the encrypted MCP token. **`make up`** waits for the token, then runs **`make update-claude-config`** (macOS Claude path).
+
+**Not included in init:** a **`claude_logs`** index or file monitors. Optional ingestion is described in [docs/CONFIGURATION.md](docs/CONFIGURATION.md) if you uncomment the bind mount in `compose.yml`.
 
 ## Requirements
 
-- Docker Desktop (or compatible engine) with Compose
-- **Secrets:** either **1Password CLI** (`op`) with vault items matching your local **`tpl.env`** (copy from **`tpl.env.example`** first), **or** a local **`.env`** file (git-ignored) with the same variables—see [docs/PRESALES.md](docs/PRESALES.md)
-- `make`, `bash`, `curl`, `jq`
-- Node/npm for `npx mcp-remote` (Claude / Cursor MCP client configs)
+- Docker with Compose, **`make`**, `bash`, **`curl`**, **`jq`**
+- **Secrets:** 1Password + **`tpl.env`** *or* **`.env`** (see [docs/PRESALES.md](docs/PRESALES.md))
+- **Node/npm** for `npx mcp-remote` (MCP client configs)
+- **Splunkbase** account with download rights (used for `SPLUNK_APPS_URL`)
 
-## Quick start
-
-1. **Create and edit `tpl.env`** (one-time): `cp tpl.env.example tpl.env`, then set every `op://vault/item/field` path to match **your** 1Password items (docs use illustrative names; your vault layout will differ).
-
-2. **Start the stack** (recommended — does **not** write a `.env` file on disk):
-
-   ```bash
-   make up
-   ```
-
-   If **no** `.env` exists, the Makefile runs Compose via  
-   `op run --env-file=tpl.env -- docker compose …`  
-   (requires a local **`tpl.env`** from the step above). If `.env` **does** exist (e.g. after `make init`), Compose uses that file as usual.
-
-3. **Optional — materialize `.env`** (e.g. CI or when you want secrets in a file on disk):
-
-   ```bash
-   make init          # tpl.env → .env (via op run + scripts/materialize-env.sh)
-   make up
-   ```
-
-4. Restart **Claude Desktop** so it loads `~/Library/Application Support/Claude/claude_desktop_config.json` (updated when the token appears). **`make up` runs `make update-claude-config` for you** once the token file exists.
-
-**Cursor:** run:
+## Quick commands
 
 ```bash
-make update-cursor-config    # writes/updates .cursor/mcp.json from the generated token
+make up                      # start stack, wait for token, update Claude Desktop config (macOS)
+make status                  # is Splunk answering?
+make update-cursor-config    # write .cursor/mcp.json from the token
+make verify-mcp-remote      # smoke-test mcp-remote → Splunk MCP
+make down                    # stop (no op / .env needed)
 ```
-
-Restart Cursor or reload MCP servers.
-
-**Goose:** run:
-
-```bash
-make update-goose-config  # configures ~/.config/goose/config.yaml from the generated token
-```
-
-Restart Goose for changes to take effect.
-
-## Common commands
 
 | Command | Purpose |
-| -------- | -------- |
-| `make help` | List all targets |
-| `make up` | `docker compose up -d` (with `op run` or `.env`), wait for token, run `update-claude-config` |
-| `make init` | Optional: write `.env` from local `tpl.env` (`op run` + `scripts/materialize-env.sh`) |
-| `make down` | Stop the stack (does **not** require `op` or `.env`) |
-| `make restart` | Restart Splunk container (does **not** require `op` or `.env`) |
-| `make logs` | Follow **`so1`** logs via `docker logs` (no `op`; avoids misleading Compose env warnings) |
-| `make status` | Compose status + quick API readiness (does **not** require `op` or `.env`) |
-| `make update-claude-config` | Merge Splunk MCP into Claude Desktop config |
-| `make update-goose-config` | Configure Goose with Splunk MCP extension (`.config/goose/config.yaml`) |
-| `make update-cursor-config` | Merge Splunk MCP into `.cursor/mcp.json` |
-| `make verify-mcp-remote` | Smoke-test `mcp-remote` → Splunk MCP |
-| `make clean` | Destructive: remove volumes and `.env` / token (prompts first; does **not** require `op`) |
+| ------- | ------- |
+| `make help` | All targets |
+| `make up` | Compose up, wait for **`.secrets/splunk-token`**, **`update-claude-config`** |
+| `make init` | Optional: **`.env`** from **`tpl.env`** via `op` + `scripts/materialize-env.sh` |
+| `make update-claude-config` | Merge Splunk MCP into Claude Desktop config (macOS) |
+| `make update-cursor-config` | Merge into **`.cursor/mcp.json`** |
+| `make update-goose-config` | **~/.config/goose/config.yaml** (stdio entry) |
+| `make clean` | Destructive: volumes + **`.env`** + token (prompts; no `op` needed) |
 
-## Documentation
+## Documentation (by audience)
 
-| Doc | Description |
-| --- | --- |
-| [docs/README.md](docs/README.md) | Index and reading order |
-| [AGENTS.md](AGENTS.md) | Short contributor / agent reference |
-| [docs/OVERVIEW.md](docs/OVERVIEW.md) | Architecture, flows, components |
-| [docs/CONFIGURATION.md](docs/CONFIGURATION.md) | `compose.yml`, `tpl.env` / `tpl.env.example`, Makefile, clients |
-| [docs/SECURITY.md](docs/SECURITY.md) | Dev-only risks and hardening notes |
-| [docs/QUICK_START.md](docs/QUICK_START.md) | Minimal checklist |
+| Doc | Audience |
+| --- | -------- |
+| **[docs/PRESALES.md](docs/PRESALES.md)** | **SE / presales: demo prep and flow** |
+| [docs/QUICK_START.md](docs/QUICK_START.md) | Short technical checklist (points at PRESALES for demos) |
 | [docs/INSTALLATION.md](docs/INSTALLATION.md) | Detailed install and verification |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Design reference |
-| [docs/API_REFERENCE.md](docs/API_REFERENCE.md) | REST / MCP endpoints |
-| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common failures |
-| [docs/SA-S4R-APP.md](docs/SA-S4R-APP.md) | Bundled sample app and Eventgen |
-| [docs/PRESALES.md](docs/PRESALES.md) | Demos, checklist, handoff for presales |
-| [LICENSE](LICENSE) | MIT |
+| [docs/CONFIGURATION.md](docs/CONFIGURATION.md) | `compose.yml`, env files, client configs |
+| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Failures: Splunkbase, ports, token, MCP |
+| [docs/OVERVIEW.md](docs/OVERVIEW.md) | Architecture |
+| [AGENTS.md](AGENTS.md) | Contributors and AI agent rules |
 
 ## Security
 
-This repo targets **local development**: self-signed TLS, `NODE_TLS_REJECT_UNAUTHORIZED=0` for `mcp-remote`, and secrets supplied via `op` or `.env` / `.secrets`. Do not expose the stack to untrusted networks without redesign. See [docs/SECURITY.md](docs/SECURITY.md).
+Local development defaults: self-signed TLS, `NODE_TLS_REJECT_UNAUTHORIZED=0` for `mcp-remote` in the generated client snippets, secrets in `op` / `.env` / **`.secrets`**. Do not expose this stack to untrusted networks as-is. See [docs/SECURITY.md](docs/SECURITY.md).
 
 ## CI
 
-Pushes and pull requests to **`main`** or **`master`** run [`.github/workflows/ci.yml`](.github/workflows/ci.yml): **shellcheck** on `scripts/*.sh` and **`make lint-md`**. Run the same checks locally before pushing ([shellcheck](https://github.com/koalaman/shellcheck) for scripts; Node/`npx` for markdownlint via the Makefile).
+Pushes/PRs to **`main`** / **`master`**: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) (**shellcheck**, **`make lint-md`**). Run the same before pushing.
 
 ## Repository layout (high level)
 
 ```text
 splunk-mcp/
-├── .github/workflows/ci.yml           # shellcheck + markdownlint (on push/PR)
-├── compose.yml                        # Splunk + one-shot init container
-├── docker-compose.override.yml.example  # Optional: copy to docker-compose.override.yml
-├── Makefile                           # Compose wrappers (op run or .env), client helpers
-├── tpl.env.example                    # Tracked template — copy to tpl.env (gitignored) and edit op://
-├── scripts/                           # setup-splunk.sh, Claude/Cursor MCP writers
-├── SA-S4R/                            # Sample Splunk app (Eventgen demo data)
-├── .secrets/                          # splunk-token, splunker-password (git-ignored)
-└── docs/                              # Extended documentation
+├── compose.yml                         # Splunk + one-shot init
+├── docker-compose.override.yml.example # Optional: copy to docker-compose.override.yml
+├── Makefile
+├── tpl.env.example / .env.example     # Tracked; copy to tpl.env or .env (gitignored)
+├── scripts/                            # setup-splunk.sh, client config writers, verify
+├── SA-S4R/                             # Sample app (Eventgen)
+├── .secrets/                          # splunk-token, splunker-password (gitignored)
+└── docs/
 ```
 
-**Source of truth** for behavior: `Makefile`, `compose.yml`, `scripts/setup-splunk.sh`. **Contributor / agent notes:** [AGENTS.md](AGENTS.md). **License:** [LICENSE](LICENSE) (MIT).
+**Behavior:** `Makefile`, `compose.yml`, `scripts/setup-splunk.sh`. License: [LICENSE](LICENSE) (MIT).
