@@ -1,126 +1,118 @@
-# Presales & demo use
+# Presales: local Splunk + Splunk MCP demo
 
-This repo is a **local proof-of-concept** for showing Splunk Enterprise with the **Splunk MCP Server** app and LLM clients (Claude Desktop, Cursor, Goose). Use this page to run a repeatable demo and set expectations with customers or internal stakeholders.
+This repo is a **local proof-of-concept**: **Splunk Enterprise** in Docker, **Splunk MCP Server** from Splunkbase, and an LLM client (**Cursor** is the primary target; **Claude Desktop** and **Goose** are optional) via MCP and `mcp-remote`.
 
-## New SE takeover (start here)
+**This file is the only presales runbook you need** for a credible first run. For deep configuration and failure analysis, use [CONFIGURATION.md](CONFIGURATION.md) and [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
-1. **Secrets:** **`cp tpl.env.example tpl.env`**, then edit **`tpl.env`** so every `op://` path resolves in **your** vault, **or** use **Path B** (no 1Password) below.
-2. **Network:** Host must reach **Splunkbase** (`splunkbase.splunk.com`) and Docker Hub (or your mirror) for pulls—corporate VPN/firewall/proxy can block installs.
-3. **Time:** First cold start can take **many minutes** (pull, Splunk, three Splunkbase downloads, init). For a live meeting, run **`make up`** well in advance or warm volumes the day before.
-4. **Artifacts:** Read **`compose.yml`** comments for **`SPLUNK_APPS_URL`** (which app each ID is). Optional port overrides: **`docker-compose.override.yml.example`**.
-5. **When stuck:** [TROUBLESHOOTING.md](TROUBLESHOOTING.md) → especially Splunkbase auth, ports, and init.
+## Demo success path (do this in order)
 
-## Secrets: Path A (1Password CLI) vs Path B (plain `.env`)
+1. **Prereqs on the laptop:** Docker Desktop (or equivalent) with enough RAM (prefer **8 GB+** free for Splunk), **Node/npm** (`npx`), `make`, `bash`, `curl`, `jq`.
+2. **Secrets** — pick **one** path (next section):
+   - **Path A:** `cp tpl.env.example tpl.env`, edit `op://` paths for **your** 1Password vault, `op` signed in.
+   - **Path B (no 1Password):** `cp .env.example .env`, fill `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, `SPLUNK_IMAGE`, `TZ`. Never commit `.env`.
+3. **Network:** The host must reach **splunkbase.splunk.com** (HTTPS) and your container registry (e.g. Docker Hub). VPN/firewall/proxy often blocks corporate demos—test ahead.
+4. **Start:** `make up` from the repo root. First cold start is often **several minutes** (image pull, Splunk, three Splunkbase app downloads, one-shot init, token). For a live meeting, warm the stack **before** the call or the day before.
+5. **Wait for green:** `make status` until it prints **Splunk is ready ✓** and **`.secrets/splunk-token`** exists.
+6. **Cursor (recommended):** `make update-cursor-config`, then restart Cursor or reload MCP servers. Confirm Splunk/MCP tools in the tool list and run a **read-only** tool (e.g. a small search).
+7. **Sanity check from the shell:** `make verify-mcp-remote` (confirms `mcp-remote` → `https://localhost:8089/services/mcp` without printing the token).
+8. **Optional — Claude Desktop:** `make up` already runs `make update-claude-config` on macOS; **quit Claude fully (Cmd+Q)** and reopen. **Goose:** `make update-goose-config`, restart Goose.
 
-| Path | When to use | What to do |
-| ---- | ----------- | ---------- |
-| **A — `op`** | You use 1Password and `op` is signed in | **`cp tpl.env.example tpl.env`**, edit **`tpl.env`** with valid `op://vault/item/field` paths. Run **`make up`** (no `.env` file needed; Makefile uses `op run`). |
-| **B — no `op`** | No 1Password, CI, or air-gapped-style workflow | Create **`.env`** in the repo root (git-ignored) with **plain** values for `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, `SPLUNK_IMAGE`, `TZ`. Same variable names as **`tpl.env`**. Then run **`make up`**. **Never commit `.env`.** |
+If anything fails, go straight to [TROUBLESHOOTING.md](TROUBLESHOOTING.md) (Splunkbase auth, ports, token timeout, MCP 401).
 
-Optional: **`make init`** writes **`.env`** from **`tpl.env`** using **`op run`** (same as **`make up`**, not **`op inject`**), for CI or hosts that want a file on disk.
+## Secrets: Path A (1Password) vs Path B (plain `.env`)
 
-## Splunkbase and network (hard dependencies)
+| Path | When | Action |
+| ---- | ---- | ------ |
+| **A — `op`** | You use 1Password; `op` is installed and signed in | `cp tpl.env.example tpl.env`, set valid `op://vault/item/field` paths, then `make up` (no `.env` file required; Makefile uses `op run --env-file=tpl.env`). |
+| **B — no `op`** | No 1Password, CI, or you prefer a file | `cp .env.example .env` with **plain** values for `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, and optional `SPLUNK_IMAGE` / `TZ`. Then `make up`. **Never commit `.env`.** |
 
-- **Valid Splunkbase credentials** are required: Compose passes them so Splunk can download **`SPLUNK_APPS_URL`** at start. Wrong password or account without download permission → apps (including **Splunk MCP Server**) never install → MCP setup fails.
-- **Egress:** The machine running Docker needs HTTPS access to **splunkbase.splunk.com** (and image registry for **`SPLUNK_IMAGE`**). Offline/air-gapped installs are out of scope for this PoC.
-- **URLs:** See comments on **`SPLUNK_APPS_URL`** in **`compose.yml`** (apps **1924** Eventgen, **4353** Config Explorer, **7931** Splunk MCP Server). If a URL returns **404**, update the `/release/<version>/` segment from the app’s current Splunkbase download link.
+Optional: `make init` materializes `.env` from `tpl.env` using `op run` (handy when you want secrets on disk for the same flow as `make up`).
+
+## What you are demoing (URLs and roles)
+
+| URL | Purpose |
+| --- | ------- |
+| `https://localhost:8000` | Splunk Web (user **admin**, password from your secret source—not the MCP token) |
+| `https://localhost:8089/services/mcp` | Splunk MCP Server HTTP endpoint (Bearer token in **`.secrets/splunk-token`**) |
+
+| Identity | Role |
+| -------- | ---- |
+| **admin** | Splunk Web and REST in bootstrap; password = `SPLUNK_PASSWORD` |
+| **splunker** | Least-privilege user for MCP (role `mcp_user`, capability `mcp_tool_execute`); password in **`.secrets/splunker-password`** if generated |
+| **Bearer token** | What `mcp-remote` and the LLM use—read from **`.secrets/splunk-token`**, **not** the admin password |
+
+## Splunkbase and network (non-negotiable)
+
+- **Valid Splunkbase credentials** are required: Compose passes them so Splunk can download `SPLUNK_APPS_URL` at start. Wrong password or an account that cannot download apps means **Splunk MCP Server never installs** and init fails.
+- **Egress:** HTTPS to **splunkbase.splunk.com** and your image registry. Air-gapped installs are out of scope.
+- **404 on an app URL:** The `/release/<version>/` segment in `compose.yml` can go stale; refresh it from the app’s current Splunkbase download link. Comments in `compose.yml` name each app ID (e.g. **7931** Splunk MCP Server).
 
 ## Platform notes
 
-- **Apple Silicon (M1/M2/M3):** **`compose.yml`** sets **`platform: linux/amd64`**. Splunk’s image runs via emulation—first pull and CPU use can be higher; allow extra time.
-- **Windows:** Prefer **WSL2** + Docker Desktop; **`make`** and paths match Linux docs best. **Claude Desktop** config scripts in this repo target **macOS** paths (`~/Library/Application Support/Claude/...`). On Windows, configure the MCP client manually or adjust paths to your environment.
-- **TLS:** Browser and `curl` use **`-k`** / accept self-signed certs for **localhost** only.
-
-## Identity cheat sheet (who uses what)
-
-| Actor | Purpose | Where it comes from |
-| ----- | ------- | ------------------- |
-| **`admin`** | Splunk Web login; REST in **`setup-splunk.sh`** | Password = **`SPLUNK_PASSWORD`** (secret store or `.env`) |
-| **`splunker`** | Least-privilege Splunk user for MCP (role **`mcp_user`**, capability **`mcp_tool_execute`**) | Created by init; password in **`.secrets/splunker-password`** unless you supply one |
-| **Bearer token** | MCP HTTP clients (`mcp-remote`) | File **`.secrets/splunk-token`** (encrypted token from Splunk MCP Server app) |
-
-Do **not** use the **`admin`** password as the MCP Bearer token—the assistant uses the **token file** content.
+- **Apple Silicon:** `compose.yml` uses `platform: linux/amd64` for Splunk’s image—emulation is slower; budget extra time.
+- **Windows:** Prefer **WSL2** + Docker. Claude config scripts in this repo assume **macOS** paths; adjust or configure MCP manually on Windows.
+- **TLS:** Use **`-k`** with `curl` and accept the self-signed cert in the browser for localhost only.
 
 ## Sample Splunk search (bundled data)
 
-After **SA-S4R** + **Eventgen** are running and data is flowing into **`main`** (may take a few minutes post-start), try in **Search & Reporting**:
+After **SA-S4R** and **Eventgen** are running, data can appear in **`main`** (allow a few minutes). In Search & Reporting:
 
 ```splunk
 index=main sourcetype=access_combined
 | head 20
 ```
 
-If nothing returns yet, confirm apps in **Manage apps**, Eventgen enabled, and see [SA-S4R-APP.md](SA-S4R-APP.md).
+If nothing returns, check **Manage apps**, Eventgen, and [SA-S4R-APP.md](SA-S4R-APP.md).
 
-## LLM demo (~60 seconds)
+## What this demo proves (and does not)
 
-1. Open **Claude / Cursor / Goose** with MCP configured (see below).
-2. Confirm **Splunk** / **MCP** tools appear in the tool list (exact names depend on **Splunk MCP Server** version—see [Splunk MCP Server on Splunkbase](https://splunkbase.splunk.com/app/7931)).
-3. Run a **read-only** action (e.g. a small search or metadata) rather than destructive operations.
-4. **`make verify-mcp-remote`** from a shell confirms **`mcp-remote`** can proxy to **`https://localhost:8089/services/mcp`** with the token (without printing the token).
+**Proves:** Splunk exposes MCP tools at a standard HTTPS path; a least-privilege user (`splunker`) with `mcp_tool_execute` can drive MCP; clients attach via `mcp-remote` and a Bearer token from the app.
 
-## What this demo proves
+**Does not replace:** Production architecture, full security review, Splunk Cloud specifics, or customer network controls.
 
-- Splunk MCP exposes tools over **`https://localhost:8089/services/mcp`** (after apps and setup complete).
-- A least-privilege Splunk user (`splunker`) with the **`mcp_tool_execute`** capability can drive MCP without admin.
-- Standard MCP clients connect via **`mcp-remote`** and a bearer token generated at init.
+## Before the customer call (checklist)
 
-It does **not** replace production architecture, security review, or Splunk Cloud / customer-specific networking.
+| Check | Why |
+| ----- | --- |
+| Docker running; **8 GB+** RAM free if possible | Splunk + downloads |
+| Splunkbase user/password working in browser | Same creds as in `tpl.env` or `.env` |
+| `op` signed in **or** a complete `.env` | `make up` must inject non-empty `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS` |
+| `node` / `npx` available | MCP client configs use `mcp-remote` |
+| You ran **`make up`** early or have warm volumes | Cold start is multi-minute |
+| **Cursor:** `make update-cursor-config` + restart done once token exists | Primary demo client |
 
-## Before the demo (checklist)
+## Suggested 10-minute storyboard
 
-| Prerequisite | Why |
-| -------------- | --- |
-| Docker Desktop (or equivalent) with enough RAM (see [INSTALLATION.md](INSTALLATION.md#prerequisites)) | Splunk container + app downloads |
-| **Splunkbase account** + credentials in **`tpl.env`** or **`.env`** | Required for **`SPLUNK_APPS_URL`** downloads |
-| **`op`** signed in **or** a working **`.env`** | Injects `SPLUNK_PASSWORD` and Splunkbase vars |
-| Node/npm for **`npx mcp-remote`** | Claude / Cursor / Goose configs |
-| Accept self-signed TLS in the browser for `https://localhost:8000` | Default Splunk dev cert |
+1. **One line:** *Splunk data and operations exposed as MCP tools so an assistant can query and act with Splunk-side guardrails (roles/capabilities).*
+2. `make status` — show Splunk healthy.
+3. Browser: `https://localhost:8000`, login as **admin** (password from your vault—not shown in repo).
+4. **Optional:** Run the sample SPL if you need on-screen data.
+5. **Cursor (or other client):** Show MCP tools, run one **read-only** tool; run **`make verify-mcp-remote`** in a terminal to show the bridge works without exposing the token.
+6. If asked about security: [SECURITY.md](SECURITY.md) — self-signed TLS, local dev, not for untrusted networks.
 
-**Time budget:** first cold start is often **several minutes** (image pull, Splunk start, Splunkbase app downloads, init). For a live meeting, start **`make up`** early or run once the day before so volumes are warm.
+## Greenfield vs clean slate
 
-## Demo flow (suggested)
+- **Day to day:** `make down` / `make up`; volumes and token often persist.
+- **Important clean demo:** `make clean` (destructive; prompts)—expect a full **re-download and wait** next time. See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for volume reset.
 
-1. **Show the value prop in one sentence:** e.g. “Splunk operations exposed as MCP tools so an assistant can search and act with guardrails.”
-2. Run **`make status`** until “Splunk is ready”.
-3. Open **Splunk Web** at `https://localhost:8000`, log in as **admin** (password from your secret store—not from the repo).
-4. **Optional:** run the sample SPL above if your narrative includes data.
-5. In the LLM client, confirm **Splunk MCP** tools appear and run one low-risk tool (e.g. a small search), not destructive actions.
-6. Point to **docs/SECURITY.md** if asked about TLS, tokens, or production gaps.
+## LLM client configuration
 
-## Greenfield vs iterating
+| Client | What to do |
+| ------ | ---------- |
+| **Cursor** | `make update-cursor-config` → restart Cursor or reload MCP. **Use this for most SE demos.** |
+| **Claude Desktop (macOS)** | `make up` runs `make update-claude-config`; user must **quit Claude fully** and reopen. |
+| **Goose** | `make update-goose-config` → restart Goose. |
 
-- **Iterate locally:** `make down` / `make up` as needed; token and volumes usually persist (named volumes **`so1-var`**, **`so1-etc`**).
-- **Clean slate before an important demo:** see **`make clean`** (destructive; prompts) and [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for volume reset—expect full reinstall time afterward.
+Shell smoke test: **`make verify-mcp-remote`**.
 
-## Client-specific notes
+## Handoff to another SE
 
-| Client | After `make up` |
-| ------ | ---------------- |
-| **Claude Desktop** | `make up` runs **`make update-claude-config`** automatically; user must **restart Claude** (e.g. Cmd+Q on macOS). |
-| **Cursor** | Run **`make update-cursor-config`** after `.secrets/splunk-token` exists; restart Cursor or reload MCP. |
-| **Goose** | Run **`make update-goose-config`**; restart Goose. |
+1. Clone; create **your own** `tpl.env` (or `.env` for Path B)—do not copy another engineer’s secrets file.
+2. Confirm Splunkbase download works; without it, apps including MCP will not load.
+3. If something breaks: [TROUBLESHOOTING.md](TROUBLESHOOTING.md) first, then [CONFIGURATION.md](CONFIGURATION.md).
 
-Smoke-test from the shell: **`make verify-mcp-remote`**.
+## Publishing / compliance
 
-## Talking points / boundaries
-
-- **Secrets:** Admin password and Splunkbase credentials never belong in git; use local **`tpl.env`** (from **`tpl.env.example`**) + `op` or a local `.env` (git-ignored). See [AGENTS.md](../AGENTS.md).
-- **Not for untrusted networks:** Default setup uses self-signed TLS and dev-oriented MCP SSL settings; see [SECURITY.md](SECURITY.md).
-- **Splunk version:** Image tag is controlled by **`SPLUNK_IMAGE`** (see **`tpl.env.example`** / your **`tpl.env`**). Pin a version for reproducible demos.
-- **Licensing:** This stack uses Splunk’s Docker image defaults for dev/PoC; enterprise licensing and air-gapped installs are out of scope for this repo—position accordingly.
-
-## Handoff to another presales engineer
-
-1. Clone the repo; **`cp tpl.env.example tpl.env`** and map **`op://`** paths to **your** vault—do not reuse another engineer’s **`tpl.env`** (or use **Path B** `.env`).
-2. Ensure Splunkbase credentials work: without them, app downloads from **`SPLUNK_APPS_URL`** fail and MCP setup will not complete.
-3. Read [QUICK_START.md](QUICK_START.md) → [CONFIGURATION.md](CONFIGURATION.md) → [TROUBLESHOOTING.md](TROUBLESHOOTING.md) in that order when something breaks.
-
-## Publishing this repository
-
-Before making the repo public or wide-internal:
-
-- **`tpl.env.example`** stays placeholder-only; real vault paths live in gitignored **`tpl.env`**.
-- Confirm **`.gitignore`** excludes `.env`, `.secrets/`, and client configs with tokens ([AGENTS.md](../AGENTS.md)).
-- This repo includes **[LICENSE](../LICENSE)** (MIT); confirm it matches your org’s policy before wide distribution.
-- Optionally set GitHub **Topics** from [.github/TOPICS.md](../.github/TOPICS.md).
+- Keep **`tpl.env.example`** and **`.env.example`** placeholder-only; real paths live in gitignored files.
+- Confirm [AGENTS.md](../AGENTS.md) and `.gitignore` for what must never be committed.
+- License: [LICENSE](../LICENSE) (MIT). Optional GitHub topics: [.github/TOPICS.md](../.github/TOPICS.md).

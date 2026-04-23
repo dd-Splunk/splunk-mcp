@@ -5,7 +5,7 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`.
 ## What this repo is
 
 - **Purpose**: local PoC that runs **Splunk Enterprise** in Docker and exposes **Splunk MCP Server** on `https://localhost:8089/services/mcp`.
-- **Client bridge**: Claude Desktop, Cursor, or Goose connect via `npx mcp-remote` (see `make update-claude-config`, `make update-cursor-config`, `make update-goose-config`).
+- **Client bridge**: Claude Desktop, Cursor, or Goose connect via `npx mcp-remote` (see `make update-claude-config`, `make update-cursor-config`, `make update-goose-config`). **SE / presales** single runbook: **`docs/PRESALES.md`**.
 
 ## Golden rules (don’t break these)
 
