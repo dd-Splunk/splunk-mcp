@@ -42,7 +42,7 @@ make down                    # stop (no op / .env needed)
 | ------- | ------- |
 | `make help` | All targets |
 | `make up` | Compose up, wait for **`.secrets/splunk-token`**, **`update-claude-config`** |
-| `make init` | Optional: **`.env`** from **`tpl.env`** via `op` + `scripts/materialize-env.sh` |
+| `make init` | Optional: write **`.env`** (resolved secrets on disk) from `tpl.env` + `op`; you usually **do not** need this if you always use `op` with `make up` (see [docs/CONFIGURATION.md](docs/CONFIGURATION.md#generating-env-optional)) |
 | `make update-claude-config` | Merge Splunk MCP into Claude Desktop config (macOS) |
 | `make update-cursor-config` | Merge into **`.cursor/mcp.json`** |
 | `make update-goose-config` | **~/.config/goose/config.yaml** (stdio entry) |

@@ -84,7 +84,7 @@ make up
 
 This runs **`docker compose up -d`** using **`.env`** if present, otherwise **`op run --env-file=tpl.env`**. It starts **`so1`**, runs **`splunk-init`** after Splunk is healthy, waits for **`.secrets/splunk-token`**, then runs **`make update-claude-config`** (Claude Desktop config on macOS).
 
-Optional file-based env:
+Optional file-based env (you do **not** need this if you only use `tpl.env` and `make up` with 1Password—see [CONFIGURATION.md](CONFIGURATION.md#generating-env-optional)):
 
 ```bash
 make init    # tpl.env → .env (op run + scripts/materialize-env.sh)

@@ -26,7 +26,7 @@ make up
 
 Waits for **`.secrets/splunk-token`**, then runs **`make update-claude-config`** (macOS). First run can take **several minutes**.
 
-Optional: `make init` then `make up` if you want a materialized **`.env`**.
+**`make init`** is optional: it writes a **`.env`** from `op` + `tpl.env` so a later `make up` can run **without** `op`. A normal `make up` with `tpl.env` and no `.env` already injects secrets via `op run` and does not need `make init`. See [PRESALES.md](PRESALES.md#make-up-vs-make-init) and [CONFIGURATION.md](CONFIGURATION.md#generating-env-optional).
 
 ## 3. Verify
 
