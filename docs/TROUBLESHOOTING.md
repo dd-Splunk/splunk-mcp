@@ -287,6 +287,9 @@ curl -k -u admin:password https://localhost:8089/services/appserver/apps \
 # If not found, check download URL in compose.yml:
 cat compose.yml | grep SPLUNK_APPS_URL
 
+# Expected Splunkbase apps (IDs and names) are listed in CONFIGURATION.md under compose.yml.
+# If a 404 on download, update the /release/VERSION/ segment in SPLUNK_APPS_URL for that app.
+
 # Verify Splunkbase credentials:
 op read "op://Private/Splunkbase/username"
 op read "op://Private/Splunkbase/password"
@@ -297,6 +300,29 @@ docker volume rm so1-var so1-etc
 make init
 make up
 ```
+
+---
+
+#### Issue: Splunk AI Toolkit — "Failed to fetch config metadata" / Empty response (Connection Management)
+
+**Symptoms**: In Splunk Web, as user `splunker` (or any user with MLTK roles), adding an external LLM connection shows: `Failed to fetch config metadata: Empty response.`
+
+**Root cause (typical)**: The UI calls `GET /servicesNS/<user>/Splunk_ML_Toolkit/mltk/aicommander_metadata`, which can return HTTP **500** with a **non-JSON** body. That often means the **Python for Scientific Computing** add-on is missing: MLTK’s REST handler imports `Splunk_SA_Scientific_Python_linux_x86_64`. If that app is not installed, `splunkd.log` will show: `Failed to find Python for Scientific Computing Add-on (Splunk_SA_Scientific_Python_linux_x86_64)`.
+
+**Fix**:
+
+1. Ensure **app/2882** (Python for Scientific Computing, Linux 64-bit) is in **`SPLUNK_APPS_URL`** in **`compose.yml`**, *before* or with MLTK (see **CONFIGURATION.md** table), and that Splunkbase credentials allow the download.
+2. Restart / reinstall apps as needed, then re-open the Connection Management UI. (On existing volumes, you may need to install 2882 from Splunkbase under **Manage apps** or recreate the stack after updating **`SPLUNK_APPS_URL`**.)
+
+**Verify** (as admin, after the add-on is present and Splunk is healthy):
+
+```bash
+curl -k -u admin:password "https://localhost:8089/servicesNS/admin/Splunk_ML_Toolkit/mltk/aicommander_metadata?output_mode=json" | head -c 400
+```
+
+A healthy response is JSON with a `metadata` object; a missing Scientific Python add-on returns **500** with a short non-JSON error.
+
+If apps still do not install, use the same Splunkbase credential and volume reinit steps as in **Issue: Splunk MCP app not installed** above.
 
 ---
 
