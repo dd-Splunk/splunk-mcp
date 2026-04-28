@@ -2,6 +2,7 @@
 # Minimal Splunk PoC setup (idempotent):
 # - Enable SA-Eventgen default modular input (modinput_eventgen://default)
 # - Set Splunk MCP Server app ssl_verify=false (local dev only)
+# - Add Splunk role mltk_admin to MLTK_ROLES_USER (default: SPLUNKER_USERNAME / splunker; override e.g. admin or SPLUNK_USER)
 # - Ensure an MCP-enabled Splunk user exists and persist its password + token
 #
 # Out of scope: claude_logs index/monitor (add via Splunk UI/REST if needed).
@@ -19,6 +20,9 @@ SPLUNK_URL="https://${SPLUNK_HOST}:${SPLUNK_PORT}"
 MCP_TOKEN_USERNAME="${MCP_TOKEN_USERNAME:-splunker}"
 
 SPLUNKER_USERNAME="${SPLUNKER_USERNAME:-splunker}"
+# Splunk account that receives the MLTK mltk_admin role. Defaults to the MCP user (SPLUNKER_USERNAME), not SPLUNK_USER (admin REST).
+# Set to the same value as SPLUNK_USER in .env if the management account (e.g. admin) should have MLTK instead.
+MLTK_ROLES_USER="${MLTK_ROLES_USER:-$SPLUNKER_USERNAME}"
 SPLUNKER_PASSWORD_FILE="${SPLUNKER_PASSWORD_FILE:-.secrets/splunker-password}"
 FORCE_SPLUNKER_PASSWORD="${FORCE_SPLUNKER_PASSWORD:-0}"
 
@@ -244,7 +248,58 @@ else
 fi
 cleanup_last_body
 
-# --- 5. Encrypted MCP token (splunker) ---
+# --- 5. mltk_admin role (Splunk AI Toolkit) for MLTK_ROLES_USER (runs after splunker exists when default) ---
+echo "👤 Ensuring user '${MLTK_ROLES_USER}' has role mltk_admin..."
+MLTK_USER_URL="${SPLUNK_URL}/services/authentication/users/${MLTK_ROLES_USER}"
+if AUTH_CURL_QUIET=1 auth_curl "${MLTK_USER_URL}?output_mode=json" >/dev/null; then
+  cleanup_last_body
+  if command -v jq >/dev/null 2>&1; then
+    mltk_user_json="$(auth_curl "${MLTK_USER_URL}?output_mode=json" || true)"
+    if [ -n "$mltk_user_json" ]; then
+      # shellcheck disable=SC2016
+      roles_merged="$(echo "$mltk_user_json" | jq -r '([.entry[0].content.roles[]?] + ["mltk_admin"]) | unique | .[]' 2>/dev/null || true)"
+      if [ -n "$roles_merged" ]; then
+        set --
+        for r in $roles_merged; do
+          set -- "$@" -d "roles=${r}"
+        done
+        auth_curl -X POST "${MLTK_USER_URL}" "$@" \
+          -H "Content-Type: application/x-www-form-urlencoded" >/dev/null \
+          && echo "✅ Updated user ${MLTK_ROLES_USER} (role mltk_admin ensured)" \
+          || echo "⚠️  Could not add mltk_admin to ${MLTK_ROLES_USER} (is Splunk AI Toolkit installed? The mltk_admin role is created by that app.)"
+      else
+        echo "⚠️  Could not read roles for ${MLTK_ROLES_USER}; skipping mltk_admin"
+      fi
+    else
+      echo "⚠️  Empty user response; skipping mltk_admin"
+    fi
+  else
+    if [ "${MLTK_ROLES_USER}" = "${SPLUNKER_USERNAME}" ] && [ -n "${SPLUNKER_USERNAME}" ]; then
+      auth_curl -X POST "${MLTK_USER_URL}" \
+        -d "roles=user" \
+        -d "roles=mcp_user" \
+        -d "roles=mltk_admin" \
+        -H "Content-Type: application/x-www-form-urlencoded" >/dev/null \
+        && echo "✅ Updated user ${MLTK_ROLES_USER} (roles user + mcp_user + mltk_admin)" \
+        || echo "⚠️  Could not add mltk_admin to ${MLTK_ROLES_USER} (MLTK / mltk_admin role missing?)"
+    elif [ "${MLTK_ROLES_USER}" = "admin" ]; then
+      auth_curl -X POST "${MLTK_USER_URL}" \
+        -d "roles=admin" \
+        -d "roles=mltk_admin" \
+        -H "Content-Type: application/x-www-form-urlencoded" >/dev/null \
+        && echo "✅ Updated user ${MLTK_ROLES_USER} (roles admin + mltk_admin)" \
+        || echo "⚠️  Could not add mltk_admin to ${MLTK_ROLES_USER} (MLTK / mltk_admin role missing?)"
+    else
+      echo "⚠️  jq not found; set MLTK_ROLES_USER to ${SPLUNKER_USERNAME} (default) or admin, or install jq to merge roles for ${MLTK_ROLES_USER}"
+    fi
+  fi
+else
+  cleanup_last_body
+  echo "⚠️  User ${MLTK_ROLES_USER} not found; skipping mltk_admin (create the user first or set MLTK_ROLES_USER to an existing account)"
+fi
+cleanup_last_body
+
+# --- 6. Encrypted MCP token (splunker) ---
 token_skip=0
 if [ -n "${TOKEN_OUTPUT_FILE}" ] && [ -s "${TOKEN_OUTPUT_FILE}" ]; then
   if [ "${FORCE_MCP_TOKEN}" != "1" ] && [ "${FORCE_MCP_TOKEN}" != "true" ]; then
