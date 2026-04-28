@@ -1,6 +1,15 @@
 ## compose.yml
 
-**Optional:** copy **`docker-compose.override.yml.example`** to **`docker-compose.override.yml`** (gitignored) to change host ports or add bind mounts without editing the main file. **`SPLUNK_APPS_URL`** in **`compose.yml`** includes comments identifying each Splunkbase app ID.
+**Optional:** copy **`docker-compose.override.yml.example`** to **`docker-compose.override.yml`** (gitignored) to change host ports or add bind mounts without editing the main file. **`SPLUNK_APPS_URL`** in **`compose.yml`** is a comma-separated list of Splunkbase download URLs; the **`compose.yml`** comments identify each app. Current entries (app ID → name):
+
+| App ID | App |
+| ------ | --- |
+| 1924 | SA-Eventgen (sample data / Eventgen modinput) |
+| 4353 | Config Explorer (optional UI utility) |
+| 7931 | Splunk MCP Server (required for `/services/mcp`) |
+| 7245 | Splunk AI Assistant for SPL |
+| 2882 | Python for Scientific Computing (Linux x86_64; MLTK / Connection Management needs this) |
+| 2890 | Splunk AI Toolkit |
 
 ### Service `so1` (Splunk)
 
@@ -111,8 +120,9 @@ Runs **inside** `splunk-init` with `SPLUNK_HOST=so1`. It:
 2. Sets MCP server `ssl_verify=false` via REST (dev convenience).
 3. Ensures Splunk role **`mcp_user`** exists with capability **`mcp_tool_execute`** (required by MCP).
 4. Creates user **`splunker`** (defaults; override with **`SPLUNKER_USERNAME`**) with Splunk roles **`user`** + **`mcp_user`**.
-5. Requests an **encrypted MCP token** from `.../Splunk_MCP_Server/mcp_token?username=<MCP_TOKEN_USERNAME>&output_mode=json` (default **`splunker`**).
-6. Writes the token to **`TOKEN_OUTPUT_FILE`** (`.secrets/splunk-token` on the host).
+5. Adds role **`mltk_admin`** to **`MLTK_ROLES_USER`** (default **`SPLUNKER_USERNAME`** / **`splunker`**, i.e. the MCP user, not the REST account **`SPLUNK_USER`**) for **Splunk AI Toolkit**; set **`MLTK_ROLES_USER`** in **`.env`** to **`admin`** if the management account should get MLTK.
+6. Requests an **encrypted MCP token** from `.../Splunk_MCP_Server/mcp_token?username=<MCP_TOKEN_USERNAME>&output_mode=json` (default **`splunker`**).
+7. Writes the token to **`TOKEN_OUTPUT_FILE`** (`.secrets/splunk-token` on the host).
 
 Password handling: if **`SPLUNKER_PASSWORD_FILE`** is missing or empty, a password is generated and written there (default **`.secrets/splunker-password`**; **`splunk-init`** sets **`/output/splunker-password`** so it persists on the host). Set **`FORCE_SPLUNKER_PASSWORD=1`** to rotate when the file already exists.
 
@@ -143,6 +153,7 @@ Password handling: if **`SPLUNKER_PASSWORD_FILE`** is missing or empty, a passwo
 | `SPLUNK_HOST` | Client scripts | Default `localhost` |
 | `SPLUNK_PORT` | Client scripts | Default `8089` |
 | `SPLUNKER_USERNAME` | `setup-splunk.sh` | Splunk account to create/update (default `splunker`) |
+| `MLTK_ROLES_USER` | `setup-splunk.sh` | Which Splunk user gets `mltk_admin` (default: same as `SPLUNKER_USERNAME`; set `admin` to match `SPLUNK_USER`) |
 | `MCP_TOKEN_USERNAME` | `setup-splunk.sh` | User name passed to `mcp_token` (default `splunker`; must match the MCP user) |
 | `SPLUNKER_PASSWORD_FILE` | `setup-splunk.sh` | Host path for generated or supplied password (init: `/output/splunker-password` → `.secrets/splunker-password`) |
 | `TOKEN_OUTPUT_FILE` / `FORCE_MCP_TOKEN` | `setup-splunk.sh` | Token output path and optional regeneration |
