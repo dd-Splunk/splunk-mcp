@@ -1,0 +1,9 @@
+[]
+access = read : [ * ], write : [ admin, sc_admin ]
+export = system
+
+# Ensure SA-Eventgen can read this app's Eventgen definitions.
+[eventgen]
+access = read : [ * ], write : [ admin, sc_admin ]
+export = system
+
