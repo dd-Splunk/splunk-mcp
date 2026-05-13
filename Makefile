@@ -38,7 +38,7 @@ help:
 	@echo "Splunk MCP Server - PoC Environment"
 	@echo ""
 	@echo "Available targets:"
-	@echo "  make up             - Start Splunk; wait for token; update Claude config (Cursor/Goose: see update-cursor-config / update-goose-config)"
+	@echo "  make up             - Start Splunk; wait for token; update Claude, Cursor, and Goose MCP configs"
 	@echo "                       (needs: $(ENV_OUT) on disk, OR $(OP) + $(ENV_FILE) — see tpl.env.example)"
 	@echo "  make init           - [optional] Write $(ENV_OUT) from $(ENV_FILE) (op run + scripts/materialize-env.sh)"
 	@echo "  make init FORCE=1   - Re-generate $(ENV_OUT)"
@@ -122,8 +122,8 @@ up: check-env-for-up
 	@echo "MCP Server API: https://localhost:8089/services/mcp"
 	@echo ""
 	@$(MAKE) wait-token
-	@echo "✅ Token generated! Configuring Claude Desktop..."
-	@$(MAKE) update-claude-config
+	@echo "✅ Token generated! Updating Claude Desktop, Cursor, and Goose MCP configs..."
+	@$(MAKE) update-claude-config update-cursor-config update-goose-config
 
 wait-token:
 	@echo "Waiting for token generation (this may take 2-3 minutes)..."

@@ -87,13 +87,13 @@ make up
       → add mltk_admin to MLTK_ROLES_USER (default splunker; override in .env)
       → create user splunker (roles: user + mcp_user)
       → GET encrypted mcp token → .secrets/splunk-token
-  → Makefile: wait for token file → make update-claude-config
+  → Makefile: wait for token file → update-claude-config, update-cursor-config, update-goose-config
 
 Optional: make init
   → op run + materialize-env.sh → .env  (then make up uses .env like any Compose project)
 
-Optional: make update-cursor-config, make update-goose-config
-  → update Cursor or Goose client config with the token
+Optional: make update-claude-config / update-cursor-config / update-goose-config
+  → re-merge the token into one client only (e.g. after token rotation) without a full stack recycle
 
 User restarts Claude Desktop, Cursor, or Goose
   → mcp-remote connects to https://localhost:8089/services/mcp with Bearer token

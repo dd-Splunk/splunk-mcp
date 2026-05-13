@@ -86,7 +86,7 @@ Main initialization script (runs in `splunk-init`). Steps:
 
 **Not** in this minimal script: **`claude_logs`** index/monitor automation.
 
-Host-side **Claude** / **Cursor** config is updated by `update-claude-config.sh` and `update-cursor-config.sh`, not by this script inside the container.
+Host-side **Claude** / **Cursor** / **Goose** config is updated by `update-claude-config.sh`, `update-cursor-config.sh`, and `update-goose-config.sh`, not by this script inside the container.
 
 **Error Handling:**
 
@@ -103,7 +103,7 @@ Key targets:
 
 ```makefile
 init:            # Optional: op run --env-file=tpl.env -- scripts/materialize-env.sh .env
-up:              # docker compose up (op run if no .env), wait for token, update-claude-config
+up:              # docker compose up (op run if no .env), wait for token, update-claude-config + update-cursor-config + update-goose-config
 down:            # Stop containers (same env resolution as up)
 restart:         # Restart containers
 clean:           # Remove everything (destructive)
@@ -111,6 +111,7 @@ logs:            # Follow container logs
 status:          # Check health
 update-claude-config:   # Merge token into Claude Desktop MCP config
 update-cursor-config:   # Merge token into .cursor/mcp.json
+update-goose-config:    # Merge token into ~/.config/goose/config.yaml
 ```
 
 ## Development Workflow

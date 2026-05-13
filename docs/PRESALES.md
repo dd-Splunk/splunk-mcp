@@ -13,9 +13,9 @@ This repo is a **local proof-of-concept**: **Splunk Enterprise** in Docker, **Sp
 3. **Network:** The host must reach **splunkbase.splunk.com** (HTTPS) and your container registry (e.g. Docker Hub). VPN/firewall/proxy often blocks corporate demos—test ahead.
 4. **Start:** `make up` from the repo root. First cold start is often **several minutes** (image pull, Splunk, three Splunkbase app downloads, one-shot init, token). For a live meeting, warm the stack **before** the call or the day before.
 5. **Wait for green:** `make status` until it prints **Splunk is ready ✓** and **`.secrets/splunk-token`** exists.
-6. **Cursor (recommended):** `make update-cursor-config`, then restart Cursor or reload MCP servers. Confirm Splunk/MCP tools in the tool list and run a **read-only** tool (e.g. a small search).
+6. **Cursor (recommended):** **`make up`** already wrote **`.cursor/mcp.json`**; restart Cursor or reload MCP servers. Confirm Splunk/MCP tools in the tool list and run a **read-only** tool (e.g. a small search).
 7. **Sanity check from the shell:** `make verify-mcp-remote` (confirms `mcp-remote` → `https://localhost:8089/services/mcp` without printing the token).
-8. **Optional — Claude Desktop:** `make up` already runs `make update-claude-config` on macOS; **quit Claude fully (Cmd+Q)** and reopen. **Goose:** `make update-goose-config`, restart Goose.
+8. **Claude / Goose (if used):** same **`make up`** step merged **`update-claude-config`** and **`update-goose-config`**; **quit Claude fully (Cmd+Q)** and reopen, and restart Goose.
 
 If anything fails, go straight to [TROUBLESHOOTING.md](TROUBLESHOOTING.md) (Splunkbase auth, ports, token timeout, MCP 401).
 
@@ -85,7 +85,7 @@ If nothing returns, check **Manage apps**, Eventgen, and [SA-S4R-APP.md](SA-S4R-
 | `op` signed in **or** a complete `.env` | `make up` must inject non-empty `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS` |
 | `node` / `npx` available | MCP client configs use `mcp-remote` |
 | You ran **`make up`** early or have warm volumes | Cold start is multi-minute |
-| **Cursor:** `make update-cursor-config` + restart done once token exists | Primary demo client |
+| **Cursor:** `make up` writes **`.cursor/mcp.json`**; restart or reload MCP once token exists | Primary demo client |
 
 ## Suggested 10-minute storyboard
 
@@ -105,9 +105,9 @@ If nothing returns, check **Manage apps**, Eventgen, and [SA-S4R-APP.md](SA-S4R-
 
 | Client | What to do |
 | ------ | ---------- |
-| **Cursor** | `make update-cursor-config` → restart Cursor or reload MCP. **Use this for most SE demos.** |
-| **Claude Desktop (macOS)** | `make up` runs `make update-claude-config`; user must **quit Claude fully** and reopen. |
-| **Goose** | `make update-goose-config` → restart Goose. |
+| **Cursor** | **`make up`** runs **`update-cursor-config`**; restart Cursor or reload MCP. **Use this for most SE demos.** |
+| **Claude Desktop (macOS)** | **`make up`** runs **`update-claude-config`**; user must **quit Claude fully** and reopen. |
+| **Goose** | **`make up`** runs **`update-goose-config`**; restart Goose. |
 
 Shell smoke test: **`make verify-mcp-remote`**.
 
