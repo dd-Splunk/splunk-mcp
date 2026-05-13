@@ -82,7 +82,7 @@ Expected layout includes `Makefile`, `compose.yml`, `tpl.env.example`, local `tp
 make up
 ```
 
-This runs **`docker compose up -d`** using **`.env`** if present, otherwise **`op run --env-file=tpl.env`**. It starts **`so1`**, runs **`splunk-init`** after Splunk is healthy, waits for **`.secrets/splunk-token`**, then runs **`make update-claude-config`** (Claude Desktop config on macOS).
+This runs **`docker compose up -d`** using **`.env`** if present, otherwise **`op run --env-file=tpl.env`**. It starts **`so1`**, runs **`splunk-init`** after Splunk is healthy, waits for **`.secrets/splunk-token`**, then runs **`make update-claude-config`**, **`make update-cursor-config`**, and **`make update-goose-config`**.
 
 Optional file-based env (you do **not** need this if you only use `tpl.env` and `make up` with 1Password—see [CONFIGURATION.md](CONFIGURATION.md#generating-env-optional)):
 
@@ -116,9 +116,9 @@ After **`.secrets/splunk-token`** exists:
 
 | Client | Action |
 | ------ | ------ |
-| **Claude Desktop** (macOS) | Already updated by **`make up`** via **`make update-claude-config`**. Quit Claude fully (**Cmd+Q**), then reopen. Config: `~/Library/Application Support/Claude/claude_desktop_config.json`. |
-| **Cursor** | `make update-cursor-config` then restart Cursor or reload MCP servers. |
-| **Goose** | `make update-goose-config` then restart Goose. |
+| **Claude Desktop** (macOS) | **`make up`** runs **`update-claude-config`**. Quit Claude fully (**Cmd+Q**), then reopen. Config: `~/Library/Application Support/Claude/claude_desktop_config.json`. |
+| **Cursor** | **`make up`** runs **`update-cursor-config`** (writes **`.cursor/mcp.json`**). Restart Cursor or reload MCP servers. |
+| **Goose** | **`make up`** runs **`update-goose-config`**. Restart Goose. |
 
 Shell smoke test:
 

@@ -103,7 +103,7 @@ Requires a local **`tpl.env`**, `op` signed in, and access to the referenced ite
 | Target | Behavior |
 | ------ | -------- |
 | `init` | Optional: materialize **`.env`** on disk (see [Generating `.env` (optional)](#generating-env-optional)); not required if you always use `op run` with `make up` and no **`.env`** file |
-| `up` | `docker compose up -d` (via `op run --env-file=tpl.env` when `.env` is absent), wait for `.secrets/splunk-token`, then `update-claude-config` |
+| `up` | `docker compose up -d` (via `op run --env-file=tpl.env` when `.env` is absent), wait for `.secrets/splunk-token`, then `update-claude-config`, `update-cursor-config`, and `update-goose-config` |
 | `update-claude-config` | Runs `scripts/update-claude-config.sh` |
 | `update-goose-config` | Runs `scripts/update-goose-config.sh` → `~/.config/goose/config.yaml` |
 | `update-cursor-config` | Runs `scripts/update-cursor-config.sh` → `.cursor/mcp.json` |
