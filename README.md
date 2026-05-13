@@ -6,7 +6,7 @@ Local **proof-of-concept**: run **Splunk Enterprise** in Docker with the **Splun
 
 1. Read **[docs/PRESALES.md](docs/PRESALES.md)** end-to-end—it is the **demo runbook** (secrets, time budget, Cursor-first steps, checklist, handoff).
 2. Copy **`tpl.env.example` → `tpl.env`** and fix every `op://` path, **or** copy **`.env.example` → `.env`** and fill plain values (see PRESALES **Path A / Path B**).
-3. Run **`make up`**, then **`make update-cursor-config`** (restart Cursor) and **`make verify-mcp-remote`**.
+3. Run **`make up`** (updates Claude, Cursor, and Goose configs), restart clients as needed, then **`make verify-mcp-remote`**.
 
 Do not block a live meeting on a cold start: **first `make up` can take many minutes** (pulls, Splunk, Splunkbase apps, init).
 
@@ -17,7 +17,7 @@ Do not block a live meeting on a cold start: **first `make up` can take many min
 | `https://localhost:8000` | Splunk Web |
 | `https://localhost:8089/services/mcp` | Splunk MCP Server (Bearer token in **`.secrets/splunk-token`**) |
 
-Splunkbase apps (see **`compose.yml`** for IDs, including **Splunk MCP Server**) install at container start. A one-shot init configures MCP for local dev, creates user **`splunker`** (role **`mcp_user`**, capability **`mcp_tool_execute`), and writes the encrypted MCP token. **`make up`** waits for the token, then runs **`make update-claude-config`** (macOS Claude path).
+Splunkbase apps (see **`compose.yml`** for IDs, including **Splunk MCP Server**) install at container start. A one-shot init configures MCP for local dev, creates user **`splunker`** (role **`mcp_user`**, capability **`mcp_tool_execute`), and writes the encrypted MCP token. **`make up`** waits for the token, then runs **`make update-claude-config`**, **`make update-cursor-config`**, and **`make update-goose-config`**.
 
 **Not included in init:** a **`claude_logs`** index or file monitors. Optional ingestion is described in [docs/CONFIGURATION.md](docs/CONFIGURATION.md) if you uncomment the bind mount in `compose.yml`.
 
@@ -41,7 +41,7 @@ make down                    # stop (no op / .env needed)
 | Command | Purpose |
 | ------- | ------- |
 | `make help` | All targets |
-| `make up` | Compose up, wait for **`.secrets/splunk-token`**, **`update-claude-config`** |
+| `make up` | Compose up, wait for **`.secrets/splunk-token`**, **`update-claude-config`**, **`update-cursor-config`**, **`update-goose-config`** |
 | `make init` | Optional: write **`.env`** (resolved secrets on disk) from `tpl.env` + `op`; you usually **do not** need this if you always use `op` with `make up` (see [docs/CONFIGURATION.md](docs/CONFIGURATION.md#generating-env-optional)) |
 | `make update-claude-config` | Merge Splunk MCP into Claude Desktop config (macOS) |
 | `make update-cursor-config` | Merge into **`.cursor/mcp.json`** |
