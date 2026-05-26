@@ -96,10 +96,11 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 
 | Target | Behavior |
 | ------ | -------- |
-| `up` | `scripts/compose-up.sh` (`.env` or `op run --env-file=tpl.env`), wait for `.secrets/splunk-token`, then client config updates |
-| `update-claude-config` | Runs `scripts/update-claude-config.sh` |
-| `update-goose-config` | Runs `scripts/update-goose-config.sh` → `~/.config/goose/config.yaml` |
-| `update-cursor-config` | Runs `scripts/update-cursor-config.sh` → `.cursor/mcp.json` |
+| `up` | `scripts/compose-up.sh` (`.env` or `op run --env-file=tpl.env`), wait for `.secrets/splunk-token`, then `update-mcp-clients` |
+| `update-mcp-clients` | `scripts/mcp-client.sh update` for claude, cursor, goose |
+| `update-mcp-client` | One client: `MCP_CLIENT=claude\|cursor\|goose` |
+| `update-claude-config` / `update-cursor-config` / `update-goose-config` | Aliases for `update-mcp-client` |
+| `verify-mcp-remote` | `scripts/mcp-client.sh verify` (`MCP_VERIFY_CLIENT=all` by default) |
 | `down` / `restart` / `logs` / `status` | Lifecycle only (no secrets / `op` required) |
 | `clean` | `docker compose down -v` then remove `.env` / token file (no `op` required) |
 
@@ -122,20 +123,20 @@ Password handling: if **`SPLUNKER_PASSWORD_FILE`** is missing or empty, a passwo
 ## Claude Desktop configuration
 
 - Path: **`~/Library/Application Support/Claude/claude_desktop_config.json`** (macOS).
-- `update-claude-config.sh` merges `mcpServers.splunk-mcp-server` without destroying other servers.
+- `scripts/mcp-client.sh update claude` merges `mcpServers.splunk-mcp-server` without destroying other servers.
 - Uses **`jq`**; backs up invalid JSON with a timestamped file.
 
 ## Cursor configuration
 
 - Default output: **`.cursor/mcp.json`** (override with `CURSOR_MCP_JSON`).
-- `update-cursor-config.sh` merges **`splunk-mcp-server`** the same way as Claude.
+- `scripts/mcp-client.sh update cursor` merges **`splunk-mcp-server`** the same way as Claude.
 - Example placeholder without secrets: **`.cursor/mcp.json.example`**.
 
 ## Goose configuration
 
 - Path: **`~/.config/goose/config.yaml`** (Unix/Linux and macOS).
 - Goose uses **extensions** with `type: stdio` for MCP server configuration (different from Claude's format).
-- `update-goose-config.sh` adds `splunk-mcp-server` as an extension entry under `extensions` section.
+- `scripts/mcp-client.sh update goose` adds `splunk-mcp-server` as an extension entry under `extensions` section.
 - Idempotent: safely updates or creates the extension without corrupting existing config.
 - Requires Python 3 for YAML regex manipulation.
 
@@ -150,7 +151,9 @@ Password handling: if **`SPLUNKER_PASSWORD_FILE`** is missing or empty, a passwo
 | `MCP_TOKEN_USERNAME` | `setup-splunk.sh` | User name passed to `mcp_token` (default `splunker`; must match the MCP user) |
 | `SPLUNKER_PASSWORD_FILE` | `setup-splunk.sh` | Host path for generated or supplied password (init: `/output/splunker-password` → `.secrets/splunker-password`) |
 | `TOKEN_OUTPUT_FILE` / `FORCE_MCP_TOKEN` | `setup-splunk.sh` | Token output path and optional regeneration |
-| `CURSOR_MCP_JSON` | `update-cursor-config.sh` | Output path |
+| `CURSOR_MCP_JSON` | `mcp-client.sh` (cursor) | Output path |
+| `MCP_CLIENT` | `update-mcp-client` | `claude`, `cursor`, or `goose` |
+| `MCP_VERIFY_CLIENT` | `verify-mcp-remote` | `all` (default), or one client |
 
 ## See also
 

@@ -5,7 +5,7 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`.
 ## What this repo is
 
 - **Purpose**: local PoC that runs **Splunk Enterprise** in Docker and exposes **Splunk MCP Server** on `https://localhost:8089/services/mcp`.
-- **Client bridge**: Claude Desktop, Cursor, or Goose connect via `npx mcp-remote` (see `make update-claude-config`, `make update-cursor-config`, `make update-goose-config`). **SE / presales** single runbook: **`docs/PRESALES.md`**.
+- **Client bridge**: Claude Desktop, Cursor, or Goose connect via `npx mcp-remote` (see `make update-mcp-clients` or `make update-mcp-client MCP_CLIENT=…`). **SE / presales** single runbook: **`docs/PRESALES.md`**.
 
 ## Golden rules (don’t break these)
 
@@ -23,7 +23,7 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`.
 - **`make up`**: **`docker compose up -d`** with secrets from **either** a gitignored **`.env`** on disk **or** **`op run --env-file=tpl.env`** when `.env` is absent (requires signed-in `op`). See **`Makefile`** for exact behavior.
 - **`make down`**, **`make logs`**, **`make restart`**, **`make status`**, **`make clean`**: plain **`docker`** / **`docker compose`** only—no `op` or project secrets required.
 - When **`.env`** is absent, **`make up`** runs **`scripts/compose-up.sh`** (`op run` + **`tpl.env`**) and checks non-empty **`SPLUNK_PASSWORD`**, **`SPLUNKBASE_USER`**, **`SPLUNKBASE_PASS`** before Splunk starts.
-- **`make up`**: waits for **`.secrets/splunk-token`**, then runs **`make update-claude-config`**, **`make update-cursor-config`**, and **`make update-goose-config`**.
+- **`make up`**: waits for **`.secrets/splunk-token`**, then runs **`make update-mcp-clients`** (Claude, Cursor, Goose).
 - **Secrets paths:** **Path A** — `tpl.env` + `op run` (no plaintext `.env`); **Path B** — hand-written **`.env`** from **`.env.example`** (plain values; Compose auto-loads it). If **`.env` is absent**, **`make up`** uses `op run --env-file=tpl.env`.
 - **`splunk-init`** runs **`scripts/setup-splunk.sh`** after **`so1`** is healthy.
 
@@ -41,9 +41,8 @@ Splunk REST bootstrap (see **`docs/SETUP_SPLUNK_SCRIPT.md`** for detail):
 
 ## Client configuration scripts
 
-- **`scripts/update-claude-config.sh`** → `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
-- **`scripts/update-cursor-config.sh`** → **`.cursor/mcp.json`**
-- **`scripts/update-goose-config.sh`** → **`~/.config/goose/config.yaml`** (stdio extension entry)
+- **`scripts/mcp-client.sh update <claude\|cursor\|goose> [token-file]`** — Claude → `~/Library/Application Support/Claude/claude_desktop_config.json`; Cursor → **`.cursor/mcp.json`**; Goose → **`~/.config/goose/config.yaml`**
+- **`scripts/mcp-client.sh verify <client\|all> [token-file]`** — config check + `mcp-remote` smoke test (`make verify-mcp-remote` defaults to **`all`**)
 
 ## Vellem (Cursor memory)
 
@@ -60,7 +59,7 @@ When **Vellem** is in **`.cursor/mcp.json`**, agents should use it as repo-local
 | Question | Command / check |
 | -------- | ----------------- |
 | Splunk up? | `make status` |
-| MCP client path OK? | `make verify-mcp-remote` |
+| MCP client path OK? | `make verify-mcp-remote` (all clients) or `make verify-mcp-remote MCP_VERIFY_CLIENT=cursor` |
 | Eventgen modinput? | `curl -k -u admin:<password> "https://localhost:8089/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default?output_mode=json"` |
 
 ## Makefile knobs
