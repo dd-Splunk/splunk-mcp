@@ -14,8 +14,8 @@ This repo is a **local proof-of-concept**: **Splunk Enterprise** in Docker, **Sp
 4. **Start:** `make up` from the repo root. First cold start is often **several minutes** (image pull, Splunk, three Splunkbase app downloads, one-shot init, token). For a live meeting, warm the stack **before** the call or the day before.
 5. **Wait for green:** `make status` until it prints **Splunk is ready ✓** and **`.secrets/splunk-token`** exists.
 6. **Cursor (recommended):** **`make up`** already wrote **`.cursor/mcp.json`**; restart Cursor or reload MCP servers. Confirm Splunk/MCP tools in the tool list and run a **read-only** tool (e.g. a small search).
-7. **Sanity check from the shell:** `make verify-mcp-remote` (confirms `mcp-remote` → `https://localhost:8089/services/mcp` without printing the token).
-8. **Claude / Goose (if used):** same **`make up`** step merged **`update-claude-config`** and **`update-goose-config`**; **quit Claude fully (Cmd+Q)** and reopen, and restart Goose.
+7. **Sanity check from the shell:** `make verify-mcp-remote` (checks all client configs + `mcp-remote` → Splunk; does not print the token).
+8. **Claude / Goose (if used):** **`make up`** runs **`update-mcp-clients`**; **quit Claude fully (Cmd+Q)** and reopen, and restart Goose.
 
 If anything fails, go straight to [TROUBLESHOOTING.md](TROUBLESHOOTING.md) (Splunkbase auth, ports, token timeout, MCP 401).
 
@@ -92,7 +92,7 @@ If nothing returns, check **Manage apps**, Eventgen, and [SA-S4R-APP.md](SA-S4R-
 2. `make status` — show Splunk healthy.
 3. Browser: `https://localhost:8000`, login as **admin** (password from your vault—not shown in repo).
 4. **Optional:** Run the sample SPL if you need on-screen data.
-5. **Cursor (or other client):** Show MCP tools, run one **read-only** tool; run **`make verify-mcp-remote`** in a terminal to show the bridge works without exposing the token.
+5. **Cursor (or other client):** Show MCP tools, run one **read-only** tool; run **`make verify-mcp-remote MCP_VERIFY_CLIENT=cursor`** (or default `all`) to show the bridge works without exposing the token.
 6. If asked about security: [SECURITY.md](SECURITY.md) — self-signed TLS, local dev, not for untrusted networks.
 
 ## Greenfield vs clean slate
@@ -104,11 +104,11 @@ If nothing returns, check **Manage apps**, Eventgen, and [SA-S4R-APP.md](SA-S4R-
 
 | Client | What to do |
 | ------ | ---------- |
-| **Cursor** | **`make up`** runs **`update-cursor-config`**; restart Cursor or reload MCP. **Use this for most SE demos.** |
-| **Claude Desktop (macOS)** | **`make up`** runs **`update-claude-config`**; user must **quit Claude fully** and reopen. |
-| **Goose** | **`make up`** runs **`update-goose-config`**; restart Goose. |
+| **Cursor** | **`make up`** runs **`update-mcp-clients`** (includes Cursor); restart Cursor or reload MCP. **Use this for most SE demos.** |
+| **Claude Desktop (macOS)** | Same **`update-mcp-clients`**; user must **quit Claude fully** and reopen. |
+| **Goose** | Same **`update-mcp-clients`**; restart Goose. |
 
-Shell smoke test: **`make verify-mcp-remote`**.
+Shell smoke test: **`make verify-mcp-remote`** (all clients) or **`MCP_VERIFY_CLIENT=cursor`** for one.
 
 ## Handoff to another SE
 

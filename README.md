@@ -17,7 +17,7 @@ Do not block a live meeting on a cold start: **first `make up` can take many min
 | `https://localhost:8000` | Splunk Web |
 | `https://localhost:8089/services/mcp` | Splunk MCP Server (Bearer token in **`.secrets/splunk-token`**) |
 
-Splunkbase apps (see **`compose.yml`** for IDs, including **Splunk MCP Server**) install at container start. A one-shot init configures MCP for local dev, creates user **`splunker`** (role **`mcp_user`**, capability **`mcp_tool_execute`), and writes the encrypted MCP token. **`make up`** waits for the token, then runs **`make update-claude-config`**, **`make update-cursor-config`**, and **`make update-goose-config`**.
+Splunkbase apps (see **`compose.yml`** for IDs, including **Splunk MCP Server**) install at container start. A one-shot init configures MCP for local dev, creates user **`splunker`** (role **`mcp_user`**, capability **`mcp_tool_execute`), and writes the encrypted MCP token. **`make up`** waits for the token, then runs **`make update-mcp-clients`** (Claude, Cursor, Goose).
 
 **Not included in init:** a **`claude_logs`** index or file monitors. Optional ingestion is described in [docs/CONFIGURATION.md](docs/CONFIGURATION.md) if you uncomment the bind mount in `compose.yml`.
 
@@ -31,20 +31,20 @@ Splunkbase apps (see **`compose.yml`** for IDs, including **Splunk MCP Server**)
 ## Quick commands
 
 ```bash
-make up                      # start stack, wait for token, update Claude Desktop config (macOS)
+make up                      # start stack, wait for token, update all MCP clients
 make status                  # is Splunk answering?
-make update-cursor-config    # write .cursor/mcp.json from the token
-make verify-mcp-remote      # smoke-test mcp-remote → Splunk MCP
+make update-mcp-client MCP_CLIENT=cursor   # one client
+make verify-mcp-remote       # verify all clients + mcp-remote (default)
 make down                    # stop (no op / .env needed)
 ```
 
 | Command | Purpose |
 | ------- | ------- |
 | `make help` | All targets |
-| `make up` | Compose up, wait for **`.secrets/splunk-token`**, **`update-claude-config`**, **`update-cursor-config`**, **`update-goose-config`** |
-| `make update-claude-config` | Merge Splunk MCP into Claude Desktop config (macOS) |
-| `make update-cursor-config` | Merge into **`.cursor/mcp.json`** |
-| `make update-goose-config` | **~/.config/goose/config.yaml** (stdio entry) |
+| `make up` | Compose up, wait for **`.secrets/splunk-token`**, **`update-mcp-clients`** |
+| `make update-mcp-clients` | Update Claude, Cursor, and Goose configs |
+| `make update-mcp-client` | One client (`MCP_CLIENT=claude\|cursor\|goose`) |
+| `make verify-mcp-remote` | Config check + `mcp-remote` (`MCP_VERIFY_CLIENT=all` default) |
 | `make clean` | Destructive: volumes + **`.env`** + token (prompts; no `op` needed) |
 
 ## Documentation (by audience)

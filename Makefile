@@ -9,11 +9,15 @@ ENV_FILE ?= tpl.env
 ENV_OUT ?= .env
 ENV_EXAMPLE ?= tpl.env.example
 OP ?= op
+MCP_CLIENT ?= cursor
+MCP_VERIFY_CLIENT ?= all
+MCP_CLIENTS := claude cursor goose
 
 export ENV_FILE ENV_OUT ENV_EXAMPLE OP DC
 
 .PHONY: help up wait-token down restart clean logs status \
-	update-claude-config update-cursor-config update-goose-config verify-mcp-remote
+	update-mcp-clients update-mcp-client verify-mcp-remote \
+	update-claude-config update-cursor-config update-goose-config
 
 help: ## Show targets
 	@awk 'BEGIN {FS = ":.*##"; printf "Splunk MCP PoC\n\n"} \
@@ -29,7 +33,7 @@ up: ## Start stack, wait for token, update MCP client configs
 	@echo ""
 	@$(MAKE) wait-token
 	@echo "Token ready — updating Claude, Cursor, and Goose MCP configs..."
-	@$(MAKE) update-claude-config update-cursor-config update-goose-config
+	@$(MAKE) update-mcp-clients
 
 wait-token: ## Wait for .secrets/splunk-token
 	@echo "Waiting for token (up to ~2 min)..."
@@ -70,14 +74,23 @@ status: ## Container status and Splunk API probe
 	if [[ "$$code" = "200" || "$$code" = "401" ]]; then echo "Splunk is ready ✓"; \
 	else echo "Splunk is not ready yet..."; fi
 
-update-claude-config: ## Update Claude Desktop MCP config
-	@./scripts/update-claude-config.sh "$(TOKEN_FILE)"
+update-mcp-clients: ## Update Claude, Cursor, and Goose (TOKEN_FILE=)
+	@for c in $(MCP_CLIENTS); do \
+		./scripts/mcp-client.sh update "$$c" "$(TOKEN_FILE)"; \
+		echo ""; \
+	done
 
-update-cursor-config: ## Update .cursor/mcp.json
-	@./scripts/update-cursor-config.sh "$(TOKEN_FILE)"
+update-mcp-client: ## Update one client (MCP_CLIENT=claude|cursor|goose)
+	@./scripts/mcp-client.sh update "$(MCP_CLIENT)" "$(TOKEN_FILE)"
 
-update-goose-config: ## Update Goose MCP config
-	@./scripts/update-goose-config.sh "$(TOKEN_FILE)"
+update-claude-config: ## Alias: MCP_CLIENT=claude
+	@$(MAKE) update-mcp-client MCP_CLIENT=claude
 
-verify-mcp-remote: ## Smoke-test mcp-remote → Splunk
-	@./scripts/verify-mcp-remote.sh "$(TOKEN_FILE)"
+update-cursor-config: ## Alias: MCP_CLIENT=cursor
+	@$(MAKE) update-mcp-client MCP_CLIENT=cursor
+
+update-goose-config: ## Alias: MCP_CLIENT=goose
+	@$(MAKE) update-mcp-client MCP_CLIENT=goose
+
+verify-mcp-remote: ## Verify config + mcp-remote (MCP_VERIFY_CLIENT=all|claude|cursor|goose)
+	@./scripts/mcp-client.sh verify "$(MCP_VERIFY_CLIENT)" "$(TOKEN_FILE)"
