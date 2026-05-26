@@ -38,7 +38,7 @@ Use any vault you control. Names below are **illustrative**—they must match wh
 
 ### Align `tpl.env`
 
-Either create items that match each `op://vault/item/field` in **`tpl.env`**, or edit **`tpl.env`** so every path resolves in your vault. Without that, `make up` (with `op run`) and `make init` will fail.
+Either create items that match each `op://vault/item/field` in **`tpl.env`**, or edit **`tpl.env`** so every path resolves in your vault. Without that, `make up` (with `op run`) will fail.
 
 ### Test reads
 
@@ -84,12 +84,7 @@ make up
 
 This runs **`docker compose up -d`** using **`.env`** if present, otherwise **`op run --env-file=tpl.env`**. It starts **`so1`**, runs **`splunk-init`** after Splunk is healthy, waits for **`.secrets/splunk-token`**, then runs **`make update-claude-config`**, **`make update-cursor-config`**, and **`make update-goose-config`**.
 
-Optional file-based env (you do **not** need this if you only use `tpl.env` and `make up` with 1Password—see [CONFIGURATION.md](CONFIGURATION.md#generating-env-optional)):
-
-```bash
-make init    # tpl.env → .env (op run + scripts/materialize-env.sh)
-make up
-```
+For Path B (plain **`.env`** without 1Password at runtime), see [CONFIGURATION.md](CONFIGURATION.md#plain-env-path-b).
 
 Allow **several minutes** on first run (image pull, Splunk, Splunkbase downloads). Watch progress:
 

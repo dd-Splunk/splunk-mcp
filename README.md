@@ -42,7 +42,6 @@ make down                    # stop (no op / .env needed)
 | ------- | ------- |
 | `make help` | All targets |
 | `make up` | Compose up, wait for **`.secrets/splunk-token`**, **`update-claude-config`**, **`update-cursor-config`**, **`update-goose-config`** |
-| `make init` | Optional: write **`.env`** (resolved secrets on disk) from `tpl.env` + `op`; you usually **do not** need this if you always use `op` with `make up` (see [docs/CONFIGURATION.md](docs/CONFIGURATION.md#generating-env-optional)) |
 | `make update-claude-config` | Merge Splunk MCP into Claude Desktop config (macOS) |
 | `make update-cursor-config` | Merge into **`.cursor/mcp.json`** |
 | `make update-goose-config` | **~/.config/goose/config.yaml** (stdio entry) |
@@ -66,7 +65,7 @@ Local development defaults: self-signed TLS, `NODE_TLS_REJECT_UNAUTHORIZED=0` fo
 
 ## CI
 
-Pushes/PRs to **`main`** / **`master`**: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) (**shellcheck**, **`make lint-md`**). Run the same before pushing.
+Pushes/PRs to **`main`** / **`master`**: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs **pre-commit** (shellcheck + markdownlint). One-time setup: `pip install pre-commit && pre-commit install`. Check all files: `pre-commit run --all-files`.
 
 ## Repository layout (high level)
 
@@ -76,10 +75,10 @@ splunk-mcp/
 ├── docker-compose.override.yml.example # Optional: copy to docker-compose.override.yml
 ├── Makefile
 ├── tpl.env.example / .env.example     # Tracked; copy to tpl.env or .env (gitignored)
-├── scripts/                            # setup-splunk.sh, client config writers, verify
+├── scripts/                            # compose-up.sh, setup-splunk.sh, client config writers, verify
 ├── SA-S4R/                             # Sample app (Eventgen)
 ├── .secrets/                          # splunk-token, splunker-password (gitignored)
 └── docs/
 ```
 
-**Behavior:** `Makefile`, `compose.yml`, `scripts/setup-splunk.sh`. License: [LICENSE](LICENSE) (MIT).
+**Behavior:** `Makefile`, `compose.yml`, `scripts/compose-up.sh`, `scripts/setup-splunk.sh`. License: [LICENSE](LICENSE) (MIT).

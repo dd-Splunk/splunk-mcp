@@ -26,7 +26,7 @@ make up
 
 Waits for **`.secrets/splunk-token`**, then runs **`make update-claude-config`**, **`make update-cursor-config`**, and **`make update-goose-config`**. First run can take **several minutes**.
 
-**`make init`** is optional: it writes a **`.env`** from `op` + `tpl.env` so a later `make up` can run **without** `op`. A normal `make up` with `tpl.env` and no `.env` already injects secrets via `op run` and does not need `make init`. See [PRESALES.md](PRESALES.md#make-up-vs-make-init) and [CONFIGURATION.md](CONFIGURATION.md#generating-env-optional).
+With **`tpl.env`** and no **`.env`**, **`make up`** injects secrets via **`op run`** (nothing written to disk). For a plain **`.env`** file instead, see [PRESALES.md](PRESALES.md#secrets-path-a-1password-vs-path-b-plain-env) and [CONFIGURATION.md](CONFIGURATION.md#plain-env-path-b).
 
 ## 3. Verify
 
