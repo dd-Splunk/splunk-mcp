@@ -42,7 +42,7 @@ The [Model Context Protocol](https://modelcontextprotocol.io/) lets a client (Cl
 
 `compose.yml` sets `SPLUNK_APPS_URL` to a comma-separated list of Splunkbase download URLs. At build/start, Splunk pulls these apps. Installed from Splunkbase: **SA-Eventgen** (1924), **Config Explorer** (4353), **Splunk MCP Server** (7931), **Splunk AI Assistant for SPL** (7245), **Python for Scientific Computing** (2882), and **Splunk AI Toolkit** (2890). The stack expects the **Splunk MCP Server** app (namespace `Splunk_MCP_Server`) to be present so REST calls in `setup-splunk.sh` succeed. Pin details and the full table live in [CONFIGURATION.md](CONFIGURATION.md#composeyml).
 
-You need valid **Splunkbase** credentials supplied via **local `tpl.env`** (copy from **`tpl.env.example`**) or a materialized **`.env`**: define **`SPLUNKBASE_USER`** and **`SPLUNKBASE_PASS`**; Compose maps them to the container variables `SPLUNKBASE_USERNAME` / `SPLUNKBASE_PASSWORD`.
+You need valid **Splunkbase** credentials supplied via **local `tpl.env`** (copy from **`tpl.env.example`**) or a plain **`.env`** (Path B): define **`SPLUNKBASE_USER`** and **`SPLUNKBASE_PASS`**; Compose maps them to the container variables `SPLUNKBASE_USERNAME` / `SPLUNKBASE_PASSWORD`.
 
 ### Client bridge (`mcp-remote`)
 
@@ -60,7 +60,7 @@ with **`NODE_TLS_REJECT_UNAUTHORIZED=0`** to accept Splunk’s default self-sign
 2. **Preferred (`make up` without `.env`)**: the Makefile runs Compose under  
    `op run --env-file=tpl.env -- docker compose …`  
    so variables are injected **at process invocation** and nothing is written to `.env`.
-3. **Optional (`make init`)**: materializes **`.env`** via **`op run --env-file=tpl.env`** and **`scripts/materialize-env.sh`** (same resolution as `make up`; avoids `op inject` edge cases with spaces in `op://` paths).
+3. **Alternative (Path B)**: hand-written **`.env`** from **`.env.example`**; Compose auto-loads it and **`make up`** uses plain `docker compose`.
 4. **Compose** supplies `SPLUNK_PASSWORD`, Splunkbase credentials, and related env vars to the `so1` and `splunk-init` services.
 5. **Token file** `.secrets/splunk-token` is created by `splunk-init` / `setup-splunk.sh`. **`make update-claude-config`**, **`make update-cursor-config`**, and **`make update-goose-config`** read it to patch client config.
 
@@ -88,9 +88,6 @@ make up
       → create user splunker (roles: user + mcp_user)
       → GET encrypted mcp token → .secrets/splunk-token
   → Makefile: wait for token file → update-claude-config, update-cursor-config, update-goose-config
-
-Optional: make init
-  → op run + materialize-env.sh → .env  (then make up uses .env like any Compose project)
 
 Optional: make update-claude-config / update-cursor-config / update-goose-config
   → re-merge the token into one client only (e.g. after token rotation) without a full stack recycle

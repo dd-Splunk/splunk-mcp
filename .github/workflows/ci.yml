@@ -1,4 +1,4 @@
-# Minimal CI: shell scripts (shellcheck) and Markdown (markdownlint-cli2 via Makefile).
+# CI: same hooks as local pre-commit (.pre-commit-config.yaml).
 name: CI
 
 on:
@@ -18,15 +18,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Shellcheck
-        run: |
-          sudo apt-get update -q
-          sudo apt-get install -y -q shellcheck
-          shellcheck -x scripts/*.sh
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
 
-      - name: Markdownlint
-        run: make lint-md
+      - name: pre-commit
+        run: |
+          pip install pre-commit
+          pre-commit run --all-files

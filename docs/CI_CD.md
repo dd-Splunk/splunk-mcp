@@ -19,8 +19,7 @@ Automation in this repo is intentionally small: it supports a **local PoC** stac
 
 **What it runs**
 
-- **shellcheck** on **`scripts/*.sh`**
-- **`make lint-md`** (Markdownlint via **`.markdownlint-cli2.jsonc`**)
+- **pre-commit** (**.pre-commit-config.yaml**): **shellcheck** on **`scripts/*.sh`**, **markdownlint-cli2** on project Markdown (via **`.markdownlint-cli2.jsonc`**)
 
 **Permissions**
 
@@ -30,7 +29,7 @@ Automation in this repo is intentionally small: it supports a **local PoC** stac
 
 - Does **not** build Docker images, start Splunk, run integration tests, or validate MCP connectivity.
 - Does **not** package Splunk apps or publish releases.
-- Match these checks locally before pushing (install [shellcheck](https://github.com/koalaman/shellcheck); run **`make lint-md`**).
+- Match CI locally: `pip install pre-commit && pre-commit install`, then **`pre-commit run --all-files`** before pushing (requires **Node/npx** for markdownlint).
 
 ---
 

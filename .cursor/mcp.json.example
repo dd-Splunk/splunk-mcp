@@ -1,5 +1,8 @@
 {
   "mcpServers": {
+    "vellem": {
+      "command": "/Applications/Vellem.app/Contents/Resources/vellem-mcp"
+    },
     "splunk-mcp-server": {
       "command": "npx",
       "args": [

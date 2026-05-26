@@ -65,27 +65,21 @@ Runs after `so1` is **healthy**. Uses Alpine, installs `curl` and `jq`, then run
 - May use `op://` references for 1Password CLI **or** plain values for local testing—**never commit `tpl.env`**.
 - Align vault names, item titles, and field names with your 1Password layout.
 
-### Generating `.env` (optional)
+### Plain `.env` (Path B)
 
-**Default (no `make init`):** If **`.env` is missing**, `make up` runs:
+If **`.env` is missing**, `make up` runs:
 
 `op run --env-file=tpl.env -- docker compose up -d`
 
-1Password **resolves** the `op://` references and passes the values in the process environment. **Nothing in this path writes a `.env` file**—so resolved secrets are not left on disk by the Makefile (aside from what Splunk/Compose do inside containers per `compose.yml`).
+1Password **resolves** the `op://` references and passes the values in the process environment. **Nothing in this path writes a `.env` file**—resolved secrets are not left on disk by the Makefile (aside from what Splunk/Compose do inside containers per `compose.yml`).
 
-**`make init` (optional):** Materializes a **`.env` file** with the same variables as [`.env.example`](../.env.example) (passwords in **plaintext** on the host, git-ignored, `umask 077` in the script):
-
-```bash
-make init   # op run --env-file=tpl.env -- scripts/materialize-env.sh .env
-```
-
-Requires a local **`tpl.env`**, `op` signed in, and access to the referenced items. After **`.env` exists**, the Makefile’s `make up` uses **plain** `docker compose` (no `op` wrapper) because Docker Compose **auto-loads project `.env`**.
+For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env.example`](../.env.example) to **`.env`**, fill values, and run **`make up`**. Compose auto-loads **`.env`**. Use for CI or contributors without `op`.
 
 | Situation | Use |
 | --------- | --- |
-| Local development; you always have `op` and `tpl.env` | **Skip `make init`**; use **`make up` only** |
-| CI, scripts, or tools that expect a **`.env` file** on disk | Run **`make init`**, or create **`.env` manually** from [`.env.example`](../.env.example) (Path B in [PRESALES.md](PRESALES.md)) |
-| You want **`make up` without `op`** (e.g. 1Password signed out) | **`make init`** first (or hand-written **`.env`**)—accepts plaintext secrets in **`.env`** on disk |
+| Local development with 1Password | **`tpl.env`** + **`make up`** (no `.env` file) |
+| CI or no `op` | **`.env`** from **`.env.example`** (Path B in [PRESALES.md](PRESALES.md)) |
+| CI with 1Password | `OP_SERVICE_ACCOUNT_TOKEN` + `op run --env-file=tpl.env -- make up` (no `.env` artifact) |
 
 ### Typical variables
 
@@ -96,18 +90,17 @@ Requires a local **`tpl.env`**, `op` signed in, and access to the referenced ite
 | `SPLUNKBASE_USER` / `SPLUNKBASE_PASS` | Splunkbase (names in `compose.yml` map these) |
 | `TZ` | Timezone |
 
-**Note:** `compose.yml` expects `SPLUNKBASE_USER` and `SPLUNKBASE_PASS` in the environment. Define them in `tpl.env` (and/or `.env` after `make init`). Variable **names** must match what Compose references.
+**Note:** `compose.yml` expects `SPLUNKBASE_USER` and `SPLUNKBASE_PASS` in the environment. Define them in **`tpl.env`** or **`.env`**. Variable **names** must match what Compose references.
 
 ## Makefile targets
 
 | Target | Behavior |
 | ------ | -------- |
-| `init` | Optional: materialize **`.env`** on disk (see [Generating `.env` (optional)](#generating-env-optional)); not required if you always use `op run` with `make up` and no **`.env`** file |
-| `up` | `docker compose up -d` (via `op run --env-file=tpl.env` when `.env` is absent), wait for `.secrets/splunk-token`, then `update-claude-config`, `update-cursor-config`, and `update-goose-config` |
+| `up` | `scripts/compose-up.sh` (`.env` or `op run --env-file=tpl.env`), wait for `.secrets/splunk-token`, then client config updates |
 | `update-claude-config` | Runs `scripts/update-claude-config.sh` |
 | `update-goose-config` | Runs `scripts/update-goose-config.sh` → `~/.config/goose/config.yaml` |
 | `update-cursor-config` | Runs `scripts/update-cursor-config.sh` → `.cursor/mcp.json` |
-| `down` / `restart` / `logs` / `status` | Plain `docker compose` (no `op` or `.env` required—lifecycle only) |
+| `down` / `restart` / `logs` / `status` | Lifecycle only (no secrets / `op` required) |
 | `clean` | `docker compose down -v` then remove `.env` / token file (no `op` required) |
 
 ## scripts/setup-splunk.sh
