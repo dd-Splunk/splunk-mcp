@@ -44,7 +44,7 @@
 
 - **compose.yml**: Docker Compose configuration
 - **tpl.env.example**: Tracked template; copy to **tpl.env** (gitignored) for real `op://` paths
-- **.env**: Optional runtime file (git-ignored), produced by **`make init`**
+- **.env**: Optional runtime file (git-ignored), hand-written from **`.env.example`** (Path B)
 - **SA-S4R/**: Bundled sample Splunk app (bind-mounted into `$SPLUNK_HOME/etc/apps`)
 
 ### 4. Claude Logs Index
@@ -78,7 +78,6 @@ make up
      ├─ Create user: splunker
      └─ Generate encrypted MCP token → .secrets/splunk-token
 
-Optional: make init → op run + materialize-env.sh → .env (then Compose loads .env automatically)
 ```
 
 ## Security Architecture
@@ -103,7 +102,7 @@ The setup script assigns Splunk role **`mcp_user`** and ensures capability **`mc
 
 ### Environment variables
 
-Supplied to Compose via **`.env`** (after `make init`) **or** **`op run --env-file=tpl.env`** (default `make up` when `.env` is absent; **`tpl.env`** is local, from **`cp tpl.env.example tpl.env`**). Example shape:
+Supplied to Compose via **`.env`** (Path B) **or** **`op run --env-file=tpl.env`** (default `make up` when `.env` is absent; **`tpl.env`** is local, from **`cp tpl.env.example tpl.env`**). Example shape:
 
 ```bash
 SPLUNK_IMAGE=splunk/splunk:latest

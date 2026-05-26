@@ -22,9 +22,9 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`.
 
 - **`make up`**: **`docker compose up -d`** with secrets from **either** a gitignored **`.env`** on disk **or** **`op run --env-file=tpl.env`** when `.env` is absent (requires signed-in `op`). See **`Makefile`** for exact behavior.
 - **`make down`**, **`make logs`**, **`make restart`**, **`make status`**, **`make clean`**: plain **`docker`** / **`docker compose`** only—no `op` or project secrets required.
-- When **`.env`** is absent, **`make up`** runs **`check-env-for-up`** so **`op run`** yields non-empty **`SPLUNK_PASSWORD`**, **`SPLUNKBASE_USER`**, **`SPLUNKBASE_PASS`** before Splunk starts.
-- **`make init`** (optional): `op run --env-file=tpl.env -- scripts/materialize-env.sh .env`—writes a resolved **`.env`** on disk. Use when you need a file (CI) or `make up` without `op`. If **`.env` is absent**, **`make up` alone** uses `op run` and does not write that file. Skips if `.env` exists unless **`FORCE=1`**.
+- When **`.env`** is absent, **`make up`** runs **`scripts/compose-up.sh`** (`op run` + **`tpl.env`**) and checks non-empty **`SPLUNK_PASSWORD`**, **`SPLUNKBASE_USER`**, **`SPLUNKBASE_PASS`** before Splunk starts.
 - **`make up`**: waits for **`.secrets/splunk-token`**, then runs **`make update-claude-config`**, **`make update-cursor-config`**, and **`make update-goose-config`**.
+- **Secrets paths:** **Path A** — `tpl.env` + `op run` (no plaintext `.env`); **Path B** — hand-written **`.env`** from **`.env.example`** (plain values; Compose auto-loads it). If **`.env` is absent**, **`make up`** uses `op run --env-file=tpl.env`.
 - **`splunk-init`** runs **`scripts/setup-splunk.sh`** after **`so1`** is healthy.
 
 ## What `scripts/setup-splunk.sh` does
@@ -45,6 +45,16 @@ Splunk REST bootstrap (see **`docs/SETUP_SPLUNK_SCRIPT.md`** for detail):
 - **`scripts/update-cursor-config.sh`** → **`.cursor/mcp.json`**
 - **`scripts/update-goose-config.sh`** → **`~/.config/goose/config.yaml`** (stdio extension entry)
 
+## Vellem (Cursor memory)
+
+When **Vellem** is in **`.cursor/mcp.json`**, agents should use it as repo-local memory (see **`.cursor/rules/vellem-memory.mdc`**).
+
+- **Read first:** `search_notes` / `get_note` in folder **`splunk-mcp`** before re-scanning docs.
+- **Write back:** `add_note` or `update_note` after architecture, setup, or troubleshooting discoveries; `append_to_daily` for short session summaries.
+- **Stay in sync:** Vellem is not automatic—when you change **`Makefile`**, **`compose.yml`**, **`scripts/setup-splunk.sh`**, secrets flow, or contributor lint/CI, update the matching note in folder **`splunk-mcp`** (see **`.cursor/rules/vellem-memory.mdc`** § *Keep Vellem in sync*). Trust **`make help`** and docs over Vellem if they disagree. **`.cursor/hooks.json`** nudges the agent after **Write**/**StrReplace** on key workflow files.
+- **Never store secrets** in Vellem (tokens, passwords, `.env` values).
+- **Vellem entry** (macOS, merge manually or keep alongside Splunk): `"command": "/Applications/Vellem.app/Contents/Resources/vellem-mcp"`. Example: **`.cursor/mcp.json.example`**.
+
 ## Quick verification
 
 | Question | Command / check |
@@ -58,7 +68,7 @@ Splunk REST bootstrap (see **`docs/SETUP_SPLUNK_SCRIPT.md`** for detail):
 - **`TOKEN_FILE`**: token path (default **`.secrets/splunk-token`**)
 - **`ENV_FILE`**: file for `op run` (default **`tpl.env`**)
 - **`ENV_EXAMPLE`**: tracked template (default **`tpl.env.example`**)
-- **`ENV_OUT`**: materialized env (default **`.env`**)
+- **`ENV_OUT`**: optional plain env file for Path B (default **`.env`**)
 - **`OP`**, **`DC`**: 1Password CLI and docker compose command
 - **`make wait-token`**: waits on **`$(TOKEN_FILE)`** (used by **`make up`**)
 
@@ -70,10 +80,10 @@ Splunk REST bootstrap (see **`docs/SETUP_SPLUNK_SCRIPT.md`** for detail):
 ## Change discipline
 
 - Prefer small commits; keep **`make up`**, **`make status`**, **`make verify-mcp-remote`** working.
-- When changing **`Makefile`**, **`compose.yml`**, or **`scripts/setup-splunk.sh`**, update **`docs/CONFIGURATION.md`**, **`docs/OVERVIEW.md`**, and/or **`docs/TROUBLESHOOTING.md`** as needed.
-- Markdown edits: **`make lint-md`** (or **`make lint-md-fix`**) — see **`.markdownlint-cli2.jsonc`**.
+- When changing **`Makefile`**, **`compose.yml`**, or **`scripts/setup-splunk.sh`**, update **`docs/CONFIGURATION.md`**, **`docs/OVERVIEW.md`**, and/or **`docs/TROUBLESHOOTING.md`** as needed—and **Vellem** folder **`splunk-mcp`** if you use it (especially **Boot Workflow & Makefile**).
+- Markdown edits: run **`pre-commit`** (markdownlint-cli2 via **`.pre-commit-config.yaml`** / **`.markdownlint-cli2.jsonc`**). Auto-fix: `npx --yes markdownlint-cli2 --fix`.
 - **License:** contributions are under **[LICENSE](LICENSE)** (MIT).
 
 ## CI
 
-GitHub Actions: **`ci.yml`** (**shellcheck**, **`make lint-md`**) on pushes/PRs to **`main`** / **`master`**; **`package-s4r.yml`** builds **`SA-S4R.spl`** and publishes a PoC **`latest`** release when **`SA-S4R/`** or that workflow changes (or on **`workflow_dispatch`**). See **`docs/CI_CD.md`** for triggers, permissions, and PoC limitations.
+GitHub Actions: **`ci.yml`** (**pre-commit**: shellcheck + markdownlint) on pushes/PRs to **`main`** / **`master`**; **`package-s4r.yml`** builds **`SA-S4R.spl`** and publishes a PoC **`latest`** release when **`SA-S4R/`** or that workflow changes (or on **`workflow_dispatch`**). See **`docs/CI_CD.md`** for triggers, permissions, and PoC limitations.

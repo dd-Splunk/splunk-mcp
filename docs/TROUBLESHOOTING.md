@@ -101,7 +101,7 @@ make down && make clean && make up
 
 ### Environment & Configuration Issues
 
-#### Issue: `make init` fails with 1Password error
+#### Issue: `make up` fails with 1Password authentication error
 
 **Error**: `Not currently authenticated` or `Account not found`
 
@@ -121,7 +121,7 @@ op account add
 op account list
 
 # Retry
-make init
+make up
 ```
 
 ---
@@ -141,14 +141,14 @@ brew install 1password-cli
 op --version
 
 # Retry
-make init
+make up
 ```
 
 ---
 
 #### Issue: `tpl.env` not found (fresh clone)
 
-**Error** (from `make up` or `make init`): `tpl.env missing` / `copy the example…`
+**Error** (from `make up`): `tpl.env missing` / `copy the example…`
 
 **Solution**: Create a local file from the tracked template (once per clone):
 
@@ -160,12 +160,12 @@ Edit **`tpl.env`** with your `op://` paths. **`tpl.env`** is gitignored—do not
 
 ---
 
-#### Issue: `make init` fails even though `op read "op://…"` works
+#### Issue: `make up` fails even though `op read "op://…"` works
 
 **Common causes**:
 
-1. **Extra quotes in `tpl.env`** — Use `VAR=op://vault/item/field` (no surrounding `"`…`"`). If the value is `"op://…"`, `op run` may leave quotes in the value and **`scripts/materialize-env.sh`** will fail with “must be set”.
-2. **Spaces in vault paths** — **`make init`** uses the same resolution as **`make up`** (`op run` + **`materialize-env.sh`**), not **`op inject`**. Prefer this path if your `op://` references include spaces in the item title.
+1. **Extra quotes in `tpl.env`** — Use `VAR=op://vault/item/field` (no surrounding `"`…`"`). If the value is `"op://…"`, `op run` may leave quotes in the value and Compose will see invalid credentials.
+2. **Spaces in item titles** — **`make up`** resolves secrets with **`op run --env-file=tpl.env`** (not **`op inject`**), which handles spaces in `op://` paths when unquoted.
 
 ---
 
@@ -200,15 +200,8 @@ Edit **`tpl.env`** with your `op://` paths. **`tpl.env`** is gitignored—do not
 
 **Solution**:
 
-1. Sign in: `op signin` (or use desktop integration) and confirm `op read` works for every path in **`tpl.env`**.
-2. Or **materialize `.env`** after fixing `tpl.env`:
-
-   ```bash
-   make init
-   make up
-   ```
-
-3. Or create **`.env` manually** (dev only; do not commit):
+1. Sign in: `op signin` (or use desktop integration) and confirm `op read` works for every path in **`tpl.env`**, then **`make up`**.
+2. Or create **`.env` manually** from **`.env.example`** (Path B; dev only; do not commit):
 
    ```bash
    cat > .env << 'EOF'
@@ -294,10 +287,9 @@ cat compose.yml | grep SPLUNK_APPS_URL
 op read "op://Private/Splunkbase/username"
 op read "op://Private/Splunkbase/password"
 
-# If credentials wrong, update 1Password and reinit:
+# If credentials wrong, update 1Password (or .env) and recycle the stack:
 make down
 docker volume rm so1-var so1-etc
-make init
 make up
 ```
 

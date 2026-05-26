@@ -11,27 +11,28 @@ It is labeled in `default/app.conf` and is visible in Splunk Web as an app named
 ## Layout
 
 ```text
-SA-S4R/
+SA-S4R/                         # tracked in git
 ├── default/
 │   ├── app.conf
-│   └── eventgen.conf      # Eventgen definitions
+│   ├── data/ui/nav/default.xml
+│   └── eventgen.conf           # Eventgen definitions
 ├── lookups/
-│   └── product_codes.csv  # Example lookup table
+│   └── product_codes.csv       # Demo lookup (wire in Splunk Web if needed)
 ├── metadata/
-│   ├── local.meta
+│   ├── default.meta
 │   └── meta.conf
-├── samples/               # Token sources for Eventgen
-│   ├── access_combined.sample
-│   ├── action.txt
-│   ├── jsessionid.txt
-│   ├── method.txt
-│   ├── path.txt
-│   ├── product_id.txt
-│   ├── referer.txt
-│   ├── status.txt
-│   └── useragent.txt
-└── local/
-    └── app.conf
+└── samples/                    # Token sources for Eventgen
+    ├── access_combined.sample
+    ├── jsessionid.txt
+    ├── method.txt
+    ├── path.txt
+    ├── product_id.txt
+    ├── referer.txt
+    ├── status.txt
+    └── useragent.txt
+
+# Created at runtime in the container (gitignored: **/local/, **/metadata/local.meta)
+# e.g. local/inputs.conf, local/app.conf
 ```
 
 ## Eventgen

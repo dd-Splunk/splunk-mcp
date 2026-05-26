@@ -19,7 +19,7 @@ See ARCHITECTURE.md for detailed system design.
 | Splunk Enterprise | `SPLUNK_IMAGE` in local `tpl.env` / `.env` (default `splunk/splunk:latest` in **`tpl.env.example`**) | **Build** is whatever that tag resolves to when pulled—verify at runtime (`services/server/info`). |
 | Splunk MCP Server app | `SPLUNK_APPS_URL` in `compose.yml` (Splunkbase URLs, e.g. app `1924`) | Package **release** is in the URL path, not a separate semver in this repo. |
 | Docker / Compose | Host installation | Use recent versions; see [INSTALLATION.md](INSTALLATION.md). |
-| 1Password CLI | `op` | Used for `op run` (including `make up` / `make init`). |
+| 1Password CLI | `op` | Used for `op run` with `make up` when `.env` is absent. |
 | `make`, `jq`, `curl` | Host | Required by Makefile and scripts. |
 
 ## File Structure Explanation
@@ -58,12 +58,12 @@ services:
 
 - **`tpl.env.example`**: Tracked placeholder template (copy to **`tpl.env`**; **`tpl.env`** is gitignored).
 - Uses 1Password references: `op://vault/item/field` (must match **your** vault).
-- Consumed by **`op run --env-file=tpl.env`** (default `make up` when `.env` is absent) or by **`make init`** → `.env`
+- Consumed by **`op run --env-file=tpl.env`** when `.env` is absent (`make up`)
 
 #### `.env` (git-ignored, optional)
 
-- Runtime file produced by **`make init`** (`op run` + **`scripts/materialize-env.sh`**)
-- If present, Compose loads it automatically; if absent, the Makefile uses `op run` instead
+- Hand-written from **`.env.example`** (Path B); never commit
+- If present, Compose loads it automatically; if absent, the Makefile uses `op run` with **`tpl.env`**
 - Never commit to version control
 
 ### Scripts
@@ -101,18 +101,16 @@ Host-side **Claude** / **Cursor** / **Goose** config is updated by `update-claud
 
 Key targets:
 
-```makefile
-init:            # Optional: op run --env-file=tpl.env -- scripts/materialize-env.sh .env
-up:              # docker compose up (op run if no .env), wait for token, update-claude-config + update-cursor-config + update-goose-config
-down:            # Stop containers (same env resolution as up)
-restart:         # Restart containers
-clean:           # Remove everything (destructive)
-logs:            # Follow container logs
-status:          # Check health
-update-claude-config:   # Merge token into Claude Desktop MCP config
-update-cursor-config:   # Merge token into .cursor/mcp.json
-update-goose-config:    # Merge token into ~/.config/goose/config.yaml
+```text
+make help                 # Target list (default goal)
+make up                   # scripts/compose-up.sh → wait-token → update-*-config
+make down / restart       # docker compose (no op)
+make logs / status        # docker logs / health probe
+make clean                # down -v + remove .env and .secrets
+make verify-mcp-remote    # scripts/verify-mcp-remote.sh
 ```
+
+Linting: **pre-commit** (shellcheck + markdownlint), not Makefile targets.
 
 ## Development Workflow
 
