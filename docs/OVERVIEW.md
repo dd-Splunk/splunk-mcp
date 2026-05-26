@@ -62,7 +62,7 @@ with **`NODE_TLS_REJECT_UNAUTHORIZED=0`** to accept Splunk’s default self-sign
    so variables are injected **at process invocation** and nothing is written to `.env`.
 3. **Alternative (Path B)**: hand-written **`.env`** from **`.env.example`**; Compose auto-loads it and **`make up`** uses plain `docker compose`.
 4. **Compose** supplies `SPLUNK_PASSWORD`, Splunkbase credentials, and related env vars to the `so1` and `splunk-init` services.
-5. **Token file** `.secrets/splunk-token` is created by `splunk-init` / `setup-splunk.sh`. **`make update-claude-config`**, **`make update-cursor-config`**, and **`make update-goose-config`** read it to patch client config.
+5. **Token file** `.secrets/splunk-token` is created by `splunk-init` / `setup-splunk.sh`. **`make update-mcp-clients`** (`scripts/mcp-client.sh`) reads it to patch client configs.
 
 ## Authentication model (as implemented)
 
@@ -87,9 +87,9 @@ make up
       → add mltk_admin to MLTK_ROLES_USER (default splunker; override in .env)
       → create user splunker (roles: user + mcp_user)
       → GET encrypted mcp token → .secrets/splunk-token
-  → Makefile: wait for token file → update-claude-config, update-cursor-config, update-goose-config
+  → Makefile: wait for token file → update-mcp-clients
 
-Optional: make update-claude-config / update-cursor-config / update-goose-config
+Optional: make update-mcp-client MCP_CLIENT=cursor (or aliases update-*-config)
   → re-merge the token into one client only (e.g. after token rotation) without a full stack recycle
 
 User restarts Claude Desktop, Cursor, or Goose

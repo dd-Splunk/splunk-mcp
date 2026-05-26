@@ -86,7 +86,7 @@ Main initialization script (runs in `splunk-init`). Steps:
 
 **Not** in this minimal script: **`claude_logs`** index/monitor automation.
 
-Host-side **Claude** / **Cursor** / **Goose** config is updated by `update-claude-config.sh`, `update-cursor-config.sh`, and `update-goose-config.sh`, not by this script inside the container.
+Host-side **Claude** / **Cursor** / **Goose** config is updated by `scripts/mcp-client.sh` (`make update-mcp-clients`), not by this script inside the container.
 
 **Error Handling:**
 
@@ -107,7 +107,7 @@ make up                   # scripts/compose-up.sh → wait-token → update-*-co
 make down / restart       # docker compose (no op)
 make logs / status        # docker logs / health probe
 make clean                # down -v + remove .env and .secrets
-make verify-mcp-remote    # scripts/verify-mcp-remote.sh
+make verify-mcp-remote    # scripts/mcp-client.sh verify (MCP_VERIFY_CLIENT=all)
 ```
 
 Linting: **pre-commit** (shellcheck + markdownlint), not Makefile targets.

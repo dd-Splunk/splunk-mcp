@@ -74,7 +74,7 @@ SPLUNKBASE_PASS=op://YourVault/Splunkbase/password
 TZ=Europe/Brussels
 ```
 
-Expected layout includes `Makefile`, `compose.yml`, `tpl.env.example`, local `tpl.env` (after copy), `scripts/` (including `setup-splunk.sh`, `update-*-config.sh`, `verify-mcp-remote.sh`), and `SA-S4R/`. See root [README.md](../README.md) for the full picture.
+Expected layout includes `Makefile`, `compose.yml`, `tpl.env.example`, local `tpl.env` (after copy), `scripts/` (including `setup-splunk.sh`, `compose-up.sh`, `mcp-client.sh`), and `SA-S4R/`. See root [README.md](../README.md) for the full picture.
 
 ## Start the stack
 
@@ -82,7 +82,7 @@ Expected layout includes `Makefile`, `compose.yml`, `tpl.env.example`, local `tp
 make up
 ```
 
-This runs **`docker compose up -d`** using **`.env`** if present, otherwise **`op run --env-file=tpl.env`**. It starts **`so1`**, runs **`splunk-init`** after Splunk is healthy, waits for **`.secrets/splunk-token`**, then runs **`make update-claude-config`**, **`make update-cursor-config`**, and **`make update-goose-config`**.
+This runs **`docker compose up -d`** using **`.env`** if present, otherwise **`op run --env-file=tpl.env`**. It starts **`so1`**, runs **`splunk-init`** after Splunk is healthy, waits for **`.secrets/splunk-token`**, then runs **`make update-mcp-clients`**.
 
 For Path B (plain **`.env`** without 1Password at runtime), see [CONFIGURATION.md](CONFIGURATION.md#plain-env-path-b).
 
@@ -111,9 +111,9 @@ After **`.secrets/splunk-token`** exists:
 
 | Client | Action |
 | ------ | ------ |
-| **Claude Desktop** (macOS) | **`make up`** runs **`update-claude-config`**. Quit Claude fully (**Cmd+Q**), then reopen. Config: `~/Library/Application Support/Claude/claude_desktop_config.json`. |
-| **Cursor** | **`make up`** runs **`update-cursor-config`** (writes **`.cursor/mcp.json`**). Restart Cursor or reload MCP servers. |
-| **Goose** | **`make up`** runs **`update-goose-config`**. Restart Goose. |
+| **Claude Desktop** (macOS) | **`make up`** runs **`update-mcp-clients`**. Quit Claude fully (**Cmd+Q**), then reopen. Config: `~/Library/Application Support/Claude/claude_desktop_config.json`. |
+| **Cursor** | **`make up`** runs **`update-mcp-clients`** (writes **`.cursor/mcp.json`**). Restart Cursor or reload MCP servers. |
+| **Goose** | **`make up`** runs **`update-mcp-clients`**. Restart Goose. |
 
 Shell smoke test:
 

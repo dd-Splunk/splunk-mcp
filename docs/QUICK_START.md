@@ -24,7 +24,7 @@ node --version   # for npx mcp-remote
 make up
 ```
 
-Waits for **`.secrets/splunk-token`**, then runs **`make update-claude-config`**, **`make update-cursor-config`**, and **`make update-goose-config`**. First run can take **several minutes**.
+Waits for **`.secrets/splunk-token`**, then runs **`make update-mcp-clients`**. First run can take **several minutes**.
 
 With **`tpl.env`** and no **`.env`**, **`make up`** injects secrets via **`op run`** (nothing written to disk). For a plain **`.env`** file instead, see [PRESALES.md](PRESALES.md#secrets-path-a-1password-vs-path-b-plain-env) and [CONFIGURATION.md](CONFIGURATION.md#plain-env-path-b).
 
