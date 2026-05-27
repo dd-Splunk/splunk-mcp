@@ -78,11 +78,11 @@ Main initialization script (runs in `splunk-init`). Steps:
 
 3. **Role `mcp_user`** — Creates or updates `/services/authorization/roles/mcp_user` with capability **`mcp_tool_execute`**.
 
-4. **User `splunker`** — Creates or updates via `/services/authentication/users` with Splunk roles **`user`** and **`mcp_user`** (override with **`SPLUNKER_USERNAME`**). Does **not** grant **`admin`**.
+4. **User `splunker`** — Creates or updates via `/services/authentication/users` with Splunk roles **`user`** and **`mcp_user`** (override with **`SPLUNK_MCP_USER`**). Does **not** grant **`admin`**.
 
-5. **Encrypted MCP token** — GET `/servicesNS/admin/Splunk_MCP_Server/mcp_token?username=splunker&output_mode=json` (or **`MCP_TOKEN_USERNAME`**); writes token to `TOKEN_OUTPUT_FILE` (`.secrets/splunk-token`).
+5. **Encrypted MCP token** — GET `/servicesNS/admin/Splunk_MCP_Server/mcp_token?username=<SPLUNK_MCP_USER>&output_mode=json`; writes token to `TOKEN_OUTPUT_FILE` (`.secrets/splunk-token`).
 
-6. **Password file** — May generate **`.secrets/splunker-password`** (see **`SPLUNKER_PASSWORD_FILE`**).
+6. **Password file** — May generate **`.secrets/splunker-password`** (see **`SPLUNK_MCP_PASSWORD_FILE`**).
 
 **Not** in this minimal script: **`claude_logs`** index/monitor automation.
 
@@ -184,7 +184,7 @@ volumes:
 
 ```bash
 curl ${CURL_OPTS} -X POST "${SPLUNK_URL}/services/data/inputs/monitor/" \
-  -u "${SPLUNK_USER}:${SPLUNK_PASSWORD}" \
+  -u "${SPLUNK_REST_USER}:${SPLUNK_PASSWORD}" \
   -d "name=/var/log/custom_logs" \
   -d "index=custom_index"
 ```
@@ -195,7 +195,7 @@ Edit `scripts/setup-splunk.sh`:
 
 ```bash
 curl -X POST "${SPLUNK_URL}/services/authentication/users" \
-  -u "${SPLUNK_USER}:${SPLUNK_PASSWORD}" \
+  -u "${SPLUNK_REST_USER}:${SPLUNK_PASSWORD}" \
   -d "name=user2" -d "password=pass" -d "roles=user" -d "roles=mcp_user"
 ```
 
