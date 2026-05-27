@@ -84,7 +84,7 @@ make up
       → enable SA-Eventgen default modinput (when app present)
       → POST mcp server ssl_verify=false (dev)
       → create/update role mcp_user with capability mcp_tool_execute
-      → add mltk_admin to MLTK_ROLES_USER (default splunker; override in .env)
+      → add MLTK_ROLE to MLTK_ROLES_USER (default splunker; override in .env)
       → create user splunker (roles: user + mcp_user)
       → GET encrypted mcp token → .secrets/splunk-token
   → Makefile: wait for token file → update-mcp-clients
