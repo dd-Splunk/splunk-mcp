@@ -42,6 +42,9 @@ Typical environment inside `splunk-init` (from Compose):
 | `SPLUNK_HOST` | `so1` | REST hostname on the Docker network |
 | `SPLUNK_PORT` | `8089` | Management port |
 | `SPLUNK_REST_USER` | `admin` | REST login user |
+| `SPLUNK_MCP_USER` | `splunker` | MCP user (from `.env` when set in `compose.yml`) |
+| `SPLUNK_MLTK_USER` | *(often empty)* | MLTK role target; defaults to `SPLUNK_MCP_USER` in script |
+| `MLTK_ROLE` | `mltk_dsdl_admin` | Splunk role assigned in step 5 |
 | `SPLUNK_PASSWORD` | *(secret)* | REST password |
 | `TOKEN_OUTPUT_FILE` | `/output/splunk-token` | Host path: `.secrets/splunk-token` |
 | `SPLUNK_MCP_PASSWORD_FILE` | `/output/splunker-password` | Host path: `.secrets/splunker-password` |

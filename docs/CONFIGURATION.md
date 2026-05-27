@@ -49,7 +49,7 @@ If you are not on macOS or that path does not exist, adjust or remove this mount
 Runs after `so1` is **healthy**. Uses Alpine, installs `curl` and `jq`, then runs `setup-splunk.sh`. Mounts:
 
 - `scripts/setup-splunk.sh` → `/setup-splunk.sh`
-- `./.secrets` → `/output` (token written to **`splunk-token`**, MCP user password to **`splunker-password`** when generated—see `TOKEN_OUTPUT_FILE` / `SPLUNK_MCP_PASSWORD_FILE` in **`compose.yml`**)
+- `./.secrets` → `/output` (token written to **`splunk-token`**, MCP user password to **`splunker-password`** when generated—see **`compose.yml`** for `TOKEN_OUTPUT_FILE`, `SPLUNK_MCP_PASSWORD_FILE`, `SPLUNK_REST_USER`, `SPLUNK_MCP_USER`, `SPLUNK_MLTK_USER`, `MLTK_ROLE`)
 
 ### Network and volumes
 

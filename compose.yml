@@ -46,7 +46,8 @@ services:
     environment:
       SPLUNK_PASSWORD: ${SPLUNK_PASSWORD}
       SPLUNK_REST_USER: ${SPLUNK_REST_USER:-admin}
-      # User that receives the MLTK role (default: same as SPLUNK_MCP_USER → splunker; set to admin to match SPLUNK_REST_USER)
+      SPLUNK_MCP_USER: ${SPLUNK_MCP_USER:-splunker}
+      # Who receives MLTK_ROLE (default: same as SPLUNK_MCP_USER; set to admin to match SPLUNK_REST_USER)
       SPLUNK_MLTK_USER: ${SPLUNK_MLTK_USER:-}
       # Splunk AI Toolkit role name (default mltk_dsdl_admin; set empty to skip assignment)
       MLTK_ROLE: ${MLTK_ROLE:-mltk_dsdl_admin}
