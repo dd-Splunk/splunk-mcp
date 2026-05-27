@@ -45,16 +45,16 @@ services:
       - ./.secrets:/output:rw
     environment:
       SPLUNK_PASSWORD: ${SPLUNK_PASSWORD}
-      SPLUNK_USER: ${SPLUNK_USER:-admin}
-      # User that receives the MLTK role (default: same as SPLUNKER_USERNAME → splunker; set to admin to match SPLUNK_USER)
-      MLTK_ROLES_USER: ${MLTK_ROLES_USER:-}
+      SPLUNK_REST_USER: ${SPLUNK_REST_USER:-admin}
+      # User that receives the MLTK role (default: same as SPLUNK_MCP_USER → splunker; set to admin to match SPLUNK_REST_USER)
+      SPLUNK_MLTK_USER: ${SPLUNK_MLTK_USER:-}
       # Splunk AI Toolkit role name (default mltk_dsdl_admin; set empty to skip assignment)
       MLTK_ROLE: ${MLTK_ROLE:-mltk_dsdl_admin}
       SPLUNK_HOST: so1
       SPLUNK_PORT: 8089
       TOKEN_OUTPUT_FILE: /output/splunk-token
       # Host .secrets is mounted at /output; use absolute paths so the init container persists secrets.
-      SPLUNKER_PASSWORD_FILE: /output/splunker-password
+      SPLUNK_MCP_PASSWORD_FILE: /output/splunker-password
     command: sh -c "apk add --no-cache curl jq && chmod +x /setup-splunk.sh &&
       /setup-splunk.sh"
     networks:

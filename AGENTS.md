@@ -33,9 +33,9 @@ Splunk REST bootstrap (see **`docs/SETUP_SPLUNK_SCRIPT.md`** for detail):
 
 - MCP dev: **`ssl_verify=false`** on the Splunk MCP Server app (local dev only).
 - **SA-Eventgen**: enables the default modular input when the app is installed.
-- **Identity**: Splunk role **`mcp_user`** with capability **`mcp_tool_execute`**; MLTK role **`MLTK_ROLE`** (default **`mltk_dsdl_admin`**) on **`MLTK_ROLES_USER`** (default **`SPLUNKER_USERNAME`** / **`splunker`**, not the REST user **`SPLUNK_USER`**) for AI Toolkit; user **`splunker`** (overridable via **`SPLUNKER_USERNAME`** / **`MCP_TOKEN_USERNAME`**) with roles **`user`** + **`mcp_user`**. Set **`MLTK_ROLES_USER=admin`** (or the same as **`SPLUNK_USER`**) in **`.env`** if the admin account should have MLTK instead; override **`MLTK_ROLE`** if your MLTK version uses a different role name.
+- **Identity**: Splunk role **`mcp_user`** with capability **`mcp_tool_execute`**; MLTK role **`MLTK_ROLE`** (default **`mltk_dsdl_admin`**) on **`SPLUNK_MLTK_USER`** (default **`SPLUNK_MCP_USER`** / **`splunker`**, not the REST user **`SPLUNK_REST_USER`**) for AI Toolkit; user **`splunker`** (overridable via **`SPLUNK_MCP_USER`**) with roles **`user`** + **`mcp_user`**; MCP token minted for the same user. Set **`SPLUNK_MLTK_USER=admin`** (or the same as **`SPLUNK_REST_USER`**) in **`.env`** if the admin account should have MLTK instead; override **`MLTK_ROLE`** if your MLTK version uses a different role name.
 - **Token**: encrypted MCP token from the app’s **`mcp_token`** endpoint → **`TOKEN_OUTPUT_FILE`** (host **`.secrets/splunk-token`** when using **`compose.yml`**).
-- **Password**: generated or read from **`SPLUNKER_PASSWORD_FILE`** (default **`.secrets/splunker-password`**; **`splunk-init`** uses **`/output/splunker-password`**).
+- **Password**: generated or read from **`SPLUNK_MCP_PASSWORD_FILE`** (default **`.secrets/splunker-password`**; **`splunk-init`** uses **`/output/splunker-password`**).
 
 **Not** in this script: **`claude_logs`** index or file monitors. Optional ingestion: enable the bind mount in **`compose.yml`**, create the index and monitor in Splunk—**`docs/CONFIGURATION.md`**.
 

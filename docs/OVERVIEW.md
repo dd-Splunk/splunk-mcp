@@ -69,8 +69,8 @@ with **`NODE_TLS_REJECT_UNAUTHORIZED=0`** to accept Splunk’s default self-sign
 | Actor | Mechanism | Notes |
 | ----- | --------- | ----- |
 | Splunk admin | Username/password (`admin` + `SPLUNK_PASSWORD`) | Used in setup script REST calls |
-| MCP client (Claude/Cursor) | Bearer token | Token from Splunk MCP app’s encrypted token endpoint for user **`splunker`** (override with `MCP_TOKEN_USERNAME`) |
-| User **`splunker`** | Password file **`.secrets/splunker-password`** (unless you pre-create it or set `SPLUNKER_PASSWORD_FILE`); Splunk roles **`user`** + **`mcp_user`** | Created idempotently; see `scripts/setup-splunk.sh` |
+| MCP client (Claude/Cursor) | Bearer token | Token from Splunk MCP app’s encrypted token endpoint for **`SPLUNK_MCP_USER`** (default **`splunker`**) |
+| User **`splunker`** | Password file **`.secrets/splunker-password`** (unless you pre-create it or set `SPLUNK_MCP_PASSWORD_FILE`); Splunk roles **`user`** + **`mcp_user`** | Created idempotently; see `scripts/setup-splunk.sh` |
 
 The setup script creates Splunk role **`mcp_user`** and assigns capability **`mcp_tool_execute`** to that role (the MCP app checks the **capability**, not the role name).
 
@@ -84,7 +84,7 @@ make up
       → enable SA-Eventgen default modinput (when app present)
       → POST mcp server ssl_verify=false (dev)
       → create/update role mcp_user with capability mcp_tool_execute
-      → add MLTK_ROLE to MLTK_ROLES_USER (default splunker; override in .env)
+      → add MLTK_ROLE to SPLUNK_MLTK_USER (default splunker; override in .env)
       → create user splunker (roles: user + mcp_user)
       → GET encrypted mcp token → .secrets/splunk-token
   → Makefile: wait for token file → update-mcp-clients

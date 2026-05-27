@@ -1,47 +1,61 @@
 #!/bin/sh
-# Minimal Splunk PoC setup (idempotent):
-# - Enable SA-Eventgen default modular input (modinput_eventgen://default)
-# - Set Splunk MCP Server app ssl_verify=false (local dev only)
-# - Add Splunk MLTK role (MLTK_ROLE) to MLTK_ROLES_USER (default: SPLUNKER_USERNAME / splunker; override e.g. admin or SPLUNK_USER)
-# - Ensure an MCP-enabled Splunk user exists and persist its password + token
+# Splunk PoC bootstrap over HTTPS REST (idempotent; safe to re-run via make up / splunk-init).
 #
-# Out of scope: claude_logs index/monitor (add via Splunk UI/REST if needed).
+# Execution order:
+#   1. Enable SA-Eventgen modinput_eventgen://default (when the app is installed)
+#   2. Splunk MCP Server: ssl_verify=false (local dev only; uses curl -k)
+#   3. Role mcp_user with capability mcp_tool_execute
+#   4. User SPLUNK_MCP_USER (default splunker): roles user + mcp_user; password file
+#   5. Merge MLTK_ROLE onto SPLUNK_MLTK_USER (requires jq; non-fatal if MLTK app is absent)
+#   6. Encrypted MCP token for SPLUNK_MCP_USER → TOKEN_OUTPUT_FILE
+#
+# Required env: SPLUNK_PASSWORD.
+# Refuses SPLUNK_MCP_USER=admin (no MCP tokens for admin).
+#
+# REST login (curl -u): SPLUNK_REST_USER (default admin).
+# MCP user (steps 4 and 6): SPLUNK_MCP_USER (default splunker).
+# MLTK user (step 5): SPLUNK_MLTK_USER (defaults to SPLUNK_MCP_USER; set to admin in .env
+# if the management account should get MLTK instead).
+#
+# Other env (defaults in parentheses):
+#   SPLUNK_HOST (localhost), SPLUNK_PORT (8089)
+#   MLTK_ROLE (mltk_dsdl_admin; empty skips step 5; e.g. mltk_admin on older MLTK)
+#   SPLUNK_MCP_PASSWORD_FILE (.secrets/splunker-password)
+#   TOKEN_OUTPUT_FILE (.secrets/splunk-token; empty skips writing token to disk)
+#   FORCE_SPLUNK_MCP_PASSWORD, FORCE_MCP_TOKEN (1|true|yes rotates password / regenerates token)
+#
+# Deprecated env (still honored if new names unset): SPLUNK_USER, SPLUNKER_USERNAME,
+# MLTK_ROLES_USER, SPLUNKER_PASSWORD_FILE, FORCE_SPLUNKER_PASSWORD, MCP_TOKEN_USERNAME.
+#
+# Out of scope: claude_logs index or file monitors — see docs/CONFIGURATION.md.
+# Full variable table and flows: docs/SETUP_SPLUNK_SCRIPT.md
 
 set -eu
 
 SPLUNK_HOST="${SPLUNK_HOST:-localhost}"
 SPLUNK_PORT="${SPLUNK_PORT:-8089}"
-SPLUNK_USER="${SPLUNK_USER:-admin}"
+SPLUNK_REST_USER="${SPLUNK_REST_USER:-${SPLUNK_USER:-admin}}"
 : "${SPLUNK_PASSWORD:?SPLUNK_PASSWORD must be set}"
 SPLUNK_URL="https://${SPLUNK_HOST}:${SPLUNK_PORT}"
 
-# Dedicated MCP user to create/maintain and mint the encrypted MCP token for.
-# This script intentionally does NOT mint tokens for admin.
-MCP_TOKEN_USERNAME="${MCP_TOKEN_USERNAME:-splunker}"
-
-SPLUNKER_USERNAME="${SPLUNKER_USERNAME:-splunker}"
-# Splunk account that receives the MLTK role. Defaults to the MCP user (SPLUNKER_USERNAME), not SPLUNK_USER (admin REST).
-# Set to the same value as SPLUNK_USER in .env if the management account (e.g. admin) should have MLTK instead.
-MLTK_ROLES_USER="${MLTK_ROLES_USER:-$SPLUNKER_USERNAME}"
-# Role created by Splunk AI Toolkit (override if your app version uses a different name, e.g. mltk_admin).
-# Set empty to skip MLTK role assignment.
+SPLUNK_MCP_USER="${SPLUNK_MCP_USER:-${SPLUNKER_USERNAME:-${MCP_TOKEN_USERNAME:-splunker}}}"
+SPLUNK_MLTK_USER="${SPLUNK_MLTK_USER:-${MLTK_ROLES_USER:-$SPLUNK_MCP_USER}}"
 MLTK_ROLE="${MLTK_ROLE:-mltk_dsdl_admin}"
-SPLUNKER_PASSWORD_FILE="${SPLUNKER_PASSWORD_FILE:-.secrets/splunker-password}"
-FORCE_SPLUNKER_PASSWORD="${FORCE_SPLUNKER_PASSWORD:-0}"
-
-# If set, token is written here (mode 600). Idempotent: existing non-empty file is left
-# unchanged unless FORCE_MCP_TOKEN is 1/true.
+SPLUNK_MCP_PASSWORD_FILE="${SPLUNK_MCP_PASSWORD_FILE:-${SPLUNKER_PASSWORD_FILE:-.secrets/splunker-password}}"
+FORCE_SPLUNK_MCP_PASSWORD="${FORCE_SPLUNK_MCP_PASSWORD:-${FORCE_SPLUNKER_PASSWORD:-0}}"
 TOKEN_OUTPUT_FILE="${TOKEN_OUTPUT_FILE:-.secrets/splunk-token}"
 FORCE_MCP_TOKEN="${FORCE_MCP_TOKEN:-0}"
 
 CURL_OPTS="-k"
 LAST_BODY_FILE=""
 
+# True for 1, true, yes (any case) — used by FORCE_* flags.
 is_truthy() {
   case "${1:-}" in 1|true|yes|TRUE) return 0 ;; esac
   return 1
 }
 
+# curl with SPLUNK_REST_USER:SPLUNK_PASSWORD; prints body on 2xx/3xx, else stderr unless AUTH_CURL_QUIET=1.
 auth_curl() { # $@ = curl args excluding auth
   tmp_body="$(mktemp)"
   quiet="${AUTH_CURL_QUIET:-0}"
@@ -52,7 +66,7 @@ auth_curl() { # $@ = curl args excluding auth
     esac
   done
 
-  if code="$(curl ${CURL_OPTS} -u "${SPLUNK_USER}:${SPLUNK_PASSWORD}" -sS -o "${tmp_body}" -w "%{http_code}" "$@")"; then
+  if code="$(curl ${CURL_OPTS} -u "${SPLUNK_REST_USER}:${SPLUNK_PASSWORD}" -sS -o "${tmp_body}" -w "%{http_code}" "$@")"; then
     :
   else
     code="000"
@@ -135,18 +149,19 @@ wait_for_disabled_value() {
   return 1
 }
 
+# Idempotent: GET user roles, merge MLTK_ROLE, POST full role list (needs jq).
 ensure_mltk_role() {
-  MLTK_USER_URL="${SPLUNK_URL}/services/authentication/users/${MLTK_ROLES_USER}"
+  MLTK_USER_URL="${SPLUNK_URL}/services/authentication/users/${SPLUNK_MLTK_USER}"
 
   if ! AUTH_CURL_QUIET=1 auth_curl "${MLTK_USER_URL}?output_mode=json" >/dev/null; then
     cleanup_last_body
-    echo "⚠️  User ${MLTK_ROLES_USER} not found; skipping ${MLTK_ROLE} (create the user first or set MLTK_ROLES_USER to an existing account)"
+    echo "⚠️  User ${SPLUNK_MLTK_USER} not found; skipping ${MLTK_ROLE} (create the user first or set SPLUNK_MLTK_USER to an existing account)"
     return
   fi
   cleanup_last_body
 
   if ! command -v jq >/dev/null 2>&1; then
-    echo "⚠️  jq not found; install jq to merge ${MLTK_ROLE} with existing roles for ${MLTK_ROLES_USER}, or assign the role in Splunk Web"
+    echo "⚠️  jq not found; install jq to merge ${MLTK_ROLE} with existing roles for ${SPLUNK_MLTK_USER}, or assign the role in Splunk Web"
     return
   fi
 
@@ -159,7 +174,7 @@ ensure_mltk_role() {
   roles_merged="$(echo "$mltk_user_json" | jq -r --arg r "${MLTK_ROLE}" \
     '([.entry[0].content.roles[]?] + [$r]) | unique | .[]' 2>/dev/null || true)"
   if [ -z "$roles_merged" ]; then
-    echo "⚠️  Could not read roles for ${MLTK_ROLES_USER}; skipping ${MLTK_ROLE}"
+    echo "⚠️  Could not read roles for ${SPLUNK_MLTK_USER}; skipping ${MLTK_ROLE}"
     return
   fi
 
@@ -169,8 +184,8 @@ ensure_mltk_role() {
   done
   auth_curl -X POST "${MLTK_USER_URL}" "$@" \
     -H "Content-Type: application/x-www-form-urlencoded" >/dev/null \
-    && echo "✅ Updated user ${MLTK_ROLES_USER} (role ${MLTK_ROLE} ensured)" \
-    || echo "⚠️  Could not add ${MLTK_ROLE} to ${MLTK_ROLES_USER} (is Splunk AI Toolkit installed? The role is created by that app.)"
+    && echo "✅ Updated user ${SPLUNK_MLTK_USER} (role ${MLTK_ROLE} ensured)" \
+    || echo "⚠️  Could not add ${MLTK_ROLE} to ${SPLUNK_MLTK_USER} (is Splunk AI Toolkit installed? The role is created by that app.)"
   cleanup_last_body
 }
 
@@ -238,73 +253,73 @@ auth_curl "$@" -H "Content-Type: application/x-www-form-urlencoded" >/dev/null \
   && echo "${role_ok_msg}" || echo "${role_fail_msg}"
 cleanup_last_body
 
-# --- 4. Dedicated MCP user (splunker) ---
-if [ "${MCP_TOKEN_USERNAME}" = "admin" ] || [ "${SPLUNKER_USERNAME}" = "admin" ]; then
-  echo "❌ Refusing to mint MCP tokens for admin. Set MCP_TOKEN_USERNAME and SPLUNKER_USERNAME to a non-admin user." >&2
+# --- 4. MCP user (SPLUNK_MCP_USER; default account name splunker) ---
+if [ "${SPLUNK_MCP_USER}" = "admin" ]; then
+  echo "❌ Refusing to mint MCP tokens for admin. Set SPLUNK_MCP_USER to a non-admin user." >&2
   exit 1
 fi
 
-echo "🧑 Ensuring Splunk user '${SPLUNKER_USERNAME}' exists with roles user + mcp_user..."
+echo "🧑 Ensuring Splunk user '${SPLUNK_MCP_USER}' exists with roles user + mcp_user..."
 
-splunker_pw_skip=0
-SPLUNKER_PASSWORD_VALUE=""
-if [ -s "${SPLUNKER_PASSWORD_FILE}" ] && ! is_truthy "${FORCE_SPLUNKER_PASSWORD}"; then
-  SPLUNKER_PASSWORD_VALUE="$(read_secret_file "${SPLUNKER_PASSWORD_FILE}")"
-  [ -n "${SPLUNKER_PASSWORD_VALUE}" ] && splunker_pw_skip=1
+mcp_pw_skip=0
+SPLUNK_MCP_PASSWORD_VALUE=""
+if [ -s "${SPLUNK_MCP_PASSWORD_FILE}" ] && ! is_truthy "${FORCE_SPLUNK_MCP_PASSWORD}"; then
+  SPLUNK_MCP_PASSWORD_VALUE="$(read_secret_file "${SPLUNK_MCP_PASSWORD_FILE}")"
+  [ -n "${SPLUNK_MCP_PASSWORD_VALUE}" ] && mcp_pw_skip=1
 fi
 
-if [ "${splunker_pw_skip}" = "0" ]; then
-  SPLUNKER_PASSWORD_VALUE="$(generate_password)"
-  if [ -z "${SPLUNKER_PASSWORD_VALUE}" ]; then
-    echo "❌ Failed to generate password for ${SPLUNKER_USERNAME}" >&2
+if [ "${mcp_pw_skip}" = "0" ]; then
+  SPLUNK_MCP_PASSWORD_VALUE="$(generate_password)"
+  if [ -z "${SPLUNK_MCP_PASSWORD_VALUE}" ]; then
+    echo "❌ Failed to generate password for ${SPLUNK_MCP_USER}" >&2
     exit 1
   fi
-  pw_dir="$(dirname "${SPLUNKER_PASSWORD_FILE}")"
+  pw_dir="$(dirname "${SPLUNK_MCP_PASSWORD_FILE}")"
   mkdir -p "${pw_dir}"
-  echo "${SPLUNKER_PASSWORD_VALUE}" > "${SPLUNKER_PASSWORD_FILE}"
-  chmod 600 "${SPLUNKER_PASSWORD_FILE}"
-  echo "✅ Generated password saved to ${SPLUNKER_PASSWORD_FILE} (mode 600)"
+  echo "${SPLUNK_MCP_PASSWORD_VALUE}" > "${SPLUNK_MCP_PASSWORD_FILE}"
+  chmod 600 "${SPLUNK_MCP_PASSWORD_FILE}"
+  echo "✅ Generated password saved to ${SPLUNK_MCP_PASSWORD_FILE} (mode 600)"
 fi
-if [ "${splunker_pw_skip}" = "1" ]; then
-  echo "ℹ️  Using existing password file: ${SPLUNKER_PASSWORD_FILE}"
+if [ "${mcp_pw_skip}" = "1" ]; then
+  echo "ℹ️  Using existing password file: ${SPLUNK_MCP_PASSWORD_FILE}"
 fi
 
-USER_URL="${SPLUNK_URL}/services/authentication/users/${SPLUNKER_USERNAME}"
+USER_URL="${SPLUNK_URL}/services/authentication/users/${SPLUNK_MCP_USER}"
 user_exists=0
 AUTH_CURL_QUIET=1 auth_curl "${USER_URL}?output_mode=json" >/dev/null && user_exists=1
 cleanup_last_body
 
 set -- -d "roles=user" -d "roles=mcp_user"
-[ "${splunker_pw_skip}" = "0" ] && set -- -d "password=${SPLUNKER_PASSWORD_VALUE}" "$@"
+[ "${mcp_pw_skip}" = "0" ] && set -- -d "password=${SPLUNK_MCP_PASSWORD_VALUE}" "$@"
 
 if [ "${user_exists}" = "1" ]; then
-  user_ok_msg="✅ Updated user ${SPLUNKER_USERNAME}"
-  [ "${splunker_pw_skip}" = "0" ] && user_ok_msg="${user_ok_msg} (password + roles)"
-  [ "${splunker_pw_skip}" = "1" ] && user_ok_msg="${user_ok_msg} (roles)"
-  user_fail_msg="⚠️  Failed to update user ${SPLUNKER_USERNAME}"
+  user_ok_msg="✅ Updated user ${SPLUNK_MCP_USER}"
+  [ "${mcp_pw_skip}" = "0" ] && user_ok_msg="${user_ok_msg} (password + roles)"
+  [ "${mcp_pw_skip}" = "1" ] && user_ok_msg="${user_ok_msg} (roles)"
+  user_fail_msg="⚠️  Failed to update user ${SPLUNK_MCP_USER}"
   auth_curl -X POST "${USER_URL}" "$@" \
     -H "Content-Type: application/x-www-form-urlencoded" >/dev/null \
     && echo "${user_ok_msg}" || echo "${user_fail_msg}"
 fi
 if [ "${user_exists}" = "0" ]; then
   auth_curl -X POST "${SPLUNK_URL}/services/authentication/users" \
-    -d "name=${SPLUNKER_USERNAME}" "$@" \
+    -d "name=${SPLUNK_MCP_USER}" "$@" \
     -H "Content-Type: application/x-www-form-urlencoded" >/dev/null \
-    && echo "✅ Created user ${SPLUNKER_USERNAME} (roles user + mcp_user)" \
-    || echo "⚠️  Failed to create user ${SPLUNKER_USERNAME}"
+    && echo "✅ Created user ${SPLUNK_MCP_USER} (roles user + mcp_user)" \
+    || echo "⚠️  Failed to create user ${SPLUNK_MCP_USER}"
 fi
 cleanup_last_body
 
-# --- 5. MLTK role (Splunk AI Toolkit) for MLTK_ROLES_USER ---
+# --- 5. MLTK role (Splunk AI Toolkit) for SPLUNK_MLTK_USER ---
 if [ -z "${MLTK_ROLE}" ]; then
   echo "ℹ️  MLTK_ROLE unset/empty; skipping MLTK role assignment"
 fi
 if [ -n "${MLTK_ROLE}" ]; then
-  echo "👤 Ensuring user '${MLTK_ROLES_USER}' has role ${MLTK_ROLE}..."
+  echo "👤 Ensuring user '${SPLUNK_MLTK_USER}' has role ${MLTK_ROLE}..."
   ensure_mltk_role
 fi
 
-# --- 6. Encrypted MCP token (splunker) ---
+# --- 6. Encrypted MCP token (SPLUNK_MCP_USER) ---
 token_skip=0
 if [ -n "${TOKEN_OUTPUT_FILE}" ] && [ -s "${TOKEN_OUTPUT_FILE}" ] && ! is_truthy "${FORCE_MCP_TOKEN}"; then
   token_skip=1
@@ -316,9 +331,9 @@ if [ "${token_skip}" = "1" ]; then
 fi
 
 if [ "${token_skip}" = "0" ]; then
-  echo "🔑 Creating encrypted MCP token for Splunk user '${MCP_TOKEN_USERNAME}'..."
+  echo "🔑 Creating encrypted MCP token for Splunk user '${SPLUNK_MCP_USER}'..."
   TOKEN_RESPONSE=$(must auth_curl -sS \
-    "${SPLUNK_URL}/servicesNS/${SPLUNK_USER}/Splunk_MCP_Server/mcp_token?username=${MCP_TOKEN_USERNAME}&output_mode=json")
+    "${SPLUNK_URL}/servicesNS/${SPLUNK_REST_USER}/Splunk_MCP_Server/mcp_token?username=${SPLUNK_MCP_USER}&output_mode=json")
 
   TOKEN="$(extract_token "${TOKEN_RESPONSE}")"
   if [ -z "$TOKEN" ]; then
@@ -342,8 +357,7 @@ fi
 
 echo "✅ Setup complete!"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  MCP user: ${SPLUNKER_USERNAME}"
-echo "  MCP user password file: ${SPLUNKER_PASSWORD_FILE}"
-echo "  MCP token user: ${MCP_TOKEN_USERNAME}"
+echo "  MCP user: ${SPLUNK_MCP_USER}"
+echo "  MCP user password file: ${SPLUNK_MCP_PASSWORD_FILE}"
 echo "  Token file: ${TOKEN_OUTPUT_FILE:-<not saved>}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

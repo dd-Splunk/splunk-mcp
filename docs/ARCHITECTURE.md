@@ -137,7 +137,7 @@ Claude Desktop
 
 ### Token Management
 
-- **Generation**: `splunk-init` runs `setup-splunk.sh`, which calls the Splunk MCP Server app’s **`mcp_token`** endpoint for user **`splunker`** (or `MCP_TOKEN_USERNAME`).
+- **Generation**: `splunk-init` runs `setup-splunk.sh`, which calls the Splunk MCP Server app’s **`mcp_token`** endpoint for **`SPLUNK_MCP_USER`** (default **`splunker`**).
 - **Storage**: Host file `.secrets/splunk-token`; client configs reference it via **`make update-mcp-clients`** (or **`make up`**, which runs it after the token appears).
 - **Expiry**: Depends on Splunk MCP app and token settings (docs may cite ~15 days as a rule of thumb—verify in your build).
 - **Renewal**: Regenerate token and refresh client config (`make update-mcp-clients`, or **`make up`** after a new token exists).
@@ -154,7 +154,7 @@ Claude Desktop
 ### setup-splunk.sh
 
 - Creates or updates Splunk role **`mcp_user`** with capability **`mcp_tool_execute`**
-- Creates **`splunker`** user (`SPLUNKER_USERNAME`) with roles **`user`** + **`mcp_user`**
+- Creates **`splunker`** user (`SPLUNK_MCP_USER`) with roles **`user`** + **`mcp_user`**
 - Requests encrypted MCP token and writes `.secrets/splunk-token`; may generate **`.secrets/splunker-password`**
 - Enables SA-Eventgen default modinput when the app is installed
 - Dependencies: `curl`, `jq` (installed in `splunk-init`)
