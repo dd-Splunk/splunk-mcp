@@ -8,7 +8,7 @@ The script bootstraps a **local Splunk Enterprise PoC** so that:
 
 1. The **Splunk MCP Server** app can be used from clients (`mcp-remote`) with dev-friendly TLS settings.
 2. **SA-Eventgen** sample data can run via the default modular input, when the app is installed.
-3. The Splunk user **`MLTK_ROLES_USER`** (default **same as `SPLUNKER_USERNAME`**, e.g. **`splunker`**) receives the **`mltk_admin`** role when the **Splunk AI Toolkit** app is installed (separate from **`SPLUNK_USER`**, which is only the REST **login**; override **`MLTK_ROLES_USER`** in **`.env`** to **`admin`** if the admin account should have MLTK).
+3. The Splunk user **`MLTK_ROLES_USER`** (default **same as `SPLUNKER_USERNAME`**, e.g. **`splunker`**) receives the **`MLTK_ROLE`** (default **`mltk_dsdl_admin`**) when the **Splunk AI Toolkit** app is installed (separate from **`SPLUNK_USER`**, which is only the REST **login**; override **`MLTK_ROLES_USER`** in **`.env`** to **`admin`** if the admin account should have MLTK).
 4. Splunk has a dedicated **MCP execution identity**: Splunk role **`mcp_user`** (capability **`mcp_tool_execute`**), local user **`splunker`** by default, and an **encrypted MCP token** from the app’s `mcp_token` handler (not a plain JWT from `/services/authorization/tokens`).
 
 The script is **`/bin/sh`**, uses **`set -eu`**, and talks to Splunk only through **HTTPS REST** (`curl -k` for local dev).
@@ -57,7 +57,8 @@ You can run the script manually on a host that reaches Splunk, with the same var
 | `SPLUNK_USER` | `admin` | Authenticated user for REST (namespace for `mcp_token` call) |
 | `SPLUNK_PASSWORD` | *(required)* | Admin password; **must** be set in the environment |
 | `SPLUNKER_USERNAME` | `splunker` | Splunk user to create or update |
-| `MLTK_ROLES_USER` | *same as `SPLUNKER_USERNAME`* | User that receives the `mltk_admin` role (set `admin` in `.env` to use the management account) |
+| `MLTK_ROLES_USER` | *same as `SPLUNKER_USERNAME`* | User that receives `MLTK_ROLE` (set `admin` in `.env` to use the management account) |
+| `MLTK_ROLE` | `mltk_dsdl_admin` | Splunk role from MLTK to assign; empty skips assignment |
 | `MCP_TOKEN_USERNAME` | `splunker` | Passed to `mcp_token?username=` (should match the MCP execution user) |
 | `SPLUNKER_PASSWORD_FILE` | `.secrets/splunker-password` | If missing/empty, a password is generated and written here (`chmod 600`) unless an existing non-empty file is reused |
 | `FORCE_SPLUNKER_PASSWORD` | `0` | If `1`/`true`, regenerate password even when `SPLUNKER_PASSWORD_FILE` exists |
@@ -78,7 +79,7 @@ flowchart TD
   C --> D[Ensure role mcp_user + capability mcp_tool_execute]
   D --> E[Resolve or generate splunker password]
   E --> F[Create or update user SPLUNKER_USERNAME]
-  F --> D2[Add mltk_admin to MLTK_ROLES_USER]
+  F --> D2[Add MLTK_ROLE to MLTK_ROLES_USER]
   D2 --> G[GET mcp_token for MCP_TOKEN_USERNAME]
   G --> H{TOKEN_OUTPUT_FILE set?}
   H -->|yes| I[Write token chmod 600]
@@ -98,7 +99,7 @@ sequenceDiagram
   S->>API: POST .../modinput_eventgen/default/enable (fallback disabled=0)
   S->>API: POST .../conf-mcp/server ssl_verify=false
   S->>API: GET/POST .../authorization/roles/mcp_user capabilities=mcp_tool_execute
-  S->>API: GET/POST .../authentication/users/MLTK_ROLES_USER (merge roles, include mltk_admin)
+  S->>API: GET/POST .../authentication/users/MLTK_ROLES_USER (merge roles, include MLTK_ROLE)
   S->>API: POST .../authentication/users (splunker, roles user + mcp_user)
   S->>API: GET .../Splunk_MCP_Server/mcp_token?username=splunker&output_mode=json
 ```
@@ -110,7 +111,7 @@ sequenceDiagram
 | Eventgen | POST | `/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default/enable` | Fallback: same URL with `disabled=0` |
 | MCP TLS dev | POST | `/servicesNS/nobody/Splunk_MCP_Server/configs/conf-mcp/server` | Body: `ssl_verify=false` |
 | Role | GET/POST | `/services/authorization/roles/mcp_user` | Body: `capabilities=mcp_tool_execute` |
-| Admin + MLTK | GET/POST | `/services/authentication/users/{MLTK_ROLES_USER}` | GET for current `roles[]`; POST repeats `roles=` for each, including `mltk_admin` |
+| Admin + MLTK | GET/POST | `/services/authentication/users/{MLTK_ROLES_USER}` | GET for current `roles[]`; POST repeats `roles=` for each, including `MLTK_ROLE` |
 | User | POST | `/services/authentication/users` or `.../users/{name}` | Bodies: `roles=user`, `roles=mcp_user` (splunker) |
 | Token | GET | `/servicesNS/{SPLUNK_USER}/Splunk_MCP_Server/mcp_token` | Query: `username`, `output_mode=json` |
 
@@ -147,7 +148,7 @@ Designed so **`make up` / `splunk-init` repeating** does not break:
 - MCP `ssl_verify=false` is posted every run; failure is non-fatal (warning).
 - Role `mcp_user` is updated or created; capability is set each run.
 - User create/update tolerates existing users.
-- `mltk_admin` is merged with existing `MLTK_ROLES_USER` roles (via `jq`); non-fatal if the MLTK app (and thus `mltk_admin`) is absent.
+- `MLTK_ROLE` is merged with existing `MLTK_ROLES_USER` roles (via `jq`); non-fatal if the MLTK app (and thus the role) is absent.
 - Token generation is skipped when `TOKEN_OUTPUT_FILE` is non-empty unless `FORCE_MCP_TOKEN=1`.
 
 ## Security notes (dev PoC)

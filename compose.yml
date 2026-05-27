@@ -20,7 +20,7 @@ services:
       #   app/2890  = Splunk AI Toolkit
       # If a download fails (404, etc.), replace the /release/VERSION/ segment with a current
       # release for that app from https://splunkbase.splunk.com/app/<id> .
-      SPLUNK_APPS_URL: https://splunkbase.splunk.com/app/1924/release/8.2.1/download/,https://splunkbase.splunk.com/app/4353/release/1.8.24/download/,https://splunkbase.splunk.com/app/7931/release/1.1.2/download/,https://splunkbase.splunk.com/app/7245/release/2.0.0/download/,https://splunkbase.splunk.com/app/2882/release/4.3.1/download/,https://splunkbase.splunk.com/app/2890/release/5.7.3/download/
+      SPLUNK_APPS_URL: https://splunkbase.splunk.com/app/1924/release/8.2.2/download/,https://splunkbase.splunk.com/app/4353/release/1.8.24/download/,https://splunkbase.splunk.com/app/7931/release/1.1.3/download/,https://splunkbase.splunk.com/app/7245/release/2.0.0/download/,https://splunkbase.splunk.com/app/2882/release/4.3.2/download/,https://splunkbase.splunk.com/app/2890/release/5.7.4/download/
       TZ: ${TZ:-Europe/Brussels}
     volumes:
       - so1-var:/opt/splunk/var
@@ -46,8 +46,10 @@ services:
     environment:
       SPLUNK_PASSWORD: ${SPLUNK_PASSWORD}
       SPLUNK_USER: ${SPLUNK_USER:-admin}
-      # User that receives the MLTK mltk_admin role (default: same as SPLUNKER_USERNAME → splunker; set to admin to match SPLUNK_USER)
+      # User that receives the MLTK role (default: same as SPLUNKER_USERNAME → splunker; set to admin to match SPLUNK_USER)
       MLTK_ROLES_USER: ${MLTK_ROLES_USER:-}
+      # Splunk AI Toolkit role name (default mltk_dsdl_admin; set empty to skip assignment)
+      MLTK_ROLE: ${MLTK_ROLE:-mltk_dsdl_admin}
       SPLUNK_HOST: so1
       SPLUNK_PORT: 8089
       TOKEN_OUTPUT_FILE: /output/splunk-token
