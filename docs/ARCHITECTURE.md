@@ -123,14 +123,11 @@ Claude Desktop
       │
       ├─ Reads: ~/Library/Application Support/Claude/claude_desktop_config.json (macOS)
       │
-      ├─ Spawns: node scripts/mcp-stdio-http-bridge.mjs
+      ├─ Spawns: npx mcp-remote (Claude/Cursor) or stdio bridge (Goose)
       │
-      ├─ With env:
-      │  └─ MCP_URL: http://localhost:${MCP_PROXY_PORT:-8090}/mcp
+      ├─ Claude/Cursor: HTTPS → https://localhost:8089/services/mcp + encrypted bearer token
       │
-      └─ HTTP → local MCP proxy
-               ↓
-        Proxy forwards to Splunk MCP Server
+      └─ Goose: HTTP → local MCP proxy → Splunk MCP Server
 ```
 
 ### Token Management
@@ -186,11 +183,10 @@ Host **Claude** / **Cursor** / **Goose** configs are updated by **`scripts/mcp-c
 
 ### MCP Operation
 
-1. Claude Desktop connects via the stdio bridge script
-2. Bridge forwards JSON-RPC to the local MCP proxy
-3. Local proxy adds an in-memory Bearer token and forwards to Splunk MCP (`/services/mcp`)
-4. MCP Server processes the request
-5. Response is returned to the client
+1. **Claude/Cursor:** `mcp-remote` speaks streamable HTTP to `/services/mcp` with an encrypted bearer token
+2. **Goose:** stdio bridge forwards JSON-RPC to the local MCP proxy (in-memory token)
+3. Splunk MCP Server processes the request (tool prefixes `splunk_`, `saia_`)
+4. Response is returned to the client
 
 ## Scalability Considerations
 

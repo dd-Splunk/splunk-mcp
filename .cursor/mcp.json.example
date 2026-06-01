@@ -4,10 +4,16 @@
       "command": "/Applications/Vellem.app/Contents/Resources/vellem-mcp"
     },
     "splunk-mcp-server": {
-      "command": "node",
-      "args": ["scripts/mcp-stdio-http-bridge.mjs"],
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://localhost:8089/services/mcp",
+        "--header",
+        "Authorization: Bearer REPLACE_AFTER_make_update-cursor-config"
+      ],
+      "command": "npx",
       "env": {
-        "MCP_URL": "http://localhost:8090/mcp"
+        "NODE_TLS_REJECT_UNAUTHORIZED": "0"
       }
     }
   }
