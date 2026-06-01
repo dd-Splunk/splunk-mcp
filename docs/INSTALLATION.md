@@ -19,7 +19,7 @@
 | 1Password CLI (`op`) | Secrets from local `tpl.env` | `op --version` (sign in: `op account add` or desktop integration) |
 | `make`, `bash` | `Makefile` workflows | `make --version` |
 | `curl`, `jq` | Scripts / REST | `curl --version`, `jq --version` |
-| Node/npm | `npx mcp-remote` for MCP clients | `node --version` |
+| Node/npm | MCP client bridge script | `node --version` |
 
 Optional: **Git** to clone; an editor (e.g. VS Code) to edit `tpl.env` (from **`tpl.env.example`**) and `compose.yml`.
 
@@ -71,6 +71,7 @@ SPLUNK_IMAGE=splunk/splunk:latest
 SPLUNK_PASSWORD=op://YourVault/YourItem/password
 SPLUNKBASE_USER=op://YourVault/Splunkbase/username
 SPLUNKBASE_PASS=op://YourVault/Splunkbase/password
+SPLUNK_MCP_PASSWORD=op://YourVault/Splunk-MCP/splunker-password
 TZ=Europe/Brussels
 ```
 
@@ -82,7 +83,9 @@ Expected layout includes `Makefile`, `compose.yml`, `tpl.env.example`, local `tp
 make up
 ```
 
-This runs **`docker compose up -d`** using **`.env`** if present, otherwise **`op run --env-file=tpl.env`**. It starts **`so1`**, runs **`splunk-init`** after Splunk is healthy, waits for **`.secrets/splunk-token`**, then runs **`make update-mcp-clients`**.
+This runs **`docker compose up -d`** using **`.env`** if present, otherwise **`op run --env-file=tpl.env`**. It starts **`so1`**, runs **`splunk-init`** after Splunk is healthy, then runs **`make update-mcp-clients`**.
+
+It also starts **`mcp-proxy`**, which exposes the local MCP endpoint at `http://localhost:${MCP_PROXY_PORT:-8090}/mcp`.
 
 For Path B (plain **`.env`** without 1Password at runtime), see [CONFIGURATION.md](CONFIGURATION.md#plain-env-path-b).
 
@@ -107,7 +110,7 @@ curl -k -u "admin:<password>" https://localhost:8089/services/server/info
 
 ## MCP clients
 
-After **`.secrets/splunk-token`** exists:
+After `make up` completes:
 
 | Client | Action |
 | ------ | ------ |
@@ -127,10 +130,11 @@ If you want a **`claude_logs`** index, create it in Splunk (UI or REST). Log **f
 
 ## Confirm MCP endpoint
 
-Replace `<token>` with the contents of **`.secrets/splunk-token`** (treat it as a secret; do not commit it):
-
 ```bash
-curl -k -H "Authorization: Bearer <token>" https://localhost:8089/services/mcp
+curl -fsS -X POST "http://localhost:${MCP_PROXY_PORT:-8090}/mcp" \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq .
 ```
 
 In Claude Desktop, open a chat and confirm **splunk-mcp-server** tools appear.

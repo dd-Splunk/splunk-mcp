@@ -5,7 +5,7 @@
 Use this text (or a shortened variant) in **Repository → Settings → General → About**, or via CLI:
 
 ```bash
-gh repo edit OWNER/splunk-mcp --description "Proof-of-concept: Splunk Enterprise with Splunk MCP Server in Docker. Connect Claude Desktop, Cursor, or Goose via MCP (mcp-remote); secrets with 1Password CLI or .env."
+gh repo edit OWNER/splunk-mcp --description "Proof-of-concept: Splunk Enterprise with Splunk MCP Server in Docker. Connect Claude Desktop, Cursor, or Goose via MCP (local proxy + stdio bridge); secrets with 1Password CLI or .env."
 ```
 
 ## Topics
