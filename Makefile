@@ -4,7 +4,6 @@ SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
 DC ?= docker compose
-TOKEN_FILE ?= .secrets/splunk-token
 ENV_FILE ?= tpl.env
 ENV_OUT ?= .env
 ENV_EXAMPLE ?= tpl.env.example
@@ -12,10 +11,11 @@ OP ?= op
 MCP_CLIENT ?= cursor
 MCP_VERIFY_CLIENT ?= all
 MCP_CLIENTS := claude cursor goose
+MCP_PROXY_PORT ?= 8090
 
 export ENV_FILE ENV_OUT ENV_EXAMPLE OP DC
 
-.PHONY: help up wait-token down restart clean logs status \
+.PHONY: help up down restart clean logs status \
 	update-mcp-clients update-mcp-client verify-mcp-remote \
 	update-claude-config update-cursor-config update-goose-config
 
@@ -23,25 +23,17 @@ help: ## Show targets
 	@awk 'BEGIN {FS = ":.*##"; printf "Splunk MCP PoC\n\n"} \
 		/^[$$()% a-zA-Z_-]+:.*?##/ { printf "  make %-22s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
-up: ## Start stack, wait for token, update MCP client configs
+up: ## Start stack and update MCP client configs
 	@echo "Starting Splunk with MCP Server app..."
 	@./scripts/compose-up.sh
 	@echo ""
 	@echo "Splunk is starting..."
 	@echo "Web UI:  https://localhost:8000"
-	@echo "MCP API: https://localhost:8089/services/mcp"
+	@echo "Splunk MCP API: https://localhost:8089/services/mcp"
+	@echo "Local MCP proxy: http://localhost:$(MCP_PROXY_PORT)/mcp"
 	@echo ""
-	@$(MAKE) wait-token
-	@echo "Token ready — updating Claude, Cursor, and Goose MCP configs..."
+	@echo "Updating Claude, Cursor, and Goose MCP configs (no secrets written)..."
 	@$(MAKE) update-mcp-clients
-
-wait-token: ## Wait for .secrets/splunk-token
-	@echo "Waiting for token (up to ~2 min)..."
-	@for _ in {1..60}; do \
-		[[ -f "$(TOKEN_FILE)" ]] && { echo ""; exit 0; }; \
-		printf "."; sleep 2; \
-	done; \
-	echo ""; echo "Timeout: $(TOKEN_FILE) not found"; exit 1
 
 down: ## Stop containers (no secrets required)
 	@echo "Stopping stack..."
@@ -50,13 +42,12 @@ down: ## Stop containers (no secrets required)
 restart: ## Restart Splunk container (no secrets required)
 	@$(DC) restart so1
 
-clean: ## Remove volumes, .env, and secrets (destructive)
-	@echo "WARNING: removes containers, volumes, $(ENV_OUT), and $(TOKEN_FILE)."
+clean: ## Remove volumes and .env (destructive)
+	@echo "WARNING: removes containers, volumes, and $(ENV_OUT)."
 	@read -p "Are you sure? [y/N] " -n 1 -r; echo; \
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
 		$(DC) down -v; \
-		rm -f "$(ENV_OUT)" "$(TOKEN_FILE)"; \
-		rm -rf .secrets/* .secrets/.[!.]* .secrets/..?* 2>/dev/null || true; \
+		rm -f "$(ENV_OUT)"; \
 		echo "Cleanup complete."; \
 	else echo "Cancelled."; fi
 
@@ -74,14 +65,14 @@ status: ## Container status and Splunk API probe
 	if [[ "$$code" = "200" || "$$code" = "401" ]]; then echo "Splunk is ready ✓"; \
 	else echo "Splunk is not ready yet..."; fi
 
-update-mcp-clients: ## Update Claude, Cursor, and Goose (TOKEN_FILE=)
+update-mcp-clients: ## Update Claude, Cursor, and Goose (no secrets)
 	@for c in $(MCP_CLIENTS); do \
-		./scripts/mcp-client.sh update "$$c" "$(TOKEN_FILE)"; \
+		MCP_PROXY_PORT="$(MCP_PROXY_PORT)" ./scripts/mcp-client.sh update "$$c"; \
 		echo ""; \
 	done
 
 update-mcp-client: ## Update one client (MCP_CLIENT=claude|cursor|goose)
-	@./scripts/mcp-client.sh update "$(MCP_CLIENT)" "$(TOKEN_FILE)"
+	@MCP_PROXY_PORT="$(MCP_PROXY_PORT)" ./scripts/mcp-client.sh update "$(MCP_CLIENT)"
 
 update-claude-config: ## Alias: MCP_CLIENT=claude
 	@$(MAKE) update-mcp-client MCP_CLIENT=claude
@@ -92,5 +83,5 @@ update-cursor-config: ## Alias: MCP_CLIENT=cursor
 update-goose-config: ## Alias: MCP_CLIENT=goose
 	@$(MAKE) update-mcp-client MCP_CLIENT=goose
 
-verify-mcp-remote: ## Verify config + mcp-remote (MCP_VERIFY_CLIENT=all|claude|cursor|goose)
-	@./scripts/mcp-client.sh verify "$(MCP_VERIFY_CLIENT)" "$(TOKEN_FILE)"
+verify-mcp-remote: ## Verify config + MCP proxy (MCP_VERIFY_CLIENT=all|claude|cursor|goose)
+	@MCP_PROXY_PORT="$(MCP_PROXY_PORT)" ./scripts/mcp-client.sh verify "$(MCP_VERIFY_CLIENT)"

@@ -14,6 +14,17 @@ ENV_EXAMPLE="${ENV_EXAMPLE:-tpl.env.example}"
 OP="${OP:-op}"
 DC="${DC:-docker compose}"
 
+maybe_load_legacy_mcp_password() {
+  # Migration helper: older flows wrote the MCP user password to disk.
+  # If SPLUNK_MCP_PASSWORD is unset/empty, reuse that file so existing users
+  # can boot without immediately editing tpl.env/.env.
+  # Opt-in only: set ALLOW_LEGACY_SECRETS=1 to enable.
+  if [[ "${ALLOW_LEGACY_SECRETS:-0}" == "1" && -z "${SPLUNK_MCP_PASSWORD:-}" && -r ".secrets/splunker-password" ]]; then
+    SPLUNK_MCP_PASSWORD="$(tr -d '\r\n' < .secrets/splunker-password)"
+    export SPLUNK_MCP_PASSWORD
+  fi
+}
+
 if [[ -f "$ENV_OUT" ]]; then
   set -a
   # shellcheck disable=SC1090
@@ -22,12 +33,13 @@ if [[ -f "$ENV_OUT" ]]; then
     exit 1
   }
   set +a
-  if [[ -z "${SPLUNK_PASSWORD:-}" || -z "${SPLUNKBASE_USER:-}" || -z "${SPLUNKBASE_PASS:-}" ]]; then
-    echo "Error: $ENV_OUT must set SPLUNK_PASSWORD, SPLUNKBASE_USER, and SPLUNKBASE_PASS."
+  maybe_load_legacy_mcp_password
+  if [[ -z "${SPLUNK_PASSWORD:-}" || -z "${SPLUNKBASE_USER:-}" || -z "${SPLUNKBASE_PASS:-}" || -z "${SPLUNK_MCP_PASSWORD:-}" ]]; then
+    echo "Error: $ENV_OUT must set SPLUNK_PASSWORD, SPLUNKBASE_USER, SPLUNKBASE_PASS, and SPLUNK_MCP_PASSWORD."
     exit 1
   fi
   echo "Using $ENV_OUT for Compose."
-  exec sh -c "$DC up -d"
+  exec sh -c "$DC up -d --build"
 fi
 
 if [[ ! -f "$ENV_FILE" ]]; then
@@ -43,11 +55,14 @@ command -v "$OP" >/dev/null 2>&1 || {
 }
 
 # Vars must expand inside op run's child shell, not here.
-if ! "$OP" run --env-file="$ENV_FILE" -- sh -c \
-  "[ -n \"\${SPLUNK_PASSWORD:-}\" ] && [ -n \"\${SPLUNKBASE_USER:-}\" ] && [ -n \"\${SPLUNKBASE_PASS:-}\" ]"; then
-  echo "Error: SPLUNK_PASSWORD, SPLUNKBASE_USER, and SPLUNKBASE_PASS must be non-empty after op run."
-  echo "Fix op:// paths in $ENV_FILE. Test with: op read \"op://...\""
-  exit 1
-fi
-
-exec "$OP" run --env-file="$ENV_FILE" -- sh -c "$DC up -d"
+exec "$OP" run --env-file="$ENV_FILE" -- sh -c "
+  if [ \"\${ALLOW_LEGACY_SECRETS:-0}\" = \"1\" ] && [ -z \"\${SPLUNK_MCP_PASSWORD:-}\" ] && [ -r .secrets/splunker-password ]; then
+    export SPLUNK_MCP_PASSWORD=\"\$(tr -d '\r\n' < .secrets/splunker-password)\"
+  fi
+  if [ -z \"\${SPLUNK_PASSWORD:-}\" ] || [ -z \"\${SPLUNKBASE_USER:-}\" ] || [ -z \"\${SPLUNKBASE_PASS:-}\" ] || [ -z \"\${SPLUNK_MCP_PASSWORD:-}\" ]; then
+    echo \"Error: SPLUNK_PASSWORD, SPLUNKBASE_USER, SPLUNKBASE_PASS, and SPLUNK_MCP_PASSWORD must be non-empty after op run.\" >&2
+    echo \"Fix op:// paths in ${ENV_FILE}. Test with: op read \\\"op://...\\\"\" >&2
+    exit 1
+  fi
+  ${DC} up -d --build
+"
