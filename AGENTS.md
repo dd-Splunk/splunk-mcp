@@ -5,7 +5,7 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`.
 ## What this repo is
 
 - **Purpose**: local PoC that runs **Splunk Enterprise** in Docker and exposes **Splunk MCP Server** on `https://localhost:8089/services/mcp`.
-- **Client bridge**: **Claude Desktop** and **Cursor** use **`npx mcp-remote`** to Splunk MCP (token minted at `make update-claude-config` / `make update-cursor-config`; stored only in client config, not the repo). **Goose** uses a stdio bridge to the local **`mcp-proxy`**. See `make update-mcp-clients` or `make update-mcp-client MCP_CLIENT=…`. **SE / presales**: **`docs/PRESALES.md`**.
+- **Client bridge**: **Claude Desktop**, **Cursor**, and **Goose** use **`npx mcp-remote`** to `https://localhost:8089/services/mcp` (token minted at `make update-*-config` after **`splunk-init`** completes; stored only in client config, not the repo). See `make update-mcp-clients` or `make update-mcp-client MCP_CLIENT=…`. **SE / presales**: **`docs/PRESALES.md`**.
 
 ## Golden rules (don’t break these)
 
@@ -13,7 +13,7 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`.
   - `.env` (admin password, Splunkbase creds)
   - **`tpl.env`** (local `op://` paths to **your** vault—gitignored; start from tracked **`tpl.env.example`**)
   - `.cursor/mcp.json` if it contains a live bearer token (expected after `make update-cursor-config`)
-  - `~/.config/goose/config.yaml` if it contains live credentials (this repo’s `update goose` writes no bearer tokens)
+  - `~/.config/goose/config.yaml` if it contains a live bearer token (expected after `make update-goose-config`)
 - **Do not paste tokens/passwords** into issues, PRs, or logs.
 - **Keep changes idempotent**: `make up` / `splunk-init` should be safe to run repeatedly.
 
@@ -22,7 +22,7 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`.
 - **`make up`**: **`docker compose up -d`** with secrets from **either** a gitignored **`.env`** on disk **or** **`op run --env-file=tpl.env`** when `.env` is absent (requires signed-in `op`). See **`Makefile`** for exact behavior.
 - **`make down`**, **`make logs`**, **`make restart`**, **`make status`**, **`make clean`**: plain **`docker`** / **`docker compose`** only—no `op` or project secrets required.
 - When **`.env`** is absent, **`make up`** runs **`scripts/compose-up.sh`** (`op run` + **`tpl.env`**) and checks non-empty **`SPLUNK_PASSWORD`**, **`SPLUNKBASE_USER`**, **`SPLUNKBASE_PASS`** before Splunk starts.
-- **`make up`**: runs **`make update-mcp-clients`** (Claude, Cursor, Goose). Client configs do not embed bearer tokens.
+- **`make up`**: runs **`make update-mcp-clients`** (Claude, Cursor, Goose). Bearer tokens are written only to client configs, not the repo.
 - **Secrets paths:** **Path A** — `tpl.env` + `op run` (no plaintext `.env`); **Path B** — hand-written **`.env`** from **`.env.example`** (plain values; Compose auto-loads it). If **`.env` is absent**, **`make up`** uses `op run --env-file=tpl.env`.
 - **`splunk-init`** runs **`scripts/setup-splunk.sh`** after **`so1`** is healthy.
 
@@ -33,7 +33,7 @@ Splunk REST bootstrap (see **`docs/SETUP_SPLUNK_SCRIPT.md`** for detail):
 - MCP dev: **`ssl_verify=false`** on the Splunk MCP Server app (local dev only).
 - **SA-Eventgen**: enables the default modular input when the app is installed.
 - **Identity**: Splunk role **`mcp_user`** with capability **`mcp_tool_execute`**; MLTK role **`MLTK_ROLE`** (default **`mltk_dsdl_admin`**) on **`SPLUNK_MLTK_USER`** (default **`SPLUNK_MCP_USER`** / **`splunker`**, not the REST user **`SPLUNK_REST_USER`**) for AI Toolkit; user **`splunker`** (overridable via **`SPLUNK_MCP_USER`**) with roles **`user`** + **`mcp_user`**; MCP token minted for the same user. Set **`SPLUNK_MLTK_USER=admin`** (or the same as **`SPLUNK_REST_USER`**) in **`.env`** if the admin account should have MLTK instead; override **`MLTK_ROLE`** if your MLTK version uses a different role name.
-- **Token**: encrypted MCP token is minted at runtime by the local `mcp-proxy` service and held in memory (not written to disk).
+- **Token**: encrypted MCP token is minted by **`scripts/mint-mcp-token.sh`** (after **`splunk-init`** exits) and written only to client configs (not the repo).
 - **Password**: MCP user password is provided via `SPLUNK_MCP_PASSWORD` (env).
 
 **Not** in this script: **`claude_logs`** index or file monitors. Optional ingestion: enable the bind mount in **`compose.yml`**, create the index and monitor in Splunk—**`docs/CONFIGURATION.md`**.
@@ -41,7 +41,7 @@ Splunk REST bootstrap (see **`docs/SETUP_SPLUNK_SCRIPT.md`** for detail):
 ## Client configuration scripts
 
 - **`scripts/mcp-client.sh update <claude\|cursor\|goose>`** — Claude → `~/Library/Application Support/Claude/claude_desktop_config.json`; Cursor → **`.cursor/mcp.json`**; Goose → **`~/.config/goose/config.yaml`**
-- **`scripts/mcp-client.sh verify <client\|all>`** — config check + MCP proxy smoke test (`make verify-mcp-remote` defaults to **`all`**)
+- **`scripts/mcp-client.sh verify <client\|all>`** — config check + Splunk MCP `tools/list` (`make verify-mcp-remote` defaults to **`all`**)
 
 ## Vellem (Cursor memory)
 
@@ -67,7 +67,7 @@ When **Vellem** is in **`.cursor/mcp.json`**, agents should use it as repo-local
 - **`ENV_EXAMPLE`**: tracked template (default **`tpl.env.example`**)
 - **`ENV_OUT`**: optional plain env file for Path B (default **`.env`**)
 - **`OP`**, **`DC`**: 1Password CLI and docker compose command
-- **`MCP_PROXY_PORT`**: local MCP proxy port (default **`8090`**)
+- **`SPLUNK_MCP_ENDPOINT`**, **`SPLUNK_MCP_TLS_INSECURE`**: see **`docs/CONFIGURATION.md`**
 
 ## Common failure modes
 

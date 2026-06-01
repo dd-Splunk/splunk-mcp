@@ -76,7 +76,7 @@ make up
      ├─ Enable Eventgen modinput (if SA-Eventgen present)
      ├─ Create/update role: mcp_user (capability mcp_tool_execute)
      ├─ Create user: splunker
-     └─ (No token written to disk; token minting happens at runtime in mcp-proxy)
+     └─ (Token minted after splunk-init; stored only in client configs)
 
 ```
 
@@ -87,7 +87,7 @@ make up
 1. **Container to Container**: Network isolation via bridge network
 2. **API Authentication**:
    - Admin operations: Username/password (admin user)
-   - MCP operations: Bearer token minted at runtime by local `mcp-proxy` (in memory)
+   - MCP operations: Bearer token from `scripts/mint-mcp-token.sh` in client config
 3. **Transport Security**: HTTPS with self-signed certificates (localhost only)
 4. **Credential Management**: 1Password CLI integration
 
@@ -123,19 +123,15 @@ Claude Desktop
       │
       ├─ Reads: ~/Library/Application Support/Claude/claude_desktop_config.json (macOS)
       │
-      ├─ Spawns: npx mcp-remote (Claude/Cursor) or stdio bridge (Goose)
-      │
-      ├─ Claude/Cursor: HTTPS → https://localhost:8089/services/mcp + encrypted bearer token
-      │
-      └─ Goose: HTTP → local MCP proxy → Splunk MCP Server
+      └─ Spawns: npx mcp-remote → https://localhost:8089/services/mcp + encrypted bearer token
 ```
 
 ### Token Management
 
 - **Generation**: `splunk-init` runs `setup-splunk.sh`, which calls the Splunk MCP Server app’s **`mcp_token`** endpoint for **`SPLUNK_MCP_USER`** (default **`splunker`**).
-- **Storage**: In memory inside the local `mcp-proxy` service.
+- **Storage**: Client config files only (not the repo).
 - **Expiry**: Depends on Splunk MCP app and token settings (docs may cite ~15 days as a rule of thumb—verify in your build).
-- **Renewal**: Restart `mcp-proxy` (or wait for it to mint a new token) and retry the MCP call.
+- **Renewal**: Re-run `make update-mcp-client` to mint a new token.
 
 ## Configuration Files
 
@@ -154,7 +150,7 @@ Claude Desktop
 - Enables SA-Eventgen default modinput when the app is installed
 - Dependencies: `curl`, `jq` (installed in `splunk-init`)
 
-Host **Claude** / **Cursor** / **Goose** configs are updated by **`scripts/mcp-client.sh`** via **`make update-mcp-clients`** (invoked by **`make up`**), not by this script. Goose gets an **absolute** bridge path and **`envs`** (see **`docs/CONFIGURATION.md`**).
+Host **Claude** / **Cursor** / **Goose** configs are updated by **`scripts/mcp-client.sh`** via **`make update-mcp-clients`** (invoked by **`make up`**), not by this script. Goose uses **`envs`** for TLS overrides (see **`docs/CONFIGURATION.md`**).
 
 ### Makefile
 
@@ -177,16 +173,15 @@ Host **Claude** / **Cursor** / **Goose** configs are updated by **`scripts/mcp-c
 1. splunk-init waits for healthcheck to pass
 2. Runs setup-splunk.sh
 3. Creates role and user via REST API
-4. mcp-proxy mints token for MCP operations at runtime (in memory)
-5. Makefile runs `update-mcp-clients` on the host (no secrets written)
+4. Client uses minted bearer token against `/services/mcp`
+5. Makefile runs `update-mcp-clients` on the host (tokens to client configs only, not the repo)
 6. splunk-init container exits (`restart: "no"`)
 
 ### MCP Operation
 
-1. **Claude/Cursor:** `mcp-remote` speaks streamable HTTP to `/services/mcp` with an encrypted bearer token
-2. **Goose:** stdio bridge forwards JSON-RPC to the local MCP proxy (in-memory token)
-3. Splunk MCP Server processes the request (tool prefixes `splunk_`, `saia_`)
-4. Response is returned to the client
+1. Client spawns **`npx mcp-remote`** with streamable HTTP to `/services/mcp` and an encrypted bearer token
+2. Splunk MCP Server processes the request (tool prefixes `splunk_`, `saia_`)
+3. Response is returned to the client
 
 ## Scalability Considerations
 

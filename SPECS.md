@@ -79,20 +79,16 @@ Supported clients:
 
 ### Connection pattern
 
-- A local MCP proxy/bridge runs as a Docker Compose service (`mcp-proxy`)
-- The proxy listens on loopback only (localhost)
-- The proxy authenticates upstream using an encrypted MCP token minted at runtime
-  - The token is minted by the proxy using Splunk REST credentials and held in memory only
-  - The token is refreshed each boot (new token per `make up`)
-- Upstream TLS: dev-friendly “skip verify” is supported behind an explicit setting
+- Clients connect with **`npx mcp-remote`** to Splunk’s **`/services/mcp`** (HTTPS on localhost:8089).
+- **`scripts/mint-mcp-token.sh`** waits for **`splunk-init`** to exit, then polls the Splunk MCP Server **`mcp_token`** REST endpoint.
+- Encrypted bearer tokens are written only to client config files (not the repo); refresh with `make update-mcp-client`.
+- Dev TLS: optional `NODE_TLS_REJECT_UNAUTHORIZED=0` when **`SPLUNK_MCP_TLS_INSECURE=1`** (self-signed Splunk cert).
 
 ### Client config generation
 
-- Client config files may be written to disk only if they contain no secrets
-- Configs should be repo-local when possible; otherwise use the client’s required default path
-- **Goose** uses a local stdio bridge to the local proxy (no bearer token in repo config)
-- **Claude Desktop** and **Cursor:** canonical **`npx mcp-remote`** to Splunk MCP; bearer token is written only to the client config when running `update claude` / `update cursor` (not committed to git)
-- **Goose:** `update goose` writes an **absolute** path to the bridge script and uses the **`envs`** field (not `env`); Goose’s session cwd is often not the repo root
+- Bearer tokens live only in client config files (gitignored where applicable), not in the repo.
+- **Claude Desktop**, **Cursor**, and **Goose** use the same **`npx mcp-remote`** shape per Splunk MCP Server 1.2.
+- **Goose:** `update goose` uses **`envs`** (not `env`) for TLS env vars.
 
 ## Tooling and UX requirements
 
@@ -113,7 +109,7 @@ Supported clients:
 
 The environment is “working” when all of the following pass:
 
-- The MCP proxy is up and reachable locally
+- Splunk MCP at `https://localhost:8089/services/mcp` answers `tools/list` with a minted token
 - At least one MCP call succeeds (e.g., a search runs successfully)
 - Eventgen is producing events for the SA-S4R dataset
 - **Direct SPL (basic auth)**: as Splunk user `splunker`, the following SPL returns results and includes `access_combined` in the returned `Sourcetype` list:

@@ -28,7 +28,7 @@ See ARCHITECTURE.md for detailed system design.
 
 #### `compose.yml`
 
-- Defines Docker services (so1, splunk-init, mcp-proxy)
+- Defines Docker services (so1, splunk-init)
 - Volume mounts for persistence
 - Network configuration
 - Port mappings
