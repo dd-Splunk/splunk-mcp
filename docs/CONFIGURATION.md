@@ -49,7 +49,13 @@ If you are not on macOS or that path does not exist, adjust or remove this mount
 Runs after `so1` is **healthy**. Uses Alpine, installs `curl` and `jq`, then runs `setup-splunk.sh`. Mounts:
 
 - `scripts/setup-splunk.sh` → `/setup-splunk.sh`
-- `./.secrets` → `/output` (token written to **`splunk-token`**, MCP user password to **`splunker-password`** when generated—see `TOKEN_OUTPUT_FILE` / `SPLUNKER_PASSWORD_FILE` in **`compose.yml`**)
+- No host secrets mount (this repo does not write tokens/passwords to disk). See `compose.yml` for `SPLUNK_REST_USER`, `SPLUNK_MCP_USER`, `SPLUNK_MLTK_USER`, `MLTK_ROLE`, `SPLUNK_MCP_PASSWORD`.
+
+### Service `mcp-proxy`
+
+- Exposes `http://localhost:${MCP_PROXY_PORT:-8090}/mcp` on the host (bound to `127.0.0.1`).
+- Mints an encrypted MCP token from Splunk at runtime using `SPLUNK_REST_USER`/`SPLUNK_PASSWORD`, holds it in memory, and forwards JSON-RPC `POST` requests to Splunk’s `/services/mcp`.
+- Client configs point at the proxy and do not embed bearer tokens.
 
 ### Network and volumes
 
@@ -96,13 +102,13 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 
 | Target | Behavior |
 | ------ | -------- |
-| `up` | `scripts/compose-up.sh` (`.env` or `op run --env-file=tpl.env`), wait for `.secrets/splunk-token`, then `update-mcp-clients` |
+| `up` | `scripts/compose-up.sh` (`.env` or `op run --env-file=tpl.env`), then `update-mcp-clients` |
 | `update-mcp-clients` | `scripts/mcp-client.sh update` for claude, cursor, goose |
 | `update-mcp-client` | One client: `MCP_CLIENT=claude\|cursor\|goose` |
 | `update-claude-config` / `update-cursor-config` / `update-goose-config` | Aliases for `update-mcp-client` |
 | `verify-mcp-remote` | `scripts/mcp-client.sh verify` (`MCP_VERIFY_CLIENT=all` by default) |
 | `down` / `restart` / `logs` / `status` | Lifecycle only (no secrets / `op` required) |
-| `clean` | `docker compose down -v` then remove `.env` / token file (no `op` required) |
+| `clean` | `docker compose down -v` then remove `.env` (no `op` required) |
 
 ## scripts/setup-splunk.sh
 
@@ -113,12 +119,9 @@ Runs **inside** `splunk-init` with `SPLUNK_HOST=so1`. It:
 1. Enables the **SA-Eventgen** default modular input when the app is installed.
 2. Sets MCP server `ssl_verify=false` via REST (dev convenience).
 3. Ensures Splunk role **`mcp_user`** exists with capability **`mcp_tool_execute`** (required by MCP).
-4. Creates user **`splunker`** (defaults; override with **`SPLUNKER_USERNAME`**) with Splunk roles **`user`** + **`mcp_user`**.
-5. Adds role **`MLTK_ROLE`** (default **`mltk_dsdl_admin`**) to **`MLTK_ROLES_USER`** (default **`SPLUNKER_USERNAME`** / **`splunker`**, i.e. the MCP user, not the REST account **`SPLUNK_USER`**) for **Splunk AI Toolkit**; set **`MLTK_ROLES_USER`** in **`.env`** to **`admin`** if the management account should get MLTK; set **`MLTK_ROLE`** empty to skip.
-6. Requests an **encrypted MCP token** from `.../Splunk_MCP_Server/mcp_token?username=<MCP_TOKEN_USERNAME>&output_mode=json` (default **`splunker`**).
-7. Writes the token to **`TOKEN_OUTPUT_FILE`** (`.secrets/splunk-token` on the host).
-
-Password handling: if **`SPLUNKER_PASSWORD_FILE`** is missing or empty, a password is generated and written there (default **`.secrets/splunker-password`**; **`splunk-init`** sets **`/output/splunker-password`** so it persists on the host). Set **`FORCE_SPLUNKER_PASSWORD=1`** to rotate when the file already exists.
+4. Creates user **`splunker`** (defaults; override with **`SPLUNK_MCP_USER`**) with Splunk roles **`user`** + **`mcp_user`**.
+5. Adds role **`MLTK_ROLE`** (default **`mltk_dsdl_admin`**) to **`SPLUNK_MLTK_USER`** (default **`SPLUNK_MCP_USER`** / **`splunker`**, i.e. the MCP user, not the REST account **`SPLUNK_REST_USER`**) for **Splunk AI Toolkit**; set **`SPLUNK_MLTK_USER`** in **`.env`** to **`admin`** if the management account should get MLTK; set **`MLTK_ROLE`** empty to skip.
+6. Uses `SPLUNK_MCP_PASSWORD` (provided via `.env` or `op run`) for the MCP execution user. This repo does not write passwords to disk.
 
 ## Claude Desktop configuration
 
@@ -137,6 +140,8 @@ Password handling: if **`SPLUNKER_PASSWORD_FILE`** is missing or empty, a passwo
 - Path: **`~/.config/goose/config.yaml`** (Unix/Linux and macOS).
 - Goose uses **extensions** with `type: stdio` for MCP server configuration (different from Claude's format).
 - `scripts/mcp-client.sh update goose` adds `splunk-mcp-server` as an extension entry under `extensions` section.
+- The bridge script path is written as an **absolute** path (Goose’s working directory is often not this repo).
+- Environment variables use Goose’s **`envs`** field (not `env`).
 - Idempotent: safely updates or creates the extension without corrupting existing config.
 - Requires Python 3 for YAML regex manipulation.
 
@@ -144,14 +149,10 @@ Password handling: if **`SPLUNKER_PASSWORD_FILE`** is missing or empty, a passwo
 
 | Variable | Used by | Purpose |
 | -------- | ------- | ------- |
-| `SPLUNK_HOST` | Client scripts | Default `localhost` |
-| `SPLUNK_PORT` | Client scripts | Default `8089` |
-| `SPLUNKER_USERNAME` | `setup-splunk.sh` | Splunk account to create/update (default `splunker`) |
-| `MLTK_ROLES_USER` | `setup-splunk.sh` | Which Splunk user gets `MLTK_ROLE` (default: same as `SPLUNKER_USERNAME`; set `admin` to match `SPLUNK_USER`) |
+| `MCP_PROXY_PORT` | Client scripts | Local MCP proxy port (default `8090`) |
+| `SPLUNK_MCP_USER` | `setup-splunk.sh` | Splunk account to create/update (default `splunker`) |
+| `SPLUNK_MLTK_USER` | `setup-splunk.sh` | Which Splunk user gets `MLTK_ROLE` (default: same as `SPLUNK_MCP_USER`; set `admin` to match `SPLUNK_REST_USER`) |
 | `MLTK_ROLE` | `setup-splunk.sh` | MLTK Splunk role to assign (default `mltk_dsdl_admin`; empty skips assignment) |
-| `MCP_TOKEN_USERNAME` | `setup-splunk.sh` | User name passed to `mcp_token` (default `splunker`; must match the MCP user) |
-| `SPLUNKER_PASSWORD_FILE` | `setup-splunk.sh` | Host path for generated or supplied password (init: `/output/splunker-password` → `.secrets/splunker-password`) |
-| `TOKEN_OUTPUT_FILE` / `FORCE_MCP_TOKEN` | `setup-splunk.sh` | Token output path and optional regeneration |
 | `CURSOR_MCP_JSON` | `mcp-client.sh` (cursor) | Output path |
 | `MCP_CLIENT` | `update-mcp-client` | `claude`, `cursor`, or `goose` |
 | `MCP_VERIFY_CLIENT` | `verify-mcp-remote` | `all` (default), or one client |
