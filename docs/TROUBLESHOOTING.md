@@ -209,6 +209,7 @@ Edit **`tpl.env`** with your `op://` paths. **`tpl.env`** is gitignored—do not
    SPLUNK_PASSWORD=your_password_here
    SPLUNKBASE_USER=your_username
    SPLUNKBASE_PASS=your_password
+   SPLUNK_MCP_PASSWORD=your_splunker_password
    TZ=Europe/Brussels
    EOF
 
@@ -274,7 +275,7 @@ make down && make up
 
 ```bash
 # Check installed apps
-curl -k -u admin:password https://localhost:8089/services/appserver/apps \
+curl -k -u "admin:${SPLUNK_PASSWORD}" https://localhost:8089/services/appserver/apps \
   | grep -i "mcp\|model"
 
 # If not found, check download URL in compose.yml:
@@ -309,7 +310,7 @@ make up
 **Verify** (as admin, after the add-on is present and Splunk is healthy):
 
 ```bash
-curl -k -u admin:password "https://localhost:8089/servicesNS/admin/Splunk_ML_Toolkit/mltk/aicommander_metadata?output_mode=json" | head -c 400
+curl -k -u "admin:${SPLUNK_PASSWORD}" "https://localhost:8089/servicesNS/admin/Splunk_ML_Toolkit/mltk/aicommander_metadata?output_mode=json" | head -c 400
 ```
 
 A healthy response is JSON with a `metadata` object; a missing Scientific Python add-on returns **500** with a short non-JSON error.
@@ -379,84 +380,10 @@ curl -k -u admin:$SPLUNK_PASSWORD https://localhost:8089/services/server/info
 # For curl: use -k flag (already in scripts)
 curl -k https://localhost:8089/...
 
-# For Python: disable verification
-import urllib3
-urllib3.disable_warnings()
-
-# For Node.js: set NODE_TLS_REJECT_UNAUTHORIZED
-NODE_TLS_REJECT_UNAUTHORIZED=0 node app.js
+# For Node.js talking to Splunk directly: set NODE_TLS_REJECT_UNAUTHORIZED
+NODE_TLS_REJECT_UNAUTHORIZED=0 node some-script.js
 
 # Note: Only do this for localhost/development!
-```
-
----
-
-### Token Issues
-
-#### Issue: Token generation fails
-
-**Error**: `Failed to create token` or splunk-init exits non-zero
-
-**Solution**:
-
-```bash
-# Check Splunk is ready
-make status
-
-# Verify user exists
-curl -k -u admin:password https://localhost:8089/services/authentication/users/splunker
-
-# Try manual encrypted MCP token (matches setup-splunk.sh)
-curl -skS -u admin:$SPLUNK_PASSWORD \
-  "https://localhost:8089/servicesNS/admin/Splunk_MCP_Server/mcp_token?username=splunker&output_mode=json" | jq .
-
-# If error about permissions, verify admin user still exists:
-curl -k -u admin:password https://localhost:8089/services/server/info
-```
-
----
-
-#### Issue: Token expired
-
-**Error**: Claude Desktop disconnects after 15 days
-
-**Solution**:
-
-```bash
-# Generate new token
-make up
-# or re-run token generation manually:
-# curl -skS -u admin:$SPLUNK_PASSWORD \
-#   "https://localhost:8089/servicesNS/admin/Splunk_MCP_Server/mcp_token?username=splunker&output_mode=json" | jq -r .token > .secrets/splunk-token
-
-# Update Claude Desktop config
-cat ~/Library/Application\ Support/Claude/claude_desktop_config.json
-
-# Restart Claude Desktop
-# (Fully quit and reopen)
-```
-
----
-
-#### Issue: Cannot parse token from response
-
-**Error**: Token shows empty or malformed
-
-**Solution**:
-
-```bash
-# Check token response
-curl -k -s -X POST https://localhost:8089/services/authorization/tokens \
-  -u admin:password \
-  -d "status=enabled" \
-  -d "name=test" \
-  -d "audience=mcp" | grep -A 5 "token"
-
-# Token should be in CDATA section:
-# <s:key name="token"><![CDATA[eyJ...]]></s:key>
-
-# If CDATA format changed, update sed expression in setup script:
-# Current: sed -n 's/.*<!\[CDATA\[\(.*\)\]\].*/\1/p'
 ```
 
 ---
@@ -475,11 +402,9 @@ curl -k -s -X POST https://localhost:8089/services/authorization/tokens \
 
    ```bash
    cat ~/Library/Application\ Support/Claude/claude_desktop_config.json
-   
-   # Should contain:
-   # - "splunk-mcp-server"
-   # - "https://localhost:8089/services/mcp"
-   # - Valid Bearer token
+   # Should contain a stdio server using:
+   # - node scripts/mcp-stdio-http-bridge.mjs
+   # - MCP_URL=http://localhost:<MCP_PROXY_PORT>/mcp
    ```
 
 2. **Restart Claude Desktop**:
@@ -487,22 +412,16 @@ curl -k -s -X POST https://localhost:8089/services/authorization/tokens \
    - Wait 2 seconds
    - Reopen from Applications
 
-3. **Check token validity**:
+3. **Test MCP proxy directly**:
 
    ```bash
-   # Token should be recent
-   curl -k -u admin:password https://localhost:8089/services/authorization/tokens
+   curl -fsS -X POST "http://localhost:${MCP_PROXY_PORT:-8090}/mcp" \
+     -H 'Content-Type: application/json' \
+     -H 'Accept: application/json' \
+     --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq .
    ```
 
-4. **Test connection manually**:
-
-   ```bash
-   TOKEN="your_token_here"
-   curl -k -H "Authorization: Bearer $TOKEN" \
-     https://localhost:8089/services/mcp
-   ```
-
-5. **Check Claude logs**:
+4. **Check Claude logs**:
 
    ```bash
    log stream --predicate 'process == "Claude"' --level debug
@@ -510,34 +429,21 @@ curl -k -s -X POST https://localhost:8089/services/authorization/tokens \
 
 ---
 
-#### Issue: mcp-remote fails with `405`, `SseError`, or `Using custom headers: {"Authorization":""}`
+#### Issue: Goose Splunk extension fails to start
 
-**Cause**: The shell split your `--header` value into multiple words. `mcp-remote` only reads the **next** argument after `--header`. If you run:
+**Error**: `Cannot find module '.../scripts/mcp-stdio-http-bridge.mjs'` or extension shows no tools
 
-```bash
-npx -y mcp-remote https://localhost:8089/services/mcp --header Authorization: Bearer YOUR_TOKEN
-```
+**Cause**: Goose runs stdio extensions from its **session working directory**, not necessarily this repo. A relative path like `scripts/mcp-stdio-http-bridge.mjs` only works when Goose’s cwd is the `splunk-mcp` root. Goose also expects environment variables under **`envs`**, not `env`.
 
-then the first header argument is the word `Authorization:` (with nothing after the colon), so the parsed header is `Authorization` with an **empty** value. Logs will show `Using custom headers: {"Authorization":""}`. Without a Bearer token, the client then mis-handles errors (often HTML) and you may see `405`, OAuth parse errors, or SSE failures.
-
-**Fix**: Pass the header as **one** argument (quoted):
+**Solution**:
 
 ```bash
-TOKEN=$(tr -d '\n' < .secrets/splunk-token)
-export NODE_TLS_REJECT_UNAUTHORIZED=0   # dev only; matches .cursor/mcp.json
-npx -y mcp-remote "https://localhost:8089/services/mcp" \
-  --header "Authorization: Bearer ${TOKEN}"
+make update-mcp-client MCP_CLIENT=goose
+make verify-mcp-remote MCP_VERIFY_CLIENT=goose
+# Restart Goose
 ```
 
-**Cursor / Claude** configs use JSON `args` with two strings (`--header` and `Authorization: Bearer …`) — that is already correct. This mistake mainly happens when you copy-paste a manual `npx` command into a terminal.
-
-**Verify**: From the repo root, with Splunk up:
-
-```bash
-make verify-mcp-remote
-```
-
-You should see `OK: mcp-remote connected to Splunk (Streamable HTTP).`
+Confirm `~/.config/goose/config.yaml` has an **absolute** bridge path and `envs.MCP_URL` pointing at `http://localhost:8090/mcp` (or your `MCP_PROXY_PORT`).
 
 ---
 
@@ -545,40 +451,24 @@ You should see `OK: mcp-remote connected to Splunk (Streamable HTTP).`
 
 **Error**: `Error: command not found: npx` (in Claude Desktop logs)
 
-**Symptoms**: Claude cannot spawn mcp-remote
+**Symptoms**: The client cannot spawn the Node bridge
 
 **Solution**:
 
 ```bash
-# Install Node.js and npm
+# Install Node.js
 # macOS
 brew install node
 
 # Verify
 node --version
 npm --version
-npx --version
-
-# Restart Claude Desktop
+# Restart Claude Desktop / Cursor / Goose
 ```
 
 ---
 
-#### Issue: mcp-remote not found
-
-**Error**: `Module not found: mcp-remote`
-
-**Solution**:
-
-```bash
-# Install mcp-remote globally
-npm install -g mcp-remote
-
-# Or npx will auto-download with -y flag (already in config)
-
-# Restart Claude Desktop
-```
-
+---
 ---
 
 ### Data & Volume Issues
@@ -675,9 +565,9 @@ make status                  # Check containers
 make logs | tail -20         # Check for errors
 
 # Manual verification:
-curl -k -u admin:password https://localhost:8089/services/server/info
-curl -k -u admin:password https://localhost:8089/services/authentication/users/splunker
-curl -k -u admin:password https://localhost:8089/services/authorization/roles/mcp_user
+curl -k -u "admin:${SPLUNK_PASSWORD}" https://localhost:8089/services/server/info
+curl -k -u "admin:${SPLUNK_PASSWORD}" https://localhost:8089/services/authentication/users/splunker
+curl -k -u "admin:${SPLUNK_PASSWORD}" https://localhost:8089/services/authorization/roles/mcp_user
 
 # Verify Claude config:
 cat ~/Library/Application\ Support/Claude/claude_desktop_config.json | jq '.mcpServers'
@@ -729,11 +619,11 @@ ls -la ~/Library/Logs/Claude/
 docker exec so1 ls -la /var/log/claude_logs
 
 # Check if index was created
-curl -k -u admin:password \
+curl -k -u "admin:${SPLUNK_PASSWORD}" \
   https://localhost:8089/services/data/indexes/claude_logs
 
 # View Splunk monitor input config
-curl -k -u admin:password \
+curl -k -u "admin:${SPLUNK_PASSWORD}" \
   https://localhost:8089/services/data/indexes/claude_logs
 #### Issue: Claude logs stopped being indexed
 
@@ -743,7 +633,7 @@ curl -k -u admin:password \
 
 ```bash
 # Check monitor status
-curl -k -u admin:password "https://localhost:8089/services/data/inputs/monitor"
+curl -k -u "admin:${SPLUNK_PASSWORD}" "https://localhost:8089/services/data/inputs/monitor"
 
 # Verify Claude app is running
 log stream --predicate 'process == "Claude"' --level debug | head -20

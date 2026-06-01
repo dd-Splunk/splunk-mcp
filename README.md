@@ -1,6 +1,6 @@
 # splunk-mcp
 
-Local **proof-of-concept**: run **Splunk Enterprise** in Docker with the **Splunk MCP Server** app, and connect an LLM client (**Cursor**, **Claude Desktop**, or **Goose**) over the Model Context Protocol (MCP) using **`npx mcp-remote`**. Secrets come from the **1Password CLI** (`op` + `tpl.env`) or a git-ignored **`.env`** (no 1Password required).
+Local **proof-of-concept**: run **Splunk Enterprise** in Docker with the **Splunk MCP Server** app, and connect an LLM client (**Cursor**, **Claude Desktop**, or **Goose**) over the Model Context Protocol (MCP) via a **local MCP proxy** and a small **stdio bridge** script. Secrets come from the **1Password CLI** (`op` + `tpl.env`) or a git-ignored **`.env`** (no 1Password required).
 
 ## First time here? (Presales / SE demo)
 
@@ -15,9 +15,9 @@ Do not block a live meeting on a cold start: **first `make up` can take many min
 | Endpoint | Use |
 | -------- | --- |
 | `https://localhost:8000` | Splunk Web |
-| `https://localhost:8089/services/mcp` | Splunk MCP Server (Bearer token in **`.secrets/splunk-token`**) |
+| `http://localhost:${MCP_PROXY_PORT:-8090}/mcp` | Local MCP proxy (no bearer tokens in client configs) |
 
-Splunkbase apps (see **`compose.yml`** for IDs, including **Splunk MCP Server**) install at container start. A one-shot init configures MCP for local dev, creates user **`splunker`** (role **`mcp_user`**, capability **`mcp_tool_execute`), and writes the encrypted MCP token. **`make up`** waits for the token, then runs **`make update-mcp-clients`** (Claude, Cursor, Goose).
+Splunkbase apps (see **`compose.yml`** for IDs, including **Splunk MCP Server**) install at container start. A one-shot init configures MCP for local dev and creates/updates user **`splunker`** (role **`mcp_user`**, capability **`mcp_tool_execute`). The `mcp-proxy` service mints the encrypted MCP token at runtime and holds it in memory. **`make up`** runs **`make update-mcp-clients`** (Claude, Cursor, Goose) without embedding secrets.
 
 **Not included in init:** a **`claude_logs`** index or file monitors. Optional ingestion is described in [docs/CONFIGURATION.md](docs/CONFIGURATION.md) if you uncomment the bind mount in `compose.yml`.
 
@@ -25,27 +25,27 @@ Splunkbase apps (see **`compose.yml`** for IDs, including **Splunk MCP Server**)
 
 - Docker with Compose, **`make`**, `bash`, **`curl`**, **`jq`**
 - **Secrets:** 1Password + **`tpl.env`** *or* **`.env`** (see [docs/PRESALES.md](docs/PRESALES.md))
-- **Node/npm** for `npx mcp-remote` (MCP client configs)
+- **Node** for the MCP stdio bridge script (client configs)
 - **Splunkbase** account with download rights (used for `SPLUNK_APPS_URL`)
 
 ## Quick commands
 
 ```bash
-make up                      # start stack, wait for token, update all MCP clients
+make up                      # start stack, update all MCP clients
 make status                  # is Splunk answering?
 make update-mcp-client MCP_CLIENT=cursor   # one client
-make verify-mcp-remote       # verify all clients + mcp-remote (default)
+make verify-mcp-remote       # verify all clients + MCP proxy (default)
 make down                    # stop (no op / .env needed)
 ```
 
 | Command | Purpose |
 | ------- | ------- |
 | `make help` | All targets |
-| `make up` | Compose up, wait for **`.secrets/splunk-token`**, **`update-mcp-clients`** |
+| `make up` | Compose up, then **`update-mcp-clients`** |
 | `make update-mcp-clients` | Update Claude, Cursor, and Goose configs |
 | `make update-mcp-client` | One client (`MCP_CLIENT=claude\|cursor\|goose`) |
-| `make verify-mcp-remote` | Config check + `mcp-remote` (`MCP_VERIFY_CLIENT=all` default) |
-| `make clean` | Destructive: volumes + **`.env`** + token (prompts; no `op` needed) |
+| `make verify-mcp-remote` | Config check + MCP proxy (`MCP_VERIFY_CLIENT=all` default) |
+| `make clean` | Destructive: volumes + **`.env`** (prompts; no `op` needed) |
 
 ## Documentation (by audience)
 
@@ -61,7 +61,7 @@ make down                    # stop (no op / .env needed)
 
 ## Security
 
-Local development defaults: self-signed TLS, `NODE_TLS_REJECT_UNAUTHORIZED=0` for `mcp-remote` in the generated client snippets, secrets in `op` / `.env` / **`.secrets`**. Do not expose this stack to untrusted networks as-is. See [docs/SECURITY.md](docs/SECURITY.md).
+Local development defaults: self-signed TLS, dev-oriented MCP settings, secrets in `op` / `.env`. Do not expose this stack to untrusted networks as-is. See [docs/SECURITY.md](docs/SECURITY.md).
 
 ## CI
 
@@ -76,8 +76,8 @@ splunk-mcp/
 ├── Makefile
 ├── tpl.env.example / .env.example     # Tracked; copy to tpl.env or .env (gitignored)
 ├── scripts/                            # compose-up.sh, setup-splunk.sh, client config writers, verify
+├── mcp-proxy/                           # local MCP proxy (token held in memory)
 ├── SA-S4R/                             # Sample app (Eventgen)
-├── .secrets/                          # splunk-token, splunker-password (gitignored)
 └── docs/
 ```
 

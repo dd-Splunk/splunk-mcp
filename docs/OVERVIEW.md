@@ -3,8 +3,8 @@
 This repository packages a **repeatable local environment** for:
 
 1. Running **Splunk Enterprise** in Docker with the **Splunk MCP Server** application from Splunkbase.
-2. Provisioning a dedicated Splunk user and **encrypted MCP token** suitable for the MCP HTTP endpoint.
-3. Wiring **Claude Desktop**, **Cursor**, or **Goose** to that endpoint via **`mcp-remote`** (stdio bridge to remote HTTP MCP).
+2. Provisioning a dedicated Splunk user suitable for MCP tool execution.
+3. Wiring **Claude Desktop**, **Cursor**, or **Goose** to a **local MCP proxy** via a small **stdio→HTTP bridge** (no bearer tokens embedded in client configs).
 
 It is a **proof-of-concept**: fast iteration on Splunk + LLM tooling, not a production deployment template.
 
@@ -14,7 +14,7 @@ The [Model Context Protocol](https://modelcontextprotocol.io/) lets a client (Cl
 
 - Installing dependencies (Splunkbase downloads at container start).
 - Post-start configuration (SSL verify flag for dev, user/role/token).
-- Client configuration files with the bearer token.
+- MCP client configuration files without embedding bearer tokens.
 
 ## Major components
 
@@ -36,7 +36,13 @@ The [Model Context Protocol](https://modelcontextprotocol.io/) lets a client (Cl
 - Runs **once** after `so1` is healthy.
 - Image: **Alpine** (installs `curl` and `jq` at runtime).
 - Executes **`scripts/setup-splunk.sh`** with environment pointing at Splunk on the Docker network (`SPLUNK_HOST=so1`).
-- Writes the MCP token to **`.secrets/splunk-token`** and (by default) a generated **`splunker`** password to **`.secrets/splunker-password`** on the host (mode `600`), via paths under the `/output` bind mount in **`compose.yml`**.
+- Ensures Splunk role/user prerequisites for MCP are present (idempotent). This repo does not write the MCP token to disk.
+
+### Local MCP proxy (`mcp-proxy`)
+
+- Runs after `so1` is healthy.
+- Exposes a local HTTP endpoint: `http://localhost:${MCP_PROXY_PORT:-8090}/mcp` (bound to `127.0.0.1`).
+- Mints an encrypted MCP bearer token from Splunk at runtime using admin credentials, holds it **in memory**, and forwards JSON-RPC `POST` requests to Splunk’s `/services/mcp`.
 
 ### Splunkbase applications
 
@@ -44,15 +50,15 @@ The [Model Context Protocol](https://modelcontextprotocol.io/) lets a client (Cl
 
 You need valid **Splunkbase** credentials supplied via **local `tpl.env`** (copy from **`tpl.env.example`**) or a plain **`.env`** (Path B): define **`SPLUNKBASE_USER`** and **`SPLUNKBASE_PASS`**; Compose maps them to the container variables `SPLUNKBASE_USERNAME` / `SPLUNKBASE_PASSWORD`.
 
-### Client bridge (`mcp-remote`)
+### Client bridge (stdio→HTTP)
 
-Claude, Cursor, and Goose do not speak HTTP MCP natively in the same process as the editor; configuration uses:
+Claude, Cursor, and Goose use MCP over **stdio**; this repo provides a small bridge script that forwards newline-delimited JSON-RPC to the local proxy over HTTP:
 
 ```text
-npx -y mcp-remote https://localhost:8089/services/mcp --header "Authorization: Bearer <token>"
+node scripts/mcp-stdio-http-bridge.mjs
 ```
 
-with **`NODE_TLS_REJECT_UNAUTHORIZED=0`** to accept Splunk’s default self-signed certificate on localhost. This is appropriate **only** for trusted local development.
+The bridge reads `MCP_URL` from the environment and defaults to `http://localhost:8090/mcp`.
 
 ### Secrets flow
 
@@ -62,15 +68,16 @@ with **`NODE_TLS_REJECT_UNAUTHORIZED=0`** to accept Splunk’s default self-sign
    so variables are injected **at process invocation** and nothing is written to `.env`.
 3. **Alternative (Path B)**: hand-written **`.env`** from **`.env.example`**; Compose auto-loads it and **`make up`** uses plain `docker compose`.
 4. **Compose** supplies `SPLUNK_PASSWORD`, Splunkbase credentials, and related env vars to the `so1` and `splunk-init` services.
-5. **Token file** `.secrets/splunk-token` is created by `splunk-init` / `setup-splunk.sh`. **`make update-mcp-clients`** (`scripts/mcp-client.sh`) reads it to patch client configs.
+5. **Token minting** happens inside `mcp-proxy` at runtime; bearer tokens are held **in memory** and are not written to disk or embedded into client configs.
 
 ## Authentication model (as implemented)
 
 | Actor | Mechanism | Notes |
 | ----- | --------- | ----- |
 | Splunk admin | Username/password (`admin` + `SPLUNK_PASSWORD`) | Used in setup script REST calls |
-| MCP client (Claude/Cursor) | Bearer token | Token from Splunk MCP app’s encrypted token endpoint for **`SPLUNK_MCP_USER`** (default **`splunker`**) |
-| User **`splunker`** | Password file **`.secrets/splunker-password`** (unless you pre-create it or set `SPLUNK_MCP_PASSWORD_FILE`); Splunk roles **`user`** + **`mcp_user`** | Created idempotently; see `scripts/setup-splunk.sh` |
+| MCP clients (Claude/Cursor/Goose) | Local stdio bridge → local proxy | Bridge forwards to `http://localhost:${MCP_PROXY_PORT}/mcp`; Claude/Cursor use a repo-relative path; Goose uses an **absolute** path and **`envs`** |
+| Local MCP proxy | Bearer token (in memory) | Token minted from Splunk MCP app’s encrypted token endpoint for **`SPLUNK_MCP_USER`** (default **`splunker`**) |
+| User **`splunker`** | Password from env | Password is provided via `.env` (Path B) or `op run` (Path A) as `SPLUNK_MCP_PASSWORD` |
 
 The setup script creates Splunk role **`mcp_user`** and assigns capability **`mcp_tool_execute`** to that role (the MCP app checks the **capability**, not the role name).
 
@@ -86,14 +93,13 @@ make up
       → create/update role mcp_user with capability mcp_tool_execute
       → add MLTK_ROLE to SPLUNK_MLTK_USER (default splunker; override in .env)
       → create user splunker (roles: user + mcp_user)
-      → GET encrypted mcp token → .secrets/splunk-token
-  → Makefile: wait for token file → update-mcp-clients
+  → Makefile: update-mcp-clients (writes no secrets)
 
 Optional: make update-mcp-client MCP_CLIENT=cursor (or aliases update-*-config)
-  → re-merge the token into one client only (e.g. after token rotation) without a full stack recycle
+  → refresh one client config without a full stack recycle
 
 User restarts Claude Desktop, Cursor, or Goose
-  → mcp-remote connects to https://localhost:8089/services/mcp with Bearer token
+  → client spawns bridge script, which forwards to local MCP proxy
 ```
 
 ## Sample data (SA-S4R)

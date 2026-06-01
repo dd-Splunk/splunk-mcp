@@ -1,6 +1,6 @@
 # API Reference & MCP Integration
 
-**This repository** creates Splunk role **`mcp_user`** (capability **`mcp_tool_execute`**) and user **`splunker`**, then obtains an **encrypted MCP token** from the Splunk MCP Server app (`GET .../Splunk_MCP_Server/mcp_token?username=splunker`). For MCP HTTP access, use that token flow—**`scripts/setup-splunk.sh`** is the source of truth (not ad-hoc JWT minting from `/services/authorization/tokens`).
+**This repository** creates Splunk role **`mcp_user`** (capability **`mcp_tool_execute`**) and user **`splunker`** (default), then exposes a **local MCP proxy** at `http://localhost:${MCP_PROXY_PORT:-8090}/mcp`. The proxy mints an encrypted MCP token from the Splunk MCP Server app at runtime and keeps it **in memory**. Client configs do not embed bearer tokens.
 
 ## Splunk REST API Endpoints
 
@@ -11,14 +11,16 @@ All Splunk REST API calls require authentication. Choose one method:
 #### Method 1: Basic Auth (Admin)
 
 ```bash
-curl -k -u admin:password https://localhost:8089/services/server/info
+curl -k -u "admin:${SPLUNK_PASSWORD}" https://localhost:8089/services/server/info
 ```
 
-#### Method 2: Bearer Token (MCP User)
+#### Method 2: MCP proxy (recommended for this repo)
 
 ```bash
-curl -k -H "Authorization: Bearer <token>" \
-  https://localhost:8089/services/authorization/tokens
+curl -fsS -X POST "http://localhost:${MCP_PROXY_PORT:-8090}/mcp" \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq .
 ```
 
 ### Core Endpoints Used
@@ -88,43 +90,9 @@ POST /services/authentication/users/splunker
 password=newpassword
 ```
 
-#### 3. Token Management
+#### 3. Token Management (notes)
 
-##### Create Token
-
-```bash
-POST /services/authorization/tokens
-Content-Type: application/x-www-form-urlencoded
-
-status=enabled
-name=splunker
-audience=mcp
-```
-
-Response includes token in CDATA section:
-
-```xml
-<s:key name="token"><![CDATA[eyJr...]]>
-</s:key>
-```
-
-##### List Tokens
-
-```bash
-GET /services/authorization/tokens
-```
-
-##### Get Token Details
-
-```bash
-GET /services/authorization/tokens/tokens
-```
-
-##### Delete Token
-
-```bash
-DELETE /services/authorization/tokens/tokens
-```
+This repo’s MCP access is via the Splunk MCP Server app’s encrypted token flow, minted by `mcp-proxy` at runtime. The generic Splunk endpoint `/services/authorization/tokens` is **not** the same thing and is not used for MCP in this repo.
 
 #### 4. Server Information
 
@@ -144,23 +112,11 @@ GET /services/server/status
 
 ### MCP Server Endpoint
 
-#### MCP Services
-
-```bash
-GET /services/mcp
-Authorization: Bearer <token>
-```
-
-#### Available Tools in MCP Context
-
-```bash
-GET /services/mcp/tools
-Authorization: Bearer <token>
-```
+The Splunk MCP endpoint is a **JSON-RPC `POST`** handler at `/services/mcp` (not `GET`).
 
 ## Complete API Call Examples
 
-### Example 1: Create User and Token
+### Example 1: Create role + user (admin basic auth)
 
 ```bash
 #!/bin/bash
@@ -176,58 +132,26 @@ curl -k -X POST https://$HOST/services/authorization/roles \
 curl -k -X POST https://$HOST/services/authentication/users \
   -u "$ADMIN_USER:$ADMIN_PASS" \
   -d "name=splunker" -d "password=changeme" -d "roles=user" -d "roles=mcp_user"
-
-# Create token
-TOKEN=$(curl -k -s -X POST https://$HOST/services/authorization/tokens \
-  -u "$ADMIN_USER:$ADMIN_PASS" \
-  -d "status=enabled" -d "name=splunker" -d "audience=mcp" | \
-  sed -n 's/.*<![CDATA[/p')
-
-echo "Token: $TOKEN"
 ```
 
-### Example 2: Search Query
+### Example 2: List MCP tools (via local proxy)
 
 ```bash
-#!/bin/bash
-
-TOKEN="your-token-here"
-HOST="localhost"
-PORT="8089"
-
-# Test MCP endpoint
-curl -k -H "Authorization: Bearer $TOKEN" \
-  https://$HOST:$PORT/services/mcp/tools | jq .
-
-# List available MCP tools
-curl -k -H "Authorization: Bearer $TOKEN" \
-  https://$HOST:$PORT/services/mcp | jq .
+curl -fsS -X POST "http://localhost:${MCP_PROXY_PORT:-8090}/mcp" \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq .
 ```
 
-### Example 3: Search via API
+### Example 3: Direct SPL via basic auth (recommended for “direct SPL” tests)
 
 ```bash
-#!/bin/bash
-
-TOKEN="your-token-here"
-QUERY="search index=main"
-
-# Create search job
-JOB_RESPONSE=$(curl -k -s -X POST https://localhost:8089/services/search/jobs \
-  -H "Authorization: Bearer $TOKEN" \
-  -d "search=$QUERY")
-
-# Extract search ID
-SID=$(echo "$JOB_RESPONSE" | grep -o '<sid>[^<]*</sid>' | sed 's/<[^>]*>//g')
-
-echo "Search ID: $SID"
-
-# Check search status
-curl -k -H "Authorization: Bearer $TOKEN" \
-  https://localhost:8089/services/search/jobs/$SID
+curl -k -u "splunker:${SPLUNK_MCP_PASSWORD}" \
+  "https://localhost:8089/services/search/jobs?output_mode=json" \
+  -d 'search=index=main | stats values(sourcetype) AS Sourcetype'
 ```
 
-## Claude Desktop MCP Integration
+## Claude Desktop / Cursor MCP Integration
 
 ### Configuration Structure
 
@@ -235,14 +159,9 @@ curl -k -H "Authorization: Bearer $TOKEN" \
 {
   "mcpServers": {
     "splunk-mcp-server": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "mcp-remote",
-        "https://localhost:8089/services/mcp",
-        "--header",
-        "Authorization: Bearer <token>"
-      ]
+      "command": "node",
+      "args": ["scripts/mcp-stdio-http-bridge.mjs"],
+      "env": {"MCP_URL": "http://localhost:8090/mcp"}
     }
   }
 }
@@ -250,33 +169,21 @@ curl -k -H "Authorization: Bearer $TOKEN" \
 
 ### How It Works
 
-1. **Claude Desktop reads config**: Loads `claude_desktop_config.json`
-2. **Spawns mcp-remote**: Launches Node.js process
-3. **Connects to Splunk**: Establishes HTTPS connection to MCP endpoint
-4. **Sends bearer token**: Authenticates using token
-5. **Claude can use tools**: All MCP tools become available to Claude
+1. **Client reads config**: Loads config (`claude_desktop_config.json` / `.cursor/mcp.json`)
+2. **Spawns bridge**: `node scripts/mcp-stdio-http-bridge.mjs`
+3. **Bridge calls local proxy**: `http://localhost:${MCP_PROXY_PORT}/mcp`
+4. **Proxy calls Splunk**: `https://localhost:8089/services/mcp` with an in-memory bearer token
+5. **Client can use tools**: All MCP tools become available
 
 ### Troubleshooting Connection
-
-#### Check if token is still valid
-
-```bash
-# Get token creation date
-curl -k -u admin:password \
-  https://localhost:8089/services/authorization/tokens/
-  | grep "eai:last_updated"
-```
-
-#### Regenerate token if expired
-
-Token auto-expires after 15 days. Run `make up` again to generate new
-token.
 
 #### Test connection manually
 
 ```bash
-curl -k -H "Authorization: Bearer <token>" \
-  https://localhost:8089/services/mcp
+curl -fsS -X POST "http://localhost:${MCP_PROXY_PORT:-8090}/mcp" \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq .
 ```
 
 **View Claude Desktop logs** (macOS)
@@ -304,10 +211,8 @@ log stream --predicate 'process == "Claude"' --level debug
 
 ### Token Security
 
-- Tokens are JWT format
-- Expiry: 15 days from creation
-- Scope: Limited to token creator's capabilities
-- Rotation: Generate new token before expiry
+- This repo does not place bearer tokens into client configs or write them to disk.
+- Tokens are minted by the local proxy and held in memory.
 
 ### Network Security
 
@@ -359,7 +264,7 @@ log stream --predicate 'process == "Claude"' --level debug
 Many endpoints support JSON responses with `output_mode=json` parameter:
 
 ```bash
-curl -k -u admin:password \
+curl -k -u "admin:${SPLUNK_PASSWORD}" \
   "https://localhost:8089/services/server/info?output_mode=json"
 ```
 
@@ -370,7 +275,7 @@ curl -k -u admin:password \
 **Search all Claude logs:**
 
 ```bash
-curl -k -u admin:password \
+curl -k -u "admin:${SPLUNK_PASSWORD}" \
   "https://localhost:8089/services/search/jobs" \
   -d "search=index=claude_logs" \
   -d "output_mode=json"
@@ -393,7 +298,7 @@ index=claude_logs earliest=-1h | tail 20
 **Get claude_logs index stats:**
 
 ```bash
-curl -k -u admin:password \
+curl -k -u "admin:${SPLUNK_PASSWORD}" \
   "https://localhost:8089/services/data/indexes/claude_logs"
 ```
 
@@ -402,26 +307,26 @@ curl -k -u admin:password \
 ### Enable Verbose Output
 
 ```bash
-curl -v -k -u admin:password https://localhost:8089/services/server/info
+curl -v -k -u "admin:${SPLUNK_PASSWORD}" https://localhost:8089/services/server/info
 ```
 
 ### Check Request/Response Headers
 
 ```bash
-curl -i -k -u admin:password https://localhost:8089/services/server/info
+curl -i -k -u "admin:${SPLUNK_PASSWORD}" https://localhost:8089/services/server/info
 ```
 
 ### Use jq for JSON Parsing
 
 ```bash
-curl -k -u admin:password \
+curl -k -u "admin:${SPLUNK_PASSWORD}" \
   "https://localhost:8089/services/server/info?output_mode=json" | jq .
 ```
 
 ### Save Response to File
 
 ```bash
-curl -k -u admin:password https://localhost:8089/services/server/info > response.xml
+curl -k -u "admin:${SPLUNK_PASSWORD}" https://localhost:8089/services/server/info > response.xml
 ```
 
 ## Advanced Topics
@@ -447,12 +352,5 @@ Create and manage alerts that can be triggered by MCP commands.
 Add these to `.bashrc` or `.zshrc`:
 
 ```bash
-alias splunk-auth='curl -k -u admin:password'
-alias splunk-mcp='curl -k -H "Authorization: Bearer $SPLUNK_TOKEN"'
-
-# Export token for use in shell
-export SPLUNK_TOKEN="your-token-here"
-
-# Test MCP
-splunk-mcp https://localhost:8089/services/mcp
+Avoid aliases that embed passwords or tokens. Prefer environment variables set in your shell session and do not paste secrets into logs/issues.
 ```

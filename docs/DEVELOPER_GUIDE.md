@@ -28,7 +28,7 @@ See ARCHITECTURE.md for detailed system design.
 
 #### `compose.yml`
 
-- Defines Docker services (so1, splunk-init)
+- Defines Docker services (so1, splunk-init, mcp-proxy)
 - Volume mounts for persistence
 - Network configuration
 - Port mappings
@@ -80,9 +80,7 @@ Main initialization script (runs in `splunk-init`). Steps:
 
 4. **User `splunker`** — Creates or updates via `/services/authentication/users` with Splunk roles **`user`** and **`mcp_user`** (override with **`SPLUNK_MCP_USER`**). Does **not** grant **`admin`**.
 
-5. **Encrypted MCP token** — GET `/servicesNS/admin/Splunk_MCP_Server/mcp_token?username=<SPLUNK_MCP_USER>&output_mode=json`; writes token to `TOKEN_OUTPUT_FILE` (`.secrets/splunk-token`).
-
-6. **Password file** — May generate **`.secrets/splunker-password`** (see **`SPLUNK_MCP_PASSWORD_FILE`**).
+5. **MCP password** — Uses `SPLUNK_MCP_PASSWORD` (env) for the MCP execution user. This repo does not write passwords to disk.
 
 **Not** in this minimal script: **`claude_logs`** index/monitor automation.
 
@@ -103,10 +101,10 @@ Key targets:
 
 ```text
 make help                 # Target list (default goal)
-make up                   # scripts/compose-up.sh → wait-token → update-*-config
+make up                   # scripts/compose-up.sh → update-*-config
 make down / restart       # docker compose (no op)
 make logs / status        # docker logs / health probe
-make clean                # down -v + remove .env and .secrets
+make clean                # down -v + remove .env
 make verify-mcp-remote    # scripts/mcp-client.sh verify (MCP_VERIFY_CLIENT=all)
 ```
 
