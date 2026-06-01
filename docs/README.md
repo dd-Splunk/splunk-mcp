@@ -23,9 +23,8 @@ The root [README.md](../README.md) stays short. **For a presales or SE demo, sta
 | Document | Use when |
 | -------- | -------- |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Containers, volumes, init order |
-| [CONFIGURATION.md](CONFIGURATION.md) | `compose.yml`, `tpl.env` / `.env`, client JSON, optional Claude log mount |
+| [CONFIGURATION.md](CONFIGURATION.md) | `compose.yml`, `tpl.env` / `.env`, client JSON, optional local overrides |
 | [SETUP_SPLUNK_SCRIPT.md](SETUP_SPLUNK_SCRIPT.md) | Details for `scripts/setup-splunk.sh` |
-| [../docker-compose.override.yml.example](../docker-compose.override.yml.example) | Optional local overrides (copy to `docker-compose.override.yml`) |
 | [SECURITY.md](SECURITY.md) | Dev-only risks, tokens, TLS |
 | [CI_CD.md](CI_CD.md) | GitHub Actions, artifacts |
 | [SA-S4R-APP.md](SA-S4R-APP.md) | Bundled sample app and Eventgen |

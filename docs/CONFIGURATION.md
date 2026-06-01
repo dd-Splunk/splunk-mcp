@@ -1,6 +1,6 @@
 ## compose.yml
 
-**Optional:** copy **`docker-compose.override.yml.example`** to **`docker-compose.override.yml`** (gitignored) to change host ports or add bind mounts without editing the main file. **`SPLUNK_APPS_URL`** in **`compose.yml`** is a comma-separated list of Splunkbase download URLs; the **`compose.yml`** comments identify each app. Current entries (app ID → name):
+**`SPLUNK_APPS_URL`** in **`compose.yml`** is a comma-separated list of Splunkbase download URLs; the **`compose.yml`** comments identify each app. Current entries (app ID → name):
 
 | App ID | App |
 | ------ | --- |
@@ -43,6 +43,24 @@ ${HOME}/Library/Logs/Claude:/var/log/claude_logs
 ```
 
 If you are not on macOS or that path does not exist, adjust or remove this mount. **`scripts/setup-splunk.sh`** does **not** create a `claude_logs` index or monitor; add those via Splunk UI or REST if you want host log ingestion.
+
+### Local overrides (optional)
+
+Docker Compose merges **`docker-compose.override.yml`** automatically when present (file is **gitignored**). Create it at the repo root for host-specific ports or mounts instead of editing tracked **`compose.yml`**.
+
+```yaml
+services:
+  so1:
+    # Host ports already in use (default mapping is 8000 / 8089 on localhost)
+    ports:
+      - "127.0.0.1:9000:8000"
+      - "127.0.0.1:9089:8089"
+    # macOS: optional Claude Desktop log bind mount (see commented line in compose.yml)
+    volumes:
+      - ${HOME}/Library/Logs/Claude:/var/log/claude_logs:rw
+```
+
+Use only the blocks you need. If you remap **8089**, set **`SPLUNK_MCP_ENDPOINT`** (and re-run **`make update-mcp-clients`**) to the new URL. Do not commit secrets or machine-specific paths.
 
 ### Service `splunk-init`
 
