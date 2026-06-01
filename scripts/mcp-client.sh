@@ -2,10 +2,10 @@
 # Update or verify Splunk MCP client configs (Claude, Cursor, Goose).
 #
 # Usage:
-#   ./scripts/mcp-client.sh update <claude|cursor|goose> [token-file]
-#   ./scripts/mcp-client.sh verify <claude|cursor|goose|all> [token-file]
+#   ./scripts/mcp-client.sh update <claude|cursor|goose>
+#   ./scripts/mcp-client.sh verify <claude|cursor|goose|all>
 #
-# Env: SPLUNK_HOST, SPLUNK_PORT, CURSOR_MCP_JSON (cursor output path)
+# Env: MCP_PROXY_PORT, CURSOR_MCP_JSON (cursor output path)
 
 set -euo pipefail
 
@@ -13,17 +13,15 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 readonly VALID_CLIENTS="claude cursor goose"
-TOKEN_FILE="${TOKEN_FILE:-.secrets/splunk-token}"
-SPLUNK_HOST="${SPLUNK_HOST:-localhost}"
-SPLUNK_PORT="${SPLUNK_PORT:-8089}"
+MCP_PROXY_PORT="${MCP_PROXY_PORT:-8090}"
 
 usage() {
   cat <<EOF
 Usage:
-  $(basename "$0") update <claude|cursor|goose> [token-file]
-  $(basename "$0") verify <claude|cursor|goose|all> [token-file]
+  $(basename "$0") update <claude|cursor|goose>
+  $(basename "$0") verify <claude|cursor|goose|all>
 
-Default token file: ${TOKEN_FILE}
+This config uses the local MCP proxy (no secrets written to client configs).
 EOF
   exit "${1:-0}"
 }
@@ -41,32 +39,20 @@ valid_client() {
   esac
 }
 
-read_token() {
-  local file="$1"
-  [[ -f "$file" ]] || die "token file not found: $file (run: make up)"
-  [[ -r "$file" ]] || die "token file not readable: $file"
-  local t
-  t=$(tr -d '\r\n' <"$file")
-  [[ -n "$t" ]] || die "token file is empty: $file"
-  printf '%s' "$t"
-}
-
-splunk_mcp_url() {
-  printf 'https://%s:%s/services/mcp' "$SPLUNK_HOST" "$SPLUNK_PORT"
+proxy_mcp_url() {
+  printf 'http://localhost:%s/mcp' "$MCP_PROXY_PORT"
 }
 
 # JSON mcpServers block (Claude + Cursor)
 mcp_servers_block_jq() {
-  local url token
+  local url
   url="$1"
-  token="$2"
   jq -n \
     --arg url "$url" \
-    --arg token "$token" \
     '{
-      command: "npx",
-      args: ["-y", "mcp-remote", $url, "--header", ("Authorization: Bearer " + $token)],
-      env: {NODE_TLS_REJECT_UNAUTHORIZED: "0"}
+      command: "node",
+      args: ["scripts/mcp-stdio-http-bridge.mjs"],
+      env: {MCP_URL: $url}
     }'
 }
 
@@ -85,17 +71,17 @@ merge_json_mcp_server() {
 }
 
 merge_json_mcp_server_python() {
-  local out_path="$1" url="$2" token="$3"
-  python3 - "$out_path" "$url" "$token" <<'PY'
+  local out_path="$1" url="$2"
+  python3 - "$out_path" "$url" <<'PY'
 import json
 import os
 import sys
 
-out_path, url, token = sys.argv[1], sys.argv[2], sys.argv[3]
+out_path, url = sys.argv[1], sys.argv[2]
 block = {
-    "command": "npx",
-    "args": ["-y", "mcp-remote", url, "--header", f"Authorization: Bearer {token}"],
-    "env": {"NODE_TLS_REJECT_UNAUTHORIZED": "0"},
+    "command": "node",
+    "args": ["scripts/mcp-stdio-http-bridge.mjs"],
+    "env": {"MCP_URL": url},
 }
 data = {}
 try:
@@ -116,14 +102,13 @@ PY
 }
 
 update_claude() {
-  local token="$1"
   command -v jq >/dev/null 2>&1 || die "jq required for Claude config (brew install jq)"
   local url dir file block current
-  url=$(splunk_mcp_url)
+  url=$(proxy_mcp_url)
   dir="${HOME}/Library/Application Support/Claude"
   file="${dir}/claude_desktop_config.json"
   mkdir -p "$dir"
-  block=$(mcp_servers_block_jq "$url" "$token")
+  block=$(mcp_servers_block_jq "$url")
   if [[ -f "$file" ]] && current=$(cat "$file") && echo "$current" | jq empty 2>/dev/null; then
     if ! updated=$(echo "$current" | jq \
       --argjson splunk_mcp "$block" \
@@ -140,33 +125,33 @@ update_claude() {
 }
 
 update_cursor() {
-  local token="$1"
   local url out block
-  url=$(splunk_mcp_url)
+  url=$(proxy_mcp_url)
   out="${CURSOR_MCP_JSON:-.cursor/mcp.json}"
   if command -v jq >/dev/null 2>&1; then
-    block=$(mcp_servers_block_jq "$url" "$token")
+    block=$(mcp_servers_block_jq "$url")
     merge_json_mcp_server "$out" "$block"
   else
-    merge_json_mcp_server_python "$out" "$url" "$token"
+    merge_json_mcp_server_python "$out" "$url"
   fi
   echo "Updated Cursor MCP config: $out"
   echo "Restart Cursor or reload MCP servers."
 }
 
 update_goose() {
-  local token="$1"
-  local url dir file
-  url=$(splunk_mcp_url)
+  local url dir file bridge
+  url=$(proxy_mcp_url)
+  bridge="${ROOT}/scripts/mcp-stdio-http-bridge.mjs"
+  [[ -f "$bridge" ]] || die "bridge script missing: $bridge"
   dir="${HOME}/.config/goose"
   file="${dir}/config.yaml"
   mkdir -p "$dir"
   [[ -f "$file" ]] || printf 'extensions: {}\n' >"$file"
-  python3 - "$file" "$token" "$SPLUNK_HOST" "$SPLUNK_PORT" <<'PY'
+  python3 - "$file" "$url" "$bridge" <<'PY'
 import re
 import sys
 
-config_file, token, host, port = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+config_file, url, bridge = sys.argv[1], sys.argv[2], sys.argv[3]
 with open(config_file, encoding="utf-8") as f:
     content = f.read()
 
@@ -189,18 +174,12 @@ new_entry = f"""
     type: stdio
     name: splunk-mcp-server
     description: Splunk MCP Server
-    cmd: npx
+    cmd: node
     args:
-      - -y
-      - mcp-remote
-      - https://{host}:{port}/services/mcp
-      - --header
-      - "Authorization: Bearer {token}"
-    env:
-      NODE_TLS_REJECT_UNAUTHORIZED: "0"
-    envs:
-      NODE_TLS_REJECT_UNAUTHORIZED: "0"
+      - {bridge!r}
     env_keys: []
+    envs:
+      MCP_URL: "{url}"
     timeout: 300
     bundled: null
     available_tools: []"""
@@ -235,71 +214,94 @@ verify_client_config() {
       [[ -f "$path" ]] || die "goose config missing: $path (run: make update-mcp-client CLIENT=goose)"
       grep -q 'splunk-mcp-server:' "$path" \
         || die "goose config has no splunk-mcp-server extension in $path"
+      python3 - "$path" "${ROOT}/scripts/mcp-stdio-http-bridge.mjs" <<'PY'
+import re
+import sys
+
+path, expected_bridge = sys.argv[1], sys.argv[2]
+with open(path, encoding="utf-8") as f:
+    block = f.read()
+m = re.search(
+    r"^\s{2}splunk-mcp-server:.*?(?=\n\s{2}[a-zA-Z_]|\n[a-zA-Z_]|\Z)",
+    block,
+    re.MULTILINE | re.DOTALL,
+)
+if not m:
+    sys.exit("splunk-mcp-server block not found")
+section = m.group(0)
+if "envs:" not in section and re.search(r"^\s+env:", section, re.MULTILINE):
+    print(
+        "goose splunk-mcp-server uses 'env:' but Goose expects 'envs:' — run: make update-mcp-client MCP_CLIENT=goose",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+arg_m = re.search(r"^\s+args:\s*\n\s+-\s+(.+)$", section, re.MULTILINE)
+if not arg_m:
+    print("goose splunk-mcp-server has no args — run: make update-mcp-client MCP_CLIENT=goose", file=sys.stderr)
+    sys.exit(1)
+bridge = arg_m.group(1).strip().strip('"').strip("'")
+if bridge != expected_bridge:
+    print(
+        f"goose bridge path is {bridge!r}; expected absolute {expected_bridge!r} — run: make update-mcp-client MCP_CLIENT=goose",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+if not bridge.startswith("/"):
+    print(
+        f"goose bridge path must be absolute (got {bridge!r}) — run: make update-mcp-client MCP_CLIENT=goose",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+PY
       ;;
   esac
   echo "OK: $client config contains splunk-mcp-server ($path)"
 }
 
 verify_mcp_remote() {
-  local token="$1"
-  local url tmp pid
-  url=$(splunk_mcp_url)
-  export NODE_TLS_REJECT_UNAUTHORIZED="${NODE_TLS_REJECT_UNAUTHORIZED:-0}"
+  local url tmp
+  url=$(proxy_mcp_url)
   tmp=$(mktemp)
   # shellcheck disable=SC2329
-  cleanup() { rm -f "$tmp" "${tmp}.pid"; }
-  trap cleanup EXIT
+  cleanup() { rm -f "${tmp:-}"; }
+  # Use RETURN so cleanup runs when this function ends (tmp is local).
+  trap cleanup RETURN
 
-  ( npx -y mcp-remote "$url" --header "Authorization: Bearer ${token}" >"$tmp" 2>&1 & echo $! >"${tmp}.pid" )
-  pid=$(cat "${tmp}.pid")
-  for _ in $(seq 1 30); do
-    if grep -q "Proxy established successfully" "$tmp" 2>/dev/null; then
-      kill "$pid" 2>/dev/null || true
-      wait "$pid" 2>/dev/null || true
-      echo "OK: mcp-remote connected to Splunk ($url)."
-      return 0
-    fi
-    if grep -qE "Fatal error:|Connection error:" "$tmp" 2>/dev/null; then
-      kill "$pid" 2>/dev/null || true
-      wait "$pid" 2>/dev/null || true
-      die "mcp-remote failed (see logs in temp file; Splunk up? $url)"
-    fi
-    sleep 0.5
-  done
-  kill "$pid" 2>/dev/null || true
-  wait "$pid" 2>/dev/null || true
-  die "mcp-remote timed out ($url)"
+  if ! curl -fsS -X POST "$url" \
+    -H 'Content-Type: application/json' \
+    -H 'Accept: application/json' \
+    --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' >"$tmp" 2>&1; then
+    die "MCP proxy request failed (is it up?): $url"
+  fi
+  if ! jq -e '.jsonrpc=="2.0" and (.result.tools|type=="array")' "$tmp" >/dev/null 2>&1; then
+    die "MCP proxy returned unexpected response: $url"
+  fi
+  echo "OK: MCP proxy responded to tools/list ($url)."
 }
 
 cmd_update() {
   local client="${1:?}"
-  local token_file="${2:-$TOKEN_FILE}"
   valid_client "$client" || die "unknown client '$client' (use: $VALID_CLIENTS)"
-  local token
-  token=$(read_token "$token_file")
   case "$client" in
-    claude) update_claude "$token" ;;
-    cursor) update_cursor "$token" ;;
-    goose) update_goose "$token" ;;
+    claude) update_claude ;;
+    cursor) update_cursor ;;
+    goose) update_goose ;;
   esac
 }
 
 cmd_verify() {
   local client="${1:?}"
-  local token_file="${2:-$TOKEN_FILE}"
-  local token
-  token=$(read_token "$token_file")
   case "$client" in
     all)
       for c in $VALID_CLIENTS; do
         verify_client_config "$c"
       done
-      verify_mcp_remote "$token"
+      verify_mcp_remote
       ;;
     *)
       valid_client "$client" || die "unknown client '$client' (use: $VALID_CLIENTS or all)"
       verify_client_config "$client"
-      verify_mcp_remote "$token"
+      verify_mcp_remote
       ;;
   esac
 }

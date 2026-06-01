@@ -10,13 +10,15 @@ docker --version
 make --version
 jq --version
 curl --version
-node --version   # for npx mcp-remote
+node --version   # for the MCP stdio bridge script
 ```
+
+Note: MCP client configs in this repo use a local stdio bridge and do not require `npx mcp-remote`.
 
 ## 1. Secrets
 
 - **1Password:** `cp tpl.env.example tpl.env` and set `op://` paths that resolve in your vault. Test: `op read "op://YourVault/Item/field"`.
-- **No 1Password:** `cp .env.example .env` and set `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS` (and optional `SPLUNK_IMAGE`, `TZ`).
+- **No 1Password:** `cp .env.example .env` and set `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, `SPLUNK_MCP_PASSWORD` (and optional `SPLUNK_IMAGE`, `TZ`).
 
 ## 2. Start
 
@@ -24,7 +26,7 @@ node --version   # for npx mcp-remote
 make up
 ```
 
-Waits for **`.secrets/splunk-token`**, then runs **`make update-mcp-clients`**. First run can take **several minutes**.
+Starts the stack, then runs **`make update-mcp-clients`**. First run can take **several minutes**.
 
 With **`tpl.env`** and no **`.env`**, **`make up`** injects secrets via **`op run`** (nothing written to disk). For a plain **`.env`** file instead, see [PRESALES.md](PRESALES.md#secrets-path-a-1password-vs-path-b-plain-env) and [CONFIGURATION.md](CONFIGURATION.md#plain-env-path-b).
 
@@ -47,4 +49,4 @@ make verify-mcp-remote
 
 ## Do not commit
 
-- **`tpl.env`**, **`.env`**, **`.secrets/`**, or client files with live bearer tokens (see [AGENTS.md](../AGENTS.md)).
+- **`tpl.env`**, **`.env`**, **`.secrets/`**, or client files with secrets (see [AGENTS.md](../AGENTS.md)).
