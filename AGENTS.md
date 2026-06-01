@@ -5,14 +5,14 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`.
 ## What this repo is
 
 - **Purpose**: local PoC that runs **Splunk Enterprise** in Docker and exposes **Splunk MCP Server** on `https://localhost:8089/services/mcp`.
-- **Client bridge**: Claude Desktop, Cursor, or Goose connect via a stdio bridge script to the local MCP proxy (see `make update-mcp-clients` or `make update-mcp-client MCP_CLIENT=…`). **SE / presales** single runbook: **`docs/PRESALES.md`**.
+- **Client bridge**: **Claude Desktop** and **Cursor** use **`npx mcp-remote`** to Splunk MCP (token minted at `make update-claude-config` / `make update-cursor-config`; stored only in client config, not the repo). **Goose** uses a stdio bridge to the local **`mcp-proxy`**. See `make update-mcp-clients` or `make update-mcp-client MCP_CLIENT=…`. **SE / presales**: **`docs/PRESALES.md`**.
 
 ## Golden rules (don’t break these)
 
 - **Never commit secrets**:
   - `.env` (admin password, Splunkbase creds)
   - **`tpl.env`** (local `op://` paths to **your** vault—gitignored; start from tracked **`tpl.env.example`**)
-  - `.cursor/mcp.json` if it contains a live Bearer token
+  - `.cursor/mcp.json` if it contains a live bearer token (expected after `make update-cursor-config`)
   - `~/.config/goose/config.yaml` if it contains live credentials (this repo’s `update goose` writes no bearer tokens)
 - **Do not paste tokens/passwords** into issues, PRs, or logs.
 - **Keep changes idempotent**: `make up` / `splunk-init` should be safe to run repeatedly.
