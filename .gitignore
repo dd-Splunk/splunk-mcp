@@ -23,8 +23,6 @@ docker-compose.override.yml
 .cursor/mcp.json
 
 # Node dependencies for local build contexts
-mcp-proxy/node_modules/
-
 # Cursor / Windsurf local rules (any path in repo)
 **/.cursor/rules/
 **/.windsurf/rules/

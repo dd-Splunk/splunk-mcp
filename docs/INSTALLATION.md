@@ -19,7 +19,7 @@
 | 1Password CLI (`op`) | Secrets from local `tpl.env` | `op --version` (sign in: `op account add` or desktop integration) |
 | `make`, `bash` | `Makefile` workflows | `make --version` |
 | `curl`, `jq` | Scripts / REST | `curl --version`, `jq --version` |
-| Node/npm | MCP client bridge script | `node --version` |
+| Node/npm | `npx mcp-remote` for MCP clients | `node --version` |
 
 Optional: **Git** to clone; an editor (e.g. VS Code) to edit `tpl.env` (from **`tpl.env.example`**) and `compose.yml`.
 
@@ -85,7 +85,7 @@ make up
 
 This runs **`docker compose up -d`** using **`.env`** if present, otherwise **`op run --env-file=tpl.env`**. It starts **`so1`**, runs **`splunk-init`** after Splunk is healthy, then runs **`make update-mcp-clients`**.
 
-It also starts **`mcp-proxy`**, which exposes the local MCP endpoint at `http://localhost:${MCP_PROXY_PORT:-8090}/mcp`.
+After **`splunk-init`** exits, **`make update-mcp-clients`** mints MCP tokens and writes client configs pointing at **`https://localhost:8089/services/mcp`**.
 
 For Path B (plain **`.env`** without 1Password at runtime), see [CONFIGURATION.md](CONFIGURATION.md#plain-env-path-b).
 
@@ -131,10 +131,7 @@ If you want a **`claude_logs`** index, create it in Splunk (UI or REST). Log **f
 ## Confirm MCP endpoint
 
 ```bash
-curl -fsS -X POST "http://localhost:${MCP_PROXY_PORT:-8090}/mcp" \
-  -H 'Content-Type: application/json' \
-  -H 'Accept: application/json' \
-  --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq .
+make verify-mcp-remote
 ```
 
 In Claude Desktop, open a chat and confirm **splunk-mcp-server** tools appear.

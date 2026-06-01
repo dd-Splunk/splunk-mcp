@@ -1,6 +1,6 @@
 ## Scope
 
-This document applies the workspace **development PoC** context: single host, Docker, localhost URLs, and AI clients using a local MCP proxy with a stdio bridge.
+This document applies the workspace **development PoC** context: single host, Docker, localhost URLs, and AI clients using **`npx mcp-remote`** to Splunk’s MCP endpoint with bearer tokens in client config only.
 
 ## How this rule was applied
 
@@ -16,7 +16,7 @@ Security guidance for **credentials**, **certificates**, and **transport** was a
 ## TLS and trust
 
 - Splunk uses **HTTPS** on 8089 with a **self-signed** (or container-default) certificate.
-- The local proxy talks to Splunk over HTTPS and may disable TLS verification for localhost in development. That is acceptable only on **loopback** in a trusted dev machine context.
+- Clients (`npx mcp-remote`) talk to Splunk over HTTPS; this PoC may set **`NODE_TLS_REJECT_UNAUTHORIZED=0`** for self-signed localhost certs. That is acceptable only on **loopback** in a trusted dev machine context.
 - **Production-style** deployments should use proper CA-issued certificates (or organizational PKI), **enable** verification, and avoid disabling TLS checks in client env vars.
 
 ### Certificate verification (operational)
@@ -46,7 +46,7 @@ For stricter experiments:
 
 ## Token lifecycle
 
-- Tokens may be **time-limited** (see Splunk MCP app behavior and Splunk auth settings). In this repo, tokens are minted by `mcp-proxy` and held in memory; rotation is handled by restarting the proxy (or waiting for it to mint a new token).
+- Tokens may be **time-limited** (see Splunk MCP app behavior and Splunk auth settings). In this repo, tokens are minted into client configs via `make update-mcp-client`; re-run that target to rotate.
 
 ## Logging and privacy
 
