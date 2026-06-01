@@ -6,7 +6,7 @@
 /opt/splunk/etc/apps/SA-S4R
 ```
 
-It is labeled in `default/app.conf` and is visible in Splunk Web as **Splunk4Rookies** (install folder name remains **`SA-S4R`**). The main purpose in this repo is to ship **Eventgen** sample data and supporting **lookups** so you can run searches against synthetic **`access_combined`** traffic without manual onboarding. **`appserver/static/Buttercup_Background.jpg`** is a static asset for a dashboard to be added later (not app-wide chrome).
+It is labeled in `default/app.conf` and is visible in Splunk Web as **Splunk4Rookies** (install folder name and **`[package] id`** must remain **`SA-S4R`** — Eventgen sample paths are hard-coded to that folder). **`[launcher] version`** is set in `app.conf` (bump when shipping a new `.spl`). The main purpose in this repo is to ship **Eventgen** sample data and supporting **lookups** so you can run searches against synthetic **`access_combined`** traffic without manual onboarding. **`appserver/static/Buttercup_Background.jpg`** is a static asset for a dashboard to be added later (not app-wide chrome).
 
 Generated events match the **Splunk4Rookies** workshop **`noise_apache.log`** shape: `/product.screen` and `/cart.do?action=…` URIs, Buttercup referers, workshop-era user agents, and `HTTP 1.1` request lines.
 
@@ -17,7 +17,7 @@ SA-S4R/                         # tracked in git
 ├── appserver/static/
 │   └── Buttercup_Background.jpg  # Dashboard background (future)
 ├── default/
-│   ├── app.conf                # label = Splunk4Rookies
+│   ├── app.conf                # id, label, version, launcher metadata
 │   ├── data/ui/nav/default.xml
 │   ├── eventgen.conf           # Eventgen definitions (dual templates)
 │   ├── props.conf              # action, product_id, uid, JSESSIONID extractions
@@ -103,6 +103,18 @@ Both use workshop-style `HTTP 1.1`, Buttercup referers, and a trailing response-
 - Edit **`samples/action.txt`**, **`status.txt`**, or **`useragent.txt`** to change categorical choices.
 - Tune **`interval`**, **`count`**, and **`randomizeCount`** per stanza in `eventgen.conf`.
 - Adjust the **`product.screen`** / **`cart.do`** ratio via each stanza’s **`count`**.
+
+## App metadata (compliance)
+
+| File | Purpose |
+| ---- | ------- |
+| `default/app.conf` | **`[package] id`**, **`[launcher] version`**, UI label/description |
+| `metadata/default.meta` | Export/ACL for shipped objects (`props`, `transforms`, lookup CSV, `eventgen.conf`) |
+| `metadata/meta.conf` | Default ACL for new objects created in-app |
+
+**Do not package** runtime paths: `local/`, `metadata/local.meta`, `.DS_Store` (excluded in **`package-s4r.yml`**). **`local/`** may contain HEC inputs or tokens from a live container — keep gitignored.
+
+**Not yet in repo (workshop follow-ups):** Dashboard Studio view under `default/data/ui/views/`, **`platform`** field extraction (Lab 4), app icon under `appserver/static/`.
 
 ## See also
 

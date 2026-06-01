@@ -2,8 +2,17 @@
 access = read : [ * ], write : [ admin, sc_admin ]
 export = system
 
-# Ensure SA-Eventgen can read this app's Eventgen definitions.
+# Eventgen reads eventgen.conf from enabled apps (SA-Eventgen modinput).
 [eventgen]
 access = read : [ * ], write : [ admin, sc_admin ]
 export = system
 
+[props]
+export = system
+
+[transforms]
+export = system
+
+[lookup-table-files/product_codes.csv]
+access = read : [ * ], write : [ admin, sc_admin ]
+export = system
