@@ -10,10 +10,10 @@ docker --version
 make --version
 jq --version
 curl --version
-node --version   # for npx mcp-remote (Claude/Cursor) and Goose stdio bridge
+node --version   # for npx mcp-remote (all MCP clients)
 ```
 
-Note: Claude and Cursor use **`npx mcp-remote`** per [Splunk MCP Server 1.2](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/1.2/connecting-to-the-mcp-server-and-settings). Goose uses the local proxy + stdio bridge.
+Note: **Claude**, **Cursor**, and **Goose** use **`npx mcp-remote`** per [Splunk MCP Server 1.2](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/1.2/connecting-to-the-mcp-server-and-settings).
 
 ## 1. Secrets
 

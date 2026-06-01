@@ -6,10 +6,10 @@ This document describes **[`scripts/setup-splunk.sh`](../scripts/setup-splunk.sh
 
 The script bootstraps a **local Splunk Enterprise PoC** so that:
 
-1. The **Splunk MCP Server** app can be used via the local MCP proxy with dev-friendly TLS settings.
+1. The **Splunk MCP Server** app is configured for local dev (e.g. **`ssl_verify=false`** on the app).
 2. **SA-Eventgen** sample data can run via the default modular input, when the app is installed.
 3. The Splunk user **`SPLUNK_MLTK_USER`** (default **same as `SPLUNK_MCP_USER`**, e.g. **`splunker`**) receives the **`MLTK_ROLE`** (default **`mltk_dsdl_admin`**) when the **Splunk AI Toolkit** app is installed (separate from **`SPLUNK_REST_USER`**, which is only the REST **login**; override **`SPLUNK_MLTK_USER`** in **`.env`** to **`admin`** if the admin account should have MLTK).
-4. Splunk has a dedicated **MCP execution identity**: Splunk role **`mcp_user`** (capability **`mcp_tool_execute`**) and local user **`splunker`** by default. Token minting happens at runtime in the local proxy (in memory).
+4. Splunk has a dedicated **MCP execution identity**: Splunk role **`mcp_user`** (capability **`mcp_tool_execute`**) and local user **`splunker`** by default. Token minting is **`scripts/mint-mcp-token.sh`** after **`splunk-init`** (not in this script).
 
 The script is **`/bin/sh`**, uses **`set -eu`**, and talks to Splunk only through **HTTPS REST** (`curl -k` for local dev).
 
@@ -129,7 +129,7 @@ Used to poll the Eventgen stanza until `disabled=0` when `jq` is available.
 ## Password and token handling
 
 - **Password**: In this repo, the MCP execution user password is supplied via `SPLUNK_MCP_PASSWORD` (env), not generated and written to disk.
-- **Token**: Token minting happens in the local `mcp-proxy` service at runtime and is held in memory.
+- **Token**: Minted by **`scripts/mint-mcp-token.sh`** after **`splunk-init`**; stored only in MCP client configs.
 
 ## Idempotency and safe re-runs
 

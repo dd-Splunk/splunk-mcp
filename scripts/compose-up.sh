@@ -39,7 +39,9 @@ if [[ -f "$ENV_OUT" ]]; then
     exit 1
   fi
   echo "Using $ENV_OUT for Compose."
-  exec sh -c "$DC up -d --build"
+  sh -c "$DC up -d --build"
+  ./scripts/wait-splunk-init.sh
+  exit 0
 fi
 
 if [[ ! -f "$ENV_FILE" ]]; then
@@ -65,4 +67,5 @@ exec "$OP" run --env-file="$ENV_FILE" -- sh -c "
     exit 1
   fi
   ${DC} up -d --build
+  ./scripts/wait-splunk-init.sh
 "

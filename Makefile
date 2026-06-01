@@ -11,9 +11,6 @@ OP ?= op
 MCP_CLIENT ?= cursor
 MCP_VERIFY_CLIENT ?= all
 MCP_CLIENTS := cursor goose claude
-MCP_CLIENTS_PROXY := goose
-MCP_CLIENTS_MCP_REMOTE := cursor claude
-MCP_PROXY_PORT ?= 8090
 
 export ENV_FILE ENV_OUT ENV_EXAMPLE OP DC
 
@@ -29,12 +26,10 @@ up: ## Start stack and update MCP client configs
 	@echo "Starting Splunk with MCP Server app..."
 	@./scripts/compose-up.sh
 	@echo ""
-	@echo "Splunk is starting..."
-	@echo "Web UI:  https://localhost:8000"
+	@echo "Splunk Web UI:  https://localhost:8000"
 	@echo "Splunk MCP API: https://localhost:8089/services/mcp"
-	@echo "Local MCP proxy: http://localhost:$(MCP_PROXY_PORT)/mcp"
 	@echo ""
-	@echo "Updating Cursor, Goose, and Claude MCP configs..."
+	@echo "Updating Cursor, Goose, and Claude MCP configs (npx mcp-remote)..."
 	@$(MAKE) update-mcp-clients
 
 down: ## Stop containers (no secrets required)
@@ -67,29 +62,25 @@ status: ## Container status and Splunk API probe
 	if [[ "$$code" = "200" || "$$code" = "401" ]]; then echo "Splunk is ready ✓"; \
 	else echo "Splunk is not ready yet..."; fi
 
-update-mcp-clients: ## Update Goose, then Cursor + Claude (mcp-remote token)
-	@for c in $(MCP_CLIENTS_PROXY); do \
-		MCP_PROXY_PORT="$(MCP_PROXY_PORT)" ./scripts/mcp-client.sh update "$$c"; \
-		echo ""; \
-	done
-	@for c in $(MCP_CLIENTS_MCP_REMOTE); do \
-		echo "Updating $$c (mint token; Splunk must be answering on localhost:8089)..."; \
-		MCP_PROXY_PORT="$(MCP_PROXY_PORT)" ./scripts/mcp-client.sh update "$$c" \
-			|| { echo "$$c config skipped — run: make update-mcp-client MCP_CLIENT=$$c when Splunk is ready"; }; \
+update-mcp-clients: ## Update Claude, Cursor, and Goose (mcp-remote + token)
+	@for c in $(MCP_CLIENTS); do \
+		echo "Updating $$c (waits for splunk-init, then mints token)..."; \
+		./scripts/mcp-client.sh update "$$c" \
+			|| { echo "$$c config skipped — run: make update-mcp-client MCP_CLIENT=$$c"; }; \
 		echo ""; \
 	done
 
 update-mcp-client: ## Update one client (MCP_CLIENT=claude|cursor|goose)
-	@MCP_PROXY_PORT="$(MCP_PROXY_PORT)" ./scripts/mcp-client.sh update "$(MCP_CLIENT)"
+	@./scripts/mcp-client.sh update "$(MCP_CLIENT)"
 
-update-claude-config: ## Claude: npx mcp-remote + bearer token (Splunk must be up)
+update-claude-config: ## Claude: npx mcp-remote + bearer token
 	@$(MAKE) update-mcp-client MCP_CLIENT=claude
 
-update-cursor-config: ## Cursor: npx mcp-remote + bearer token (Splunk must be up)
+update-cursor-config: ## Cursor: npx mcp-remote + bearer token
 	@$(MAKE) update-mcp-client MCP_CLIENT=cursor
 
-update-goose-config: ## Alias: MCP_CLIENT=goose
+update-goose-config: ## Goose: npx mcp-remote + bearer token
 	@$(MAKE) update-mcp-client MCP_CLIENT=goose
 
-verify-mcp-remote: ## Verify config + MCP proxy (MCP_VERIFY_CLIENT=all|claude|cursor|goose)
-	@MCP_PROXY_PORT="$(MCP_PROXY_PORT)" ./scripts/mcp-client.sh verify "$(MCP_VERIFY_CLIENT)"
+verify-mcp-remote: ## Verify client configs + Splunk MCP (MCP_VERIFY_CLIENT=all|…)
+	@./scripts/mcp-client.sh verify "$(MCP_VERIFY_CLIENT)"

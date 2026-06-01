@@ -402,9 +402,8 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 node some-script.js
 
    ```bash
    cat ~/Library/Application\ Support/Claude/claude_desktop_config.json
-   # Should contain a stdio server using:
-   # - node scripts/mcp-stdio-http-bridge.mjs
-   # - MCP_URL=http://localhost:<MCP_PROXY_PORT>/mcp
+   # Should contain npx mcp-remote → https://localhost:8089/services/mcp
+   # and Authorization: Bearer <encrypted token>
    ```
 
 2. **Restart Claude Desktop**:
@@ -412,13 +411,10 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 node some-script.js
    - Wait 2 seconds
    - Reopen from Applications
 
-3. **Test MCP proxy directly**:
+3. **Test Splunk MCP from the shell**:
 
    ```bash
-   curl -fsS -X POST "http://localhost:${MCP_PROXY_PORT:-8090}/mcp" \
-     -H 'Content-Type: application/json' \
-     -H 'Accept: application/json' \
-     --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq .
+   make verify-mcp-remote MCP_VERIFY_CLIENT=claude
    ```
 
 4. **Check Claude logs**:
@@ -431,9 +427,9 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 node some-script.js
 
 #### Issue: Goose Splunk extension fails to start
 
-**Error**: `Cannot find module '.../scripts/mcp-stdio-http-bridge.mjs'` or extension shows no tools
+**Error**: Extension shows no tools, or MCP connection errors in Goose logs
 
-**Cause**: Goose runs stdio extensions from its **session working directory**, not necessarily this repo. A relative path like `scripts/mcp-stdio-http-bridge.mjs` only works when Goose’s cwd is the `splunk-mcp` root. Goose also expects environment variables under **`envs`**, not `env`.
+**Cause**: Stale Goose config (old bridge/proxy layout), Splunk not ready, or token mint failed before **`splunk-init`** finished.
 
 **Solution**:
 
@@ -443,7 +439,7 @@ make verify-mcp-remote MCP_VERIFY_CLIENT=goose
 # Restart Goose
 ```
 
-Confirm `~/.config/goose/config.yaml` has an **absolute** bridge path and `envs.MCP_URL` pointing at `http://localhost:8090/mcp` (or your `MCP_PROXY_PORT`).
+Confirm `~/.config/goose/config.yaml` has **`command: npx`**, **`mcp-remote`**, endpoint **`https://localhost:8089/services/mcp`**, and bearer token under the extension args. TLS dev override belongs in **`envs`**, not `env`.
 
 ---
 
@@ -451,7 +447,7 @@ Confirm `~/.config/goose/config.yaml` has an **absolute** bridge path and `envs.
 
 **Error**: `Error: command not found: npx` (in Claude Desktop logs)
 
-**Symptoms**: The client cannot spawn the Node bridge
+**Symptoms**: The client cannot spawn `npx mcp-remote`
 
 **Solution**:
 

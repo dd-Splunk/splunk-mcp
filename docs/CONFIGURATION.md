@@ -51,11 +51,11 @@ Runs after `so1` is **healthy**. Uses Alpine, installs `curl` and `jq`, then run
 - `scripts/setup-splunk.sh` → `/setup-splunk.sh`
 - No host secrets mount (this repo does not write tokens/passwords to disk). See `compose.yml` for `SPLUNK_REST_USER`, `SPLUNK_MCP_USER`, `SPLUNK_MLTK_USER`, `MLTK_ROLE`, `SPLUNK_MCP_PASSWORD`.
 
-### Service `mcp-proxy`
+### MCP token minting (host)
 
-- Exposes `http://localhost:${MCP_PROXY_PORT:-8090}/mcp` on the host (bound to `127.0.0.1`).
-- Mints an encrypted MCP token from Splunk at runtime using `SPLUNK_REST_USER`/`SPLUNK_PASSWORD`, holds it in memory, and forwards JSON-RPC `POST` requests to Splunk’s `/services/mcp`.
-- Client configs point at the proxy and do not embed bearer tokens.
+- **`scripts/wait-splunk-init.sh`** — blocks until the **`splunk-init`** container exits `0` (`compose-up.sh` runs this after `docker compose up`).
+- **`scripts/mint-mcp-token.sh`** — after init: waits for Splunk API, polls **`mcp_token`**, prints encrypted token to stdout.
+- **`make update-mcp-client`** writes the token into Claude / Cursor / Goose configs only.
 
 ### Network and volumes
 
@@ -140,10 +140,10 @@ Runs **inside** `splunk-init` with `SPLUNK_HOST=so1`. It:
 ## Goose configuration
 
 - Path: **`~/.config/goose/config.yaml`** (Unix/Linux and macOS).
-- Goose uses **extensions** with `type: stdio` for MCP server configuration (different from Claude's format).
-- `scripts/mcp-client.sh update goose` adds `splunk-mcp-server` as an extension entry under `extensions` section.
-- The bridge script path is written as an **absolute** path (Goose’s working directory is often not this repo).
-- Environment variables use Goose’s **`envs`** field (not `env`).
+- Same Splunk MCP Server **1.2** pattern as Claude/Cursor: **`npx mcp-remote`**, endpoint **`https://localhost:8089/services/mcp`**, encrypted bearer token.
+- Goose uses **extensions** with `type: stdio` (different YAML shape from Claude’s `mcpServers`).
+- `scripts/mcp-client.sh update goose` adds or updates the `splunk-mcp-server` extension entry.
+- TLS dev override uses Goose’s **`envs`** field (not `env`), e.g. `NODE_TLS_REJECT_UNAUTHORIZED=0` when **`SPLUNK_MCP_TLS_INSECURE=1`**.
 - Idempotent: safely updates or creates the extension without corrupting existing config.
 - Requires Python 3 for YAML regex manipulation.
 
@@ -151,7 +151,6 @@ Runs **inside** `splunk-init` with `SPLUNK_HOST=so1`. It:
 
 | Variable | Used by | Purpose |
 | -------- | ------- | ------- |
-| `MCP_PROXY_PORT` | Client scripts | Local MCP proxy port (default `8090`) |
 | `SPLUNK_MCP_ENDPOINT` | `mcp-client.sh` | Splunk MCP URL for `mcp-remote` (default `https://localhost:8089/services/mcp`) |
 | `SPLUNK_MCP_TLS_INSECURE` | `mcp-client.sh` | If `1` (default), add `NODE_TLS_REJECT_UNAUTHORIZED=0` to Claude/Cursor config (dev/self-signed only) |
 | `SPLUNK_MCP_USER` | `setup-splunk.sh` | Splunk account to create/update (default `splunker`) |

@@ -1,6 +1,6 @@
 # splunk-mcp
 
-Local **proof-of-concept**: run **Splunk Enterprise** in Docker with the **Splunk MCP Server** app, and connect **Cursor** or **Claude Desktop** via **`npx mcp-remote`** (Splunk 1.2 canonical config) or **Goose** via a local MCP proxy + stdio bridge. Secrets come from the **1Password CLI** (`op` + `tpl.env`) or a git-ignored **`.env`** (no 1Password required).
+Local **proof-of-concept**: run **Splunk Enterprise** in Docker with the **Splunk MCP Server** app, and connect **Cursor**, **Claude Desktop**, or **Goose** via **`npx mcp-remote`** (Splunk 1.2 canonical config). Secrets come from the **1Password CLI** (`op` + `tpl.env`) or a git-ignored **`.env`** (no 1Password required).
 
 ## First time here? (Presales / SE demo)
 
@@ -15,9 +15,9 @@ Do not block a live meeting on a cold start: **first `make up` can take many min
 | Endpoint | Use |
 | -------- | --- |
 | `https://localhost:8000` | Splunk Web |
-| `http://localhost:${MCP_PROXY_PORT:-8090}/mcp` | Local MCP proxy (no bearer tokens in client configs) |
+| `https://localhost:8089/services/mcp` | Splunk MCP Server (`npx mcp-remote` + token in client config only) |
 
-Splunkbase apps (see **`compose.yml`** for IDs, including **Splunk MCP Server**) install at container start. A one-shot init configures MCP for local dev and creates/updates user **`splunker`** (role **`mcp_user`**, capability **`mcp_tool_execute`). The `mcp-proxy` service mints the encrypted MCP token at runtime and holds it in memory. **`make up`** runs **`make update-mcp-clients`** (Claude, Cursor, Goose) without embedding secrets.
+Splunkbase apps (see **`compose.yml`** for IDs, including **Splunk MCP Server**) install at container start. A one-shot init configures MCP for local dev and creates/updates user **`splunker`** (role **`mcp_user`**, capability **`mcp_tool_execute`). **`make up`** waits for **`splunk-init`**, mints tokens, and updates Claude, Cursor, and Goose (tokens stay out of git).
 
 **Not included in init:** a **`claude_logs`** index or file monitors. Optional ingestion is described in [docs/CONFIGURATION.md](docs/CONFIGURATION.md) if you uncomment the bind mount in `compose.yml`.
 
@@ -25,7 +25,7 @@ Splunkbase apps (see **`compose.yml`** for IDs, including **Splunk MCP Server**)
 
 - Docker with Compose, **`make`**, `bash`, **`curl`**, **`jq`**
 - **Secrets:** 1Password + **`tpl.env`** *or* **`.env`** (see [docs/PRESALES.md](docs/PRESALES.md))
-- **Node** / **npm** for `npx mcp-remote` (Claude/Cursor) and the Goose stdio bridge
+- **Node** / **npm** for `npx mcp-remote` (all MCP clients)
 - **Splunkbase** account with download rights (used for `SPLUNK_APPS_URL`)
 
 ## Quick commands
@@ -34,7 +34,7 @@ Splunkbase apps (see **`compose.yml`** for IDs, including **Splunk MCP Server**)
 make up                      # start stack, update all MCP clients
 make status                  # is Splunk answering?
 make update-mcp-client MCP_CLIENT=cursor   # one client
-make verify-mcp-remote       # verify all clients + MCP proxy (default)
+make verify-mcp-remote       # verify all clients + Splunk MCP API (default)
 make down                    # stop (no op / .env needed)
 ```
 
@@ -44,7 +44,7 @@ make down                    # stop (no op / .env needed)
 | `make up` | Compose up, then **`update-mcp-clients`** |
 | `make update-mcp-clients` | Update Claude, Cursor, and Goose configs |
 | `make update-mcp-client` | One client (`MCP_CLIENT=claude\|cursor\|goose`) |
-| `make verify-mcp-remote` | Config check + MCP proxy (`MCP_VERIFY_CLIENT=all` default) |
+| `make verify-mcp-remote` | Config check + Splunk MCP `tools/list` (`MCP_VERIFY_CLIENT=all` default) |
 | `make clean` | Destructive: volumes + **`.env`** (prompts; no `op` needed) |
 
 ## Documentation (by audience)
@@ -75,8 +75,7 @@ splunk-mcp/
 ├── docker-compose.override.yml.example # Optional: copy to docker-compose.override.yml
 ├── Makefile
 ├── tpl.env.example / .env.example     # Tracked; copy to tpl.env or .env (gitignored)
-├── scripts/                            # compose-up.sh, setup-splunk.sh, client config writers, verify
-├── mcp-proxy/                           # local MCP proxy (token held in memory)
+├── scripts/                            # compose-up, setup-splunk, mint-mcp-token, mcp-client
 ├── SA-S4R/                             # Sample app (Eventgen)
 └── docs/
 ```

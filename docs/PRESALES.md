@@ -1,22 +1,22 @@
 # Presales: local Splunk + Splunk MCP demo
 
-This repo is a **local proof-of-concept**: **Splunk Enterprise** in Docker, **Splunk MCP Server** from Splunkbase, and an LLM client (**Cursor** is the primary target; **Claude Desktop** and **Goose** are optional) via MCP through a **local MCP proxy**.
+This repo is a **local proof-of-concept**: **Splunk Enterprise** in Docker, **Splunk MCP Server** from Splunkbase, and an LLM client (**Cursor** is the primary target; **Claude Desktop** and **Goose** are optional) via **`npx mcp-remote`** to Splunk’s MCP endpoint.
 
 **This file is the only presales runbook you need** for a credible first run. For deep configuration and failure analysis, use [CONFIGURATION.md](CONFIGURATION.md) and [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 ## Demo success path (do this in order)
 
-1. **Prereqs on the laptop:** Docker Desktop (or equivalent) with enough RAM (prefer **8 GB+** free for Splunk), **Node** (for the MCP stdio bridge script), `make`, `bash`, `curl`, `jq`.
+1. **Prereqs on the laptop:** Docker Desktop (or equivalent) with enough RAM (prefer **8 GB+** free for Splunk), **Node** / **npm** (for `npx mcp-remote`), `make`, `bash`, `curl`, `jq`.
 2. **Secrets** — pick **one** path (next section):
 
    - **Path A:** `cp tpl.env.example tpl.env`, edit `op://` paths for **your** 1Password vault, `op` signed in.
 
    - **Path B (no 1Password):** `cp .env.example .env`, fill `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, `SPLUNK_MCP_PASSWORD`, `SPLUNK_IMAGE`, `TZ`. Never commit `.env`.
 3. **Network:** The host must reach **splunkbase.splunk.com** (HTTPS) and your container registry (e.g. Docker Hub). VPN/firewall/proxy often blocks corporate demos—test ahead.
-4. **Start:** `make up` from the repo root. First cold start is often **several minutes** (image pull, Splunk, Splunkbase app downloads, one-shot init, proxy build). For a live meeting, warm the stack **before** the call or the day before.
+4. **Start:** `make up` from the repo root. First cold start is often **several minutes** (image pull, Splunk, Splunkbase app downloads, **`splunk-init`**). For a live meeting, warm the stack **before** the call or the day before.
 5. **Wait for green:** `make status` until it prints **Splunk is ready ✓**.
 6. **Cursor (recommended):** **`make up`** already wrote **`.cursor/mcp.json`**; restart Cursor or reload MCP servers. Confirm Splunk/MCP tools in the tool list and run a **read-only** tool (e.g. a small search).
-7. **Sanity check from the shell:** `make verify-mcp-remote` (checks all client configs + local proxy MCP response).
+7. **Sanity check from the shell:** `make verify-mcp-remote` (checks all client configs + Splunk MCP `tools/list`).
 8. **Claude / Goose (if used):** **`make up`** runs **`update-mcp-clients`**; **quit Claude fully (Cmd+Q)** and reopen, and restart Goose.
 
 If anything fails, go straight to [TROUBLESHOOTING.md](TROUBLESHOOTING.md) (Splunkbase auth, ports, token timeout, MCP 401).
@@ -40,13 +40,13 @@ See [CONFIGURATION.md](CONFIGURATION.md#tplenv-and-env).
 | URL | Purpose |
 | --- | ------- |
 | `https://localhost:8000` | Splunk Web (user **admin**, password from your secret source—not the MCP token) |
-| `http://localhost:${MCP_PROXY_PORT:-8090}/mcp` | Local MCP proxy endpoint (client configs point here; no bearer tokens in configs) |
+| `https://localhost:8089/services/mcp` | Splunk MCP Server (`npx mcp-remote` from clients) |
 
 | Identity | Role |
 | -------- | ---- |
 | **admin** | Splunk Web and REST in bootstrap; password = `SPLUNK_PASSWORD` |
 | **splunker** | Least-privilege user for MCP (role `mcp_user`, capability `mcp_tool_execute`); password provided as `SPLUNK_MCP_PASSWORD` |
-| **Bearer token** | Minted by `mcp-proxy` at runtime (in memory); clients do not store it |
+| **Bearer token** | Minted by `scripts/mint-mcp-token.sh` after **`splunk-init`**; stored only in client config files (not the repo) |
 
 ## Splunkbase and network (non-negotiable)
 
@@ -73,7 +73,7 @@ If nothing returns, check **Manage apps**, Eventgen, and [SA-S4R-APP.md](SA-S4R-
 
 ## What this demo proves (and does not)
 
-**Proves:** Splunk exposes MCP tools at a standard HTTPS path; a least-privilege user (`splunker`) with `mcp_tool_execute` can drive MCP; clients attach via a local proxy without storing bearer tokens in configs.
+**Proves:** Splunk exposes MCP tools at a standard HTTPS path; a least-privilege user (`splunker`) with `mcp_tool_execute` can drive MCP; clients connect with **`npx mcp-remote`** and a minted bearer token kept out of git.
 
 **Does not replace:** Production architecture, full security review, Splunk Cloud specifics, or customer network controls.
 
@@ -84,7 +84,7 @@ If nothing returns, check **Manage apps**, Eventgen, and [SA-S4R-APP.md](SA-S4R-
 | Docker running; **8 GB+** RAM free if possible | Splunk + downloads |
 | Splunkbase user/password working in browser | Same creds as in `tpl.env` or `.env` |
 | `op` signed in **or** a complete `.env` | `make up` must inject non-empty `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS` |
-| `node` available | MCP client configs use the stdio bridge script |
+| `node` / `npx` available | MCP clients spawn `npx mcp-remote` |
 | You ran **`make up`** early or have warm volumes | Cold start is multi-minute |
 | **Cursor:** `make up` writes **`.cursor/mcp.json`**; restart or reload MCP after `make up` | Primary demo client |
 
@@ -94,7 +94,7 @@ If nothing returns, check **Manage apps**, Eventgen, and [SA-S4R-APP.md](SA-S4R-
 2. `make status` — show Splunk healthy.
 3. Browser: `https://localhost:8000`, login as **admin** (password from your vault—not shown in repo).
 4. **Optional:** Run the sample SPL if you need on-screen data.
-5. **Cursor (or other client):** Show MCP tools, run one **read-only** tool; run **`make verify-mcp-remote MCP_VERIFY_CLIENT=cursor`** (or default `all`) to show the bridge works without exposing the token.
+5. **Cursor (or other client):** Show MCP tools, run one **read-only** tool; run **`make verify-mcp-remote MCP_VERIFY_CLIENT=cursor`** (or default `all`) to confirm Splunk MCP responds.
 6. If asked about security: [SECURITY.md](SECURITY.md) — self-signed TLS, local dev, not for untrusted networks.
 
 ## Greenfield vs clean slate
