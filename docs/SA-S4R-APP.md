@@ -6,14 +6,16 @@
 /opt/splunk/etc/apps/SA-S4R
 ```
 
-It is labeled in `default/app.conf` and is visible in Splunk Web as an app named **SA-S4R**. The main purpose in this repo is to ship **Eventgen** sample data and supporting **lookups** so you can run searches against synthetic **`access_combined`** traffic without manual onboarding.
+It is labeled in `default/app.conf` and is visible in Splunk Web as **Splunk4Rookies** (install folder name remains **`SA-S4R`**). The main purpose in this repo is to ship **Eventgen** sample data and supporting **lookups** so you can run searches against synthetic **`access_combined`** traffic without manual onboarding. **`appserver/static/Buttercup_Background.jpg`** is a static asset for a dashboard to be added later (not app-wide chrome).
 
 ## Layout
 
 ```text
 SA-S4R/                         # tracked in git
+├── appserver/static/
+│   └── Buttercup_Background.jpg  # Dashboard background (future)
 ├── default/
-│   ├── app.conf
+│   ├── app.conf                # label = Splunk4Rookies
 │   ├── data/ui/nav/default.xml
 │   └── eventgen.conf           # Eventgen definitions
 ├── lookups/
@@ -35,6 +37,22 @@ SA-S4R/                         # tracked in git
 # e.g. local/inputs.conf, local/app.conf
 ```
 
+### Dashboard background (hint)
+
+**`Buttercup_Background.jpg`** is for a **dashboard** you add later—not Splunk Web app chrome. Do not use **`application.css`** for this; reference the file from the dashboard’s own HTML or CSS.
+
+- **Repo path:** `SA-S4R/appserver/static/Buttercup_Background.jpg`
+- **Splunk Web URL:** `/static/app/SA-S4R/Buttercup_Background.jpg`
+- **App folder name:** **`SA-S4R`** (unchanged; the UI label **Splunk4Rookies** is display-only)
+
+Example when you define the dashboard (adjust selector to your panel layout):
+
+```css
+.dashboard-body {
+  background: url("/static/app/SA-S4R/Buttercup_Background.jpg") center center / cover no-repeat;
+}
+```
+
 ## Eventgen
 
 Configuration lives in **`default/eventgen.conf`**. The sample stanza **`access_combined.sample`**:
@@ -50,7 +68,7 @@ Upstream documentation: [Splunk Eventgen](https://splunk.github.io/eventgen/).
 Eventgen is provided by a Splunkbase app (included in `SPLUNK_APPS_URL` in `compose.yml`). After Splunk is up:
 
 1. Confirm the Eventgen app is installed and enabled.
-2. Confirm **SA-S4R** is enabled under **Apps**.
+2. Confirm **Splunk4Rookies** (**`SA-S4R`**) is enabled under **Apps**.
 3. If events do not appear, check Splunk’s internal logs and Eventgen app status; Eventgen may require enablement per app in your Splunk version.
 
 ## Sample event file
