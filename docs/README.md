@@ -29,6 +29,7 @@ The root [README.md](../README.md) stays short. **For a presales or SE demo, sta
 | [SECURITY.md](SECURITY.md) | Dev-only risks, tokens, TLS |
 | [CI_CD.md](CI_CD.md) | GitHub Actions, artifacts |
 | [SA-S4R-APP.md](SA-S4R-APP.md) | Bundled sample app and Eventgen |
+| [What Does the Business Want to See.md](What%20Does%20the%20Business%20Want%20to%20See.md) | **Splunk4Rookies** dashboard build prompt (Labs 3–7) |
 
 ## API and development
 

@@ -8,6 +8,8 @@
 
 It is labeled in `default/app.conf` and is visible in Splunk Web as **Splunk4Rookies** (install folder name remains **`SA-S4R`**). The main purpose in this repo is to ship **Eventgen** sample data and supporting **lookups** so you can run searches against synthetic **`access_combined`** traffic without manual onboarding. **`appserver/static/Buttercup_Background.jpg`** is a static asset for a dashboard to be added later (not app-wide chrome).
 
+Generated events match the **Splunk4Rookies** workshop **`noise_apache.log`** shape: `/product.screen` and `/cart.do?action=…` URIs, Buttercup referers, workshop-era user agents, and `HTTP 1.1` request lines.
+
 ## Layout
 
 ```text
@@ -17,17 +19,20 @@ SA-S4R/                         # tracked in git
 ├── default/
 │   ├── app.conf                # label = Splunk4Rookies
 │   ├── data/ui/nav/default.xml
-│   └── eventgen.conf           # Eventgen definitions
+│   ├── eventgen.conf           # Eventgen definitions (dual templates)
+│   ├── props.conf              # action, product_id, uid, JSESSIONID extractions
+│   └── transforms.conf         # product_codes.csv lookup definition
 ├── lookups/
-│   └── product_codes.csv       # Demo lookup (wire in Splunk Web if needed)
+│   └── product_codes.csv       # Demo lookup for Lab 5
 ├── metadata/
 │   ├── default.meta
 │   └── meta.conf
 └── samples/                    # Token sources for Eventgen
-    ├── access_combined.sample
+    ├── product.screen.sample
+    ├── cart.do.sample
+    ├── action.txt
     ├── jsessionid.txt
     ├── method.txt
-    ├── path.txt
     ├── product_id.txt
     ├── referer.txt
     ├── status.txt
@@ -55,11 +60,12 @@ Example when you define the dashboard (adjust selector to your panel layout):
 
 ## Eventgen
 
-Configuration lives in **`default/eventgen.conf`**. The sample stanza **`access_combined.sample`**:
+Configuration lives in **`default/eventgen.conf`**. Two stanzas emit Buttercup-shaped traffic into **`main`** / **`access_combined`**:
 
-- Emits events on an interval with randomized count.
-- Targets index **`main`** and sourcetype **`access_combined`**.
-- Replaces tokens in the sample file with random IPs, timestamps, file-based tokens (paths, status codes, user agents, etc.).
+- **`product.screen.sample`** (~67%) — `GET|POST /product.screen?uid=…&product_id=…&JSESSIONID=…`
+- **`cart.do.sample`** (~33%) — `GET|POST /cart.do?action=…&product_id=…&JSESSIONID=…`
+
+Cart **`action`** values (`action.txt`): `view`, `addtocart`, `purchase`, `remove`, `changequantity`.
 
 Upstream documentation: [Splunk Eventgen](https://splunk.github.io/eventgen/).
 
@@ -71,21 +77,35 @@ Eventgen is provided by a Splunkbase app (included in `SPLUNK_APPS_URL` in `comp
 2. Confirm **Splunk4Rookies** (**`SA-S4R`**) is enabled under **Apps**.
 3. If events do not appear, check Splunk’s internal logs and Eventgen app status; Eventgen may require enablement per app in your Splunk version.
 
-## Sample event file
+## Sample event files
 
-**`samples/access_combined.sample`** is a template line for Apache/NCSA combined-style access logs. Tokens like `CLIENTIP`, `METHOD`, `PATH`, `STATUS` are substituted per `eventgen.conf`.
+- **`product.screen.sample`** — product page views with `uid` (no `action`).
+- **`cart.do.sample`** — cart actions with `action=` (no `uid`).
+
+Both use workshop-style `HTTP 1.1`, Buttercup referers, and a trailing response-time integer.
+
+## Field extractions and lookup
+
+**`default/props.conf`** extracts `action`, `product_id`, `uid`, and `JSESSIONID` from the request line so workshop SPL such as `action=purchase` works without manual field extraction.
+
+**`default/transforms.conf`** defines the **`product_codes.csv`** file lookup used in Lab 5:
+
+```spl
+| lookup product_codes.csv product_id
+```
 
 ## Lookup table
 
-**`lookups/product_codes.csv`** is a small CSV for demonstrations (product code → description). You can extend it and reference it from searches or knowledge objects in Splunk Web.
+**`lookups/product_codes.csv`** maps product IDs to names and prices for the lost-revenue exercise.
 
 ## Customizing
 
-- Add or edit **`samples/*.txt`** files to change categorical random choices.
-- Tune **`interval`**, **`count`**, and **`randomizeCount`** in `eventgen.conf` for load characteristics.
-- Add new stanzas and `.sample` files for additional sourcetypes.
+- Edit **`samples/action.txt`**, **`status.txt`**, or **`useragent.txt`** to change categorical choices.
+- Tune **`interval`**, **`count`**, and **`randomizeCount`** per stanza in `eventgen.conf`.
+- Adjust the **`product.screen`** / **`cart.do`** ratio via each stanza’s **`count`**.
 
 ## See also
 
+- [What Does the Business Want to See.md](What%20Does%20the%20Business%20Want%20to%20See.md) — dashboard build prompt (Labs 3–7)
 - [OVERVIEW.md](OVERVIEW.md) — where SA-S4R fits in the stack
 - [ARCHITECTURE.md](ARCHITECTURE.md) — volumes and persistence
