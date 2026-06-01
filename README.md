@@ -72,7 +72,6 @@ Pushes/PRs to **`main`** / **`master`**: [`.github/workflows/ci.yml`](.github/wo
 ```text
 splunk-mcp/
 ├── compose.yml                         # Splunk + one-shot init
-├── docker-compose.override.yml.example # Optional: copy to docker-compose.override.yml
 ├── Makefile
 ├── tpl.env.example / .env.example     # Tracked; copy to tpl.env or .env (gitignored)
 ├── scripts/                            # compose-up, setup-splunk, mint-mcp-token, mcp-client
