@@ -2,14 +2,16 @@
 
 **`SPLUNK_APPS_URL`** in **`compose.yml`** is a comma-separated list of Splunkbase download URLs; the **`compose.yml`** comments identify each app. Current entries (app ID → name):
 
-| App ID | App |
-| ------ | --- |
-| 1924 | SA-Eventgen (sample data / Eventgen modinput) |
-| 4353 | Config Explorer (optional UI utility) |
-| 7931 | Splunk MCP Server (required for `/services/mcp`) |
-| 7245 | Splunk AI Assistant for SPL |
-| 2882 | Python for Scientific Computing (Linux x86_64; MLTK / Connection Management needs this) |
-| 2890 | Splunk AI Toolkit |
+| App ID | App | Pinned release |
+| ------ | --- | -------------- |
+| 1924 | SA-Eventgen (sample data / Eventgen modinput) | 8.2.2 |
+| 4353 | Config Explorer (optional UI utility) | 1.8.24 |
+| 7931 | Splunk MCP Server (required for `/services/mcp`) | 1.2.0 |
+| 7245 | Splunk AI Assistant for SPL | 2.0.0 |
+| 2882 | Python for Scientific Computing (Linux x86_64; MLTK / Connection Management needs this) | 4.3.2 |
+| 2890 | Splunk AI Toolkit | 5.7.4 |
+
+Check current Splunkbase releases: `https://splunkbase.splunk.com/api/v1/app/<id>/release/` (first entry is latest). Update the `/release/VERSION/` segment in **`compose.yml`** when bumping.
 
 ### Service `so1` (Splunk)
 
