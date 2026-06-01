@@ -18,7 +18,7 @@ SA-S4R/                         # tracked in git
 │   └── Buttercup_Background.jpg  # Dashboard background (future)
 ├── default/
 │   ├── app.conf                # id, label, version, launcher metadata
-│   ├── data/ui/nav/default.xml
+│   ├── data/ui/nav/default.xml   # barebones nav (Search, Dashboards, Alerts, …)
 │   ├── eventgen.conf           # Eventgen definitions (dual templates)
 │   ├── props.conf              # action, product_id, uid, JSESSIONID extractions
 │   └── transforms.conf         # product_codes.csv lookup definition
@@ -83,6 +83,10 @@ Eventgen is provided by a Splunkbase app (included in `SPLUNK_APPS_URL` in `comp
 - **`cart.do.sample`** — cart actions with `action=` (no `uid`).
 
 Both use workshop-style `HTTP 1.1`, Buttercup referers, and a trailing response-time integer.
+
+## Navigation
+
+**`default/data/ui/nav/default.xml`** follows Splunk’s **barebones** app template (`share/splunk/app_templates/barebones/`): **Search** (default), **Analytics**, **Datasets**, **Reports**, **Alerts**, **Dashboards**, and **Modules**. Custom workshop dashboards (when added under `default/data/ui/views/`) appear under **Dashboards**.
 
 ## Field extractions and lookup
 
