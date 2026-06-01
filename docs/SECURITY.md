@@ -1,6 +1,6 @@
 ## Scope
 
-This document applies the workspace **development PoC** context: single host, Docker, localhost URLs, and AI clients using `mcp-remote` with TLS verification disabled for self-signed certificates.
+This document applies the workspace **development PoC** context: single host, Docker, localhost URLs, and AI clients using a local MCP proxy with a stdio bridge.
 
 ## How this rule was applied
 
@@ -11,13 +11,12 @@ Security guidance for **credentials**, **certificates**, and **transport** was a
 - **`tpl.env.example`** (tracked): Placeholder `op://` paths only—safe to publish.
 - **`tpl.env`** (gitignored): Your local file from **`cp tpl.env.example tpl.env`**; may contain real `op://` paths—**never commit**.
 - **`.env`**: Optional; hand-written from **`.env.example`** (Path B) and **git-ignored** when present. With **`tpl.env`** only, **`make up`** passes secrets via **`op run`** without creating `.env` (fewer secrets on disk).
-- **`.secrets/splunk-token`**: Bearer token for MCP; **git-ignored**, created with mode `600` by the setup script.
 - **Do not** commit `.env`, token files, or private keys. The repo should remain safe if published.
 
 ## TLS and trust
 
 - Splunk uses **HTTPS** on 8089 with a **self-signed** (or container-default) certificate.
-- Client configs set **`NODE_TLS_REJECT_UNAUTHORIZED=0`** for `mcp-remote`, which **disables certificate validation**. That is acceptable only on **loopback** in a trusted dev machine context.
+- The local proxy talks to Splunk over HTTPS and may disable TLS verification for localhost in development. That is acceptable only on **loopback** in a trusted dev machine context.
 - **Production-style** deployments should use proper CA-issued certificates (or organizational PKI), **enable** verification, and avoid disabling TLS checks in client env vars.
 
 ### Certificate verification (operational)
@@ -47,8 +46,7 @@ For stricter experiments:
 
 ## Token lifecycle
 
-- Tokens may be **time-limited** (see Splunk MCP app behavior and Splunk auth settings). Plan to **regenerate** via the documented REST flow or by re-running init when expired.
-- Rotating the token requires updating client configs again (`make update-mcp-clients`, or a full **`make up`** after the new token exists).
+- Tokens may be **time-limited** (see Splunk MCP app behavior and Splunk auth settings). In this repo, tokens are minted by `mcp-proxy` and held in memory; rotation is handled by restarting the proxy (or waiting for it to mint a new token).
 
 ## Logging and privacy
 
