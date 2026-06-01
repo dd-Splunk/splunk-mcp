@@ -21,7 +21,8 @@ Usage:
   $(basename "$0") update <claude|cursor|goose>
   $(basename "$0") verify <claude|cursor|goose|all>
 
-This config uses the local MCP proxy (no secrets written to client configs).
+Claude Desktop and Cursor use npx mcp-remote with a bearer token (client config only, not the repo).
+Goose uses the local MCP proxy via the stdio bridge (no secrets in repo configs).
 EOF
   exit "${1:-0}"
 }
@@ -43,17 +44,8 @@ proxy_mcp_url() {
   printf 'http://localhost:%s/mcp' "$MCP_PROXY_PORT"
 }
 
-# JSON mcpServers block (Claude + Cursor)
-mcp_servers_block_jq() {
-  local url
-  url="$1"
-  jq -n \
-    --arg url "$url" \
-    '{
-      command: "node",
-      args: ["scripts/mcp-stdio-http-bridge.mjs"],
-      env: {MCP_URL: $url}
-    }'
+splunk_mcp_endpoint() {
+  printf '%s' "${SPLUNK_MCP_ENDPOINT:-https://localhost:8089/services/mcp}"
 }
 
 merge_json_mcp_server() {
@@ -70,71 +62,59 @@ merge_json_mcp_server() {
   fi
 }
 
-merge_json_mcp_server_python() {
-  local out_path="$1" url="$2"
-  python3 - "$out_path" "$url" <<'PY'
-import json
-import os
-import sys
-
-out_path, url = sys.argv[1], sys.argv[2]
-block = {
-    "command": "node",
-    "args": ["scripts/mcp-stdio-http-bridge.mjs"],
-    "env": {"MCP_URL": url},
-}
-data = {}
-try:
-    with open(out_path, encoding="utf-8") as f:
-        data = json.load(f)
-except FileNotFoundError:
-    pass
-except json.JSONDecodeError:
-    pass
-data.setdefault("mcpServers", {})
-data["mcpServers"]["splunk-mcp-server"] = block
-tmp = out_path + ".tmp"
-with open(tmp, "w", encoding="utf-8") as f:
-    json.dump(data, f, indent=2)
-    f.write("\n")
-os.replace(tmp, out_path)
-PY
+# Splunk MCP Server 1.2 client shape: npx mcp-remote + encrypted bearer token
+# https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/1.2/connecting-to-the-mcp-server-and-settings
+# Local PoC: SPLUNK_MCP_TLS_INSECURE=1 adds NODE_TLS_REJECT_UNAUTHORIZED (self-signed Splunk TLS only).
+mcp_servers_block_mcp_remote_jq() {
+  local endpoint="$1" token="$2"
+  local tls_insecure="${SPLUNK_MCP_TLS_INSECURE:-1}"
+  jq -n \
+    --arg endpoint "$endpoint" \
+    --arg token "$token" \
+    --arg tls_insecure "$tls_insecure" \
+    '{
+      args: ["-y", "mcp-remote", $endpoint, "--header", ("Authorization: Bearer " + $token)],
+      command: "npx"
+    }
+    | if ($tls_insecure == "1" or $tls_insecure == "true" or $tls_insecure == "yes") then
+        . + {env: {NODE_TLS_REJECT_UNAUTHORIZED: "0"}}
+      else . end'
 }
 
-update_claude() {
-  command -v jq >/dev/null 2>&1 || die "jq required for Claude config (brew install jq)"
-  local url dir file block current
-  url=$(proxy_mcp_url)
-  dir="${HOME}/Library/Application Support/Claude"
-  file="${dir}/claude_desktop_config.json"
-  mkdir -p "$dir"
-  block=$(mcp_servers_block_jq "$url")
+update_json_mcp_remote() {
+  local file="$1" label="$2"
+  command -v jq >/dev/null 2>&1 || die "jq required for $label (brew install jq)"
+  local endpoint token block current
+  endpoint=$(splunk_mcp_endpoint)
+  token="$(./scripts/mint-mcp-token.sh)" || die "could not mint MCP token (is Splunk up? secrets in .env or tpl.env?)"
+  mkdir -p "$(dirname "$file")"
+  block=$(mcp_servers_block_mcp_remote_jq "$endpoint" "$token")
   if [[ -f "$file" ]] && current=$(cat "$file") && echo "$current" | jq empty 2>/dev/null; then
     if ! updated=$(echo "$current" | jq \
       --argjson splunk_mcp "$block" \
       '.mcpServers |= (. // {}) | .mcpServers["splunk-mcp-server"] = $splunk_mcp'); then
-      die "failed to merge Claude Desktop JSON"
+      die "failed to merge $label JSON"
     fi
     echo "$updated" | jq '.' >"$file"
   else
     [[ -f "$file" ]] && cp "$file" "${file}.backup.$(date +%s)"
     merge_json_mcp_server "$file" "$block"
   fi
-  echo "Updated Claude Desktop: $file"
+  echo "Updated $label: $file (npx mcp-remote → $endpoint)"
+  echo "Bearer token stored in client config only (not in this repo)."
+}
+
+update_claude() {
+  update_json_mcp_remote \
+    "${HOME}/Library/Application Support/Claude/claude_desktop_config.json" \
+    "Claude Desktop"
   echo "Restart Claude Desktop (Cmd+Q) for changes to take effect."
 }
 
 update_cursor() {
-  local url out block
-  url=$(proxy_mcp_url)
-  out="${CURSOR_MCP_JSON:-.cursor/mcp.json}"
-  if command -v jq >/dev/null 2>&1; then
-    block=$(mcp_servers_block_jq "$url")
-    merge_json_mcp_server "$out" "$block"
-  else
-    merge_json_mcp_server_python "$out" "$url"
-  fi
-  echo "Updated Cursor MCP config: $out"
+  update_json_mcp_remote \
+    "${CURSOR_MCP_JSON:-$ROOT/.cursor/mcp.json}" \
+    "Cursor"
   echo "Restart Cursor or reload MCP servers."
 }
 
@@ -206,9 +186,13 @@ verify_client_config() {
   path=$(client_config_path "$client")
   case "$client" in
     claude | cursor)
-      [[ -f "$path" ]] || die "$client config missing: $path (run: make update-mcp-client CLIENT=$client)"
+      [[ -f "$path" ]] || die "$client config missing: $path (run: make update-mcp-client MCP_CLIENT=$client)"
       jq -e '.mcpServers["splunk-mcp-server"]' "$path" >/dev/null \
         || die "$client config has no mcpServers.splunk-mcp-server in $path"
+      jq -e '.mcpServers["splunk-mcp-server"].command == "npx"' "$path" >/dev/null \
+        || die "$client splunk-mcp-server should use command npx (run: make update-mcp-client MCP_CLIENT=$client)"
+      jq -e '.mcpServers["splunk-mcp-server"].args | index("mcp-remote")' "$path" >/dev/null \
+        || die "$client splunk-mcp-server should use mcp-remote (run: make update-mcp-client MCP_CLIENT=$client)"
       ;;
     goose)
       [[ -f "$path" ]] || die "goose config missing: $path (run: make update-mcp-client CLIENT=goose)"
@@ -297,6 +281,9 @@ cmd_verify() {
         verify_client_config "$c"
       done
       verify_mcp_remote
+      ;;
+    claude | cursor)
+      verify_client_config "$client"
       ;;
     *)
       valid_client "$client" || die "unknown client '$client' (use: $VALID_CLIENTS or all)"

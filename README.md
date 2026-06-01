@@ -1,6 +1,6 @@
 # splunk-mcp
 
-Local **proof-of-concept**: run **Splunk Enterprise** in Docker with the **Splunk MCP Server** app, and connect an LLM client (**Cursor**, **Claude Desktop**, or **Goose**) over the Model Context Protocol (MCP) via a **local MCP proxy** and a small **stdio bridge** script. Secrets come from the **1Password CLI** (`op` + `tpl.env`) or a git-ignored **`.env`** (no 1Password required).
+Local **proof-of-concept**: run **Splunk Enterprise** in Docker with the **Splunk MCP Server** app, and connect **Cursor** or **Claude Desktop** via **`npx mcp-remote`** (Splunk 1.2 canonical config) or **Goose** via a local MCP proxy + stdio bridge. Secrets come from the **1Password CLI** (`op` + `tpl.env`) or a git-ignored **`.env`** (no 1Password required).
 
 ## First time here? (Presales / SE demo)
 
@@ -25,7 +25,7 @@ Splunkbase apps (see **`compose.yml`** for IDs, including **Splunk MCP Server**)
 
 - Docker with Compose, **`make`**, `bash`, **`curl`**, **`jq`**
 - **Secrets:** 1Password + **`tpl.env`** *or* **`.env`** (see [docs/PRESALES.md](docs/PRESALES.md))
-- **Node** for the MCP stdio bridge script (client configs)
+- **Node** / **npm** for `npx mcp-remote` (Claude/Cursor) and the Goose stdio bridge
 - **Splunkbase** account with download rights (used for `SPLUNK_APPS_URL`)
 
 ## Quick commands

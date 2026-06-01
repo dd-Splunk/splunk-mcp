@@ -126,14 +126,16 @@ Runs **inside** `splunk-init` with `SPLUNK_HOST=so1`. It:
 ## Claude Desktop configuration
 
 - Path: **`~/Library/Application Support/Claude/claude_desktop_config.json`** (macOS).
-- `scripts/mcp-client.sh update claude` merges `mcpServers.splunk-mcp-server` without destroying other servers.
+- Matches Splunk MCP Server **1.2** [client configuration](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/1.2/connecting-to-the-mcp-server-and-settings): **`npx mcp-remote`**, endpoint **`https://localhost:8089/services/mcp`**, **`Authorization: Bearer`** with an **encrypted** token.
+- `make update-claude-config` mints the token via **`scripts/mint-mcp-token.sh`** (Splunk app `mcp_token` REST). Splunk must be up. Token is stored **only** in Claude’s config, not in this repo.
+- **`NODE_TLS_REJECT_UNAUTHORIZED=0`** is written when **`SPLUNK_MCP_TLS_INSECURE`** is `1` (default for this PoC; self-signed Splunk only). Set **`SPLUNK_MCP_TLS_INSECURE=0`** to omit `env` if using proper TLS.
 - Uses **`jq`**; backs up invalid JSON with a timestamped file.
 
 ## Cursor configuration
 
-- Default output: **`.cursor/mcp.json`** (override with `CURSOR_MCP_JSON`).
-- `scripts/mcp-client.sh update cursor` merges **`splunk-mcp-server`** the same way as Claude.
-- Example placeholder without secrets: **`.cursor/mcp.json.example`**.
+- Default output: **`.cursor/mcp.json`** (override with `CURSOR_MCP_JSON`; gitignored if it contains a live token).
+- Same **1.2** `npx mcp-remote` entry as Claude (**`make update-cursor-config`**).
+- Example shape: **`.cursor/mcp.json.example`** (see Splunk doc link in Claude section above).
 
 ## Goose configuration
 
@@ -150,6 +152,8 @@ Runs **inside** `splunk-init` with `SPLUNK_HOST=so1`. It:
 | Variable | Used by | Purpose |
 | -------- | ------- | ------- |
 | `MCP_PROXY_PORT` | Client scripts | Local MCP proxy port (default `8090`) |
+| `SPLUNK_MCP_ENDPOINT` | `mcp-client.sh` | Splunk MCP URL for `mcp-remote` (default `https://localhost:8089/services/mcp`) |
+| `SPLUNK_MCP_TLS_INSECURE` | `mcp-client.sh` | If `1` (default), add `NODE_TLS_REJECT_UNAUTHORIZED=0` to Claude/Cursor config (dev/self-signed only) |
 | `SPLUNK_MCP_USER` | `setup-splunk.sh` | Splunk account to create/update (default `splunker`) |
 | `SPLUNK_MLTK_USER` | `setup-splunk.sh` | Which Splunk user gets `MLTK_ROLE` (default: same as `SPLUNK_MCP_USER`; set `admin` to match `SPLUNK_REST_USER`) |
 | `MLTK_ROLE` | `setup-splunk.sh` | MLTK Splunk role to assign (default `mltk_dsdl_admin`; empty skips assignment) |

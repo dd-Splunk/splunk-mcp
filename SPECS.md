@@ -90,7 +90,8 @@ Supported clients:
 
 - Client config files may be written to disk only if they contain no secrets
 - Configs should be repo-local when possible; otherwise use the client’s required default path
-- Client configs must not embed bearer tokens; they should run a local stdio bridge that talks to the local proxy
+- **Goose** uses a local stdio bridge to the local proxy (no bearer token in repo config)
+- **Claude Desktop** and **Cursor:** canonical **`npx mcp-remote`** to Splunk MCP; bearer token is written only to the client config when running `update claude` / `update cursor` (not committed to git)
 - **Goose:** `update goose` writes an **absolute** path to the bridge script and uses the **`envs`** field (not `env`); Goose’s session cwd is often not the repo root
 
 ## Tooling and UX requirements
