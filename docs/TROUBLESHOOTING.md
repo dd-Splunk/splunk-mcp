@@ -248,11 +248,12 @@ Edit **`tpl.env`** with your `op://` paths. **`tpl.env`** is gitignored—do not
 
 **Error**: `splunk-init exited with code 1`
 
-**Symptoms**: Splunk running but user/role/token not created
+**Symptoms**: Splunk running but user/role/token not created; **`make status`** prints **`splunk-init: FAILED (exit N)`** and exits non-zero
 
 **Solution**:
 
 ```bash
+make status                # confirms init failure vs still running
 docker logs splunk-init  # Check error
 make logs | tail -50     # Check Splunk readiness
 
