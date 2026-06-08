@@ -55,12 +55,16 @@ status: ## Container status and Splunk API probe
 	@echo "Containers:"
 	@docker ps -a --filter "name=so1" --format "table {{.Names}}\t{{.Status}}\t{{.Image}}" 2>/dev/null || true
 	@docker ps -a --filter "name=splunk-init" --format "table {{.Names}}\t{{.Status}}\t{{.Image}}" 2>/dev/null || true
-	@echo ""; echo "splunk-init Exited (0) is normal (one-shot setup)."
 	@echo ""
-	@code="$$(docker exec so1 curl -k -s -o /dev/null -w '%{http_code}' \
+	@init_rc=0; ./scripts/splunk-init-status.sh || init_rc=$$?; \
+	echo ""; \
+	code="$$(docker exec so1 curl -k -s -o /dev/null -w '%{http_code}' \
 		https://localhost:8089/services/server/info 2>/dev/null)"; \
 	if [[ "$$code" = "200" || "$$code" = "401" ]]; then echo "Splunk is ready ✓"; \
-	else echo "Splunk is not ready yet..."; fi
+	else echo "Splunk is not ready yet..."; splunk_rc=1; fi; \
+	splunk_rc="$${splunk_rc:-0}"; \
+	if [[ "$$init_rc" -ne 0 ]]; then exit "$$init_rc"; fi; \
+	exit "$$splunk_rc"
 
 update-mcp-clients: ## Update Claude, Cursor, and Goose (mcp-remote + token)
 	@for c in $(MCP_CLIENTS); do \

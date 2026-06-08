@@ -93,7 +93,7 @@ Allow **several minutes** on first run (image pull, Splunk, Splunkbase downloads
 
 ```bash
 make logs
-make status    # expect "Splunk is ready ✓" when healthy
+make status    # splunk-init line + "Splunk is ready ✓"; exits non-zero if init failed or Splunk down
 ```
 
 ## Splunk Web
