@@ -43,6 +43,17 @@ splunk_mcp_endpoint() {
   printf '%s' "${SPLUNK_MCP_ENDPOINT:-https://localhost:8089/services/mcp}"
 }
 
+# GUI apps (e.g. Claude Desktop) often inherit a minimal PATH without Homebrew.
+npx_command() {
+  local npx_cmd="${MCP_NPX_COMMAND:-}"
+  if [[ -z "$npx_cmd" ]]; then
+    npx_cmd="$(command -v npx || true)"
+  fi
+  [[ -n "$npx_cmd" ]] || die "npx not found in PATH (brew install node)"
+  [[ -x "$npx_cmd" ]] || die "npx is not executable: $npx_cmd"
+  printf '%s' "$npx_cmd"
+}
+
 merge_json_mcp_server() {
   local out_path="$1"
   local block="$2"
@@ -59,15 +70,16 @@ merge_json_mcp_server() {
 
 # Splunk MCP Server 1.2 client shape: npx mcp-remote + encrypted bearer token
 mcp_servers_block_mcp_remote_jq() {
-  local endpoint="$1" token="$2"
+  local endpoint="$1" token="$2" npx_cmd="$3"
   local tls_insecure="${SPLUNK_MCP_TLS_INSECURE:-1}"
   jq -n \
     --arg endpoint "$endpoint" \
     --arg token "$token" \
+    --arg npx_cmd "$npx_cmd" \
     --arg tls_insecure "$tls_insecure" \
     '{
       args: ["-y", "mcp-remote", $endpoint, "--header", ("Authorization: Bearer " + $token)],
-      command: "npx"
+      command: $npx_cmd
     }
     | if ($tls_insecure == "1" or $tls_insecure == "true" or $tls_insecure == "yes") then
         . + {env: {NODE_TLS_REJECT_UNAUTHORIZED: "0"}}
@@ -81,11 +93,12 @@ mint_mcp_token() {
 update_json_mcp_remote() {
   local file="$1" label="$2"
   command -v jq >/dev/null 2>&1 || die "jq required for $label (brew install jq)"
-  local endpoint token block current
+  local endpoint token block current npx_cmd
   endpoint=$(splunk_mcp_endpoint)
+  npx_cmd="$(npx_command)"
   token="$(mint_mcp_token)" || die "could not mint MCP token (is Splunk up? secrets in .env or tpl.env?)"
   mkdir -p "$(dirname "$file")"
-  block=$(mcp_servers_block_mcp_remote_jq "$endpoint" "$token")
+  block=$(mcp_servers_block_mcp_remote_jq "$endpoint" "$token" "$npx_cmd")
   if [[ -f "$file" ]] && current=$(cat "$file") && echo "$current" | jq empty 2>/dev/null; then
     if ! updated=$(echo "$current" | jq \
       --argjson splunk_mcp "$block" \
@@ -97,7 +110,7 @@ update_json_mcp_remote() {
     [[ -f "$file" ]] && cp "$file" "${file}.backup.$(date +%s)"
     merge_json_mcp_server "$file" "$block"
   fi
-  echo "Updated $label: $file (npx mcp-remote → $endpoint)"
+  echo "Updated $label: $file ($npx_cmd mcp-remote → $endpoint)"
   echo "Bearer token stored in client config only (not in this repo)."
 }
 
@@ -117,8 +130,9 @@ update_cursor() {
 
 update_goose() {
   command -v jq >/dev/null 2>&1 || die "jq required for Goose (brew install jq)"
-  local endpoint token header tls_insecure dir file
+  local endpoint token header tls_insecure dir file npx_cmd
   endpoint=$(splunk_mcp_endpoint)
+  npx_cmd="$(npx_command)"
   token="$(mint_mcp_token)" || die "could not mint MCP token"
   header="Authorization: Bearer ${token}"
   tls_insecure="${SPLUNK_MCP_TLS_INSECURE:-1}"
@@ -126,11 +140,11 @@ update_goose() {
   file="${dir}/config.yaml"
   mkdir -p "$dir"
   [[ -f "$file" ]] || printf 'extensions: {}\n' >"$file"
-  python3 - "$file" "$endpoint" "$header" "$tls_insecure" <<'PY'
+  python3 - "$file" "$endpoint" "$header" "$tls_insecure" "$npx_cmd" <<'PY'
 import re
 import sys
 
-config_file, endpoint, header, tls_insecure = sys.argv[1:5]
+config_file, endpoint, header, tls_insecure, npx_cmd = sys.argv[1:6]
 with open(config_file, encoding="utf-8") as f:
     content = f.read()
 
@@ -160,7 +174,7 @@ new_entry = f"""
     type: stdio
     name: splunk-mcp-server
     description: Splunk MCP Server
-    cmd: npx
+    cmd: {npx_cmd!r}
     args:
       - -y
       - mcp-remote
@@ -176,7 +190,7 @@ content = content[:end_of_line] + new_entry + content[end_of_line:]
 with open(config_file, "w", encoding="utf-8") as f:
     f.write(content)
 PY
-  echo "Updated Goose: $file (npx mcp-remote → $endpoint)"
+  echo "Updated Goose: $file ($npx_cmd mcp-remote → $endpoint)"
   echo "Bearer token stored in Goose config only (not in this repo)."
   echo "Restart Goose for changes to take effect."
 }
@@ -198,8 +212,8 @@ verify_client_config() {
       [[ -f "$path" ]] || die "$client config missing: $path (run: make update-mcp-client MCP_CLIENT=$client)"
       jq -e '.mcpServers["splunk-mcp-server"]' "$path" >/dev/null \
         || die "$client config has no mcpServers.splunk-mcp-server in $path"
-      jq -e '.mcpServers["splunk-mcp-server"].command == "npx"' "$path" >/dev/null \
-        || die "$client splunk-mcp-server should use command npx (run: make update-mcp-client MCP_CLIENT=$client)"
+      jq -e '.mcpServers["splunk-mcp-server"].command | test("npx$")' "$path" >/dev/null \
+        || die "$client splunk-mcp-server should use npx (run: make update-mcp-client MCP_CLIENT=$client)"
       jq -e '.mcpServers["splunk-mcp-server"].args | index("mcp-remote")' "$path" >/dev/null \
         || die "$client splunk-mcp-server should use mcp-remote (run: make update-mcp-client MCP_CLIENT=$client)"
       ;;
@@ -222,8 +236,8 @@ m = re.search(
 if not m:
     sys.exit("splunk-mcp-server block not found")
 section = m.group(0)
-if "cmd: npx" not in section and "cmd:npx" not in section.replace(" ", ""):
-    sys.exit("goose splunk-mcp-server should use cmd: npx")
+if not re.search(r"cmd:\s*(\S+/)?npx\b", section):
+    sys.exit("goose splunk-mcp-server should use npx in cmd")
 if "mcp-remote" not in section:
     sys.exit("goose splunk-mcp-server should use mcp-remote in args")
 PY
