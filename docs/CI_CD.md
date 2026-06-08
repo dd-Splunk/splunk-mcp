@@ -29,7 +29,7 @@ Automation in this repo is intentionally small: it supports a **local PoC** stac
 
 - Does **not** build Docker images, start Splunk, run integration tests, or validate MCP connectivity.
 - Does **not** package Splunk apps or publish releases.
-- Match CI locally: `pip install pre-commit && pre-commit install`, then **`pre-commit run --all-files`** before pushing (requires **Node/npx** for markdownlint).
+- Match CI locally: `pip install pre-commit && pre-commit install`, then **`pre-commit run --all-files`** before pushing (requires **shellcheck** on PATH and **Node/npx** for markdownlint). CI installs **shellcheck** via **apt**; on macOS use **`brew install shellcheck`**.
 
 ---
 
