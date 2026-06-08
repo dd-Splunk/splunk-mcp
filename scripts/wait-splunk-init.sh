@@ -56,6 +56,46 @@ wait_splunk_init() {
   return 1
 }
 
+# One-line summary for make status. Returns 0 unless the container exited non-zero.
+report_splunk_init_status() {
+  local status exit_code
+
+  command -v docker >/dev/null 2>&1 || {
+    echo "splunk-init: docker not found"
+    return 0
+  }
+
+  if ! docker inspect "$SPLUNK_INIT_CONTAINER" >/dev/null 2>&1; then
+    echo "splunk-init: not found (run make up)"
+    return 0
+  fi
+
+  status="$(docker inspect -f '{{.State.Status}}' "$SPLUNK_INIT_CONTAINER")"
+  case "$status" in
+    exited)
+      exit_code="$(docker inspect -f '{{.State.ExitCode}}' "$SPLUNK_INIT_CONTAINER")"
+      if [[ "$exit_code" = "0" ]]; then
+        echo "splunk-init: completed successfully (exit 0)."
+        return 0
+      fi
+      echo "splunk-init: FAILED (exit ${exit_code}) — run: docker logs ${SPLUNK_INIT_CONTAINER}"
+      return 1
+      ;;
+    running)
+      echo "splunk-init: still running (setup in progress)…"
+      return 0
+      ;;
+    created)
+      echo "splunk-init: created (not started yet)…"
+      return 0
+      ;;
+    *)
+      echo "splunk-init: unexpected status=${status}"
+      return 1
+      ;;
+  esac
+}
+
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   wait_splunk_init
 fi
