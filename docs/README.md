@@ -6,7 +6,7 @@ The root [README.md](../README.md) stays short. **For a presales or SE demo, sta
 
 1. [`Makefile`](../Makefile) — `make up` uses `op run` or `.env`; lifecycle targets use plain `docker compose` (no `op` required)  
 2. [`compose.yml`](../compose.yml) — services, ports, `SPLUNK_APPS_URL`, mounts  
-3. [`scripts/setup-splunk.sh`](../scripts/setup-splunk.sh) — REST bootstrap, `splunker`, token file  
+3. [`scripts/setup-splunk.sh`](../scripts/setup-splunk.sh) — REST bootstrap, `splunker`, MCP roles  
 4. [`AGENTS.md`](../AGENTS.md) — contributor rules and verification commands  
 
 ## Getting started
@@ -28,6 +28,7 @@ The root [README.md](../README.md) stays short. **For a presales or SE demo, sta
 | [SECURITY.md](SECURITY.md) | Dev-only risks, tokens, TLS |
 | [CI_CD.md](CI_CD.md) | GitHub Actions, artifacts |
 | [SA-S4R-APP.md](SA-S4R-APP.md) | Bundled sample app and Eventgen |
+| [S4R-AGENTS.md](S4R-AGENTS.md) | **Splunk4Rookies** agentic setup (Power User + four specialists) |
 | [What Does the Business Want to See.md](What%20Does%20the%20Business%20Want%20to%20See.md) | **Splunk4Rookies** dashboard build prompt (Labs 3–7) |
 
 ## API and development

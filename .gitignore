@@ -24,7 +24,8 @@ docker-compose.override.yml
 
 # Node dependencies for local build contexts
 # Cursor / Windsurf local rules (any path in repo)
-**/.cursor/rules/
+**/.cursor/rules/*
+!**/.cursor/rules/s4r-buttercup-agents.mdc
 **/.windsurf/rules/
 
 # Editor directories

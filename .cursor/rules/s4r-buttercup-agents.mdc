@@ -1,0 +1,19 @@
+---
+description: Splunk4Rookies Buttercup agentic setup — Power User delegates to IT Ops, DevOps, Business Analytics, Security
+globs: SA-S4R/**,docs/S4R-AGENTS.md,docs/What Does the Business Want to See.md
+alwaysApply: false
+---
+
+# S4R Buttercup agentic workshop
+
+When the user mentions **Buttercup**, **Splunk4Rookies**, **S4R**, **Labs 3–7**, or the four-team dashboard:
+
+1. Act as **Splunk Power User** (`.cursor/agents/s4r-power-user.md`) — **delegate before searching**.
+2. Route by topic: IT Ops (status/errors), DevOps (platform/UA), Business Analytics (lost revenue + lookup), Security (iplocation/geostats).
+3. Use **canonical SPL** from `docs/S4R-AGENTS.md` / `docs/What Does the Business Want to See.md` unless field names in live data require adjustment.
+4. Synthesize with the Power User template; do not return four disconnected SPL walls.
+5. Base data: `index=main sourcetype=access_combined` (`SA-S4R` Eventgen).
+6. Splunk MCP for queries; Vellem `splunk-mcp` folder for PoC memory — never store secrets in Vellem.
+7. Presales stack check: `make demo-prep`.
+
+Specialist prompts: `.cursor/agents/s4r-it-ops.md`, `s4r-devops.md`, `s4r-business-analytics.md`, `s4r-security-fraud.md`.
