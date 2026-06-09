@@ -19,13 +19,14 @@ mcp_token.txt
 # Docker volumes (data stored in named volumes)
 docker-compose.override.yml
 
-# Cursor MCP (may contain secrets in some configs)
+# Cursor — mcp.json may contain secrets; agent prompts and S4R rule are tracked
 .cursor/mcp.json
+**/.cursor/rules/*
+!**/.cursor/rules/s4r-buttercup-agents.mdc
+!**/.cursor/agents/**
 
 # Node dependencies for local build contexts
 # Cursor / Windsurf local rules (any path in repo)
-**/.cursor/rules/*
-!**/.cursor/rules/s4r-buttercup-agents.mdc
 **/.windsurf/rules/
 
 # Editor directories
