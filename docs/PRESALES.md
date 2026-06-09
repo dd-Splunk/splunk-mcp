@@ -14,9 +14,9 @@ This repo is a **local proof-of-concept**: **Splunk Enterprise** in Docker, **Sp
    - **Path B (no 1Password):** `cp .env.example .env`, fill `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, `SPLUNK_MCP_PASSWORD`, `SPLUNK_IMAGE`, `TZ`. Never commit `.env`.
 3. **Network:** The host must reach **splunkbase.splunk.com** (HTTPS) and your container registry (e.g. Docker Hub). VPN/firewall/proxy often blocks corporate demos—test ahead.
 4. **Start:** `make up` from the repo root. First cold start is often **several minutes** (image pull, Splunk, Splunkbase app downloads, **`splunk-init`**). For a live meeting, warm the stack **before** the call or the day before.
-5. **Wait for green:** `make status` until it prints **Splunk is ready ✓**.
+5. **Wait for green:** `make status` until it prints **Splunk is ready ✓** (or run **`make demo-prep`** — status + MCP verify + warm-stack reminder).
 6. **Cursor (recommended):** **`make up`** already wrote **`.cursor/mcp.json`**; restart Cursor or reload MCP servers. Confirm Splunk/MCP tools in the tool list and run a **read-only** tool (e.g. a small search).
-7. **Sanity check from the shell:** `make verify-mcp-remote` (checks all client configs + Splunk MCP `tools/list`).
+7. **Sanity check from the shell:** `make verify-mcp-remote` or **`make demo-prep`** (checks all client configs + Splunk MCP `tools/list`).
 8. **Claude / Goose (if used):** **`make up`** runs **`update-mcp-clients`**; **quit Claude fully (Cmd+Q)** and reopen, and restart Goose.
 
 If anything fails, go straight to [TROUBLESHOOTING.md](TROUBLESHOOTING.md) (Splunkbase auth, ports, token timeout, MCP 401).
