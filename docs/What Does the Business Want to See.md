@@ -1,6 +1,6 @@
 # Splunk4Rookies dashboard prompt
 
-Use this document as the **build spec** when creating the Buttercup Enterprises workshop dashboard in the **Splunk4Rookies** app (`SA-S4R`). It reflects **Splunk4Rookies** workshop Labs 3–7. Data and lookups are described in [SA-S4R-APP.md](SA-S4R-APP.md).
+Use this document as the **build spec** when creating the Buttercup Enterprises workshop dashboard in the **Splunk4Rookies** app (`SA-S4R`). It reflects **Splunk4Rookies** workshop Labs 3–7. Data and lookups are described in [SA-S4R-APP.md](SA-S4R-APP.md). For **agentic** analysis (Power User delegating to IT Ops, DevOps, Business Analytics, Security), see [S4R-AGENTS.md](S4R-AGENTS.md) and [`.cursor/agents/`](../.cursor/agents/).
 
 ## Scenario
 
