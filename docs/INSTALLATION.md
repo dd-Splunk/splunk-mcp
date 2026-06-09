@@ -142,7 +142,7 @@ Use **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** for Docker, ports, `op` auth, S
 
 ## Security (local PoC)
 
-This setup targets **trusted localhost** use: self-signed TLS, dev-oriented MCP settings. Do not treat it as production-ready. See [SECURITY.md](SECURITY.md). Do not commit **`.env`**, **`.secrets/`**, or client files containing live tokens.
+This setup targets **trusted localhost** use: self-signed TLS, dev-oriented MCP settings. Do not treat it as production-ready. See [SECURITY.md](SECURITY.md). Do not commit **`.env`**, **`tpl.env`**, or client files containing live MCP bearer tokens. (Legacy **`.secrets/`** is gitignored and only used when **`ALLOW_LEGACY_SECRETS=1`** — tokens are not written there.)
 
 ## Next steps
 

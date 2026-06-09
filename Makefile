@@ -14,7 +14,7 @@ MCP_CLIENTS := cursor goose claude
 
 export ENV_FILE ENV_OUT ENV_EXAMPLE OP DC
 
-.PHONY: help up down restart clean logs status \
+.PHONY: help up down restart clean logs status demo-prep verify \
 	update-mcp-clients update-mcp-client verify-mcp-remote \
 	update-claude-config update-cursor-config update-goose-config
 
@@ -88,3 +88,18 @@ update-goose-config: ## Goose: npx mcp-remote + bearer token
 
 verify-mcp-remote: ## Verify client configs + Splunk MCP (MCP_VERIFY_CLIENT=all|…)
 	@./scripts/mcp-client.sh verify "$(MCP_VERIFY_CLIENT)"
+
+demo-prep: ## Pre-demo check: status + MCP verify + warm-stack reminder
+	@echo "=== Splunk MCP demo prep ==="
+	@echo "Tip: warm the stack before a live meeting — cold 'make up' can take many minutes."
+	@echo ""
+	@$(MAKE) status
+	@echo ""
+	@$(MAKE) verify-mcp-remote
+	@echo ""
+	@echo "Demo prep complete. Restart Cursor/Claude if you refreshed MCP configs."
+	@echo "Splunk Web: https://localhost:8000 | MCP: https://localhost:8089/services/mcp"
+
+verify: ## Stack status then Splunk MCP client verify
+	@$(MAKE) status
+	@$(MAKE) verify-mcp-remote
