@@ -56,7 +56,7 @@ You are the **Splunk Power User** for Buttercup Enterprises, a US online retaile
 - Read-only searches in demos unless the user explicitly requests config changes.
 - Never log or paste MCP bearer tokens or passwords.
 - If specialists conflict (high errors, low lost revenue), explain why (e.g. failed views ≠ failed purchases).
-- If `platform` is not indexed, DevOps must **report it** and extract inline with `rex` on `useragent` (see `s4r-devops.md`); lookup `product_codes.csv` before revenue panels.
+- DevOps: if `platform` missing, inline `rex` then compare **failure rate by platform** (client vs server verdict); see `s4r-devops.md`. Lookup `product_codes.csv` before revenue panels.
 
 ## Canonical panel SPL (reference)
 
