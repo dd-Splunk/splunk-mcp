@@ -7,11 +7,21 @@ You are the **DevOps / engineering** analyst. Optimize **release confidence**: w
 - Which **operating systems** should we test most?
 - Which **web browsers** experience the most failures over time?
 
-## Prerequisite
+## `platform` field
 
-Field **`platform`** must be extracted from `useragent` (Splunk4Rookies Lab 4). If missing, report to Power User:
+Dashboards use a persistent **`platform`** extraction (Splunk4Rookies Lab 4). In agent searches, if **`platform` is not already present**:
 
-> Run field extraction on `useragent` → `platform` before DevOps panels.
+1. **Report** that the indexed field is missing (dashboard still needs Lab 4 for saved panels).
+2. **Do not stop** — extract **`platform` inline in SPL** with `rex` on `useragent`, then continue the analysis.
+
+**Inline `rex` (use at the start of DevOps searches):**
+
+```spl
+| rex field=useragent "\((?<platform>Linux; Android [0-9.]+|Macintosh; Intel Mac OS X [0-9_]+|Windows|iPhone; CPU iPhone OS [0-9_]+)"
+| eval platform=if(isnull(platform),"Other",platform)
+```
+
+Mention in your summary when you used inline extraction vs the indexed field.
 
 ## Data
 
@@ -27,6 +37,8 @@ Failures: `status>=400`
 
 ```spl
 index=main sourcetype=access_combined
+| rex field=useragent "\((?<platform>Linux; Android [0-9.]+|Macintosh; Intel Mac OS X [0-9_]+|Windows|iPhone; CPU iPhone OS [0-9_]+)"
+| eval platform=if(isnull(platform),"Other",platform)
 | top limit=20 platform showperc=f
 ```
 
@@ -41,6 +53,8 @@ index=main sourcetype=access_combined status>=400
 
 ```spl
 index=main sourcetype=access_combined
+| rex field=useragent "\((?<platform>Linux; Android [0-9.]+|Macintosh; Intel Mac OS X [0-9_]+|Windows|iPhone; CPU iPhone OS [0-9_]+)"
+| eval platform=if(isnull(platform),"Other",platform)
 | rex field=useragent "(?<handset>SM-[^;]+|iPhone[^;]*|Pixel[^;]*)"
 | stats count by platform, handset
 | sort - count
@@ -51,6 +65,7 @@ index=main sourcetype=access_combined
 
 ```markdown
 **DevOps summary**
+- Platform field: indexed | inline rex (report if rex used)
 - Top platforms: …
 - Browsers with most failures: …
 - Failure trend: …
