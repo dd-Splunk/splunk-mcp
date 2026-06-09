@@ -106,21 +106,17 @@ index=main sourcetype=access_combined status>=400
 
 ## DevOps agent
 
-**Ask (Lab 4):** Most common customer operating systems; web browsers with the most failures.
+**Ask (Lab 4):** Most common operating systems; browsers with the most failures; **client-specific vs server-wide** failure pattern.
 
-**`platform` field:** If not indexed, report it and add inline `rex` before `top`:
-
-```spl
-| rex field=useragent "\((?<platform>Linux; Android [0-9.]+|Macintosh; Intel Mac OS X [0-9_]+|Windows|iPhone; CPU iPhone OS [0-9_]+)"
-| eval platform=if(isnull(platform),"Other",platform)
-```
+**`platform` field:** If not indexed, report it and prepend inline `rex` (do not stop). Full workflow and queries: [`.cursor/agents/s4r-devops.md`](../.cursor/agents/s4r-devops.md).
 
 | Panel | Visualization | Canonical SPL |
 | ----- | ------------- | ------------- |
-| Top OS | Bar chart | `index=main sourcetype=access_combined` + inline `rex` above + `\| top limit=20 platform showperc=f` |
+| Top OS | Bar chart | `index=main sourcetype=access_combined` + platform prefix + `\| top limit=20 platform showperc=f` |
 | Failing browsers | Area chart | `index=main sourcetype=access_combined status>=400 \| timechart count by useragent limit=5 useother=f` |
+| Failure rate by OS | Table / verdict | platform prefix + `stats` by `platform`, `outcome` — see DevOps agent query 3 |
 
-**Escalate:** Site-wide status spike → IT Ops; failed purchases → Business Analytics.
+**Escalate:** Flat failure rate across platforms → IT Ops; purchase-only failures → Business Analytics.
 
 **Prompt file:** [`.cursor/agents/s4r-devops.md`](../.cursor/agents/s4r-devops.md)
 
