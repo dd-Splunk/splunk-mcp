@@ -7,6 +7,7 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`.
 - **Purpose**: local PoC that runs **Splunk Enterprise** in Docker and exposes **Splunk MCP Server** on `https://localhost:8089/services/mcp`.
 - **Client bridge**: **Claude Desktop**, **Cursor**, and **Goose** use **`npx mcp-remote`** to `https://localhost:8089/services/mcp` (token minted at `make update-*-config` after **`splunk-init`** completes; stored only in client config, not the repo). See `make update-mcp-clients` or `make update-mcp-client MCP_CLIENT=…`. **SE / presales**: **`docs/PRESALES.md`**.
 - **Sample app**: **`SA-S4R`** (UI label **Splunk4Rookies**) — bind-mounted Eventgen traffic, lookups, dashboard assets. See **`docs/SA-S4R-APP.md`** and **`docs/What Does the Business Want to See.md`** (workshop dashboard spec).
+- **Session memory (Vellem)**: when the **vellem** MCP server is enabled in Cursor, start with **`search_notes_semantic`** on folder **`splunk-mcp`** (boot, verify, troubleshooting) before deep doc reads. Use **`list_expiring_contexts`** to avoid stale notes. After demos or non-obvious fixes, capture outcomes in Vellem (**`add_decision_note`** / **`append_to_daily`**) — not in git. Splunk MCP handles live data; Vellem holds repo-specific memory (no secrets).
 
 ## Golden rules (don’t break these)
 
@@ -51,6 +52,7 @@ Splunk REST bootstrap (see **`docs/SETUP_SPLUNK_SCRIPT.md`** for detail):
 | -------- | ----------------- |
 | Stack healthy? | `make status` — **`splunk-init`** line + **Splunk is ready ✓**; exits non-zero if init failed or Splunk down |
 | MCP client path OK? | `make verify-mcp-remote` (all clients) or `make verify-mcp-remote MCP_VERIFY_CLIENT=cursor` |
+| Pre-demo / both checks? | `make demo-prep` (status + verify + warm-stack reminder) or `make verify` (status then verify only) |
 | Init failed? | `docker logs splunk-init` (see **`docs/TROUBLESHOOTING.md`**) |
 | Eventgen modinput? | `curl -k -u admin:<password> "https://localhost:8089/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default?output_mode=json"` |
 
@@ -73,7 +75,7 @@ Splunk REST bootstrap (see **`docs/SETUP_SPLUNK_SCRIPT.md`** for detail):
 ## Change discipline
 
 - Prefer small commits; keep **`make up`**, **`make status`**, **`make verify-mcp-remote`** working.
-- When changing **`Makefile`**, **`compose.yml`**, or **`scripts/setup-splunk.sh`**, update **`docs/CONFIGURATION.md`**, **`docs/OVERVIEW.md`**, and/or **`docs/TROUBLESHOOTING.md`** as needed.
+- When changing **`Makefile`**, **`compose.yml`**, or **`scripts/setup-splunk.sh`**, update **`docs/CONFIGURATION.md`**, **`docs/OVERVIEW.md`**, and/or **`docs/TROUBLESHOOTING.md`** as needed; refresh or expire Vellem **`splunk-mcp`** folder notes when behavior changes.
 - Lint before push: **`pre-commit run --all-files`** (**shellcheck** on **`scripts/*.sh`**, **markdownlint-cli2** on Markdown). Requires **shellcheck** on PATH (`brew install shellcheck`) and **Node/npx**. Auto-fix Markdown: `npx --yes markdownlint-cli2 --fix`.
 - **License:** contributions are under **[LICENSE](LICENSE)** (MIT).
 

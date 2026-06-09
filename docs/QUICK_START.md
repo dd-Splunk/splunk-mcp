@@ -33,8 +33,9 @@ With **`tpl.env`** and no **`.env`**, **`make up`** injects secrets via **`op ru
 ## 3. Verify
 
 ```bash
-make status
-make verify-mcp-remote
+make demo-prep    # status + MCP verify + presales reminder
+# or:
+make verify       # status then verify-mcp-remote only
 ```
 
 - Splunk Web: `https://localhost:8000` (admin + password from your secret source).
