@@ -19,7 +19,7 @@ Agent roles for the **Splunk4Rookies** attendee workshop (Apr 2026 deck) and thi
 index=main sourcetype=access_combined
 ```
 
-Eventgen in **`SA-S4R`** emits workshop-shaped Apache access logs (`/product.screen`, `/cart.do`). Lookup **`product_codes.csv`** maps `product_id` → `product_price`. Field **`platform`** must be extracted from `useragent` before DevOps panels (Lab 4).
+Eventgen in **`SA-S4R`** emits workshop-shaped Apache access logs (`/product.screen`, `/cart.do`). Lookup **`product_codes.csv`** maps `product_id` → `product_price`. Dashboards use a persistent **`platform`** field (Lab 4); **agents** may extract it **inline in SPL** with `rex` when the field is not indexed.
 
 ## Architecture
 
@@ -108,11 +108,16 @@ index=main sourcetype=access_combined status>=400
 
 **Ask (Lab 4):** Most common customer operating systems; web browsers with the most failures.
 
-**Prerequisite:** Extract field **`platform`** from `useragent` if not present.
+**`platform` field:** If not indexed, report it and add inline `rex` before `top`:
+
+```spl
+| rex field=useragent "\((?<platform>Linux; Android [0-9.]+|Macintosh; Intel Mac OS X [0-9_]+|Windows|iPhone; CPU iPhone OS [0-9_]+)"
+| eval platform=if(isnull(platform),"Other",platform)
+```
 
 | Panel | Visualization | Canonical SPL |
 | ----- | ------------- | ------------- |
-| Top OS | Bar chart | `index=main sourcetype=access_combined \| top limit=20 platform showperc=f` |
+| Top OS | Bar chart | `index=main sourcetype=access_combined` + inline `rex` above + `\| top limit=20 platform showperc=f` |
 | Failing browsers | Area chart | `index=main sourcetype=access_combined status>=400 \| timechart count by useragent limit=5 useother=f` |
 
 **Escalate:** Site-wide status spike → IT Ops; failed purchases → Business Analytics.

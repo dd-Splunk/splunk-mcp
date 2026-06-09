@@ -15,7 +15,7 @@ You are a Splunk power user for **Buttercup Enterprises**, a US online retailer 
 | Index / sourcetype | `index=main sourcetype=access_combined` |
 | Event shape | Apache-style access logs: `/product.screen?uid=…&product_id=…` and `/cart.do?action=…&product_id=…` |
 | Fields in repo | `action`, `product_id`, `uid`, `JSESSIONID` (`SA-S4R/default/props.conf`) |
-| Field to add (Lab 4) | **`platform`** — extract from `useragent` (OS/platform); required before DevOps panels |
+| Field to add (Lab 4) | **`platform`** — extract from `useragent` (OS/platform) for saved dashboard panels; agents may use inline `rex` in SPL when the field is not indexed (see [S4R-AGENTS.md](S4R-AGENTS.md)) |
 | Lookup | `product_codes.csv` → `product_id`, `product_name`, `product_price` (`SA-S4R/lookups/`) |
 | Background asset | `/static/app/SA-S4R/Buttercup_Background.jpg` (repo: `SA-S4R/appserver/static/Buttercup_Background.jpg`) |
 
@@ -49,7 +49,7 @@ Add this panel to a **new** dashboard; choose Dashboard Studio and Absolute layo
 
 **Ask:** Show the most common customer operating systems and which web browsers experience the most failures.
 
-**Prerequisite:** Extract **`platform`** from `useragent` (workshop field extraction). Then:
+**Prerequisite (dashboard):** Extract **`platform`** from `useragent` (workshop field extraction) for the saved panel. **Agents:** if `platform` is missing, report it and extract inline with `rex` (see DevOps agent in [S4R-AGENTS.md](S4R-AGENTS.md)). Then:
 
 | Panel | Visualization | Reference SPL |
 | ----- | ------------- | ------------- |
