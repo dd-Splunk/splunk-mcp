@@ -22,6 +22,43 @@ Design: [docs/S4R-AGENTS.md](../../docs/S4R-AGENTS.md). **Marp deck:** [demo-sli
 | [s4r-business-analytics.md](s4r-business-analytics.md) | Business Analytics — lost revenue |
 | [s4r-security-fraud.md](s4r-security-fraud.md) | Security & Fraud — geographic activity |
 
+## Model configuration
+
+Each agent sets **`model`** in YAML frontmatter ([Subagents → Model configuration](https://cursor.com/docs/subagents)). Prefer explicit models over **`inherit`** for specialists so four parallel workers do not all run the orchestrator’s thinking model.
+
+| Agent | `model` | Rationale |
+| ----- | ------- | --------- |
+| `s4r-power-user` | `claude-4.6-sonnet-medium-thinking` | Routing, wait-for-all, cross-team synthesis, infrastructure vs threat verdict |
+| `s4r-it-ops`, `s4r-devops`, `s4r-business-analytics`, `s4r-security-fraud` | `composer-2.5-fast` | Catalog § → MCP → template; runbook-driven, cost/latency friendly in parallel |
+
+**Upgrades:** Flagship demos — Power User → `claude-opus-4-8-thinking-high`. Weak DevOps/Security verdicts in rehearsal — bump only those two to `claude-4.6-sonnet-medium-thinking`.
+
+**Caveats:** Cursor may override models (plan, Max Mode, org policy). Rehearse with your subscription before a live workshop.
+
+## Foreground / background configuration
+
+Cursor subagents support **`is_background`** ([Subagents](https://cursor.com/docs/subagents)):
+
+| Agent | `is_background` | Mode | Why |
+| ----- | ------------- | ---- | --- |
+| `s4r-power-user` | `false` (default) | **Foreground** | User-facing orchestrator — blocks until synthesis is ready |
+| Specialists (four teams) | `true` | **Background** | Parallel workers; MCP/SPL noise stays out of the main thread |
+
+**Background** specialists write progress under `~/.cursor/subagents/`. The Power User prompt requires **wait for all** delegated specialists before synthesizing — note missing/failed teams instead of inventing findings.
+
+**Demo tip:** Background keeps the executive answer clean; set `is_background: false` on a specialist if you want live MCP tool traces visible for that team.
+
+Example specialist frontmatter:
+
+```yaml
+---
+name: s4r-it-ops
+model: composer-2.5-fast
+is_background: true
+description: IT Operations analyst for Buttercup web tier — HTTP success vs failure.
+---
+```
+
 ## Task subagent example
 
 ```text
