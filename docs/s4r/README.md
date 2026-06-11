@@ -13,6 +13,17 @@ Buttercup Enterprises PoC: **SA-S4R** sample app, Labs 3–7 SPL, dashboard buil
 | Present the agentic demo (slides + script) | [demo-slides/](../../demo-slides/) — `s4r-demo-slides.md`, [S4R-DEMO.md](../../demo-slides/S4R-DEMO.md) |
 | Cursor agent prompts | [`.cursor/agents/`](../../.cursor/agents/) |
 
+## Cursor subagent configuration
+
+Power User and specialists set **`model`** and **`is_background`** in YAML frontmatter (see [`.cursor/agents/README.md` § Model configuration](../../.cursor/agents/README.md#model-configuration) and [§ Foreground / background](../../.cursor/agents/README.md#foreground--background-configuration)):
+
+| Agent | Model | Background |
+| ----- | ----- | ---------- |
+| `s4r-power-user` | `claude-4.6-sonnet-medium-thinking` | No (foreground orchestrator) |
+| Four specialists | `composer-2.5-fast` | Yes (parallel workers) |
+
+Orchestration detail: [S4R-AGENTS.md § Using agents in Cursor](../S4R-AGENTS.md#using-agents-in-cursor).
+
 ## Three layers (teaching model)
 
 | Layer | Location |
