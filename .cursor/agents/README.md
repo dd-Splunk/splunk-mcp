@@ -64,6 +64,7 @@ description: IT Operations analyst for Buttercup web tier — HTTP success vs fa
 ```text
 You are the S4R IT Ops agent. Read .cursor/agents/s4r-it-ops.md for your role.
 Before splunk_run_query: read docs/S4R-SPL-CATALOG.md § IT Ops and run every query there.
+Splunk MCP only — use splunk_run_query; do not use Splunk REST, curl, or basic auth for searches.
 Time range: last 24 hours.
 Return IT Ops summary only; do not synthesize other teams.
 ```
@@ -76,7 +77,7 @@ Launch with Splunk MCP enabled (`subagent_type: generalPurpose` or `s4r-power-us
 
 ```text
 As Buttercup Power User: is the shop losing money? Delegate to all four teams.
-Read docs/S4R-SPL-CATALOG.md per team. Use Splunk MCP splunk_run_query. Last 24 hours.
+Read docs/S4R-SPL-CATALOG.md per team. Splunk MCP only — splunk_run_query; never Splunk REST or curl for searches. Last 24 hours.
 Wait for all four summaries; synthesize one executive answer (Power User template).
 ```
 
@@ -98,7 +99,7 @@ Detail: [TROUBLESHOOTING.md § Parallel agent searches](../../docs/TROUBLESHOOTI
 
 - `make up` and `make demo-prep`
 - Data in `main` / `access_combined` (SA-S4R Eventgen)
-- Splunk MCP tools in the client
+- **Splunk MCP enabled** in the client (`.cursor/mcp.json`) — agents use **`splunk_run_query` only**; no Splunk REST or curl fallbacks from agent sessions
 
 ## Workshop data modes
 
