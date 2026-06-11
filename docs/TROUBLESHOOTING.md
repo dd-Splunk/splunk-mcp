@@ -550,6 +550,58 @@ If still empty, confirm **SA-Eventgen** modinput is enabled (`make status`, [CON
 
 ---
 
+#### Issue: `splunker` account locked out
+
+**Symptoms**:
+
+- REST basic auth as `splunker` returns HTTP **500**: *"For security reasons, your account has been locked out"*
+- `GET .../authentication/users/splunker?output_mode=json` shows **`"locked-out": true`**
+- **`make verify-mcp-remote MCP_VERIFY_CLIENT=cursor`** may still pass (config-only check)
+- **MCP bearer token** (`tools/list`, `splunk_run_query`) may still work — token mint uses **`admin`**, not `splunker` password
+
+**Cause**: Splunk locks local accounts after repeated failed login attempts. Common PoC triggers:
+
+1. **`SPLUNK_MCP_PASSWORD` drift** — password in `.env` / `tpl.env` no longer matches Splunk (setup only sets password on **create** or when **`FORCE_SPLUNK_MCP_PASSWORD=1`**).
+2. **Parallel subagents using REST fallback** — several workers attempted `-u splunker:…` via Splunk REST when MCP was unavailable; wrong or stale password locks the account quickly. **Agents must use MCP `splunk_run_query` only** (see `.cursor/agents/s4r-*.md`).
+3. **Manual REST probes** with an incorrect password.
+
+**Fix (immediate — unlock)**:
+
+```bash
+# From repo root; requires SPLUNK_PASSWORD (admin) in .env or tpl.env + op
+op run --env-file=tpl.env -- bash -c '
+curl -sk -u "admin:${SPLUNK_PASSWORD}" -X POST \
+  "https://localhost:8089/services/authentication/users/splunker" \
+  -d "locked-out=false" \
+  -H "Content-Type: application/x-www-form-urlencoded"
+'
+```
+
+Or re-run init (clears lock idempotently after `setup-splunk.sh` unlock step):
+
+```bash
+docker compose run --rm splunk-init   # or: make up
+```
+
+**Fix (password out of sync)**:
+
+```bash
+FORCE_SPLUNK_MCP_PASSWORD=1 make up
+```
+
+**Verify**:
+
+```bash
+make verify-mcp-remote MCP_VERIFY_CLIENT=all   # config + tools/list
+# Optional: confirm splunker basic auth
+curl -sk -u "splunker:${SPLUNK_MCP_PASSWORD}" \
+  "https://localhost:8089/services/authentication/current-context?output_mode=json"
+```
+
+**Prevention**: Workshop agents and subagents must use **MCP `splunk_run_query` only** — never REST basic auth as `splunker`. Prefer **`make verify-mcp-remote MCP_VERIFY_CLIENT=all`** before delegating four teams. Keep **`SPLUNK_MCP_PASSWORD`** aligned with vault; use **`FORCE_SPLUNK_MCP_PASSWORD=1`** after rotating the password.
+
+---
+
 #### Issue: Parallel agent searches hit `splunker` concurrency limit
 
 **Symptoms**: Cursor launches four S4R specialist subagents; some `splunk_run_query` calls fail with:
