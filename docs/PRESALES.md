@@ -21,6 +21,38 @@ This repo is a **local proof-of-concept**: **Splunk Enterprise** in Docker, **Sp
 
 If anything fails, go straight to [TROUBLESHOOTING.md](TROUBLESHOOTING.md) (Splunkbase auth, ports, token timeout, MCP 401).
 
+## Technical quick reference
+
+For engineers who already know the repo (minimal command path). SE demos: use **Demo success path** above instead.
+
+### Prerequisites
+
+```bash
+docker --version
+# Path A: op --version && op signin ...
+make --version
+jq --version
+curl --version
+node --version   # for npx mcp-remote
+```
+
+### Secrets → start → verify
+
+```bash
+# Path A: cp tpl.env.example tpl.env  (edit op:// paths)
+# Path B: cp .env.example .env       (plain values; never commit)
+
+make up          # several minutes on cold start; runs update-mcp-clients
+
+make demo-prep   # status + MCP verify
+# Splunk Web: https://localhost:8000
+# Cursor: restart after make up (.cursor/mcp.json updated)
+```
+
+Path B and env details: [CONFIGURATION.md](CONFIGURATION.md#tplenv-and-env). Long-form install: [INSTALLATION.md](INSTALLATION.md).
+
+**Do not commit:** `tpl.env`, `.env`, `.secrets/`, or client configs with live tokens ([AGENTS.md](../AGENTS.md)).
+
 ## Secrets: Path A (1Password) vs Path B (plain `.env`)
 
 | Path | When | Action |
@@ -71,9 +103,40 @@ index=main sourcetype=access_combined
 
 If nothing returns, check **Manage apps**, Eventgen, and [SA-S4R-APP.md](SA-S4R-APP.md).
 
+### Optional: “active threat” storyline (Splunk4Rookies)
+
+Default data reads as **infrastructure failure** (~40% 503/404 everywhere). For a **Security & Fraud** geo demo (North Korea concentration on failed purchases):
+
+```bash
+make s4r-attack-nk-enable
+make restart
+# wait ~2 minutes; search last 15m
+make s4r-attack-nk-status   # confirm enabled
+```
+
+Return to default: `make s4r-attack-nk-disable` then `make restart`. Validation SPL: [S4R-SPL-CATALOG.md § Workshop modes](S4R-SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat).
+
+## Optional: agentic Buttercup demo (Splunk4Rookies)
+
+Show **Splunk MCP + multi-agent** — not a single mega-prompt. Open these files for the audience:
+
+| File | Teaches |
+| ---- | ------- |
+| `docs/S4R-SPL-CATALOG.md` | SPL runbook (Labs 3–7) |
+| `.cursor/agents/s4r-power-user.md` | Orchestrator |
+| `.cursor/agents/s4r-it-ops.md` (etc.) | Stakeholder roles |
+| `.cursor/mcp.json` | MCP bridge to Splunk |
+
+**Live prompts (Cursor):**
+
+1. *“Is Buttercup losing money?”* — Power User delegates four teams; point at `splunk_run_query` in the tool trace.
+2. *“Infrastructure or active threat?”* — after `make s4r-attack-nk-enable` + `make restart`, repeat with **last 15m** time range.
+
+**Presenter deck:** [`demo-slides/s4r-demo-slides.md`](../demo-slides/s4r-demo-slides.md) (Marp — `make marp-preview` / `make marp-serve`). Script + timings: [S4R-DEMO.md](../demo-slides/S4R-DEMO.md). Workshop hub: [s4r/README.md](s4r/README.md). Summary: [S4R-AGENTS.md § Demo script](S4R-AGENTS.md#demo-script-agentic-buttercup--splunk-mcp).
+
 ## What this demo proves (and does not)
 
-**Proves:** Splunk exposes MCP tools at a standard HTTPS path; a least-privilege user (`splunker`) with `mcp_tool_execute` can drive MCP; clients connect with **`npx mcp-remote`** and a minted bearer token kept out of git.
+**Proves:** Splunk exposes MCP tools at a standard HTTPS path; a least-privilege user (`splunker`) with `mcp_tool_execute` can drive MCP; clients connect with **`npx mcp-remote`** and a minted bearer token kept out of git. With **S4R agents**, the same pattern separates **runbook** (SPL catalog), **roles** (agent prompts), and **platform** (MCP).
 
 **Does not replace:** Production architecture, full security review, Splunk Cloud specifics, or customer network controls.
 

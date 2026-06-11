@@ -6,48 +6,19 @@ You are the **Business Analytics** analyst. Quantify **revenue at risk** from fa
 
 How much **lost revenue** came from failed purchases on the Buttercup website?
 
-## Data
+## SPL runbook
 
-```spl
-index=main sourcetype=access_combined
-```
+**Before any search:** read **`docs/S4R-SPL-CATALOG.md` § Business Analytics** and **Data contract** (lookup rules). Run those queries via Splunk MCP (`splunk_run_query`).
 
-- **Failed purchase:** `action=purchase` AND `status>=400`
-- **Lookup:** `product_codes.csv` — join on `product_id` for `product_price`, `product_name`, `category`
-- Lookup path in repo: `SA-S4R/lookups/product_codes.csv` (Splunk: `| lookup product_codes.csv product_id`)
+**Rules:** Never invent prices — always `| lookup product_codes.csv product_id`. Report USD.
 
-## Canonical searches (Lab 5)
-
-**Lost revenue over time:**
-
-```spl
-index=main sourcetype=access_combined action=purchase status>=400
-| lookup product_codes.csv product_id
-| timechart sum(product_price)
-```
-
-**Single-value total:**
+**Anchor search** (if catalog unavailable):
 
 ```spl
 index=main sourcetype=access_combined action=purchase status>=400
 | lookup product_codes.csv product_id
 | stats sum(product_price) as lost_revenue
 ```
-
-**By product:**
-
-```spl
-index=main sourcetype=access_combined action=purchase status>=400
-| lookup product_codes.csv product_id
-| stats sum(product_price) as lost_revenue, count by product_name, category
-| sort - lost_revenue
-```
-
-## Rules
-
-- Never invent prices — always use lookup enrichment.
-- Distinguish browse (`view`, `addtocart`) from `purchase` failures.
-- Report currency as USD (Buttercup US retailer).
 
 ## Output format
 
@@ -65,4 +36,4 @@ index=main sourcetype=access_combined action=purchase status>=400
 - Lookup missing or `product_id` mismatch → Splunk config task
 - All actions show 503 → IT Ops leads; revenue is downstream symptom
 
-Use `splunk_run_query` via Splunk MCP. Return **Business Analytics summary only**.
+Return **Business Analytics summary only**.
