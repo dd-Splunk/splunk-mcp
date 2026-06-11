@@ -1,12 +1,14 @@
 # splunk-mcp
 
-Local **proof-of-concept**: run **Splunk Enterprise** in Docker with the **Splunk MCP Server** app, and connect **Cursor**, **Claude Desktop**, or **Goose** via **`npx mcp-remote`** (Splunk 1.2 canonical config). Secrets come from the **1Password CLI** (`op` + `tpl.env`) or a git-ignored **`.env`** (no 1Password required).
+Local **proof-of-concept**: run **Splunk Enterprise** in Docker with the **Splunk MCP Server** app, and connect **Cursor**, **Claude Desktop**, or **Goose** via **`npx mcp-remote`** (Splunk 1.2 canonical config). Includes **Splunk4Rookies** sample data (**`SA-S4R`**) and an optional **Marp presenter deck** in **`demo-slides/`** ([`make marp-preview`](#splunk4rookies-presenter-deck-marp)). Secrets come from the **1Password CLI** (`op` + `tpl.env`) or a git-ignored **`.env`** (no 1Password required).
 
 ## First time here? (Presales / SE demo)
 
 1. Read **[docs/PRESALES.md](docs/PRESALES.md)** end-to-end—it is the **demo runbook** (secrets, time budget, Cursor-first steps, checklist, handoff).
 2. Copy **`tpl.env.example` → `tpl.env`** and fix every `op://` path, **or** copy **`.env.example` → `.env`** and fill plain values (see PRESALES **Path A / Path B**).
 3. Run **`make up`** (updates Claude, Cursor, and Goose configs), restart clients as needed, then **`make verify-mcp-remote`**.
+
+**Presenting the agentic Buttercup demo?** Install [Marp CLI](https://github.com/marp-team/marp-cli), then **`make marp-preview`** or **`make marp-serve`** — see **[Splunk4Rookies presenter deck (Marp)](#splunk4rookies-presenter-deck-marp)** and [demo-slides/README.md](demo-slides/README.md).
 
 Do not block a live meeting on a cold start: **first `make up` can take many minutes** (pulls, Splunk, Splunkbase apps, init).
 
@@ -20,6 +22,8 @@ Do not block a live meeting on a cold start: **first `make up` can take many min
 Splunkbase apps (see **`compose.yml`** for IDs, including **Splunk MCP Server**) install at container start. A one-shot init configures MCP for local dev and creates/updates user **`splunker`** (role **`mcp_user`**, capability **`mcp_tool_execute`). **`make up`** waits for **`splunk-init`**, mints tokens, and updates Claude, Cursor, and Goose (tokens stay out of git).
 
 **Not included in init:** a **`claude_logs`** index or file monitors. Optional ingestion is described in [docs/CONFIGURATION.md](docs/CONFIGURATION.md) if you uncomment the bind mount in `compose.yml`.
+
+**Also in this repo:** **`SA-S4R`** Eventgen traffic, multi-agent Cursor prompts (`.cursor/agents/`), and the **Marp slide deck** — [presenter deck (Marp)](#splunk4rookies-presenter-deck-marp) · [docs/s4r/README.md](docs/s4r/README.md).
 
 ## Requirements
 
@@ -47,12 +51,27 @@ make down                    # stop (no op / .env needed)
 | `make verify-mcp-remote` | Config check + Splunk MCP `tools/list` (`MCP_VERIFY_CLIENT=all` default) |
 | `make clean` | Destructive: volumes + **`.env`** (prompts; no `op` needed) |
 
+## Splunk4Rookies presenter deck (Marp)
+
+Optional **17-slide** deck for the agentic Buttercup demo (`demo-slides/s4r-demo-slides.md`). Not required to run the Splunk stack.
+
+**Dependencies:** [Marp CLI](https://github.com/marp-team/marp-cli) on `PATH` (`npm install -g @marp-team/marp-cli` or `brew install marp-cli`). Live preview/serve loads **Mermaid** from jsDelivr at view time (network needed unless you use exported HTML). Optional in-editor preview: [Marp for VS Code](https://marketplace.visualstudio.com/items?itemName=marp-team.marp-vscode).
+
+```bash
+make marp-preview    # preview window
+make marp-serve      # http://localhost:8080/
+make marp-html       # export demo-slides/s4r-demo-slides.html
+```
+
+Presenter script: [demo-slides/S4R-DEMO.md](demo-slides/S4R-DEMO.md). **Build, theme, Mermaid, troubleshooting:** [demo-slides/README.md](demo-slides/README.md).
+
 ## Documentation (by audience)
 
 | Doc | Audience |
 | --- | -------- |
 | **[docs/PRESALES.md](docs/PRESALES.md)** | **SE / presales: demo prep and flow** |
 | **[docs/s4r/README.md](docs/s4r/README.md)** | **Splunk4Rookies workshop hub** |
+| **[demo-slides/README.md](demo-slides/README.md)** | **Marp deck** (deps, theme, `make marp-*`) |
 | [docs/INSTALLATION.md](docs/INSTALLATION.md) | Detailed install and verification |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architecture and stack flow |
 | [docs/CONFIGURATION.md](docs/CONFIGURATION.md) | `compose.yml`, env files, client configs |
@@ -77,6 +96,7 @@ splunk-mcp/
 ├── tpl.env.example / .env.example     # Tracked; copy to tpl.env or .env (gitignored)
 ├── scripts/                            # compose-up, setup-splunk, mint-mcp-token, mcp-client
 ├── SA-S4R/                             # Sample app (Eventgen)
+├── demo-slides/                        # Marp presenter deck (see demo-slides/README.md)
 └── docs/
 ```
 

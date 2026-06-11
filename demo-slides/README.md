@@ -21,11 +21,14 @@ make marp-serve      # http://localhost:8080/ (directory mode)
 make marp-html       # write demo-slides/s4r-demo-slides.html
 ```
 
-**Cursor / VS Code:** install the [Marp for VS Code](https://marketplace.visualstudio.com/items?itemName=marp-team.marp-vscode) extension. Workspace settings register the theme and enable HTML:
+**Cursor / VS Code (optional):** install the [Marp for VS Code](https://marketplace.visualstudio.com/items?itemName=marp-team.marp-vscode) extension. Register the theme in workspace settings if preview looks unstyled:
 
-- `.vscode/settings.json` → `markdown.marp.themes`, `markdown.marp.enableHtml`
+```json
+"markdown.marp.themes": ["./demo-slides/splunk.css"],
+"markdown.marp.enableHtml": true
+```
 
-Open `demo-slides/s4r-demo-slides.md` and use the Marp preview pane. Press **`P`** for presenter view (speaker notes).
+Open `demo-slides/s4r-demo-slides.md` and use the Marp preview pane. Press **`P`** for presenter view (speaker notes). CLI targets (`make marp-*`) use `.marprc.yml` in this folder and do not require VS Code settings.
 
 ## Front matter
 
