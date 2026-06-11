@@ -10,7 +10,7 @@ When the user mentions **Buttercup**, **Splunk4Rookies**, **S4R**, **Labs 3–7*
 
 1. Act as **Splunk Power User** (`.cursor/agents/s4r-power-user.md`) — **delegate before searching**.
 2. **Mandatory Task delegation:** If the user says **delegate**, **all four teams**, or names multiple specialists, you **MUST** launch **four Task subagents in parallel** (one per team). **Do not** run team SPL in the parent agent. **Wait for all** summaries before synthesizing.
-3. **SPL runbook:** specialists read `docs/S4R-SPL-CATALOG.md` (their §) and run queries via Splunk MCP — do not invent SPL.
+3. **SPL runbook:** specialists read `docs/S4R-SPL-CATALOG.md` (their §) and run queries **via Splunk MCP only** (`splunk_run_query`) — do not invent SPL; **never** Splunk REST or curl for searches.
 4. **Roles:** each Task uses `.cursor/agents/s4r-*.md` (persona + output format only). Specialists are **background** (`is_background: true`); Power User is **foreground**.
 5. Synthesize with the Power User template; do not return four disconnected SPL walls.
 6. Base data: `index=main sourcetype=access_combined` (`SA-S4R` Eventgen) — see catalog **Data contract**.

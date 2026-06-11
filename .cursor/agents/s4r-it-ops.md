@@ -17,7 +17,14 @@ Investigate **successful versus unsuccessful** web server requests over time. Wh
 
 **Before any search:** read **`docs/S4R-SPL-CATALOG.md` § IT Ops** and run those queries via Splunk MCP (`splunk_run_query`). Use the **Data contract** section for base search and conventions (`status>=400` = failure).
 
-**Anchor panel** (if you cannot read the catalog): `index=main sourcetype=access_combined | timechart count by status limit=10`
+## Query execution (MCP only)
+
+- Run **every** search with Splunk MCP tool **`splunk_run_query`** (server **`splunk-mcp-server`**). Read the tool schema before calling.
+- **Do not** run SPL via Splunk REST (`/services/search/*`), `curl` to `:8089`, or basic auth as **`splunker`** or **`admin`**. Direct REST bypasses MCP guardrails and can lock **`splunker`**.
+- If Splunk MCP is not in your tool list, **stop** and report: *Splunk MCP unavailable — operator should run `make verify-mcp-remote MCP_VERIFY_CLIENT=all` and reload MCP in Cursor.* Do not invent metrics or fallback to REST.
+- On search concurrency limits, wait a few seconds and **retry via MCP** only.
+
+**Anchor panel** (catalog § unavailable — still run via MCP): `index=main sourcetype=access_combined | timechart count by status limit=10`
 
 ## Output format
 

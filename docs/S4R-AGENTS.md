@@ -67,7 +67,7 @@ Eventgen in **`SA-S4R`** emits workshop-shaped Apache access logs. Lookup **`pro
 
 **Synthesis template:** see `s4r-power-user.md`.
 
-**Guardrails:** Read-only SPL in demos; no secrets in output; MCP user `splunker`; config tasks (field extract, lookup) escalated explicitly.
+**Guardrails:** Read-only SPL in demos; no secrets in output; MCP user `splunker`; **MCP-only execution** (no Splunk REST/curl from agents); config tasks (field extract, lookup) escalated explicitly.
 
 ---
 
@@ -102,7 +102,7 @@ Full SPL: [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md).
 1. Enable **splunk-mcp-server** in `.cursor/mcp.json` (`make up` / `make update-cursor-config`).
 2. Buttercup / S4R questions: act as **Power User** ([`.cursor/rules/s4r-buttercup-agents.mdc`](../.cursor/rules/s4r-buttercup-agents.mdc)).
 3. **Read `docs/S4R-SPL-CATALOG.md`** for SPL; agents for roles and output format.
-4. Heavy parallel work: **Task** subagents — prompt must include *“Read catalog § [team] before `splunk_run_query`.”* See [`.cursor/agents/README.md`](../.cursor/agents/README.md).
+4. Heavy parallel work: **Task** subagents — prompt must include *“Read catalog § [team] before `splunk_run_query`; MCP only — no REST/curl.”* See [`.cursor/agents/README.md`](../.cursor/agents/README.md).
 5. Confirm data: `make status`, then catalog **Quick data check**.
 6. Presales: `make demo-prep`.
 
@@ -122,7 +122,7 @@ When all four specialists run at once, each calls `splunk_run_query` as **`splun
 
 ```text
 As Buttercup Power User: is the shop losing money? Delegate to all four teams.
-Read docs/S4R-SPL-CATALOG.md per team. Use Splunk MCP splunk_run_query. Last 24 hours.
+Read docs/S4R-SPL-CATALOG.md per team. Splunk MCP only — splunk_run_query; never Splunk REST or curl for searches. Last 24 hours.
 Wait for all four summaries; synthesize one executive answer (Power User template).
 ```
 
@@ -159,7 +159,7 @@ Also: [PRESALES.md](PRESALES.md#optional-agentic-buttercup-demo-splunk4rookies).
 **User:** *“As Buttercup Power User: is the shop losing money? Delegate to all four teams.”*
 
 1. **Power User** — last 24h; launch **four parallel** specialist subagents (IT Ops, DevOps, Business Analytics, Security & Fraud); **wait for all** before synthesizing.
-2. Each specialist — catalog § for their team; `splunk_run_query` only in specialist context.
+2. Each specialist — catalog § for their team; **`splunk_run_query` via MCP only** (no REST/curl) in specialist context.
 3. **Power User** — synthesize: lost revenue (Business), server-wide vs client (DevOps), status/URI errors (IT Ops), geo anomalies (Security).
 
 **Typical verdict (infrastructure):** Yes, losing money — checkout/web tier failure (~40% server-wide), not a single mobile OS.

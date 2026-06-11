@@ -1,6 +1,6 @@
 # S4R SPL catalog — Buttercup Enterprises runbook
 
-**Single source of truth** for workshop SPL (Labs 3–7). Aligned with the **Splunk4Rookies Lab Guide (Apr 2026)** cheat-sheet searches; agents run these via **Splunk MCP** (`splunk_run_query`). Dashboards use the same queries — see [S4R-DASHBOARD.md](S4R-DASHBOARD.md) for layout and visualization only. Workshop hub: [s4r/README.md](s4r/README.md).
+**Single source of truth** for workshop SPL (Labs 3–7). Aligned with the **Splunk4Rookies Lab Guide (Apr 2026)** cheat-sheet searches; agents run these via **Splunk MCP** (`splunk_run_query`) **only** — not Splunk REST or shell `curl`. Dashboards use the same queries — see [S4R-DASHBOARD.md](S4R-DASHBOARD.md) for layout and visualization only. Workshop hub: [s4r/README.md](s4r/README.md).
 
 **Lab guide:** [Splunk4Rookies - Lab Guide - Apr 2026.pdf](Splunk4Rookies%20-%20Lab%20Guide%20-%20Apr%202026.pdf)
 

@@ -17,9 +17,16 @@ How much **lost revenue** came from failed purchases on the Buttercup website?
 
 **Before any search:** read **`docs/S4R-SPL-CATALOG.md` § Business Analytics** and **Data contract** (lookup rules). Run those queries via Splunk MCP (`splunk_run_query`).
 
+## Query execution (MCP only)
+
+- Run **every** search with Splunk MCP tool **`splunk_run_query`** (server **`splunk-mcp-server`**). Read the tool schema before calling.
+- **Do not** run SPL via Splunk REST (`/services/search/*`), `curl` to `:8089`, or basic auth as **`splunker`** or **`admin`**. Direct REST bypasses MCP guardrails and can lock **`splunker`**.
+- If Splunk MCP is not in your tool list, **stop** and report: *Splunk MCP unavailable — operator should run `make verify-mcp-remote MCP_VERIFY_CLIENT=all` and reload MCP in Cursor.* Do not invent metrics or fallback to REST.
+- On search concurrency limits, wait a few seconds and **retry via MCP** only.
+
 **Rules:** Never invent prices — always `| lookup product_codes.csv product_id`. Report USD.
 
-**Anchor search** (if catalog unavailable):
+**Anchor search** (catalog § unavailable — still run via MCP):
 
 ```spl
 index=main sourcetype=access_combined action=purchase status>=400

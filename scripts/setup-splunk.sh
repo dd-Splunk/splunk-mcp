@@ -4,7 +4,7 @@
 # Execution order:
 #   1. Enable SA-Eventgen modinput_eventgen://default (when the app is installed)
 #   2. Splunk MCP Server: ssl_verify=false (local dev only; uses curl -k)
-#   3. Role mcp_user with capability mcp_tool_execute
+#   3. Role mcp_user with capability mcp_tool_execute and srchJobsQuota=5
 #   4. User SPLUNK_MCP_USER (default splunker): roles user + mcp_user
 #   5. Merge MLTK_ROLE onto SPLUNK_MLTK_USER (requires jq; non-fatal if MLTK app is absent)
 #
@@ -211,7 +211,7 @@ auth_curl -X POST "${SPLUNK_URL}/servicesNS/nobody/Splunk_MCP_Server/configs/con
   && echo "✅ SSL verification disabled" || echo "⚠️  SSL verification setting may already be disabled"
 
 # --- 3. MCP role (mcp_user) ---
-echo "👤 Ensuring role 'mcp_user' exists with capability mcp_tool_execute..."
+echo "👤 Ensuring role 'mcp_user' exists with capability mcp_tool_execute and srchJobsQuota=5..."
 ROLE_URL="${SPLUNK_URL}/services/authorization/roles/mcp_user"
 
 role_exists=0
@@ -219,14 +219,14 @@ AUTH_CURL_QUIET=1 auth_curl "${ROLE_URL}?output_mode=json" >/dev/null && role_ex
 cleanup_last_body
 
 if [ "${role_exists}" = "1" ]; then
-  set -- -X POST "${ROLE_URL}" -d "capabilities=mcp_tool_execute"
-  role_ok_msg="✅ Updated role mcp_user (capabilities=mcp_tool_execute)"
+  set -- -X POST "${ROLE_URL}" -d "capabilities=mcp_tool_execute" -d "srchJobsQuota=5"
+  role_ok_msg="✅ Updated role mcp_user (capabilities=mcp_tool_execute, srchJobsQuota=5)"
   role_fail_msg="⚠️  Failed to update role mcp_user"
 fi
 if [ "${role_exists}" = "0" ]; then
   set -- -X POST "${SPLUNK_URL}/services/authorization/roles" \
-    -d "name=mcp_user" -d "capabilities=mcp_tool_execute"
-  role_ok_msg="✅ Created role mcp_user (capabilities=mcp_tool_execute)"
+    -d "name=mcp_user" -d "capabilities=mcp_tool_execute" -d "srchJobsQuota=5"
+  role_ok_msg="✅ Created role mcp_user (capabilities=mcp_tool_execute, srchJobsQuota=5)"
   role_fail_msg="⚠️  Failed to create role mcp_user"
 fi
 auth_curl "$@" -H "Content-Type: application/x-www-form-urlencoded" >/dev/null \
@@ -246,7 +246,7 @@ user_exists=0
 AUTH_CURL_QUIET=1 auth_curl "${USER_URL}?output_mode=json" >/dev/null && user_exists=1
 cleanup_last_body
 
-set -- -d "roles=user" -d "roles=mcp_user"
+set -- -d "roles=user" -d "roles=mcp_user" -d "locked-out=false"
 [ "${user_exists}" = "0" ] && [ -z "${SPLUNK_MCP_PASSWORD}" ] && {
   echo "❌ SPLUNK_MCP_PASSWORD must be set to create the MCP user '${SPLUNK_MCP_USER}'." >&2
   exit 1

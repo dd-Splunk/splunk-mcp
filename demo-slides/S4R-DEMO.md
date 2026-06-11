@@ -412,7 +412,7 @@ Short on-slide versions: **deck slide 16**. Long-form prompts for live demos:
 ```text
 As Buttercup Power User for Splunk4Rookies: is the shop losing money?
 Delegate to IT Ops, DevOps, Business Analytics, and Security & Fraud.
-Read docs/S4R-SPL-CATALOG.md for SPL. Use Splunk MCP splunk_run_query.
+Read docs/S4R-SPL-CATALOG.md for SPL. Splunk MCP only — splunk_run_query; never Splunk REST or curl for searches.
 Synthesize one executive answer with the Power User template.
 ```
 
@@ -421,7 +421,7 @@ Synthesize one executive answer with the Power User template.
 ```text
 As Buttercup Power User: is the money loss bad infrastructure or an active threat?
 Check make s4r-attack-nk-status. Delegate to all four teams.
-Use docs/S4R-SPL-CATALOG.md including § Workshop modes. Time range: last 15 minutes.
+Use docs/S4R-SPL-CATALOG.md including § Workshop modes. Splunk MCP only — no REST/curl for searches. Time range: last 15 minutes.
 Synthesize with clear verdict and recommended actions.
 ```
 
@@ -430,7 +430,7 @@ Synthesize with clear verdict and recommended actions.
 ```text
 You are the S4R [IT Ops|DevOps|Business Analytics|Security & Fraud] agent.
 Read .cursor/agents/s4r-[team].md and docs/S4R-SPL-CATALOG.md § [section].
-Run searches via splunk_run_query. Return only that team's summary.
+Run searches via splunk_run_query (MCP only — no REST/curl). Return only that team's summary.
 ```
 
 ---
