@@ -114,6 +114,18 @@ Full SPL: [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md).
 
 Specialists run as **background** subagents (`is_background: true`); **Power User** stays **foreground**. The Power User **waits for all** team summaries before synthesizing. Details: [`.cursor/agents/README.md` § Foreground / background](../.cursor/agents/README.md#foreground--background-configuration).
 
+### Parallel delegation and search concurrency
+
+When all four specialists run at once, each calls `splunk_run_query` as **`splunker`**. The default PoC user is limited to **3 concurrent historical searches** — expect occasional dispatch failures on the fourth query. Mitigations: retry after a few seconds, stagger teams, or run sequentially for live demos. See [`.cursor/agents/README.md` § Parallel delegation](../.cursor/agents/README.md#parallel-delegation-four-teams) and [TROUBLESHOOTING.md § Parallel agent searches](TROUBLESHOOTING.md#issue-parallel-agent-searches-hit-splunker-concurrency-limit).
+
+**Copy-paste prompt (Demo 1):**
+
+```text
+As Buttercup Power User: is the shop losing money? Delegate to all four teams.
+Read docs/S4R-SPL-CATALOG.md per team. Use Splunk MCP splunk_run_query. Last 24 hours.
+Wait for all four summaries; synthesize one executive answer (Power User template).
+```
+
 ## Synthetic data modes
 
 Before “infrastructure vs threat” questions: **`make s4r-attack-nk-status`**. Toggle and Eventgen detail: [SA-S4R-APP.md](SA-S4R-APP.md). Discriminating SPL: [S4R-SPL-CATALOG.md § Workshop modes](S4R-SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat).
@@ -143,6 +155,16 @@ Quick beats:
 Also: [PRESALES.md](PRESALES.md#optional-agentic-buttercup-demo-splunk4rookies).
 
 ## Example delegation
+
+**User:** *“As Buttercup Power User: is the shop losing money? Delegate to all four teams.”*
+
+1. **Power User** — last 24h; launch **four parallel** specialist subagents (IT Ops, DevOps, Business Analytics, Security & Fraud); **wait for all** before synthesizing.
+2. Each specialist — catalog § for their team; `splunk_run_query` only in specialist context.
+3. **Power User** — synthesize: lost revenue (Business), server-wide vs client (DevOps), status/URI errors (IT Ops), geo anomalies (Security).
+
+**Typical verdict (infrastructure):** Yes, losing money — checkout/web tier failure (~40% server-wide), not a single mobile OS.
+
+**Typical verdict (threat or residual NK in window):** Mixed — infrastructure still broken; Security leads on NK / **175.45.\*** failed-purchase concentration and **Costume-ManHawk** skew.
 
 **User:** *“Is the shop losing money today — servers or mobile users?”*
 
