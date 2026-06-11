@@ -550,6 +550,28 @@ If still empty, confirm **SA-Eventgen** modinput is enabled (`make status`, [CON
 
 ---
 
+#### Issue: Parallel agent searches hit `splunker` concurrency limit
+
+**Symptoms**: Cursor launches four S4R specialist subagents; some `splunk_run_query` calls fail with:
+
+```text
+Search not executed: ... role-based concurrency limit of historical searches for user "splunker"
+has been reached (usage=3, quota=3)
+```
+
+**Cause**: All specialists run SPL as **`splunker`**. Default Splunk role limits allow **3 concurrent historical searches** per user; four parallel background workers often exceed that.
+
+**Solution**:
+
+1. Wait 5–10 seconds — in-flight searches finish; retry failed teams.
+2. **Stagger** delegation (IT Ops + Business first, then DevOps + Security) or run one team at a time for screen-share clarity.
+3. Power User: **wait for all** teams; report which summaries are missing — do not invent numbers.
+4. Optional (advanced): raise `srchJobsQuota` / concurrency for `splunker` in `authorize.conf` — not required for PoC demos.
+
+See [S4R-AGENTS.md § Parallel delegation](S4R-AGENTS.md#parallel-delegation-and-search-concurrency) · [`.cursor/agents/README.md` § Parallel delegation](../.cursor/agents/README.md#parallel-delegation-four-teams) · [S4R-DEMO.md § Backup & troubleshooting](../demo-slides/S4R-DEMO.md#backup--troubleshooting).
+
+---
+
 ### Log Analysis
 
 #### Viewing Logs

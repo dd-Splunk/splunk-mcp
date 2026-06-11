@@ -70,6 +70,30 @@ Return IT Ops summary only; do not synthesize other teams.
 
 Launch with Splunk MCP enabled (`subagent_type: generalPurpose` or `s4r-power-user`).
 
+## Parallel delegation (four teams)
+
+**Copy-paste (Demo 1):**
+
+```text
+As Buttercup Power User: is the shop losing money? Delegate to all four teams.
+Read docs/S4R-SPL-CATALOG.md per team. Use Splunk MCP splunk_run_query. Last 24 hours.
+Wait for all four summaries; synthesize one executive answer (Power User template).
+```
+
+**Expected synthesis (infrastructure mode, last 24h):** Yes — non-zero lost revenue; ~40% failure **server-wide** (DevOps); 403/401/402 on **`/cart.do`** (IT Ops); geo mostly baseline unless NK stanza was recently enabled.
+
+**Expected synthesis (mixed / residual NK in 24h):** Infrastructure still broken **and** Pyongyang / **175.45.\*** may dominate failed-purchase geo (Security) even when `make s4r-attack-nk-status` shows **disabled** — use **last 15m** after toggling modes, or narrow time range.
+
+### Splunk search concurrency
+
+Four parallel specialists each call `splunk_run_query` as **`splunker`**. Default PoC role limits **historical search concurrency to 3** per user — a fourth simultaneous search may fail with:
+
+`role-based concurrency limit of historical searches for user "splunker" has been reached (usage=3, quota=3)`
+
+**Presenter mitigations:** wait a few seconds and retry; stagger one team; or run teams sequentially (`is_background: false` on specialists for visible one-at-a-time demos). Power User should **wait for all** teams and note any that failed dispatch — do not invent findings.
+
+Detail: [TROUBLESHOOTING.md § Parallel agent searches](../../docs/TROUBLESHOOTING.md#issue-parallel-agent-searches-hit-splunker-concurrency-limit).
+
 ## Prerequisites
 
 - `make up` and `make demo-prep`

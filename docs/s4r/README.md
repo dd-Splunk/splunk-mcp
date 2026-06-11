@@ -22,7 +22,7 @@ Power User and specialists set **`model`** and **`is_background`** in YAML front
 | `s4r-power-user` | `claude-4.6-sonnet-medium-thinking` | No (foreground orchestrator) |
 | Four specialists | `composer-2.5-fast` | Yes (parallel workers) |
 
-Orchestration detail: [S4R-AGENTS.md § Using agents in Cursor](../S4R-AGENTS.md#using-agents-in-cursor).
+Orchestration detail: [S4R-AGENTS.md § Using agents in Cursor](../S4R-AGENTS.md#using-agents-in-cursor). **Parallel demos:** four specialists share **`splunker`** search concurrency (limit 3) — see [TROUBLESHOOTING.md § Parallel agent searches](../TROUBLESHOOTING.md#issue-parallel-agent-searches-hit-splunker-concurrency-limit).
 
 ## Three layers (teaching model)
 
