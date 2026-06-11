@@ -5,19 +5,21 @@
 Use this text (or a shortened variant) in **Repository → Settings → General → About**, or via CLI:
 
 ```bash
-gh repo edit OWNER/splunk-mcp --description "Proof-of-concept: Splunk Enterprise with Splunk MCP Server in Docker. Connect Claude Desktop, Cursor, or Goose via npx mcp-remote; secrets with 1Password CLI or .env."
+gh repo edit dd-Splunk/splunk-mcp --description "PoC: Splunk Enterprise + Splunk MCP Server in Docker. Splunk4Rookies (SA-S4R) sample data, multi-agent demo, Marp presenter deck. Cursor, Claude Desktop, or Goose via npx mcp-remote; secrets with 1Password or .env."
 ```
 
 ## Topics
 
-Suggested topics for discoverability (Claude, **Cursor**, **Goose**, Splunk, MCP):
+Suggested topics for discoverability (Splunk, MCP, Splunk4Rookies, Marp):
 
 | Topic | Notes |
 | ----- | ----- |
 | **mcp** | Model Context Protocol |
-| **model-context-protocol** | Long-form MCP label (optional) |
+| **model-context-protocol** | Long-form MCP label |
 | **splunk** | Splunk Enterprise |
 | **splunk-mcp-server** | Splunkbase app for `/services/mcp` |
+| **splunk4rookies** | Workshop / Buttercup Enterprises storyline |
+| **marp** | Marp slide deck in `demo-slides/` |
 | **claude** | Anthropic Claude Desktop |
 | **cursor** | Cursor IDE MCP client |
 | **goose** | Goose AI agent / MCP extension |
@@ -26,6 +28,7 @@ Suggested topics for discoverability (Claude, **Cursor**, **Goose**, Splunk, MCP
 | **docker-compose** | Compose orchestration |
 | **local-development** | Local PoC workflows |
 | **poc** / **proof-of-concept** | Demo / lab use |
+| **eventgen** | SA-Eventgen sample traffic (SA-S4R) |
 | **ai-development** | AI tooling |
 | **integration** | Splunk + LLM integration |
 | **rest-api** | Splunk REST / MCP HTTP |
@@ -36,13 +39,10 @@ Suggested topics for discoverability (Claude, **Cursor**, **Goose**, Splunk, MCP
 ### Add or refresh topics (CLI)
 
 ```bash
-gh repo edit OWNER/splunk-mcp \
-  --add-topic cursor \
-  --add-topic goose \
-  --add-topic docker-compose \
-  --add-topic llm \
-  --add-topic local-development \
-  --add-topic splunk-mcp-server
+gh repo edit dd-Splunk/splunk-mcp \
+  --add-topic marp \
+  --add-topic splunk4rookies \
+  --add-topic eventgen
 ```
 
-Topics already on the repo (e.g. `claude`, `mcp`, `splunk`) can stay; `--add-topic` is idempotent for existing names.
+Topics already on the repo (e.g. `claude`, `mcp`, `splunk`, `cursor`) can stay; `--add-topic` is idempotent for existing names.

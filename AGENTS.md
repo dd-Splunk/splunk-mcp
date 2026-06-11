@@ -6,7 +6,7 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`.
 
 - **Purpose**: local PoC that runs **Splunk Enterprise** in Docker and exposes **Splunk MCP Server** on `https://localhost:8089/services/mcp`.
 - **Client bridge**: **Claude Desktop**, **Cursor**, and **Goose** use **`npx mcp-remote`** to `https://localhost:8089/services/mcp` (token minted at `make update-*-config` after **`splunk-init`** completes; stored only in client config, not the repo). See `make update-mcp-clients` or `make update-mcp-client MCP_CLIENT=…`. **SE / presales**: **`docs/PRESALES.md`**.
-- **Sample app**: **`SA-S4R`** (UI label **Splunk4Rookies**) — bind-mounted Eventgen traffic, lookups, dashboard assets. See **`docs/SA-S4R-APP.md`**, **`docs/What Does the Business Want to See.md`** (dashboard build spec), and **`docs/S4R-AGENTS.md`** (Power User + four specialist agents; prompts in **`.cursor/agents/`**).
+- **Sample app**: **`SA-S4R`** (UI label **Splunk4Rookies**) — bind-mounted Eventgen traffic, lookups, dashboard assets. Workshop hub: **`docs/s4r/README.md`**. SPL runbook: **`docs/S4R-SPL-CATALOG.md`**. Data: **`docs/SA-S4R-APP.md`**. Dashboard layout: **`docs/S4R-DASHBOARD.md`**. Agents: **`docs/S4R-AGENTS.md`** + **`.cursor/agents/`**.
 - **Session memory (Vellem)**: when the **vellem** MCP server is enabled in Cursor, start with **`search_notes_semantic`** on folder **`splunk-mcp`** (boot, verify, troubleshooting) before deep doc reads. Use **`list_expiring_contexts`** to avoid stale notes. After demos or non-obvious fixes, capture outcomes in Vellem (**`add_decision_note`** / **`append_to_daily`**) — not in git. Splunk MCP handles live data; Vellem holds repo-specific memory (no secrets).
 
 ## Golden rules (don’t break these)
@@ -30,7 +30,7 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`.
 
 ## What `scripts/setup-splunk.sh` does
 
-Splunk REST bootstrap (see **`docs/SETUP_SPLUNK_SCRIPT.md`** for detail):
+Splunk REST bootstrap (see **`docs/CONFIGURATION.md` § Appendix: setup-splunk.sh** for detail):
 
 - MCP dev: **`ssl_verify=false`** on the Splunk MCP Server app (local dev only).
 - **SA-Eventgen**: enables the default modular input when the app is installed.
@@ -55,6 +55,8 @@ Splunk REST bootstrap (see **`docs/SETUP_SPLUNK_SCRIPT.md`** for detail):
 | Pre-demo / both checks? | `make demo-prep` (status + verify + warm-stack reminder) or `make verify` (status then verify only) |
 | Init failed? | `docker logs splunk-init` (see **`docs/TROUBLESHOOTING.md`**) |
 | Eventgen modinput? | `curl -k -u admin:<password> "https://localhost:8089/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default?output_mode=json"` |
+| S4R workshop mode? | `make s4r-attack-nk-status` — infrastructure (default) vs NK threat; see **`docs/SA-S4R-APP.md`** |
+| S4R agentic demo? | **`demo-slides/s4r-demo-slides.md`** (Marp — `make marp-preview`); script **`demo-slides/S4R-DEMO.md`**; build notes **`demo-slides/README.md`** |
 
 ## Makefile knobs
 
@@ -64,6 +66,7 @@ Splunk REST bootstrap (see **`docs/SETUP_SPLUNK_SCRIPT.md`** for detail):
 - **`OP`**, **`DC`**: 1Password CLI and docker compose command
 - **`MCP_CLIENT`**, **`MCP_VERIFY_CLIENT`**: single-client update/verify (default **`cursor`** / **`all`**)
 - **`SPLUNK_MCP_ENDPOINT`**, **`SPLUNK_MCP_TLS_INSECURE`**, **`MCP_NPX_COMMAND`**: see **`docs/CONFIGURATION.md`**
+- **`s4r-attack-nk-enable`** / **`s4r-attack-nk-disable`** / **`s4r-attack-nk-status`**: toggle optional NK purchase-attack Eventgen stanza; **`make restart`** after enable/disable — **`docs/SA-S4R-APP.md`**
 
 ## Common failure modes
 
@@ -75,7 +78,7 @@ Splunk REST bootstrap (see **`docs/SETUP_SPLUNK_SCRIPT.md`** for detail):
 ## Change discipline
 
 - Prefer small commits; keep **`make up`**, **`make status`**, **`make verify-mcp-remote`** working.
-- When changing **`Makefile`**, **`compose.yml`**, or **`scripts/setup-splunk.sh`**, update **`docs/CONFIGURATION.md`**, **`docs/OVERVIEW.md`**, and/or **`docs/TROUBLESHOOTING.md`** as needed; refresh or expire Vellem **`splunk-mcp`** folder notes when behavior changes.
+- When changing **`Makefile`**, **`compose.yml`**, or **`scripts/setup-splunk.sh`**, update **`docs/CONFIGURATION.md`**, **`docs/ARCHITECTURE.md`**, and/or **`docs/TROUBLESHOOTING.md`** as needed; refresh or expire Vellem **`splunk-mcp`** folder notes when behavior changes.
 - Lint before push: **`pre-commit run --all-files`** (**shellcheck** on **`scripts/*.sh`**, **markdownlint-cli2** on Markdown). Requires **shellcheck** on PATH (`brew install shellcheck`) and **Node/npx**. Auto-fix Markdown: `npx --yes markdownlint-cli2 --fix`.
 - **License:** contributions are under **[LICENSE](LICENSE)** (MIT).
 

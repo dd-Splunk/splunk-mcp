@@ -16,7 +16,9 @@ export ENV_FILE ENV_OUT ENV_EXAMPLE OP DC
 
 .PHONY: help up down restart clean logs status demo-prep verify \
 	update-mcp-clients update-mcp-client verify-mcp-remote \
-	update-claude-config update-cursor-config update-goose-config
+	update-claude-config update-cursor-config update-goose-config \
+	s4r-attack-nk-enable s4r-attack-nk-disable s4r-attack-nk-status \
+	marp-preview marp-serve marp-html
 
 help: ## Show targets
 	@awk 'BEGIN {FS = ":.*##"; printf "Splunk MCP PoC\n\n"} \
@@ -103,3 +105,21 @@ demo-prep: ## Pre-demo check: status + MCP verify + warm-stack reminder
 verify: ## Stack status then Splunk MCP client verify
 	@$(MAKE) status
 	@$(MAKE) verify-mcp-remote
+
+s4r-attack-nk-enable: ## Enable NK purchase-attack Eventgen stanza (then: make restart)
+	@./scripts/toggle-s4r-attack-nk.sh enable
+
+s4r-attack-nk-disable: ## Disable NK purchase-attack Eventgen stanza (default mode)
+	@./scripts/toggle-s4r-attack-nk.sh disable
+
+s4r-attack-nk-status: ## Show whether NK attack Eventgen stanza is enabled
+	@./scripts/toggle-s4r-attack-nk.sh status
+
+marp-preview: ## Open S4R slide deck in Marp preview (single file)
+	@cd demo-slides && marp --no-stdin -p s4r-demo-slides.md
+
+marp-serve: ## Serve S4R slides over HTTP (open http://localhost:8080/)
+	@cd demo-slides && marp --no-stdin -s .
+
+marp-html: ## Export S4R slides to demo-slides/s4r-demo-slides.html
+	@cd demo-slides && marp --no-stdin s4r-demo-slides.md -o s4r-demo-slides.html

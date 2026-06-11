@@ -1,0 +1,357 @@
+/* @theme splunk */
+
+@import 'default';
+
+section {
+    width: 1280px;
+    height: 720px;
+    font-family: 'Proxima Nova', 'Splunk Sans', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 30px;
+    padding: 50px;
+    background-color: #000000;
+    color: #ffffff;
+    color-scheme: dark;
+    /* Override default theme tokens so imported table styles stay dark */
+    --bgColor-default: #111111;
+    --bgColor-muted: #1a1a1a;
+    --fgColor-default: #ffffff;
+    --borderColor-default: #444444;
+    --borderColor-muted: #333333;
+}
+
+/* Content slides (S2+): top-align like S4 — default theme centers short slides */
+section:not(.lead) {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+section:not(.lead) h1 {
+    margin-top: 0;
+    flex-shrink: 0;
+}
+
+section.diagram:not(.diagram-split) h1 {
+    margin-bottom: 1em;
+}
+
+/* Full-width diagram slides: grow only when diagram is the only content (S4) */
+section.diagram:not(.diagram-split):not(.lead) pre.mermaid:last-child {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin: 0;
+    display: block;
+    width: 100%;
+}
+
+section.diagram:not(.diagram-split):not(.lead) pre.mermaid:not(:last-child) {
+    flex: 0 0 auto;
+    margin: 0 0 0.35em;
+    display: block;
+    width: 100%;
+}
+
+section.diagram:not(.diagram-split):not(.lead) pre.mermaid svg {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    max-height: 520px;
+    height: auto;
+}
+
+section.diagram:not(.diagram-split) pre.mermaid + p {
+    margin-top: 0;
+    margin-bottom: 0.15em;
+}
+
+section.diagram:not(.diagram-split) pre.mermaid + p + blockquote {
+    margin-top: 0;
+}
+
+/* Headings */
+h1, h2, h3 {
+    color: #FF6600; /* Splunk Orange */
+    text-transform: none;
+    margin-bottom: 0.5em;
+}
+
+/* Fixed title size — matches S6 (1.8em × 24px diagram base); not tied to section font-size */
+h1 {
+    font-size: 43.2px;
+    border-bottom: 2px solid #FF6600;
+}
+
+.splunk-orange {
+    color: #FF6600;
+    font-weight: normal;
+}
+
+/* Title Slide Class */
+section.lead {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    background: radial-gradient(circle at bottom right, #EB008B 0%, #FF6600 30%, #000000 70%);
+}
+
+section.lead h1 {
+    color: #ffffff;
+    font-size: 43.2px;
+    border-bottom: none;
+}
+
+section.lead h1:only-child {
+    font-size: calc(43.2px * 1.71);
+    letter-spacing: 0.02em;
+}
+
+/* Title slide (S1) — hero title 71% larger than standard h1 */
+section.lead.lead-hero h1 {
+    font-size: calc(43.2px * 1.71);
+}
+
+section.lead h2 {
+    color: #e0e0e0;
+    font-weight: normal;
+}
+
+section.lead .align-left {
+    align-self: flex-start;
+    text-align: left;
+    width: 100%;
+}
+
+section.lead .align-left pre {
+    margin-left: 0;
+    margin-right: auto;
+}
+
+/* Footer logo (lower center) & pagination */
+footer {
+    font-size: 18px;
+    color: #888;
+    position: absolute;
+    left: 50%;
+    bottom: 30px;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+footer img {
+    vertical-align: middle;
+}
+
+footer::after {
+    content: ' | © 2026 Splunk Inc. Confidential';
+    margin-left: 0.25em;
+}
+
+/* Code Blocks */
+code {
+    background: #222;
+    color: #00B3F0; /* Splunk Blue accent */
+}
+
+pre:not(.mermaid) {
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 8px;
+}
+
+/* Lists and Links */
+li::marker {
+    color: #FF6600;
+}
+
+a {
+    color: #00B3F0;
+    text-decoration: none;
+}
+
+/* Mermaid diagrams (requires html: true + client-side mermaid.js) */
+pre.mermaid {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    margin: 0.25em auto;
+    padding: 0;
+    overflow: visible;
+    /* Isolate from slide font-size — inherited size shrinks node boxes and clips labels */
+    font-size: 14px;
+    line-height: 1.3;
+}
+
+.mermaid {
+    display: flex;
+    justify-content: center;
+    margin: 0.25em auto;
+    overflow: visible;
+    font-size: 14px;
+    line-height: 1.3;
+}
+
+section .mermaid svg {
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    overflow: visible !important;
+}
+
+/* foreignObject labels clip when parent font-size exceeds mermaid layout assumptions */
+.mermaid svg foreignObject {
+    overflow: visible;
+}
+
+.mermaid svg foreignObject > div,
+.mermaid svg .nodeLabel,
+.mermaid svg .label {
+    overflow: visible !important;
+    line-height: 1.3 !important;
+}
+
+/* Mermaid nodes styled like inline shell commands (slide 7 make boxes) */
+.mermaid .node.shell rect,
+.mermaid .node.shell polygon {
+    fill: #0d0d0d !important;
+    stroke: #333 !important;
+    stroke-width: 1px !important;
+    rx: 8;
+    ry: 8;
+}
+
+.mermaid .node.shell .label foreignObject > div,
+.mermaid .node.shell .label foreignObject span,
+.mermaid .node.shell .nodeLabel {
+    color: #00B3F0 !important;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+}
+
+.mermaid .node.shell .label foreignObject > div {
+    background-color: #0d0d0d !important;
+    padding: 0.15em 0.35em !important;
+    border-radius: 6px;
+}
+
+section.diagram {
+    font-size: 24px;
+}
+
+section.diagram pre.mermaid,
+section.diagram .mermaid {
+    font-size: 14px;
+}
+
+/* Diagram + table side by side (e.g. slide 6) */
+section.diagram-split .diagram-table-row {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 1.25em;
+    margin-top: 0.25em;
+}
+
+section.diagram-split .diagram-table-row > .mermaid {
+    flex: 1 1 62%;
+    min-width: 0;
+    margin: 0;
+    justify-content: flex-start;
+}
+
+section.diagram-split .diagram-table-row .mermaid svg {
+    max-width: 100%;
+    height: auto;
+}
+
+section.diagram-split pre.mermaid,
+section.diagram-split .diagram-table-row .mermaid {
+    font-size: 12px;
+}
+
+section.diagram-split .diagram-table-col {
+    flex: 0 0 34%;
+    min-width: 0;
+}
+
+section.diagram-split .diagram-table-col table {
+    margin: 0;
+    width: 100%;
+    font-size: 0.78em;
+}
+
+section.diagram-split .diagram-table-col th,
+section.diagram-split .diagram-table-col td {
+    padding: 0.3em 0.45em;
+    text-align: left;
+}
+
+/* Equal 50/50 columns (slide 7) */
+section.diagram-split-equal .diagram-table-row {
+    align-items: stretch;
+}
+
+section.diagram-split-equal .diagram-table-row > .mermaid {
+    flex: 1 1 50%;
+    justify-content: center;
+    align-items: center;
+}
+
+section.diagram-split-equal .diagram-table-col {
+    flex: 1 1 50%;
+    display: flex;
+    align-items: center;
+}
+
+section.diagram-split-equal .diagram-table-col table {
+    font-size: 0.85em;
+}
+
+section.diagram-split-equal .diagram-table-row .mermaid svg {
+    max-width: 100%;
+    width: 100%;
+}
+
+/* Tables on dark slides — beat @import default tr/td backgrounds */
+table {
+    border-collapse: collapse;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0.5em auto;
+    color: #ffffff;
+}
+
+table tr {
+    background-color: #111111;
+}
+
+table tr:nth-child(even) {
+    background-color: #1a1a1a;
+}
+
+th, td {
+    border: 1px solid #444444;
+    padding: 0.35em 0.6em;
+    color: #ffffff;
+    background-color: inherit;
+    vertical-align: top;
+    text-align: center;
+}
+
+th {
+    background-color: #222222;
+    color: #FF6600;
+}
+
+td code {
+    color: #00B3F0;
+    background: #0d0d0d;
+}
+
+/* Speaker notes: HTML comments only — hide if leaked into slide */
+section aside.marp-note,
+section .marp-note {
+    display: none;
+}

@@ -26,7 +26,7 @@
 # MLTK_ROLES_USER.
 #
 # Out of scope: claude_logs index or file monitors — see docs/CONFIGURATION.md.
-# Full variable table and flows: docs/SETUP_SPLUNK_SCRIPT.md
+# Full variable table and flows: docs/CONFIGURATION.md#appendix-setup-splunksh
 
 set -eu
 

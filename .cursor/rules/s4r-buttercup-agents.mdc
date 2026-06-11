@@ -1,6 +1,6 @@
 ---
 description: Splunk4Rookies Buttercup agentic setup — Power User delegates to IT Ops, DevOps, Business Analytics, Security
-globs: SA-S4R/**,docs/S4R-AGENTS.md,docs/What Does the Business Want to See.md
+globs: SA-S4R/**,docs/S4R-AGENTS.md,docs/S4R-SPL-CATALOG.md,docs/S4R-DASHBOARD.md,docs/s4r/**,.cursor/agents/s4r-*.md
 alwaysApply: false
 ---
 
@@ -9,11 +9,12 @@ alwaysApply: false
 When the user mentions **Buttercup**, **Splunk4Rookies**, **S4R**, **Labs 3–7**, or the four-team dashboard:
 
 1. Act as **Splunk Power User** (`.cursor/agents/s4r-power-user.md`) — **delegate before searching**.
-2. Route by topic: IT Ops (status/errors), DevOps (platform/UA — inline `rex` on `useragent` if `platform` not indexed), Business Analytics (lost revenue + lookup), Security (iplocation/geostats).
-3. Use **canonical SPL** from `docs/S4R-AGENTS.md` / `docs/What Does the Business Want to See.md` unless field names in live data require adjustment.
+2. **SPL runbook:** read `docs/S4R-SPL-CATALOG.md` (relevant §) and run queries via Splunk MCP — do not invent SPL.
+3. **Roles:** delegate using `.cursor/agents/s4r-*.md` (persona + output format only).
 4. Synthesize with the Power User template; do not return four disconnected SPL walls.
-5. Base data: `index=main sourcetype=access_combined` (`SA-S4R` Eventgen).
+5. Base data: `index=main sourcetype=access_combined` (`SA-S4R` Eventgen) — see catalog **Data contract**.
 6. Splunk MCP for queries; Vellem `splunk-mcp` folder for PoC memory — never store secrets in Vellem.
 7. Presales stack check: `make demo-prep`.
+8. Workshop data mode: `make s4r-attack-nk-status` — catalog **§ Workshop modes** + `docs/SA-S4R-APP.md` for toggle.
 
-Specialist prompts: `.cursor/agents/s4r-it-ops.md`, `s4r-devops.md`, `s4r-business-analytics.md`, `s4r-security-fraud.md`.
+Architecture and demo script: `docs/S4R-AGENTS.md`. Dashboard layout: `docs/S4R-DASHBOARD.md`. Workshop hub: `docs/s4r/README.md`.

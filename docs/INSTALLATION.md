@@ -1,6 +1,6 @@
 # Installation & setup
 
-**Presales or customer demo?** Use **[PRESALES.md](PRESALES.md)** for the happy path, time budget, and client steps; use this file for **hardware, 1Password item layout, and long-form** setup. [QUICK_START.md](QUICK_START.md) is a minimal command list. If anything fails, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+**Presales or customer demo?** Use **[PRESALES.md](PRESALES.md)** for the happy path, time budget, and client steps; use this file for **hardware, 1Password item layout, and long-form** setup. Quick commands: [PRESALES.md § Technical quick reference](PRESALES.md#technical-quick-reference). If anything fails, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 ## Prerequisites
 
@@ -148,7 +148,7 @@ This setup targets **trusted localhost** use: self-signed TLS, dev-oriented MCP 
 
 - [PRESALES.md](PRESALES.md) — SE demo runbook and checklist  
 - [CONFIGURATION.md](CONFIGURATION.md) — ports, env vars, clients  
-- [OVERVIEW.md](OVERVIEW.md) — architecture  
+- [ARCHITECTURE.md](ARCHITECTURE.md) — architecture  
 - [SA-S4R-APP.md](SA-S4R-APP.md) — bundled sample app  
 
 ```bash

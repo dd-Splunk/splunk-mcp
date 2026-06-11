@@ -522,6 +522,34 @@ make logs | grep -i "space\|disk"
 
 ---
 
+#### Issue: NK attack workshop mode not visible in Search
+
+**Symptoms**: `make s4r-attack-nk-enable` ran but no `175.45.*` IPs, `python-requests`, or North Korea in `iplocation` results.
+
+**Solution**:
+
+```bash
+make s4r-attack-nk-status          # should print "enabled"
+docker exec so1 grep -A1 'attack.nk.purchase' \
+  /opt/splunk/etc/apps/SA-S4R/default/eventgen.conf
+# expect: disabled = false
+
+ls SA-S4R/samples/attack.nk.purchase.sample   # must exist (basename = stanza name)
+
+make restart
+# wait ~2 minutes; search last 15m only
+```
+
+```spl
+index=main sourcetype=access_combined action=purchase
+  (useragent="*python-requests*" OR clientip=175.45.*)
+| head 20
+```
+
+If still empty, confirm **SA-Eventgen** modinput is enabled (`make status`, [CONFIGURATION.md § Appendix: setup-splunk.sh](CONFIGURATION.md#appendix-setup-splunksh)). Full mode table: [SA-S4R-APP.md](SA-S4R-APP.md).
+
+---
+
 ### Log Analysis
 
 #### Viewing Logs
