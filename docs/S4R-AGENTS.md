@@ -106,6 +106,14 @@ Full SPL: [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md).
 5. Confirm data: `make status`, then catalog **Quick data check**.
 6. Presales: `make demo-prep`.
 
+### Model configuration
+
+**Power User** uses **`claude-4.6-sonnet-medium-thinking`**; specialists use **`composer-2.5-fast`** (not `inherit`) so parallel workers stay fast and cheap while the orchestrator handles synthesis. Table, upgrade paths, and Cursor caveats: [`.cursor/agents/README.md` § Model configuration](../.cursor/agents/README.md#model-configuration).
+
+### Foreground / background (`is_background`)
+
+Specialists run as **background** subagents (`is_background: true`); **Power User** stays **foreground**. The Power User **waits for all** team summaries before synthesizing. Details: [`.cursor/agents/README.md` § Foreground / background](../.cursor/agents/README.md#foreground--background-configuration).
+
 ## Synthetic data modes
 
 Before “infrastructure vs threat” questions: **`make s4r-attack-nk-status`**. Toggle and Eventgen detail: [SA-S4R-APP.md](SA-S4R-APP.md). Discriminating SPL: [S4R-SPL-CATALOG.md § Workshop modes](S4R-SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat).
