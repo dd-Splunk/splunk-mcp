@@ -52,11 +52,12 @@ make down                    # stop (no op / .env needed)
 | Doc | Audience |
 | --- | -------- |
 | **[docs/PRESALES.md](docs/PRESALES.md)** | **SE / presales: demo prep and flow** |
-| [docs/QUICK_START.md](docs/QUICK_START.md) | Short technical checklist (points at PRESALES for demos) |
+| **[docs/s4r/README.md](docs/s4r/README.md)** | **Splunk4Rookies workshop hub** |
 | [docs/INSTALLATION.md](docs/INSTALLATION.md) | Detailed install and verification |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architecture and stack flow |
 | [docs/CONFIGURATION.md](docs/CONFIGURATION.md) | `compose.yml`, env files, client configs |
 | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Failures: Splunkbase, ports, token, MCP |
-| [docs/OVERVIEW.md](docs/OVERVIEW.md) | Architecture |
+| [docs/README.md](docs/README.md) | Full documentation index |
 | [AGENTS.md](AGENTS.md) | Contributors and AI agent rules |
 
 ## Security

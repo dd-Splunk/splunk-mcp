@@ -1,6 +1,52 @@
-# Architecture Overview
+# Architecture
 
-## System Components
+## Purpose
+
+This repository packages a **repeatable local environment** for:
+
+1. Running **Splunk Enterprise** in Docker with the **Splunk MCP Server** application from Splunkbase.
+2. Provisioning a dedicated Splunk user suitable for MCP tool execution.
+3. Wiring **Claude Desktop**, **Cursor**, and **Goose** via **`npx mcp-remote`** (encrypted bearer token in client config only).
+
+It is a **proof-of-concept**: fast iteration on Splunk + LLM tooling, not a production deployment template.
+
+## Why MCP here
+
+The [Model Context Protocol](https://modelcontextprotocol.io/) lets a client (Claude, Cursor) discover tools and resources exposed by a server. Splunk’s MCP Server app exposes Splunk operations through `/services/mcp`. This repo automates:
+
+- Installing dependencies (Splunkbase downloads at container start).
+- Post-start configuration (SSL verify flag for dev, user/role/token).
+- MCP client configuration with encrypted bearer tokens (client files only, not committed).
+
+## Splunkbase applications
+
+`compose.yml` sets `SPLUNK_APPS_URL` to a comma-separated list of Splunkbase download URLs. Installed from Splunkbase: **SA-Eventgen** (1924), **Config Explorer** (4353), **Splunk MCP Server** (7931), **Splunk AI Assistant for SPL** (7245), **Python for Scientific Computing** (2882), and **Splunk AI Toolkit** (2890). Pin details and the full table live in [CONFIGURATION.md](CONFIGURATION.md#composeyml).
+
+You need valid **Splunkbase** credentials via **`tpl.env`** or **`.env`** (Path B): **`SPLUNKBASE_USER`** and **`SPLUNKBASE_PASS`**.
+
+## Client connections
+
+Per [Splunk MCP Server 1.2](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/1.2/connecting-to-the-mcp-server-and-settings), **Claude**, **Cursor**, and **Goose** use **`npx mcp-remote`** to **`https://localhost:8089/services/mcp`** with an **encrypted** bearer token (`make update-mcp-clients`).
+
+## Secrets flow
+
+1. **`tpl.env.example`** → copy to **`tpl.env`** (gitignored): `op://` references and non-secret defaults.
+2. **`make up` without `.env`**: `op run --env-file=tpl.env -- docker compose …` (nothing written to disk).
+3. **Path B**: hand-written **`.env`** from **`.env.example`**; Compose auto-loads it.
+4. **Clients:** tokens minted by **`scripts/mint-mcp-token.sh`** after **`splunk-init`**; stored only in client configs.
+
+## Sample data (SA-S4R)
+
+The **SA-S4R** app ships **Eventgen** configuration for synthetic **`access_combined`** events in **`main`**. See [SA-S4R-APP.md](SA-S4R-APP.md) and workshop hub [s4r/README.md](s4r/README.md).
+
+| Mode | Makefile | Narrative |
+| ---- | -------- | --------- |
+| Infrastructure (default) | `make s4r-attack-nk-disable` | Uniform ~40% errors (503/404); IT Ops leads |
+| Active threat (optional) | `make s4r-attack-nk-enable` then `make restart` | NK geo on failed purchases; Security leads |
+
+Agentic analysis: [S4R-AGENTS.md](S4R-AGENTS.md).
+
+## System components
 
 ### 1. Splunk Enterprise Container (so1)
 
@@ -253,3 +299,10 @@ docker run --rm -v so1-etc:/data -v ~/backups:/backup \
 - `docker volume inspect so1-var`: Volume details
 - `docker volume inspect so1-etc`: Permissions check
 - `docker exec so1 df -h`: Disk space usage
+
+## Related reading
+
+- [CONFIGURATION.md](CONFIGURATION.md) — Compose, env, clients, `setup-splunk.sh` appendix
+- [SECURITY.md](SECURITY.md) — threat model and limitations
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — failures and recovery
+- [s4r/README.md](s4r/README.md) — Splunk4Rookies workshop docs

@@ -129,19 +129,24 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 | `verify-mcp-remote` | `scripts/mcp-client.sh verify` (`MCP_VERIFY_CLIENT=all` by default) |
 | `down` / `restart` / `logs` / `status` | Lifecycle only (no secrets / `op` required) |
 | `clean` | `docker compose down -v` then remove `.env` (no `op` required) |
+| `s4r-attack-nk-enable` | Sets **`disabled = false`** on **`[attack.nk.purchase.sample]`** in **`SA-S4R/default/eventgen.conf`** (active-threat workshop mode); run **`make restart`** afterward |
+| `s4r-attack-nk-disable` | Sets **`disabled = true`** (default infrastructure-failure storyline) |
+| `s4r-attack-nk-status` | Prints whether the NK attack Eventgen stanza is enabled |
+
+Workshop behavior and validation SPL: **[SA-S4R-APP.md](SA-S4R-APP.md)** (Workshop modes).
 
 ## scripts/setup-splunk.sh
 
-Full behavior, diagrams, and REST details: **[SETUP_SPLUNK_SCRIPT.md](SETUP_SPLUNK_SCRIPT.md)**.
-
-Runs **inside** `splunk-init` with `SPLUNK_HOST=so1`. It:
+Summary of what runs **inside** `splunk-init` with `SPLUNK_HOST=so1`:
 
 1. Enables the **SA-Eventgen** default modular input when the app is installed.
 2. Sets MCP server `ssl_verify=false` via REST (dev convenience).
-3. Ensures Splunk role **`mcp_user`** exists with capability **`mcp_tool_execute`** (required by MCP).
-4. Creates user **`splunker`** (defaults; override with **`SPLUNK_MCP_USER`**) with Splunk roles **`user`** + **`mcp_user`**.
-5. Adds role **`MLTK_ROLE`** (default **`mltk_dsdl_admin`**) to **`SPLUNK_MLTK_USER`** (default **`SPLUNK_MCP_USER`** / **`splunker`**, i.e. the MCP user, not the REST account **`SPLUNK_REST_USER`**) for **Splunk AI Toolkit**; set **`SPLUNK_MLTK_USER`** in **`.env`** to **`admin`** if the management account should get MLTK; set **`MLTK_ROLE`** empty to skip.
-6. Uses `SPLUNK_MCP_PASSWORD` (provided via `.env` or `op run`) for the MCP execution user. This repo does not write passwords to disk.
+3. Ensures Splunk role **`mcp_user`** exists with capability **`mcp_tool_execute`**.
+4. Creates user **`splunker`** (override with **`SPLUNK_MCP_USER`**) with roles **`user`** + **`mcp_user`**.
+5. Adds **`MLTK_ROLE`** to **`SPLUNK_MLTK_USER`** for **Splunk AI Toolkit** (override in **`.env`** as needed).
+6. Uses `SPLUNK_MCP_PASSWORD` from env; this repo does not write passwords to disk.
+
+**Full reference** (REST tables, diagrams, idempotency): [Appendix: setup-splunk.sh](#appendix-setup-splunksh).
 
 ## Claude Desktop configuration
 
@@ -182,6 +187,121 @@ Runs **inside** `splunk-init` with `SPLUNK_HOST=so1`. It:
 
 ## See also
 
-- [OVERVIEW.md](OVERVIEW.md) — how pieces fit together
+- [ARCHITECTURE.md](ARCHITECTURE.md) — how pieces fit together
 - [SECURITY.md](SECURITY.md) — TLS and token handling
 - [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — when ports or inject fail
+
+---
+
+## Appendix: setup-splunk.sh
+
+Reference for **[`scripts/setup-splunk.sh`](../scripts/setup-splunk.sh)**: configuration, idempotent behavior, environment variables, and REST flow.
+
+### Purpose
+
+The script bootstraps a **local Splunk Enterprise PoC** so that:
+
+1. The **Splunk MCP Server** app is configured for local dev (e.g. **`ssl_verify=false`** on the app).
+2. **SA-Eventgen** sample data can run via the default modular input, when the app is installed.
+3. The Splunk user **`SPLUNK_MLTK_USER`** (default **same as `SPLUNK_MCP_USER`**, e.g. **`splunker`**) receives the **`MLTK_ROLE`** (default **`mltk_dsdl_admin`**) when the **Splunk AI Toolkit** app is installed.
+4. Splunk has a dedicated **MCP execution identity**: role **`mcp_user`** (capability **`mcp_tool_execute`**) and user **`splunker`** by default. Token minting is **`scripts/mint-mcp-token.sh`** after **`splunk-init`** (not in this script).
+
+The script is **`/bin/sh`**, uses **`set -eu`**, and talks to Splunk only through **HTTPS REST** (`curl -k` for local dev).
+
+**Out of scope:** **`claude_logs`** index and monitors—add them in Splunk if you enable the bind mount (see **Claude logs (macOS, optional)** under `compose.yml` above).
+
+### Where it runs
+
+Compose starts **`splunk-init`** **after** `so1` is healthy. That container installs `curl` and `jq`, then executes this script. See [`compose.yml`](../compose.yml).
+
+```mermaid
+flowchart LR
+  subgraph host["Host"]
+    script["scripts/setup-splunk.sh"]
+  end
+  subgraph docker["Docker network splunk"]
+    so1["so1 Splunk :8089"]
+    init["splunk-init Alpine"]
+  end
+  script -->|"bind mount"| init
+  init -->|"HTTPS REST admin auth"| so1
+```
+
+Typical environment inside `splunk-init` (from Compose):
+
+| Variable | Example | Role |
+| -------- | ------- | ---- |
+| `SPLUNK_HOST` | `so1` | REST hostname on the Docker network |
+| `SPLUNK_PORT` | `8089` | Management port |
+| `SPLUNK_REST_USER` | `admin` | REST login user |
+| `SPLUNK_MCP_USER` | `splunker` | MCP user |
+| `SPLUNK_MLTK_USER` | `splunker` | MLTK role target |
+| `MLTK_ROLE` | `mltk_dsdl_admin` | Splunk role assigned in step 5 |
+| `SPLUNK_PASSWORD` | *(secret)* | REST password |
+| `SPLUNK_MCP_PASSWORD` | *(secret)* | Password for the MCP execution user |
+
+### Configuration variables
+
+| Variable | Default | Meaning |
+| -------- | ------- | ------- |
+| `SPLUNK_HOST` | `localhost` | REST host |
+| `SPLUNK_PORT` | `8089` | REST port |
+| `SPLUNK_REST_USER` | `admin` | Authenticated user for REST |
+| `SPLUNK_PASSWORD` | *(required)* | Admin password |
+| `SPLUNK_MCP_USER` | `splunker` | Splunk user to create or update |
+| `SPLUNK_MLTK_USER` | *same as `SPLUNK_MCP_USER`* | User that receives `MLTK_ROLE` |
+| `MLTK_ROLE` | `mltk_dsdl_admin` | MLTK Splunk role; empty skips assignment |
+| `SPLUNK_MCP_PASSWORD` | *(required in this repo)* | Password for the MCP execution user |
+
+Deprecated names (still read if new names unset): `SPLUNK_USER`, `SPLUNKER_USERNAME`, `MLTK_ROLES_USER`, `SPLUNKER_PASSWORD_FILE`, `FORCE_SPLUNKER_PASSWORD`, `MCP_TOKEN_USERNAME`.
+
+**Refuses to run** if `SPLUNK_MCP_USER` is `admin` (tokens must not target the admin account).
+
+### Execution order
+
+```mermaid
+flowchart TD
+  A[Start set -eu] --> B[Enable Eventgen modinput]
+  B --> C[MCP app: ssl_verify=false]
+  C --> D[Ensure role mcp_user + capability mcp_tool_execute]
+  D --> E[Resolve splunker password from env]
+  E --> F[Create or update user SPLUNK_MCP_USER]
+  F --> D2[Add MLTK_ROLE to SPLUNK_MLTK_USER]
+  D2 --> K[Done]
+```
+
+### REST interactions
+
+The script uses **basic auth** on every `auth_curl` call: `-u "${SPLUNK_REST_USER}:${SPLUNK_PASSWORD}"` with `curl -k`.
+
+| Step | Method | Path (relative to `https://HOST:PORT`) | Notes |
+| ---- | ------ | ---------------------------------------- | ----- |
+| Eventgen | POST | `/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default/enable` | Fallback: same URL with `disabled=0` |
+| MCP TLS dev | POST | `/servicesNS/nobody/Splunk_MCP_Server/configs/conf-mcp/server` | Body: `ssl_verify=false` |
+| Role | GET/POST | `/services/authorization/roles/mcp_user` | Body: `capabilities=mcp_tool_execute` |
+| Admin + MLTK | GET/POST | `/services/authentication/users/{SPLUNK_MLTK_USER}` | Merge `roles[]`, including `MLTK_ROLE` |
+| User | POST | `/services/authentication/users` or `.../users/{name}` | Bodies: `roles=user`, `roles=mcp_user` |
+
+### Helper functions
+
+- **`auth_curl`** — wraps `curl` with admin credentials; 2xx/3xx returns body, else fails.
+- **`must`** — runs a command and **`exit 1`** on failure.
+- **`splunk_get_json` / `wait_for_disabled_value`** — poll Eventgen stanza when `jq` is available.
+
+### Idempotency
+
+Designed so **`make up` / `splunk-init` repeating** does not break: MCP `ssl_verify=false`, role/user updates, and MLTK role merge tolerate re-runs.
+
+### Security notes (dev PoC)
+
+- **`curl -k`** and **`ssl_verify=false`** are **dev-only**; see [SECURITY.md](SECURITY.md).
+- Never commit `.env` / `tpl.env` or client configs with secrets. See [AGENTS.md](../AGENTS.md).
+
+### Troubleshooting pointers
+
+| Symptom | Likely cause | Where to read more |
+| ------- | ------------ | ------------------ |
+| “User lacks mcp_tool_execute capability” | `mcp_user` role missing capability | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
+| Token empty / script exits 1 | MCP app missing or wrong version | Confirm `Splunk_MCP_Server` in `SPLUNK_APPS_URL` |
+| No Claude logs | Index/monitor not created | Create index/monitor in Splunk |
+| Eventgen warnings | SA-Eventgen not installed | Check Splunkbase app install |
