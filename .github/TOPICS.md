@@ -38,7 +38,15 @@ Suggested topics for discoverability (Splunk, MCP, Splunk4Rookies, Marp):
 
 ### Add or refresh topics (CLI)
 
+GitHub allows **at most 20 topics**. If the repo is full, remove redundant tags first, then add workshop tags:
+
 ```bash
+gh repo edit dd-Splunk/splunk-mcp \
+  --remove-topic proof-of-concept \
+  --remove-topic model-context-protocol \
+  --remove-topic token-auth \
+  --remove-topic integration
+
 gh repo edit dd-Splunk/splunk-mcp \
   --add-topic marp \
   --add-topic splunk4rookies \
