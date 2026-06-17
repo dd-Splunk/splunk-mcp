@@ -34,7 +34,7 @@ make s4r-attack-nk-status         # expect: disabled (infrastructure mode)
 
 ## Slide deck (Marp)
 
-**Source:** [`demo-slides/s4r-demo-slides.md`](s4r-demo-slides.md) — **17 slides** with Splunk dark theme, client-side Mermaid, and HTML speaker notes.
+**Source:** [`demo-slides/s4r-demo-slides.md`](s4r-demo-slides.md) — **19 slides** with Splunk dark theme, client-side Mermaid, and HTML speaker notes.
 
 ```bash
 make marp-preview    # Marp preview window
@@ -245,15 +245,46 @@ Closing slide (`lead-hero` styling). No additional script required.
 
 ---
 
-## Slides 15–17 — Appendix
+## Slides 15–19 — Appendix
 
 | Slide | Content |
 | ----- | ------- |
 | 15 | Before you start — `make demo-prep`, checks, warm-stack reminder |
 | 16 | Copy-paste prompts (short versions for Demo 1 and Demo 2) |
 | 17 | Troubleshooting table — MCP, events, NK mode, concurrency, token |
+| 18 | Business use cases (1 of 2) — checkout, merchandising, mobile vs platform |
+| 19 | Business use cases (2 of 2) — international, fraud vs reliability; Demo 1 / 2 callout |
 
-Expanded presenter detail for appendix topics: [Before you start](#before-you-start-5-minutes-earlier), [Backup & troubleshooting](#backup--troubleshooting), [Copy-paste prompts](#copy-paste-prompts-chat) (long-form chat prompts below).
+Expanded presenter detail for appendix topics: [Before you start](#before-you-start-5-minutes-earlier), [Backup & troubleshooting](#backup--troubleshooting), [Copy-paste prompts](#copy-paste-prompts-chat), [Business use cases (copy-paste)](#business-use-cases-copy-paste).
+
+---
+
+## Slide 18 — Appendix — Business use cases (1 of 2)
+
+Executive questions on the same Buttercup web logs — stakeholder framing, not status-code trivia.
+
+| Use case | Ask the Power User |
+| -------- | ------------------ |
+| Checkout vs funnel | *Are we losing sales because checkout is failing, or because customers never get to purchase?* |
+| Merchandising priority | *Which products and categories are costing us the most in failed checkout revenue?* |
+| Mobile vs platform | *Should we invest in mobile app fixes, or is checkout failing every platform equally?* |
+
+*Speaker note:* Same pattern for all use cases: Power User delegates to four teams, catalog SPL, MCP only.
+
+---
+
+## Slide 19 — Appendix — Business use cases (2 of 2)
+
+| Use case | Ask the Power User |
+| -------- | ------------------ |
+| International growth | *Is checkout failing more for international customers than for US shoppers?* |
+| Fraud vs reliability | *Is the revenue impact from an active attack, or from a broken checkout service?* |
+
+**Workshop demos:** [Demo 1](#slide-8--demo-1---infrastructure-story) uses the classic lost-revenue ask; [Demo 2](#slide-11--demo-2---nk-attack) maps to fraud vs infrastructure (NK mode, last 15m).
+
+*Speaker note:* Optional reference — skip in the main 20-minute track. Attendees can swap questions without changing agents or runbook.
+
+Expanded prompts: [Business use cases (copy-paste)](#business-use-cases-copy-paste).
 
 ---
 
@@ -316,7 +347,7 @@ Optional: `make verify-mcp-remote MCP_VERIFY_CLIENT=cursor` in terminal (fast).
 
 **Say:** *“Same agents, same catalog. We flip synthetic data mode to simulate an active threat — no prompt rewrite.”*
 
-**Show:** Slide 7 again (or narrate from memory — enable NK mode).
+**Show:** Slide 7 again (or narrate from memory — enable NK mode). Optional: **Slides 18–19** (appendix) — alternate business questions if audience asks.
 
 ---
 
@@ -431,6 +462,52 @@ Synthesize with clear verdict and recommended actions.
 You are the S4R [IT Ops|DevOps|Business Analytics|Security & Fraud] agent.
 Read .cursor/agents/s4r-[team].md and docs/S4R-SPL-CATALOG.md § [section].
 Run searches via splunk_run_query (MCP only — no REST/curl). Return only that team's summary.
+```
+
+---
+
+## Business use cases (copy-paste)
+
+Same delegation pattern as Demo 1 unless noted. Infrastructure mode, **last 24 hours**, unless Demo 2 / fraud ask.
+
+**Checkout vs funnel:**
+
+```text
+As Buttercup Power User: are we losing sales because checkout is failing, or because customers never get to purchase?
+Delegate to all four teams. Read docs/S4R-SPL-CATALOG.md per team. Splunk MCP only — splunk_run_query; never REST or curl.
+Synthesize one executive answer with the Power User template.
+```
+
+**Merchandising priority:**
+
+```text
+As Buttercup Power User: which products and categories are costing us the most in failed checkout revenue?
+Delegate to all four teams. Read docs/S4R-SPL-CATALOG.md (Business Analytics § + supporting teams). MCP only. Last 24 hours.
+Synthesize with recommended merchandising and engineering priorities.
+```
+
+**Mobile vs platform:**
+
+```text
+As Buttercup Power User: should we invest in mobile app fixes, or is checkout failing every platform equally?
+Delegate to all four teams. Read docs/S4R-SPL-CATALOG.md (DevOps § platform prefix + IT Ops + Business). MCP only. Last 24 hours.
+Synthesize with a clear build-vs-fix recommendation.
+```
+
+**International growth:**
+
+```text
+As Buttercup Power User: is checkout failing more for international customers than for US shoppers?
+Delegate to all four teams. Read docs/S4R-SPL-CATALOG.md (Security § iplocation + Business + IT Ops). MCP only. Last 24 hours.
+Synthesize with a go/no-go on international marketing spend.
+```
+
+**Fraud vs reliability** (same storyline as Demo 2 — enable NK mode, **last 15 minutes**):
+
+```text
+As Buttercup Power User: is the revenue impact from an active attack, or from a broken checkout service?
+Check make s4r-attack-nk-status. Delegate to all four teams. Read docs/S4R-SPL-CATALOG.md including § Workshop modes. MCP only. Last 15 minutes.
+Synthesize who to mobilize first — Security vs Engineering.
 ```
 
 ---

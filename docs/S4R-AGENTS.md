@@ -139,7 +139,7 @@ Use **last 15m** after enabling threat mode.
 
 ## Demo script: agentic Buttercup + Splunk MCP
 
-**Full presenter guide** (17-slide Marp deck, mermaid diagrams, 20- and 10-minute tracks, copy-paste prompts): **[S4R-DEMO.md](../demo-slides/S4R-DEMO.md)** · **[demo-slides/README.md](../demo-slides/README.md)** (Marp build/preview).
+**Full presenter guide** (19-slide Marp deck, mermaid diagrams, 20- and 10-minute tracks, copy-paste prompts): **[S4R-DEMO.md](../demo-slides/S4R-DEMO.md)** · **[demo-slides/README.md](../demo-slides/README.md)** (Marp build/preview).
 
 Quick beats:
 
