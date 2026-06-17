@@ -384,3 +384,34 @@ make s4r-attack-nk-status    # expect: disabled
 | Token / 401 | `make up` or `make update-mcp-client MCP_CLIENT=cursor` |
 
 Details: `docs/TROUBLESHOOTING.md` · `docs/SA-S4R-APP.md`
+
+---
+
+# Appendix — Business use cases (1 of 2)
+
+Executive questions on the same `access_combined` data — not basic HTTP troubleshooting.
+
+| Use case | Ask the Power User |
+| -------- | ------------------ |
+| Checkout vs funnel | *Are we losing sales because checkout is failing, or because customers never get to purchase?* |
+| Merchandising priority | *Which products and categories are costing us the most in failed checkout revenue?* |
+| Mobile vs platform | *Should we invest in mobile app fixes, or is checkout failing every platform equally?* |
+
+<!--
+Same orchestration as Demo 1: delegate to four teams, read S4R-SPL-CATALOG.md, MCP splunk_run_query only. Infrastructure mode, last 24h. Full prompts: demo-slides/S4R-DEMO.md § Business use cases.
+-->
+
+---
+
+# Appendix — Business use cases (2 of 2)
+
+| Use case | Ask the Power User |
+| -------- | ------------------ |
+| International growth | *Is checkout failing more for international customers than for US shoppers?* |
+| Fraud vs reliability | *Is the revenue impact from an active attack, or from a broken checkout service?* |
+
+**Workshop demos:** *Demo 1* — lost revenue · *Demo 2* — fraud vs infrastructure (NK mode, **last 15m**)
+
+<!--
+Use case 5 / Demo 2: make s4r-attack-nk-enable before ask. Attendees can swap questions without changing agents or runbook.
+-->
