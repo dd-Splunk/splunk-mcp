@@ -4,7 +4,7 @@ Presenter slides for the **Splunk4Rookies agentic Buttercup demo**, built with [
 
 | File | Role |
 | ---- | ---- |
-| **`s4r-demo-slides.md`** | Source deck (17 slides + speaker notes) |
+| **`s4r-demo-slides.md`** | Source deck (19 slides + speaker notes) |
 | **`index.md`** | Symlink → `s4r-demo-slides.md` (for `marp -s` server mode) |
 | **`splunk.css`** | Custom theme (`/* @theme splunk */`) — dark background, orange titles |
 | **`.marprc.yml`** | CLI defaults: `themeSet`, `html: true` |
@@ -103,7 +103,7 @@ Numbers come from live MCP — do not read fixed amounts from slides.
 
 Visible in Marp **presenter view** (`P`).
 
-## Slide map (17)
+## Slide map (19)
 
 | # | Title | Notes |
 | - | ----- | ----- |
@@ -121,7 +121,11 @@ Visible in Marp **presenter view** (`P`).
 | 12 | Dashboard tie-in — Lab 7 | |
 | 13 | Takeaways | |
 | 14 | Thank You | `lead lead-hero` |
-| 15–17 | Appendix (before you start, prompts, troubleshooting) | Same style as content slides |
+| 15 | Appendix — before you start | |
+| 16 | Appendix — copy-paste prompts | |
+| 17 | Appendix — troubleshooting | |
+| 18 | Appendix — Business use cases (1 of 2) | Checkout, merchandising, mobile vs platform |
+| 19 | Appendix — Business use cases (2 of 2) | International, fraud vs reliability; Demo 1 / 2 callout |
 
 ## Theme highlights (`splunk.css`)
 
