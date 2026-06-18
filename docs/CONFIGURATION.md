@@ -5,11 +5,9 @@
 | App ID | App | Pinned release |
 | ------ | --- | -------------- |
 | 1924 | SA-Eventgen (sample data / Eventgen modinput) | 8.2.2 |
-| 4353 | Config Explorer (optional UI utility) | 1.8.24 |
+| 4353 | Config Explorer (optional UI utility) | 1.8.25 |
 | 7931 | Splunk MCP Server (required for `/services/mcp`) | 1.2.0 |
 | 7245 | Splunk AI Assistant for SPL | 2.0.0 |
-| 2882 | Python for Scientific Computing (Linux x86_64; MLTK / Connection Management needs this) | 4.3.2 |
-| 2890 | Splunk AI Toolkit | 5.7.4 |
 
 Check current Splunkbase releases: `https://splunkbase.splunk.com/api/v1/app/<id>/release/` (first entry is latest). Update the `/release/VERSION/` segment in **`compose.yml`** when bumping.
 
@@ -69,7 +67,7 @@ Use only the blocks you need. If you remap **8089**, set **`SPLUNK_MCP_ENDPOINT`
 Runs after `so1` is **healthy**. Uses Alpine, installs `curl` and `jq`, then runs `setup-splunk.sh`. Mounts:
 
 - `scripts/setup-splunk.sh` → `/setup-splunk.sh`
-- No host secrets mount (this repo does not write tokens/passwords to disk). See `compose.yml` for `SPLUNK_REST_USER`, `SPLUNK_MCP_USER`, `SPLUNK_MLTK_USER`, `MLTK_ROLE`, `SPLUNK_MCP_PASSWORD`.
+- No host secrets mount (this repo does not write tokens/passwords to disk). See `compose.yml` for `SPLUNK_REST_USER`, `SPLUNK_MCP_USER`, `SPLUNK_MCP_PASSWORD`.
 
 ### MCP token minting (host)
 
@@ -143,7 +141,7 @@ Summary of what runs **inside** `splunk-init` with `SPLUNK_HOST=so1`:
 2. Sets MCP server `ssl_verify=false` via REST (dev convenience).
 3. Ensures Splunk role **`mcp_user`** exists with capability **`mcp_tool_execute`** and **`srchJobsQuota=5`** (parallel S4R agent headroom).
 4. Creates or updates user **`splunker`** (override with **`SPLUNK_MCP_USER`**) with roles **`user`** + **`mcp_user`**, and clears **`locked-out`** (idempotent unlock on every init).
-5. Adds **`MLTK_ROLE`** to **`SPLUNK_MLTK_USER`** for **Splunk AI Toolkit** (override in **`.env`** as needed).
+5. Optionally adds **`MLTK_ROLE`** to **`SPLUNK_MLTK_USER`** when **`MLTK_ROLE`** is set (skipped by default; Splunk AI Toolkit is not installed by this stack).
 6. Uses `SPLUNK_MCP_PASSWORD` from env; this repo does not write passwords to disk.
 
 **Full reference** (REST tables, diagrams, idempotency): [Appendix: setup-splunk.sh](#appendix-setup-splunksh).
@@ -179,8 +177,8 @@ Summary of what runs **inside** `splunk-init` with `SPLUNK_HOST=so1`:
 | `SPLUNK_MCP_ENDPOINT` | `mcp-client.sh` | Splunk MCP URL for `mcp-remote` (default `https://localhost:8089/services/mcp`) |
 | `SPLUNK_MCP_TLS_INSECURE` | `mcp-client.sh` | If `1` (default), add `NODE_TLS_REJECT_UNAUTHORIZED=0` to Claude/Cursor config (dev/self-signed only) |
 | `SPLUNK_MCP_USER` | `setup-splunk.sh` | Splunk account to create/update (default `splunker`) |
-| `SPLUNK_MLTK_USER` | `setup-splunk.sh` | Which Splunk user gets `MLTK_ROLE` (default: same as `SPLUNK_MCP_USER`; set `admin` to match `SPLUNK_REST_USER`) |
-| `MLTK_ROLE` | `setup-splunk.sh` | MLTK Splunk role to assign (default `mltk_dsdl_admin`; empty skips assignment) |
+| `SPLUNK_MLTK_USER` | `setup-splunk.sh` | Which Splunk user gets `MLTK_ROLE` when set (default: same as `SPLUNK_MCP_USER`) |
+| `MLTK_ROLE` | `setup-splunk.sh` | MLTK Splunk role to assign; empty by default (Splunk AI Toolkit not in `SPLUNK_APPS_URL`) |
 | `CURSOR_MCP_JSON` | `mcp-client.sh` (cursor) | Output path |
 | `MCP_CLIENT` | `update-mcp-client` | `claude`, `cursor`, or `goose` |
 | `MCP_VERIFY_CLIENT` | `verify-mcp-remote` | `all` (default), or one client |
@@ -203,7 +201,7 @@ The script bootstraps a **local Splunk Enterprise PoC** so that:
 
 1. The **Splunk MCP Server** app is configured for local dev (e.g. **`ssl_verify=false`** on the app).
 2. **SA-Eventgen** sample data can run via the default modular input, when the app is installed.
-3. The Splunk user **`SPLUNK_MLTK_USER`** (default **same as `SPLUNK_MCP_USER`**, e.g. **`splunker`**) receives the **`MLTK_ROLE`** (default **`mltk_dsdl_admin`**) when the **Splunk AI Toolkit** app is installed.
+3. Optionally, **`SPLUNK_MLTK_USER`** receives **`MLTK_ROLE`** when **`MLTK_ROLE`** is set in env (skipped by default; Splunk AI Toolkit is out of scope for this PoC).
 4. Splunk has a dedicated **MCP execution identity**: role **`mcp_user`** (capability **`mcp_tool_execute`**) and user **`splunker`** by default. Token minting is **`scripts/mint-mcp-token.sh`** after **`splunk-init`** (not in this script).
 
 The script is **`/bin/sh`**, uses **`set -eu`**, and talks to Splunk only through **HTTPS REST** (`curl -k` for local dev).
@@ -236,7 +234,7 @@ Typical environment inside `splunk-init` (from Compose):
 | `SPLUNK_REST_USER` | `admin` | REST login user |
 | `SPLUNK_MCP_USER` | `splunker` | MCP user |
 | `SPLUNK_MLTK_USER` | `splunker` | MLTK role target |
-| `MLTK_ROLE` | `mltk_dsdl_admin` | Splunk role assigned in step 5 |
+| `MLTK_ROLE` | *(empty)* | Optional Splunk AI Toolkit role; step 5 skipped when unset |
 | `SPLUNK_PASSWORD` | *(secret)* | REST password |
 | `SPLUNK_MCP_PASSWORD` | *(secret)* | Password for the MCP execution user |
 
@@ -250,7 +248,7 @@ Typical environment inside `splunk-init` (from Compose):
 | `SPLUNK_PASSWORD` | *(required)* | Admin password |
 | `SPLUNK_MCP_USER` | `splunker` | Splunk user to create or update |
 | `SPLUNK_MLTK_USER` | *same as `SPLUNK_MCP_USER`* | User that receives `MLTK_ROLE` |
-| `MLTK_ROLE` | `mltk_dsdl_admin` | MLTK Splunk role; empty skips assignment |
+| `MLTK_ROLE` | *(empty)* | MLTK Splunk role; set only if AI Toolkit is installed manually |
 | `SPLUNK_MCP_PASSWORD` | *(required in this repo)* | Password for the MCP execution user |
 
 Deprecated names (still read if new names unset): `SPLUNK_USER`, `SPLUNKER_USERNAME`, `MLTK_ROLES_USER`, `SPLUNKER_PASSWORD_FILE`, `FORCE_SPLUNKER_PASSWORD`, `MCP_TOKEN_USERNAME`.
