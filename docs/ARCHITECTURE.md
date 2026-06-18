@@ -20,7 +20,7 @@ The [Model Context Protocol](https://modelcontextprotocol.io/) lets a client (Cl
 
 ## Splunkbase applications
 
-`compose.yml` sets `SPLUNK_APPS_URL` to a comma-separated list of Splunkbase download URLs. Installed from Splunkbase: **SA-Eventgen** (1924), **Config Explorer** (4353), **Splunk MCP Server** (7931), **Splunk AI Assistant for SPL** (7245), **Python for Scientific Computing** (2882), and **Splunk AI Toolkit** (2890). Pin details and the full table live in [CONFIGURATION.md](CONFIGURATION.md#composeyml).
+`compose.yml` sets `SPLUNK_APPS_URL` to a comma-separated list of Splunkbase download URLs. Installed from Splunkbase: **SA-Eventgen** (1924), **Config Explorer** (4353), **Splunk MCP Server** (7931), and **Splunk AI Assistant for SPL** (7245). Pin details and the full table live in [CONFIGURATION.md](CONFIGURATION.md#composeyml).
 
 You need valid **Splunkbase** credentials via **`tpl.env`** or **`.env`** (Path B): **`SPLUNKBASE_USER`** and **`SPLUNKBASE_PASS`**.
 

@@ -18,7 +18,7 @@
 #
 # Other env (defaults in parentheses):
 #   SPLUNK_HOST (localhost), SPLUNK_PORT (8089)
-#   MLTK_ROLE (mltk_dsdl_admin; empty skips step 5; e.g. mltk_admin on older MLTK)
+#   MLTK_ROLE (empty by default; set e.g. mltk_dsdl_admin if Splunk AI Toolkit is installed manually)
 #   SPLUNK_MCP_PASSWORD (required on first creation; used when FORCE_SPLUNK_MCP_PASSWORD=1)
 #   FORCE_SPLUNK_MCP_PASSWORD (1|true|yes forces password reset)
 #
@@ -39,7 +39,7 @@ SPLUNK_URL="https://${SPLUNK_HOST}:${SPLUNK_PORT}"
 SPLUNK_MCP_USER="${SPLUNK_MCP_USER:-${SPLUNKER_USERNAME:-${MCP_TOKEN_USERNAME:-splunker}}}"
 # := applies when unset or empty (compose used to pass SPLUNK_MLTK_USER="").
 : "${SPLUNK_MLTK_USER:=${MLTK_ROLES_USER:-$SPLUNK_MCP_USER}}"
-MLTK_ROLE="${MLTK_ROLE:-mltk_dsdl_admin}"
+MLTK_ROLE="${MLTK_ROLE:-}"
 : "${SPLUNK_MCP_PASSWORD:=}"
 FORCE_SPLUNK_MCP_PASSWORD="${FORCE_SPLUNK_MCP_PASSWORD:-${FORCE_SPLUNKER_PASSWORD:-0}}"
 

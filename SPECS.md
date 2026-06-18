@@ -5,7 +5,6 @@
 Provide a self-contained local Splunk environment that demonstrates:
 
 - Splunk MCP Server access from MCP clients
-- Splunk AI Toolkit installed and usable by admins
 - A non-admin MCP execution identity operating on a Splunk 4 Rookies-like dataset (via SA-S4R + Eventgen)
 
 ## Target platform
@@ -29,11 +28,9 @@ Provide a self-contained local Splunk environment that demonstrates:
 
 - **Admin user**
   - Splunk role: `admin`
-  - Always receives Splunk AI Toolkit role: `mltk_dsdl_admin`
 - **MCP user**
   - Splunk roles: `user` + `mcp_user`
   - `mcp_user` must include capability `mcp_tool_execute`
-  - Must not receive AI Toolkit admin roles (model configuration remains admin-only)
 
 ### AI SPL command
 
@@ -54,12 +51,12 @@ Provide a self-contained local Splunk environment that demonstrates:
 
 The stack installs pinned versions of these apps (by Splunkbase ID):
 
-- Splunk AI Toolkit (2890)
 - Splunk AI Assistant for SPL (7245)
 - Config Explorer (4353)
-- Python for Scientific Computing (2882)
 - SA-Eventgen (1924)
 - Splunk MCP Server (7931)
+
+Splunk AI Toolkit (2890) and Python for Scientific Computing (2882) are out of scope; install manually from Splunkbase if needed.
 
 ### SA-S4R custom app
 
