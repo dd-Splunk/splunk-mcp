@@ -34,7 +34,7 @@ Splunk REST bootstrap (see **`docs/CONFIGURATION.md` § Appendix: setup-splunk.s
 
 - MCP dev: **`ssl_verify=false`** on the Splunk MCP Server app (local dev only).
 - **SA-Eventgen**: enables the default modular input when the app is installed.
-- **Identity**: Splunk role **`mcp_user`** with capability **`mcp_tool_execute`**; MLTK role **`MLTK_ROLE`** (default **`mltk_dsdl_admin`**) on **`SPLUNK_MLTK_USER`** (default **`SPLUNK_MCP_USER`** / **`splunker`**, not the REST user **`SPLUNK_REST_USER`**) for AI Toolkit; user **`splunker`** (overridable via **`SPLUNK_MCP_USER`**) with roles **`user`** + **`mcp_user`**; MCP token minted for the same user. Set **`SPLUNK_MLTK_USER=admin`** (or the same as **`SPLUNK_REST_USER`**) in **`.env`** if the admin account should have MLTK instead; override **`MLTK_ROLE`** if your MLTK version uses a different role name.
+- **Identity**: Splunk role **`mcp_user`** with capability **`mcp_tool_execute`**; user **`splunker`** (overridable via **`SPLUNK_MCP_USER`**) with roles **`user`** + **`mcp_user`**; MCP token minted for the same user. Optional **`MLTK_ROLE`** / **`SPLUNK_MLTK_USER`** only when Splunk AI Toolkit is installed manually (not in **`SPLUNK_APPS_URL`**).
 - **Token**: encrypted MCP token is minted by **`scripts/mint-mcp-token.sh`** (after **`splunk-init`** exits) and written only to client configs (not the repo).
 - **Password**: MCP user password is provided via **`SPLUNK_MCP_PASSWORD`** (env).
 
