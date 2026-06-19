@@ -1,6 +1,7 @@
 <!-- Matches Splunk barebones app template ($SPLUNK_HOME/share/splunk/app_templates/barebones/...). -->
-<nav search_view="search" color="#1A1C24">
+<nav search_view="search" color="#791CF8">
   <view name="search" default="true" />
+  <view name="buttercup_operations_dashboard" />
   <view name="analytics_workspace" />
   <view name="datasets" />
   <view name="reports" />

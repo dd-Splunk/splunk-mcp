@@ -106,6 +106,9 @@ verify: ## Stack status then Splunk MCP client verify
 	@$(MAKE) status
 	@$(MAKE) verify-mcp-remote
 
+validate-s4r-dashboard: ## Validate Buttercup dashboard panel SPL via Splunk MCP
+	@./scripts/validate-s4r-dashboard-queries.sh
+
 s4r-attack-nk-enable: ## Enable NK purchase-attack Eventgen stanza (then: make restart)
 	@./scripts/toggle-s4r-attack-nk.sh enable
 

@@ -106,6 +106,7 @@ Tasks:
 - Eventgen in this repo emits workshop-shaped traffic (~67% `/product.screen`, ~33% `/cart.do`) so panel ratios and errors should look plausible after a few minutes of ingestion.
 - **Workshop modes:** default data supports **infrastructure failure** (Lab 3–5). Optional **`make s4r-attack-nk-enable`** + **`make restart`** adds NK geo concentration for Lab 6 / “threat vs infrastructure” agent demos — see [SA-S4R-APP.md](SA-S4R-APP.md).
 - Prefer shipping dashboard JSON/XML under `SA-S4R/default/data/ui/views/` when automating; keep background reference as a dashboard asset path above.
+- Shipped dashboard: **`SA-S4R/default/data/ui/views/buttercup_operations_dashboard.xml`** (Dashboard Studio, indigo `#791CF8` background, last-hour default, 1m refresh). Validate panel SPL: **`make validate-s4r-dashboard`** (requires Splunk MCP).
 
 ## References
 
