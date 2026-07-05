@@ -43,6 +43,9 @@ docker-compose.override.yml
 *.tmp
 .*.tmp
 
+# Internal SE materials (local only — not for public repo)
+demo-slides/claude-enterprise-*
+
 # Splunk App
 
 **/local/

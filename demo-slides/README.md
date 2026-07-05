@@ -4,7 +4,7 @@ Presenter slides for the **Splunk4Rookies agentic Buttercup demo**, built with [
 
 | File | Role |
 | ---- | ---- |
-| **`s4r-demo-slides.md`** | Source deck (19 slides + speaker notes) |
+| **`s4r-demo-slides.md`** | Source deck (26 slides + speaker notes) |
 | **`index.md`** | Symlink → `s4r-demo-slides.md` (for `marp -s` server mode) |
 | **`splunk.css`** | Custom theme (`/* @theme splunk */`) — dark background, orange titles |
 | **`.marprc.yml`** | CLI defaults: `themeSet`, `html: true` |
@@ -20,6 +20,27 @@ make marp-preview    # open preview window (single file)
 make marp-serve      # http://localhost:8080/ (directory mode)
 make marp-html       # write demo-slides/s4r-demo-slides.html
 ```
+
+## Claude Enterprise business case (local only)
+
+**Gitignored** (`demo-slides/claude-enterprise-*`) — keep internal licensing materials out of the public repo. Copy sources into `demo-slides/` locally if you use the Makefile targets below.
+
+| File | Role |
+| ---- | ---- |
+| **`claude-enterprise-bizcase-slides.md`** | 11-slide VP deck (source) |
+| **`claude-enterprise-bizcase-slides.pdf`** | Exported PDF — attach for VP meeting |
+| **`claude-enterprise-bizcase-slides.html`** | Browser export |
+| **`claude-enterprise-one-pager.md`** | Single-page A4 memo (source) |
+| **`claude-enterprise-one-pager.pdf`** | One-page PDF — email to VP |
+
+```bash
+make marp-bizcase-preview   # preview VP deck
+make marp-bizcase-pdf       # demo-slides/claude-enterprise-bizcase-slides.pdf
+make marp-bizcase-html      # demo-slides/claude-enterprise-bizcase-slides.html
+make marp-onepager-pdf      # demo-slides/claude-enterprise-one-pager.pdf
+```
+
+Replace **`[Your name]`**, **`[Manager name]`**, and KPI placeholders in the `.md` sources before re-exporting.
 
 **Cursor / VS Code (optional):** install the [Marp for VS Code](https://marketplace.visualstudio.com/items?itemName=marp-team.marp-vscode) extension. Register the theme in workspace settings if preview looks unstyled:
 
@@ -44,7 +65,7 @@ footer: '![w:46](https://www.splunk.com/.../logo-splunk-corp-rgb-w-web.svg)'
 
 - **`theme: splunk`** — must match `/* @theme splunk */` in `splunk.css`.
 - **`html: true`** — required for Mermaid client-side rendering, `<br>`, `<span class="splunk-orange">`, and layout `<div>`s.
-- **`footer`** — Splunk “a Cisco company” white logo (lower center via CSS); confidential line appended in `splunk.css`.
+- **`footer`** — Splunk “a Cisco company” white logo (lower center via CSS); PoC disclaimer appended in `splunk.css`.
 
 ## Mermaid diagrams
 
@@ -74,7 +95,8 @@ Apply at the **top** of a slide (before the `#` title):
 | `lead-hero` | With `lead` — large hero title (S1, S14 Thank You) |
 | `diagram` | Smaller body text; full-width Mermaid |
 | `diagram-split` | Diagram + table side by side (~62% / ~34%) |
-| `diagram-split-equal` | With `diagram-split` — 50/50 columns (S7) |
+| `diagram-split-equal` | With `diagram-split` — 50/50 columns (S15) |
+| `compact` | Smaller body + blockquotes for dense prompt lists (S25) |
 
 Example:
 
@@ -103,29 +125,38 @@ Numbers come from live MCP — do not read fixed amounts from slides.
 
 Visible in Marp **presenter view** (`P`).
 
-## Slide map (19)
+## Slide map (26)
+
+Deck follows **three steps**: Workshop dashboard build → business Q&A → agentic orchestration.
 
 | # | Title | Notes |
 | - | ----- | ----- |
-| 1 | Splunk4Rookies / Agentic analysis… | `lead lead-hero` |
-| 2 | Scenario — Buttercup Enterprises | |
-| 3 | The challenge | |
-| 4 | Agentic Architecture | `diagram`; User / Agentic / Splunk platform subgraphs |
-| 5 | Agents Artifacts defined | |
-| 6 | Splunk MCP guardrails | `diagram-split` |
-| 7 | Two workshop data modes | `diagram-split-equal`; shell-styled `make` nodes |
-| 8 | Demo 1 - Infrastructure story | |
-| 9 | Demo 1 — delegation flow | `diagram`; expected answer under chart |
-| 10 | Buttercup Insights | |
-| 11 | Demo 2 - NK attack | |
-| 12 | Dashboard tie-in — Lab 7 | |
-| 13 | Takeaways | |
-| 14 | Thank You | `lead lead-hero` |
-| 15 | Appendix — before you start | |
-| 16 | Appendix — copy-paste prompts | |
-| 17 | Appendix — troubleshooting | |
-| 18 | Appendix — Business use cases (1 of 2) | Checkout, merchandising, mobile vs platform |
-| 19 | Appendix — Business use cases (2 of 2) | International, fraud vs reliability; Demo 1 / 2 callout |
+| 1 | From dashboards to agentic analysis | `lead lead-hero` |
+| 2 | Three ways this repo helps | Steps 1–3 overview table |
+| 3 | Scenario — Buttercup Enterprises | |
+| 4 | Step 1 — Build dashboards with natural language | `lead` section divider |
+| 5 | Step 1 — Workshop dashboard build | Labs 3–7 table |
+| 6 | Step 1 — What you get | Artifacts |
+| 7 | Step 2 — Ask business questions without SPL | `lead` section divider |
+| 8 | Step 2 — Business questions in plain English | Example prompts |
+| 9 | Splunk MCP guardrails | `diagram-split` |
+| 10 | Step 2 — Live demo prompt | Single-assistant business ask |
+| 11 | Step 3 — Agentic orchestration for specialists | `lead` section divider |
+| 12 | The challenge | |
+| 13 | Agentic Architecture | `diagram`; User / Agentic / Splunk platform subgraphs |
+| 14 | Agents Artifacts defined | |
+| 15 | Two workshop data modes | `diagram-split-equal`; shell-styled `make` nodes |
+| 16 | Step 3 — Demo 1: Infrastructure story | |
+| 17 | Step 3 — delegation flow | `diagram`; executive synthesis |
+| 18 | Buttercup Insights | |
+| 19 | Additional Business questions (1 of 2) | Checkout, merchandising, mobile vs platform |
+| 20 | Additional Business questions (2 of 2) | International, fraud vs reliability |
+| 21 | Step 3 — Demo 2: North Korea attack | |
+| 22 | Takeaways | All three steps |
+| 23 | Thank You | `lead lead-hero` |
+| 24 | Appendix — before you start | |
+| 25 | Appendix — copy-paste prompts | `compact` — Steps 1–3 prompts |
+| 26 | Appendix — troubleshooting | |
 
 ## Theme highlights (`splunk.css`)
 
