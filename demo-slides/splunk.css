@@ -146,7 +146,7 @@ footer img {
 }
 
 footer::after {
-    content: ' | © 2026 Splunk Inc. Confidential';
+    content: ' | Splunk MCP PoC — not an official Splunk product';
     margin-left: 0.25em;
 }
 
@@ -312,6 +312,32 @@ section.diagram-split-equal .diagram-table-col table {
 section.diagram-split-equal .diagram-table-row .mermaid svg {
     max-width: 100%;
     width: 100%;
+}
+
+/* Dense appendix slides — multiple prompts/blockquotes (e.g. slide 25) */
+section.compact {
+    font-size: 21px;
+    line-height: 1.28;
+}
+
+section.compact h1 {
+    font-size: 38px;
+    margin-bottom: 0.3em;
+}
+
+section.compact p {
+    margin: 0.12em 0;
+}
+
+section.compact blockquote {
+    margin: 0.1em 0 0.28em;
+    padding: 0.15em 0.55em;
+    font-size: 0.95em;
+    line-height: 1.22;
+}
+
+section.compact blockquote p {
+    margin: 0;
 }
 
 /* Tables on dark slides — beat @import default tr/td backgrounds */
