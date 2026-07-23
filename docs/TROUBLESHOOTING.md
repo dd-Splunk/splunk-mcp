@@ -1,5 +1,45 @@
 # Troubleshooting Guide
 
+## Cursor Cloud (Docker-in-Docker)
+
+### Bootstrap before `make up`
+
+Fresh Cursor Cloud VMs do not auto-start Docker or Splunk storage. Run once per boot:
+
+```bash
+./scripts/cloud-bootstrap.sh
+make up
+```
+
+Requires `SPLUNKBASE_USER` / `SPLUNKBASE_PASS` as environment secrets. See [CONFIGURATION.md](CONFIGURATION.md#cursor-cloud-bootstrap) and [AGENTS.md](../AGENTS.md).
+
+### KVStore status `failed` / MCP token mint fails
+
+**Symptom:** `kvStoreStatus: failed`, `mcp_token` returns *KVStore is not ready*, or mongod exits with featureCompatibilityVersion errors after changing Splunk versions.
+
+**Cause:** Persistent ext4 data under `/mnt/splunkdb` still contains KVStore from an older Splunk major version.
+
+**Solution:**
+
+```bash
+./scripts/cloud-bootstrap.sh --wipe
+make up
+```
+
+### Splunk crashes on startup (`available_memory_size_in_bytes`)
+
+**Symptom:** Splunk 10.4.x SIGABRT during `setupIndexPipeline` on Cursor Cloud.
+
+**Solution:** Use default bootstrap (fake cgroup mount) or pin `splunk/splunk:9.3.2` with `./scripts/cloud-bootstrap.sh --image splunk/splunk:9.3.2`.
+
+### `homePath ... on unusable filesystem`
+
+**Symptom:** Splunk refuses to create indexes on Docker overlay/tmpfs.
+
+**Solution:** Run `./scripts/cloud-bootstrap.sh` — it mounts ext4 loopback at `/mnt/splunkdb` and binds it as `so1-var`.
+
+---
+
 ## Common Issues & Solutions
 
 ### Container Issues
