@@ -129,12 +129,7 @@ marp-serve: ## Serve S4R slides over HTTP (open http://localhost:8080/)
 marp-html: ## Export S4R slides to demo-slides/s4r-demo-slides.html
 	@cd demo-slides && marp --no-stdin s4r-demo-slides.md -o s4r-demo-slides.html
 
-: ## Preview  slides
+: ## Preview  slides (local sources)
+	@./scripts/ 
 	@cd demo-slides && marp --no-stdin -p 
-
-: ## Export  slides to HTML
-	@cd demo-slides && marp --no-stdin  -o 
-
-: ## Export  slides to PDF
-	@cd demo-slides && marp --no-stdin --pdf  -o 
 
