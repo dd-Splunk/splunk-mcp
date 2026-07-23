@@ -16,3 +16,7 @@ export = system
 [lookup-table-files/product_codes.csv]
 access = read : [ * ], write : [ admin, sc_admin ]
 export = system
+
+[views/buttercup_enterprises_dashboard]
+access = read : [ admin, sc_admin, power, user ], write : [ admin, sc_admin ]
+export = none
