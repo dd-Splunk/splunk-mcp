@@ -88,30 +88,49 @@ GitHub Actions: **`ci.yml`** (**pre-commit**: system **shellcheck** + **markdown
 
 ## Cursor Cloud specific instructions
 
-This section is for cloud agents running in the Cursor Cloud VM (Docker-in-Docker inside a Firecracker microVM). The startup **update script** only refreshes the lint tool (`pip install --user pre-commit`); everything below is runtime/infra state that does **not** persist across a fresh VM boot, so start it yourself before running Splunk.
+This section is for cloud agents running in the Cursor Cloud VM (Docker-in-Docker inside a Firecracker microVM). Runtime state **does not persist across a fresh VM boot** — run bootstrap before `make up`.
 
-- **Docker daemon is not auto-started (no systemd).** Start it once per boot and make the socket usable:
-  `sudo dockerd >/tmp/dockerd.log 2>&1 &` then `sudo chmod 666 /var/run/docker.sock`. The daemon is preconfigured for this env (`/etc/docker/daemon.json`: `fuse-overlayfs` + `containerd-snapshotter: false`; `iptables-legacy`). Verify with `docker run --rm hello-world`.
-- **Splunk indexes require a real filesystem — the container's overlay/tmpfs is rejected** with `homePath ... on unusable filesystem` (validatedb fails). Back Splunk's `/opt/splunk/var` with a loopback **ext4** image (idempotent):
-  `sudo mkdir -p /mnt/splunkdb; mountpoint -q /mnt/splunkdb || { [ -f /splunkdb.img ] || sudo fallocate -l 25G /splunkdb.img; sudo mkfs.ext4 -qF /splunkdb.img 2>/dev/null; sudo mount -o loop /splunkdb.img /mnt/splunkdb; }; sudo chown -R 41812:41812 /mnt/splunkdb` (uid 41812 = the `splunk` user).
-- **`splunk/splunk` 10.4.x crashes on startup** here without a workaround: SIGABRT in `ContainerInfo::available_memory_size_in_bytes` during `setupIndexPipeline`. Root cause: this nested VM's cgroup-v2 root is **`domain threaded`**, so the `memory` controller can't be delegated to any child (`echo +memory > .../cgroup.subtree_control` → `Operation not supported`); Docker containers get no `memory` controller, and `--cgroupns=host` exposes the root cgroup which 10.4 still can't parse (faking individual `memory.*` values does not help). **Fix (verified on 10.4.1):** bind-mount a self-consistent **fake numeric cgroup-v2 tree** over `/sys/fs/cgroup:ro`. Create it once (idempotent) and reference it from the override:
+### Quick start
 
-  ```bash
-  R=/opt/splunk-fake-cgroup; sudo mkdir -p $R
-  printf 'cpuset cpu io memory pids\n' | sudo tee $R/cgroup.controllers
-  printf '\n' | sudo tee $R/cgroup.subtree_control; printf 'domain\n' | sudo tee $R/cgroup.type
-  for kv in memory.max=8589934592 memory.high=8589934592 memory.low=0 memory.min=0 \
-            memory.current=1073741824 memory.peak=1073741824 memory.swap.max=0 memory.swap.current=0 \
-            cpu.max=100000; do printf '%s\n' "${kv#*=}" | sudo tee "$R/${kv%%=*}"; done
-  printf 'anon 536870912\nfile 268435456\nkernel 67108864\nslab 33554432\nsock 1048576\n' | sudo tee $R/memory.stat
-  printf 'low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\n' | sudo tee $R/memory.events
-  printf 'usage_usec 1000\nuser_usec 500\nsystem_usec 500\n' | sudo tee $R/cpu.stat
-  sudo chmod -R a+r $R
-  ```
+1. Add **Cursor Cloud environment secrets**: `SPLUNKBASE_USER` and `SPLUNKBASE_PASS` (splunk.com account that can download Splunkbase apps).
+2. Bootstrap (idempotent per boot):
 
-  Override `so1` with `volumes: ["/opt/splunk-fake-cgroup:/sys/fs/cgroup:ro"]`. **Simpler alternative:** pin `SPLUNK_IMAGE=splunk/splunk:9.3.2`, which runs fine here **without** the fake cgroup tree (9.x lacks the crashing memory-probe). Both were verified end-to-end incl. `/services/mcp`.
-- **Splunkbase creds gate `make up`.** `SPLUNKBASE_USER`/`SPLUNKBASE_PASS` (a real splunk.com account) are required to download the apps in `SPLUNK_APPS_URL`; with placeholder creds the base image's Ansible aborts (`Invalid Splunkbase credentials`). With valid creds (provided as secrets), full `make up` + `/services/mcp` was verified end-to-end on `splunk/splunk:9.3.2`.
-- **The pinned Splunkbase app versions in `compose.yml` go stale (404).** `app/7931/release/1.2.0` and `app/7245/release/2.0.0` now 404; provisioning then fails at "Install Splunkbase app". Override `SPLUNK_APPS_URL` with current releases (checked via `https://splunkbase.splunk.com/api/v1/app/<id>/release/`) — verified working: Eventgen `1924/8.2.2` + MCP Server `7931/1.3.0` (AI Assistant is `7245/2.2.0`). Required apps for the MCP demo are `1924` (Eventgen data) + `7931` (MCP Server); `4353`/`7245` are optional.
-- **Local run recipe (gitignored files):** `.env` (Path B: your generated `SPLUNK_PASSWORD`/`SPLUNK_MCP_PASSWORD`, real `SPLUNKBASE_*`, and `SPLUNK_IMAGE` = `splunk/splunk:10.4.1` or `:9.3.2`) plus a `docker-compose.override.yml` that: sets a working `SPLUNK_APPS_URL`; points the `so1-var` volume at the ext4 mount (`driver_opts: {type: none, o: bind, device: /mnt/splunkdb}`); and **for 10.4.x** mounts the fake cgroup tree (`volumes: ["/opt/splunk-fake-cgroup:/sys/fs/cgroup:ro"]`) — **for 9.3.2** use `cgroup: host` instead. Then `./scripts/compose-up.sh` (or `make up`). Wipe `so1-etc` + re-mkfs `/mnt/splunkdb` between clean runs (a stale `so1-etc` keeps the old admin password → 401, and skips app installs).
-- **Exercising `/services/mcp`:** mint/refresh the token with `make update-mcp-client MCP_CLIENT=cursor` (writes gitignored `.cursor/mcp.json`), then drive the endpoint with **`npx mcp-remote`** (handles the MCP session handshake). Raw `curl` to `/services/mcp` works for `initialize`/`tools/list` but tool execution is unreliable without mcp-remote's session flow. Verified: `tools/list` (10 `splunk_*` tools) and `tools/call` `splunk_run_query` returning live SPL results. Splunk core (non-MCP) SPL still works directly: `POST /services/receivers/simple` (ingest) + `POST /services/search/jobs/export` (search) on `:8089`; Web on `:8000`.
-- **Lint** (`pre-commit run --all-files`) works out of the box — `shellcheck` (system) is installed and `pre-commit` is on PATH via `~/.local/bin` (added to `~/.bashrc`); `markdownlint-cli2` is fetched via `npx`.
+   ```bash
+   ./scripts/cloud-bootstrap.sh
+   # or: make cloud-bootstrap
+   ```
+
+3. Start the stack:
+
+   ```bash
+   make up
+   make verify
+   ```
+
+**Options:** `--wipe` reformats the ext4 Splunk data mount and removes Compose volumes (required when changing Splunk major versions — otherwise KVStore can stay `failed`). `--image splunk/splunk:9.3.2` skips the fake-cgroup workaround. `--force-env` recreates gitignored `.env`. See `./scripts/cloud-bootstrap.sh --help`.
+
+The script writes gitignored **`docker-compose.override.yml`** (ext4 bind mount for `so1-var`; fake cgroup mount for Splunk **10.4.x**) and **`.env`** (generated admin/MCP passwords + Splunkbase creds from secrets). Default image: **`splunk/splunk:10.4.1`**.
+
+### What the bootstrap script does
+
+- **Docker daemon** — not auto-started (no systemd). Starts `dockerd`, fixes socket permissions, runs `hello-world`.
+- **ext4 loopback** — Splunk rejects overlay/tmpfs (`unusable filesystem`). Backs `/opt/splunk/var` via `/mnt/splunkdb` ← `/splunkdb.img` (25G default).
+- **Splunk 10.4.x cgroup workaround** — `splunk/splunk:10.4.x` crashes without a fake cgroup-v2 tree bind-mounted at `/sys/fs/cgroup:ro` (see script). **9.3.2** uses `cgroup: host` instead (no fake tree).
+- **`.env` + override** — see quick start above.
+
+### Manual reference (if not using the script)
+
+<details>
+<summary>Expand manual commands</summary>
+
+- Docker: `sudo bash -c 'dockerd >/tmp/dockerd.log 2>&1 &'` then `sudo chmod 666 /var/run/docker.sock`
+- ext4: see `ensure_splunkdb_mount` in `scripts/cloud-bootstrap.sh`
+- Fake cgroup: see `ensure_fake_cgroup` in `scripts/cloud-bootstrap.sh`
+- Override + `.env`: see `write_compose_override` / `write_env_file` in `scripts/cloud-bootstrap.sh`
+
+</details>
+
+### After `make up`
+
+- **MCP token:** `make update-mcp-client MCP_CLIENT=cursor` (writes gitignored `.cursor/mcp.json`). Drive the endpoint with **`npx mcp-remote`** (session handshake); raw `curl` is unreliable for tool execution.
+- **Lint:** `pre-commit run --all-files` — `shellcheck` (system) + `pre-commit` on `~/.local/bin` PATH; `markdownlint-cli2` via `npx`.
