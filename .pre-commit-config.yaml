@@ -3,6 +3,11 @@
 # Run all hooks: pre-commit run --all-files
 # Mirrors .github/workflows/ci.yml (CI installs shellcheck via apt).
 repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.2
+    hooks:
+      - id: gitleaks
+
   - repo: local
     hooks:
       - id: shellcheck
