@@ -8,6 +8,7 @@ Buttercup Enterprises PoC: **SA-S4R** sample app, Labs 3–7 SPL, dashboard buil
 | ---------- | -------- |
 | Run canonical SPL (agents + dashboards) | [S4R-SPL-CATALOG.md](../S4R-SPL-CATALOG.md) |
 | Build the Lab 3–7 dashboard | [S4R-DASHBOARD.md](../S4R-DASHBOARD.md) |
+| Workshop `local/` setup (props, nav, permissions) | [SA-S4R/local/README](../../SA-S4R/local/README) |
 | Understand Eventgen, NK toggle, data | [SA-S4R-APP.md](../SA-S4R-APP.md) |
 | Agent roles, delegation, demo beats | [S4R-AGENTS.md](../S4R-AGENTS.md) |
 | Present the agentic demo (slides + script) | [demo-slides/](../../demo-slides/) — `s4r-demo-slides.md`, [S4R-DEMO.md](../../demo-slides/S4R-DEMO.md) |

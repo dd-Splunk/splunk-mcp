@@ -18,7 +18,6 @@ export ENV_FILE ENV_OUT ENV_EXAMPLE OP DC
 	update-mcp-clients update-mcp-client verify-mcp-remote \
 	update-claude-config update-cursor-config update-goose-config \
 	s4r-attack-nk-enable s4r-attack-nk-disable s4r-attack-nk-status \
-	s4r-dashboard-local \
 	marp-preview marp-serve marp-html \
 	marp-bizcase-preview marp-bizcase-html marp-bizcase-pdf \
 	marp-onepager-pdf
@@ -120,9 +119,6 @@ s4r-attack-nk-disable: ## Disable NK purchase-attack Eventgen stanza (default mo
 
 s4r-attack-nk-status: ## Show whether NK attack Eventgen stanza is enabled
 	@./scripts/toggle-s4r-attack-nk.sh status
-
-s4r-dashboard-local: ## Install Buttercup dashboard tab into SA-S4R/local/ (workshop)
-	@./scripts/install-s4r-local-dashboard.sh
 
 marp-preview: ## Open S4R slide deck in Marp preview (single file)
 	@cd demo-slides && marp --no-stdin -p s4r-demo-slides.md

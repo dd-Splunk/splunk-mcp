@@ -47,10 +47,9 @@ docker-compose.override.yml
 # Internal SE materials (local only — not for public repo)
 demo-slides/claude-enterprise-*
 
-# Splunk App
-
-**/local/
+# Splunk app local/ — ignore everything except tracked workshop README
+SA-S4R/local/**
+!SA-S4R/local/README
 *.lic
 **/metadata/local.meta
-!**/local.example/metadata/local.meta
 
