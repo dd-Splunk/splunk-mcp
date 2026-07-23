@@ -20,7 +20,7 @@ SA-S4R/                         # tracked in git
 │   ├── app.conf                # id, label, version, launcher metadata
 │   ├── data/ui/nav/default.xml   # barebones nav (Search, Dashboards, Alerts, …)
 │   ├── eventgen.conf           # Eventgen definitions (baseline + optional attack stanza)
-│   ├── props.conf              # action, product_id, uid, JSESSIONID (platform → local.example)
+│   ├── props.conf              # action, product_id, uid, JSESSIONID (platform → local/props.conf)
 │   └── transforms.conf         # product_codes lookup (file: lookups/product_codes.csv)
 ├── lookups/
 │   └── product_codes.csv       # Demo lookup for Lab 5
@@ -42,8 +42,7 @@ SA-S4R/                         # tracked in git
     ├── nk_status.txt
     ├── nk_useragent.txt
     └── nk_product_id.txt
-local.example/                  # tracked workshop template → copy to local/
-└── local/                      # gitignored — Splunk UI customizations + workshop install
+local/                          # gitignored overrides; README tracked (workshop guide)
 ```
 
 ## `default/` vs `local/` (Splunk best practice)
@@ -54,13 +53,13 @@ Splunk apps split **shipped baseline** (`default/`) from **instance-specific ove
 | --------- | -------------------- | ------------ |
 | **`default/`** | PoC baseline shipped in git and **`SA-S4R.spl`**: Eventgen, core props, barebones nav, lookups | **Maintainers only** — intentional product changes in git, not ad hoc Splunk UI saves |
 | **`local/`** | Workshop dashboard, nav tab, Lab 4 **`platform`** extraction, and anything you customize in Splunk Web | **You / attendees** — all direct Splunk interaction |
-| **`local.example/`** | Tracked template copied by **`make s4r-dashboard-local`** | Maintainers when updating the workshop pack |
+| **`local/README`** | Tracked workshop guide (props, nav, metadata snippets; links to dashboard spec) | Maintainers when updating workshop instructions |
 
 **Rules (Splunk and this repo):**
 
 1. **Splunk Web, Settings → Knowledge, nav editor, field extractor, Dashboard Studio saves** — must land under **`SA-S4R/local/`** only. **Never** save customizations into **`default/`** (Splunk will overwrite shipped objects on upgrade/reinstall).
-2. **Agents and contributors** — do not add workshop dashboards, nav tabs, field extractions, or saved searches under **`SA-S4R/default/`** in git. Put templates in **`local.example/`** and install with **`make s4r-dashboard-local`**.
-3. **Packaging** — **`package-s4r.yml`** excludes **`local/`** so instance-specific content is not published in **`SA-S4R.spl`**.
+2. **Agents and contributors** — do not add workshop dashboards, nav tabs, field extractions, or saved searches under **`SA-S4R/default/`** in git. Document workshop setup in **`local/README`**; attendees create files under **`local/`** (or save from Splunk Web).
+3. **Packaging** — **`package-s4r.yml`** excludes **`local/`** (entire directory) so instance-specific content is not published in **`SA-S4R.spl`**. In git, **`SA-S4R/local/**`** is ignored except **`local/README`** (see **`.gitignore`**).
 
 If you already saved something to **`default/`** inside a running container, move it to **`local/`** (or re-export from Splunk into **`local/`**), then remove the duplicate from **`default/`**.
 
@@ -115,20 +114,13 @@ All use workshop-style `HTTP 1.1`, Buttercup referers, and a trailing response-t
 
 **`default/data/ui/nav/default.xml`** follows Splunk’s **barebones** app template (`share/splunk/app_templates/barebones/`): **Search** (default), **Analytics**, **Datasets**, **Reports**, **Alerts**, **Dashboards**, and **Modules**.
 
-The **Buttercup Enterprises** workshop tab and Dashboard Studio view live under **`local/`** only (gitignored). Install from the tracked template:
-
-```bash
-make s4r-dashboard-local
-make restart   # if Splunk is already running
-```
-
-See **`SA-S4R/local.example/`** and [S4R-DASHBOARD.md](S4R-DASHBOARD.md).
+The **Buttercup Enterprises** workshop tab and Dashboard Studio view live under **`local/`** only (gitignored except **`local/README`**). Create them per **`local/README`** and [S4R-DASHBOARD.md](S4R-DASHBOARD.md), then **`make restart`** if Splunk is already running.
 
 ## Field extractions and lookup
 
 **`default/props.conf`** extracts `action`, `product_id`, `uid`, and `JSESSIONID` from the request line so workshop SPL such as `action=purchase` works without manual field extraction.
 
-**`platform`** (Lab 4) is installed with the workshop dashboard via **`make s4r-dashboard-local`** → **`local/props.conf`** (template in **`local.example/props.conf`**). Agents/MCP still use inline `rex` per [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md).
+**`platform`** (Lab 4) belongs in **`local/props.conf`** — see **`SA-S4R/local/README`**. Agents/MCP still use inline `rex` per [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md).
 
 **`default/transforms.conf`** registers lookup **`product_codes`** (backed by **`lookups/product_codes.csv`**) for Lab 5:
 
@@ -199,7 +191,7 @@ See [S4R-AGENTS.md](S4R-AGENTS.md) for Power User delegation and [S4R-SPL-CATALO
 
 **Do not package** runtime paths: `local/`, `metadata/local.meta`, `.DS_Store` (excluded in **`package-s4r.yml`**). **`local/`** holds workshop dashboard/nav overrides and may contain HEC inputs or tokens from a live container — keep gitignored.
 
-**Workshop assets:** Dashboard Studio view, nav tab, and **`platform`** extraction template in **`local.example/`** (install with **`make s4r-dashboard-local`**). Optional follow-up: app icon under `appserver/static/`.
+**Workshop assets:** Dashboard Studio view, nav tab, and **`platform`** extraction — create under **`local/`** per **`local/README`**. Optional follow-up: app icon under `appserver/static/`.
 
 ## See also
 

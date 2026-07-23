@@ -1,0 +1,68 @@
+Splunk4Rookies (SA-S4R) — local/ workshop guide
+=================================================
+
+Splunk apps use local/ for instance-specific overrides (nav, dashboards, field
+extractions, saved searches). local/ wins at runtime over default/.
+
+In this repo, everything under SA-S4R/local/ is gitignored except this README.
+Create workshop files on your bind-mounted app path (or in Splunk Web — saves
+land under local/ automatically). Never customize default/ for workshop assets.
+
+After editing files under local/, run: make restart
+
+Layout spec (panels, SPL, acceptance): docs/S4R-DASHBOARD.md
+Canonical SPL: docs/S4R-SPL-CATALOG.md
+Full app notes: docs/SA-S4R-APP.md
+
+Expected local/ layout (workshop)
+---------------------------------
+
+  local/
+  ├── README                 (this file — tracked in git)
+  ├── props.conf             (Lab 4 — platform extraction)
+  ├── data/ui/nav/local.xml  (Buttercup nav tab)
+  ├── data/ui/views/         (Dashboard Studio export — build in Labs 3–7)
+  └── metadata/local.meta    (permissions for the dashboard view)
+
+Lab 4 — platform field extraction (local/props.conf)
+----------------------------------------------------
+
+Add to local/props.conf (not default/props.conf):
+
+  [access_combined]
+  EXTRACT-platform = \((?<platform>Linux; Android [0-9.]+|Macintosh; Intel Mac OS X [0-9_]+|Windows|iPhone; CPU iPhone OS [0-9_]+)
+
+Saved dashboard panels can use platform after this. Splunk MCP / agents must
+still use the inline rex in docs/S4R-SPL-CATALOG.md (§ Platform prefix).
+
+Workshop nav tab (local/data/ui/nav/local.xml)
+----------------------------------------------
+
+  <nav search_view="search" color="#791CF8">
+    <view name="buttercup_enterprises_dashboard" />
+  </nav>
+
+Dashboard permissions (local/metadata/local.meta)
+-------------------------------------------------
+
+  [views/buttercup_enterprises_dashboard]
+  access = read : [ admin, sc_admin, power, user ], write : [ admin, sc_admin ]
+  export = none
+
+Dashboard Studio view (Labs 3–7)
+--------------------------------
+
+Build the Buttercup Enterprises dashboard in Splunk Web (Dashboard Studio,
+Absolute layout). Save under local/data/ui/views/ — do not save to default/.
+
+Panel order, visualizations, background image, and checklist:
+  docs/S4R-DASHBOARD.md
+
+Background asset (already in default/ static):
+  /static/app/SA-S4R/Buttercup_Background.jpg
+
+Packaging
+---------
+
+SA-S4R.spl (package-s4r.yml) excludes local/ — workshop UI is not shipped in
+the published app bundle. PoC baseline stays in default/.

@@ -95,7 +95,7 @@ splunk-mcp/
 ├── Makefile
 ├── tpl.env.example / .env.example     # Tracked; copy to tpl.env or .env (gitignored)
 ├── scripts/                            # compose-up, setup-splunk, mint-mcp-token, mcp-client
-├── SA-S4R/                             # Sample app (Eventgen)
+├── SA-S4R/                             # Sample app (Eventgen); local/README tracked, rest of local/ gitignored
 ├── demo-slides/                        # Marp presenter deck (see demo-slides/README.md)
 └── docs/
 ```

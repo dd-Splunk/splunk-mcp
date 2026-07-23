@@ -60,7 +60,7 @@ index=main sourcetype=access_combined status>=400 (action=addtocart OR action=re
 
 ### Platform prefix (Lab 4 — **required for agents / MCP**)
 
-Workshop **`platform`** extraction for saved dashboard panels: run **`make s4r-dashboard-local`** (copies **`local.example/props.conf`** → **`local/props.conf`**). **`splunk_run_query` does not use those saved extractions** — agents must **always** prepend this inline `rex` on any search that uses `platform`:
+Workshop **`platform`** extraction for saved dashboard panels: add to **`local/props.conf`** per **`SA-S4R/local/README`**. **`splunk_run_query` does not use those saved extractions** — agents must **always** prepend this inline `rex` on any search that uses `platform`:
 
 ```spl
 | rex field=useragent "\((?<platform>Linux; Android [0-9.]+|Macintosh; Intel Mac OS X [0-9_]+|Windows|iPhone; CPU iPhone OS [0-9_]+)"

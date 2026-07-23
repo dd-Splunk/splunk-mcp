@@ -15,7 +15,7 @@ You are a Splunk power user for **Buttercup Enterprises**, a US online retailer 
 | Index / sourcetype | `index=main sourcetype=access_combined` |
 | Event shape | Apache-style access logs: `/product.screen?uid=…&product_id=…` and `/cart.do?action=…&product_id=…` |
 | Fields in repo | `action`, `product_id`, `uid`, `JSESSIONID` (`SA-S4R/default/props.conf`) |
-| Field to add (Lab 4) | **`platform`** — install with **`make s4r-dashboard-local`** (`local/props.conf` from **`local.example/`**) for saved dashboard panels; **agents/MCP** use inline `rex` in [S4R-SPL-CATALOG.md § Platform prefix](S4R-SPL-CATALOG.md#platform-prefix-lab-4--required-for-agents--mcp) |
+| Field to add (Lab 4) | **`platform`** — add to **`local/props.conf`** per **`SA-S4R/local/README`** for saved dashboard panels; **agents/MCP** use inline `rex` in [S4R-SPL-CATALOG.md § Platform prefix](S4R-SPL-CATALOG.md#platform-prefix-lab-4--required-for-agents--mcp) |
 | Lookup | **`product_codes`** → `product_id`, `product_name`, `product_price` (file: `SA-S4R/lookups/product_codes.csv`) |
 | Background asset | `/static/app/SA-S4R/Buttercup_Background.jpg` (repo: `SA-S4R/appserver/static/Buttercup_Background.jpg`) |
 
@@ -27,7 +27,7 @@ Base search and field conventions: [S4R-SPL-CATALOG.md § Data contract](S4R-SPL
 - **Layout:** **Absolute** — allows placing panels over the background image.
 - **Deliverable:** One dashboard in the **Splunk4Rookies** app with **five** visual areas (four team panels + branded layout).
 - **Do not** use app-wide `application.css`; background is a **dashboard** image only.
-- **Install path:** **`make s4r-dashboard-local`** → **`SA-S4R/local/`** only. **Do not** build or save this dashboard under **`SA-S4R/default/`** (Splunk best practice).
+- **Install path:** build and save under **`SA-S4R/local/`** only (see **`local/README`**). **Do not** build or save this dashboard under **`SA-S4R/default/`** (Splunk best practice).
 
 ## Panels (build in lab order)
 
@@ -46,7 +46,7 @@ Add this panel to a **new** dashboard; choose Dashboard Studio and Absolute layo
 
 **Ask:** Show the most common customer operating systems and which web browsers experience the most failures.
 
-**Prerequisite (dashboard):** Run **`make s4r-dashboard-local`** so **`platform`** is extracted in **`local/props.conf`** for saved panels (Lab 4). **Agent/ad-hoc SPL:** always use [platform prefix](S4R-SPL-CATALOG.md#platform-prefix-lab-4--required-for-agents--mcp) — do not assume the saved extraction applies to MCP searches.
+**Prerequisite (dashboard):** Add **`platform`** to **`local/props.conf`** per **`SA-S4R/local/README`** for saved panels (Lab 4). **Agent/ad-hoc SPL:** always use [platform prefix](S4R-SPL-CATALOG.md#platform-prefix-lab-4--required-for-agents--mcp) — do not assume the saved extraction applies to MCP searches.
 
 | Panel | Visualization | SPL |
 | ----- | ------------- | --- |
@@ -106,7 +106,7 @@ Tasks:
 - **`status>=400`** defines “unsuccessful” / failure for DevOps and lost-revenue panels.
 - Eventgen in this repo emits workshop-shaped traffic (~67% `/product.screen`, ~33% `/cart.do`) so panel ratios and errors should look plausible after a few minutes of ingestion.
 - **Workshop modes:** default data supports **infrastructure failure** (Lab 3–5). Optional **`make s4r-attack-nk-enable`** + **`make restart`** adds NK geo concentration for Lab 6 / “threat vs infrastructure” agent demos — see [SA-S4R-APP.md](SA-S4R-APP.md).
-- Prefer **`make s4r-dashboard-local`** to install the Dashboard Studio view under **`SA-S4R/local/data/ui/views/`** (gitignored; template in **`local.example/`**). Keep the background reference as a dashboard asset path above.
+- Build the Dashboard Studio view in Splunk Web and save under **`SA-S4R/local/data/ui/views/`** (gitignored). Snippets for nav, props, and permissions: **`SA-S4R/local/README`**. Keep the background reference as a dashboard asset path above.
 
 ## References
 

@@ -46,10 +46,9 @@ docker-compose.override.yml
 
 
 
-# Splunk App
-
-**/local/
+# Splunk app local/ — ignore everything except tracked workshop README
+SA-S4R/local/**
+!SA-S4R/local/README
 *.lic
 **/metadata/local.meta
-!**/local.example/metadata/local.meta
 
