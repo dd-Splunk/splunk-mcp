@@ -14,7 +14,7 @@ MCP_CLIENTS := cursor goose claude
 
 export ENV_FILE ENV_OUT ENV_EXAMPLE OP DC
 
-.PHONY: help up down restart clean logs status demo-prep verify \
+.PHONY: help up down restart clean logs status demo-prep verify cloud-bootstrap \
 	update-mcp-clients update-mcp-client verify-mcp-remote \
 	update-claude-config update-cursor-config update-goose-config \
 	s4r-attack-nk-enable s4r-attack-nk-disable s4r-attack-nk-status \
@@ -105,6 +105,9 @@ demo-prep: ## Pre-demo check: status + MCP verify + warm-stack reminder
 verify: ## Stack status then Splunk MCP client verify
 	@$(MAKE) status
 	@$(MAKE) verify-mcp-remote
+
+cloud-bootstrap: ## Cursor Cloud: Docker, ext4, cgroup workaround, override + .env
+	@./scripts/cloud-bootstrap.sh $(CLOUD_BOOTSTRAP_ARGS)
 
 s4r-attack-nk-enable: ## Enable NK purchase-attack Eventgen stanza (then: make restart)
 	@./scripts/toggle-s4r-attack-nk.sh enable

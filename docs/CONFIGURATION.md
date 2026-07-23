@@ -125,6 +125,7 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 | `update-mcp-client` | One client: `MCP_CLIENT=claude\|cursor\|goose` |
 | `update-claude-config` / `update-cursor-config` / `update-goose-config` | Aliases for `update-mcp-client` |
 | `verify-mcp-remote` | `scripts/mcp-client.sh verify` (`MCP_VERIFY_CLIENT=all` by default) |
+| `cloud-bootstrap` | `scripts/cloud-bootstrap.sh` — Cursor Cloud VM prep before `make up` (`CLOUD_BOOTSTRAP_ARGS` for flags) |
 | `down` / `restart` / `logs` / `status` | Lifecycle only (no secrets / `op` required) |
 | `clean` | `docker compose down -v` then remove `.env` (no `op` required) |
 | `s4r-attack-nk-enable` | Sets **`disabled = false`** on **`[attack.nk.purchase.sample]`** in **`SA-S4R/default/eventgen.conf`** (active-threat workshop mode); run **`make restart`** afterward |
@@ -182,6 +183,27 @@ Summary of what runs **inside** `splunk-init` with `SPLUNK_HOST=so1`:
 | `CURSOR_MCP_JSON` | `mcp-client.sh` (cursor) | Output path |
 | `MCP_CLIENT` | `update-mcp-client` | `claude`, `cursor`, or `goose` |
 | `MCP_VERIFY_CLIENT` | `verify-mcp-remote` | `all` (default), or one client |
+
+## Cursor Cloud bootstrap
+
+Cursor Cloud VMs (Docker-in-Docker, no systemd) need one-time **per-boot** setup before `make up`. Use:
+
+```bash
+./scripts/cloud-bootstrap.sh    # or: make cloud-bootstrap
+make up
+make verify
+```
+
+**Prerequisites:** set Cursor Cloud environment secrets `SPLUNKBASE_USER` and `SPLUNKBASE_PASS`.
+
+| Flag / env | Purpose |
+| ---------- | ------- |
+| `--wipe` | Reformat ext4 Splunk data + `docker compose down -v` (use when changing Splunk major versions) |
+| `--image IMAGE` / `SPLUNK_IMAGE` | Default `splunk/splunk:10.4.1` |
+| `--force-env` | Recreate gitignored `.env` |
+| `CLOUD_SPLUNKDB_MOUNT` | Default `/mnt/splunkdb` (bind-mounted as `so1-var`) |
+
+Writes gitignored **`docker-compose.override.yml`** (ext4 bind + fake cgroup for 10.4.x). Full notes: [AGENTS.md](../AGENTS.md) § Cursor Cloud.
 
 ## See also
 
