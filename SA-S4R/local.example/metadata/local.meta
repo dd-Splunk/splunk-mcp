@@ -1,4 +1,0 @@
-# Workshop dashboard permissions (install: make s4r-dashboard-local).
-[views/buttercup_enterprises_dashboard]
-access = read : [ admin, sc_admin, power, user ], write : [ admin, sc_admin ]
-export = none
