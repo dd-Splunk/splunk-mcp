@@ -333,7 +333,7 @@ Run in Search & Reporting (same SPL as agents):
 
 ```spl
 index=main sourcetype=access_combined action=purchase status>=400
-| lookup product_codes.csv product_id
+| lookup product_codes product_id
 | stats sum(product_price) as lost_revenue
 ```
 

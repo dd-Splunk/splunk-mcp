@@ -33,7 +33,7 @@ index=main sourcetype=access_combined
 | Success | `status` 2xx |
 | Failure (workshop) | `status>=400` |
 | Failed purchase | `action=purchase` AND `status>=400` |
-| Lookup | `\| lookup product_codes.csv product_id` → `product_price`, `product_name`, `category` |
+| Lookup | `\| lookup product_codes product_id` → `product_price`, `product_name`, `category` |
 | Currency | USD (Buttercup US retailer) |
 
 **Rules:** Never invent prices — always use the lookup. Distinguish `view` / `addtocart` / `remove` / `changequantity` from `purchase` failures.
@@ -45,7 +45,7 @@ index=main sourcetype=access_combined
 ### Explore lookup file (Lab 5)
 
 ```spl
-| inputlookup product_codes.csv
+| inputlookup product_codes
 ```
 
 ### Lab guide — introductory challenge SPL
@@ -194,7 +194,7 @@ index=main sourcetype=access_combined status>=400
 
 ```spl
 index=main sourcetype=access_combined action=purchase
-| lookup product_codes.csv product_id
+| lookup product_codes product_id
 ```
 
 ### Panel — lost revenue over time (Lab 5)
@@ -203,7 +203,7 @@ Lab guide final search (Single Value or time series):
 
 ```spl
 index=main sourcetype=access_combined action=purchase status>=400
-| lookup product_codes.csv product_id
+| lookup product_codes product_id
 | timechart sum(product_price)
 ```
 
@@ -211,7 +211,7 @@ index=main sourcetype=access_combined action=purchase status>=400
 
 ```spl
 index=main sourcetype=access_combined action=purchase status>=400
-| lookup product_codes.csv product_id
+| lookup product_codes product_id
 | stats sum(product_price) as lost_revenue, count as failed_purchases
 ```
 
@@ -219,7 +219,7 @@ index=main sourcetype=access_combined action=purchase status>=400
 
 ```spl
 index=main sourcetype=access_combined action=purchase status>=400
-| lookup product_codes.csv product_id
+| lookup product_codes product_id
 | stats sum(product_price) as lost_revenue, count by product_name, category
 | sort - lost_revenue
 ```
@@ -356,7 +356,7 @@ index=main sourcetype=access_combined action=purchase
 | ---- | -------------- |
 | IT Ops | `\| timechart count by status limit=10` |
 | DevOps | platform prefix + `\| top limit=20 platform showperc=f`; `status>=400 \| timechart count by useragent limit=5 useother=f` |
-| Business | `action=purchase status>=400 \| lookup product_codes.csv product_id \| timechart sum(product_price)` |
+| Business | `action=purchase status>=400 \| lookup product_codes product_id \| timechart sum(product_price)` |
 | Security | `\| iplocation clientip \| geostats count by City` |
 
 ---
