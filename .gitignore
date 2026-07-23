@@ -51,4 +51,5 @@ docker-compose.override.yml
 **/local/
 *.lic
 **/metadata/local.meta
+!**/local.example/metadata/local.meta
 
