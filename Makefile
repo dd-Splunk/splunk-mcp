@@ -18,7 +18,9 @@ export ENV_FILE ENV_OUT ENV_EXAMPLE OP DC
 	update-mcp-clients update-mcp-client verify-mcp-remote \
 	update-claude-config update-cursor-config update-goose-config \
 	s4r-attack-nk-enable s4r-attack-nk-disable s4r-attack-nk-status \
-	marp-preview marp-serve marp-html
+	marp-preview marp-serve marp-html \
+	marp-bizcase-preview marp-bizcase-html marp-bizcase-pdf \
+	marp-onepager-pdf
 
 help: ## Show targets
 	@awk 'BEGIN {FS = ":.*##"; printf "Splunk MCP PoC\n\n"} \
@@ -126,3 +128,15 @@ marp-serve: ## Serve S4R slides over HTTP (open http://localhost:8080/)
 
 marp-html: ## Export S4R slides to demo-slides/s4r-demo-slides.html
 	@cd demo-slides && marp --no-stdin s4r-demo-slides.md -o s4r-demo-slides.html
+
+marp-bizcase-preview: ## Preview Claude Enterprise business case slides
+	@cd demo-slides && marp --no-stdin -p claude-enterprise-bizcase-slides.md
+
+marp-bizcase-html: ## Export business case slides to HTML
+	@cd demo-slides && marp --no-stdin claude-enterprise-bizcase-slides.md -o claude-enterprise-bizcase-slides.html
+
+marp-bizcase-pdf: ## Export business case slides to PDF
+	@cd demo-slides && marp --no-stdin --pdf claude-enterprise-bizcase-slides.md -o claude-enterprise-bizcase-slides.pdf
+
+marp-onepager-pdf: ## Export one-page business case memo to PDF
+	@cd demo-slides && marp --no-stdin --pdf claude-enterprise-one-pager.md -o claude-enterprise-one-pager.pdf

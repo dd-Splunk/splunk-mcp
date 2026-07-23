@@ -29,13 +29,33 @@ footer: '![w:46](https://www.splunk.com/content/dam/splunk2/en_us/images/icon-li
 
 <!-- _class: lead lead-hero -->
 
-# Splunk4Rookies<br>Agentic analysis with Splunk MCP
+# Splunk4Rookies<br>From dashboards to agentic analysis
 
 <br>
 
-Buttercup Enterprises workshop PoC · One dataset · four teams · one orchestrator
+Buttercup Enterprises workshop PoC · one dataset · three ways to use Splunk MCP
 
 Live data via **Splunk MCP** — not pasted into the model
+
+---
+
+# Three ways this repo helps
+
+| Step | Who | What you do |
+| ---- | --- | ----------- |
+| **1 — Workshop** | Builder / analyst | Describe dashboards in **plain natural language** — Labs 3–7 in the S4R Workshop |
+| **2 — Business user** | Stakeholder | Ask **business questions** in chat — no SPL knowledge required |
+| **3 — Agentic** | Platform / SOC lead | An **orchestrator** delegates to specialists and synthesizes an executive answer |
+
+```text
+Build (Step 1)  →  Ask (Step 2)  →  Orchestrate (Step 3)
+```
+
+Same Buttercup data, same SPL catalog — increasing structure as you go deeper.
+
+<!--
+This deck follows that sequence. Step 1 = dashboard build. Step 2 = single natural-language question via MCP. Step 3 = Power User + four specialists + executive synthesis.
+-->
 
 ---
 
@@ -58,6 +78,150 @@ Pattern demo, not a product pitch. Splunk stays source of truth; the assistant c
 
 ---
 
+<!-- _class: lead -->
+
+# Step 1 — Build dashboards<br>with natural language
+
+S4R Workshop · Labs 3–7 · Dashboard Studio
+
+---
+
+# Step 1 — Workshop dashboard build
+
+Use an LLM in Cursor (or Claude Desktop) to create the **Splunk4Rookies** dashboard from the workshop spec — **no manual SPL hunting**.
+
+**Example prompt:**
+
+> *Build the Buttercup Enterprises dashboard per `docs/S4R-DASHBOARD.md` — four team panels on one Absolute-layout canvas with the marketing background.*
+
+| Lab | Panel | Catalog section |
+| --- | ----- | ----------------- |
+| 3 | Stacked column — status | IT Ops |
+| 4 | Bar + area — platform / UA | DevOps |
+| 5 | Lost revenue | Business Analytics |
+| 6 | Geo map | Security and Fraud |
+| 7 | One canvas + background | Power User |
+
+Build spec: `docs/S4R-DASHBOARD.md` · canonical SPL: `docs/S4R-SPL-CATALOG.md`
+
+<!--
+The catalog is the runbook — the LLM reads layout from S4R-DASHBOARD.md and SPL from the catalog, not from memory. Same panels the agentic demo narrates later.
+-->
+
+---
+
+# Step 1 — What you get
+
+**One Dashboard Studio canvas** — four stakeholder panels + branded background, all on the **global time picker**.
+
+| Artifact | Role |
+| -------- | ---- |
+| `docs/S4R-DASHBOARD.md` | Layout, viz types, acceptance criteria |
+| `docs/S4R-SPL-CATALOG.md` | Versioned SPL — single source of truth |
+| `SA-S4R` app | Eventgen data, lookups, static assets |
+
+Workshop hub: `docs/s4r/README.md`
+
+<!--
+After the workshop, attendees have a pinned dashboard. Steps 2 and 3 show how the same questions move into chat — with and without multi-agent structure.
+-->
+
+---
+
+<!-- _class: lead -->
+
+# Step 2 — Ask business questions<br>without SPL
+
+End-user mode · Splunk MCP · no query language
+
+---
+
+# Step 2 — Business questions in plain English
+
+Stakeholders ask **outcome questions** — the assistant runs governed searches and returns a narrative answer.
+
+**Examples:**
+
+> *Is my website losing money?*
+
+> *Are we losing sales because checkout is failing, or because customers never reach purchase?*
+
+> *Which product categories cost us the most in failed checkout revenue?*
+
+No SPL in the prompt. The model reads `docs/S4R-SPL-CATALOG.md` and calls **`splunk_run_query`** via Splunk MCP.
+
+<!--
+Step 2 can be a single assistant — no delegation required. Good for executives and workshop attendees who finished the dashboard and want answers, not panels.
+-->
+
+---
+
+# Splunk MCP guardrails
+
+<!-- _class: diagram diagram-split -->
+
+<div class="diagram-table-row">
+
+<pre class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant A as Assistant
+  participant MCP as Splunk MCP
+  participant S as splunker
+  U->>A: Natural language question
+  A->>A: Read SPL catalog section
+  A->>MCP: splunk_run_query
+  MCP->>S: REST search
+  S-->>MCP: JSON results
+  MCP-->>A: Rows and aggregates
+  A-->>U: Business answer
+</pre>
+
+<div class="diagram-table-col">
+
+| Identity | Purpose |
+| -------- | ------- |
+| `splunker` | MCP searches (`mcp_tool_execute`) |
+| Bearer token | Client auth — not in git |
+| `splunk_run_query` | Primary demo tool |
+
+</div>
+</div>
+
+<!--
+Read-only demo discipline; token minted at make up. Cursor spawns npx mcp-remote over HTTPS as splunker, not admin. Steps 2 and 3 both use this bridge — Step 3 adds agent roles on top.
+-->
+
+---
+
+# Step 2 — Live demo prompt
+
+**Ask Cursor (no agent delegation):**
+
+> *Using the Buttercup SPL catalog: is the website losing money? Summarize business impact from failed purchases.*
+
+**Watch for:**
+
+1. Catalog-backed SPL — not invented field names or prices
+2. Tool call: `splunk_run_query`
+3. Plain-language answer — revenue and failure rate, not a query dump
+
+**Expected (infrastructure mode):** Yes — high purchase failure; lost revenue from failed checkouts.
+
+<!--
+Default data mode = infrastructure (~40% 503/404 everywhere). This is the lightweight path before introducing the orchestrator in Step 3.
+-->
+
+---
+
+<!-- _class: lead -->
+
+# Step 3 — Agentic orchestration<br>for specialists
+
+Power User · four teams · executive synthesis
+
+---
+
 # The challenge
 
 ```text
@@ -71,6 +235,10 @@ Without agent structure you get:
 - Hallucinated field names or prices
 
 With agent structure you get: dedicated <span class="splunk-orange">runbook</span>, <span class="splunk-orange">roles</span>, and <span class="splunk-orange">platform</span>
+
+<!--
+Step 3 is for builders who want teachable, git-owned personas — mirrors how real platform teams delegate.
+-->
 
 ---
 
@@ -118,7 +286,7 @@ flowchart TB
 </pre>
 
 <!--
-Point at each box in the repo — nothing is hidden inside one mega-prompt.
+Point at each box in the repo — nothing is hidden inside one mega-prompt. Power User = orchestrator; Executive synthesis = final stakeholder table.
 -->
 
 ---
@@ -134,45 +302,7 @@ Point at each box in the repo — nothing is hidden inside one mega-prompt.
 Orchestration design: `docs/S4R-AGENTS.md`
 
 <!--
-SPL is not duplicated in every agent file — agents reference the catalog.
--->
-
----
-
-# Splunk MCP guardrails
-
-<!-- _class: diagram diagram-split -->
-
-<div class="diagram-table-row">
-
-<pre class="mermaid">
-sequenceDiagram
-  participant U as User
-  participant PU as Power User
-  participant MCP as Splunk MCP
-  participant S as splunker
-  U->>PU: Natural language question
-  PU->>PU: Read SPL catalog section
-  PU->>MCP: splunk_run_query
-  MCP->>S: REST search
-  S-->>MCP: JSON results
-  MCP-->>PU: Rows and aggregates
-  PU-->>U: Team summary
-</pre>
-
-<div class="diagram-table-col">
-
-| Identity | Purpose |
-| -------- | ------- |
-| `splunker` | MCP searches (`mcp_tool_execute`) |
-| Bearer token | Client auth — not in git |
-| `splunk_run_query` | Primary demo tool |
-
-</div>
-</div>
-
-<!--
-Read-only demo discipline; token minted at make up. Cursor spawns npx mcp-remote over HTTPS as splunker, not admin.
+SPL is not duplicated in every agent file — agents reference the catalog. Same catalog Steps 1 and 2 already used.
 -->
 
 ---
@@ -216,7 +346,7 @@ Search **last 15m** after enabling threat mode.
 
 ---
 
-# Demo 1 - Infrastructure story
+# Step 3 — Demo 1: Infrastructure story
 
 **Ask Cursor (act as Power User):**
 
@@ -237,7 +367,7 @@ Default data mode = infrastructure (~40% 503/404 everywhere). If slow, call one 
 
 <!-- _class: diagram -->
 
-# Demo 1 — delegation flow
+# Step 3 — delegation flow
 
 <pre class="mermaid">
 flowchart TB
@@ -246,7 +376,7 @@ flowchart TB
   T2["DevOps"]
   T3["Business Analytics"]
   T4["Security"]
-  SYN1["Synthesis"]
+  SYN1["Executive synthesis"]
   P1 --> T1
   P1 --> T2
   P1 --> T3
@@ -279,12 +409,39 @@ flowchart TB
 **Root-cause hypothesis:** Server-side failure, not fraud
 
 <!--
-Numbers come from live MCP — do not read fixed amounts from slides.
+Numbers come from live MCP — do not read fixed amounts from slides. Step 2 gave one answer; Step 3 shows how each team contributed.
 -->
 
 ---
 
-# Demo 2 - NK attack
+# Additional Business questions (1 of 2)
+
+| Use case | Ask |
+| -------- | --- |
+| Checkout vs funnel | *Are we losing sales because checkout is failing, or because customers never get to purchase?* |
+| Merchandising priority | *Which products and categories are costing us the most in failed checkout revenue?* |
+| Mobile vs platform | *Should we invest in mobile app fixes, or is checkout failing every platform equally?* |
+
+<!--
+Step 2: ask directly. Step 3: prefix with As Buttercup Power User and delegate to all four teams.
+-->
+
+---
+
+# Additional Business questions (2 of 2)
+
+| Use case | Ask |
+| -------- | --- |
+| International growth | *Is checkout failing more for international customers than for US shoppers?* |
+| Fraud vs reliability | *Is the revenue impact from an active attack, or from a broken checkout service?* |
+
+<!--
+Use case 5 / Demo 2: make s4r-attack-nk-enable before ask. Attendees can swap questions without changing agents or runbook.
+-->
+
+---
+
+# Step 3 — Demo 2: North Korea attack
 
 **Ask Cursor:**
 
@@ -307,30 +464,12 @@ Verdict: mixed — infrastructure still broken, but Security has a lead. Cleanup
 
 ---
 
-# Dashboard tie-in — Lab 7
-
-| Lab | Panel | Catalog section |
-| --- | ----- | ----------------- |
-| 3 | Stacked column — status | IT Ops |
-| 4 | Bar + area — platform / UA | DevOps |
-| 5 | Lost revenue | Business Analytics |
-| 6 | Geo map | Security and Fraud |
-| 7 | One canvas + background | Power User |
-
-Build spec: `docs/S4R-DASHBOARD.md`
-
-<!--
-Agents narrate; dashboard pins the SPL for production.
--->
-
----
-
 # Takeaways
 
-1. **Splunk MCP** — LLM calls your instance with **roles and capabilities**, not admin password in chat.
-2. **SPL catalog** — single runbook; agents stay thin and teachable.
-3. **Power User** — routes, delegates, **synthesizes** — mirrors real SOC / platform team lead.
-4. **Same orchestration, different data** — infrastructure vs threat without rewriting prompts.
+1. **Step 1 — Workshop:** Natural language builds the **S4R dashboard** from `S4R-DASHBOARD.md` + SPL catalog.
+2. **Step 2 — Business user:** Ask **outcome questions**; Splunk MCP returns live answers — no SPL required.
+3. **Step 3 — Agentic:** **Power User** orchestrates IT Ops, DevOps, Business Analytics, Security and Fraud → **executive synthesis**.
+4. **Same data, same catalog** — infrastructure vs threat modes without rewriting prompts.
 
 **Repo:** `splunk-mcp` · `make up` · presenter guide: `demo-slides/S4R-DEMO.md`
 
@@ -361,13 +500,23 @@ make s4r-attack-nk-status    # expect: disabled
 
 ---
 
+<!-- _class: compact -->
+
 # Appendix — copy-paste prompts
 
-**Demo 1:**
+**Step 1 — Dashboard build:**
+
+> *Build the Buttercup Enterprises dashboard per `docs/S4R-DASHBOARD.md` — four team panels on one Absolute-layout canvas.*
+
+**Step 2 — Business question:**
+
+> *Using the Buttercup SPL catalog: is the website losing money? Summarize business impact from failed purchases.*
+
+**Step 3 — Demo 1 (orchestrator):**
 
 > *As Buttercup Power User: is the shop losing money? Delegate to all four teams.*
 
-**Demo 2:**
+**Step 3 — Demo 2 (threat):**
 
 > *As Buttercup Power User: is the money loss due to bad infrastructure or an active threat? Delegate to all four teams. Use the last 15 minutes.*
 
@@ -384,34 +533,3 @@ make s4r-attack-nk-status    # expect: disabled
 | Token / 401 | `make up` or `make update-mcp-client MCP_CLIENT=cursor` |
 
 Details: `docs/TROUBLESHOOTING.md` · `docs/SA-S4R-APP.md`
-
----
-
-# Appendix — Business use cases (1 of 2)
-
-Executive questions on the same `access_combined` data — not basic HTTP troubleshooting.
-
-| Use case | Ask the Power User |
-| -------- | ------------------ |
-| Checkout vs funnel | *Are we losing sales because checkout is failing, or because customers never get to purchase?* |
-| Merchandising priority | *Which products and categories are costing us the most in failed checkout revenue?* |
-| Mobile vs platform | *Should we invest in mobile app fixes, or is checkout failing every platform equally?* |
-
-<!--
-Same orchestration as Demo 1: delegate to four teams, read S4R-SPL-CATALOG.md, MCP splunk_run_query only. Infrastructure mode, last 24h. Full prompts: demo-slides/S4R-DEMO.md § Business use cases.
--->
-
----
-
-# Appendix — Business use cases (2 of 2)
-
-| Use case | Ask the Power User |
-| -------- | ------------------ |
-| International growth | *Is checkout failing more for international customers than for US shoppers?* |
-| Fraud vs reliability | *Is the revenue impact from an active attack, or from a broken checkout service?* |
-
-**Workshop demos:** *Demo 1* — lost revenue · *Demo 2* — fraud vs infrastructure (NK mode, **last 15m**)
-
-<!--
-Use case 5 / Demo 2: make s4r-attack-nk-enable before ask. Attendees can swap questions without changing agents or runbook.
--->
