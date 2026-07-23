@@ -52,4 +52,5 @@ demo-slides/claude-enterprise-*
 **/local/
 *.lic
 **/metadata/local.meta
+!**/local.example/metadata/local.meta
 
