@@ -1,0 +1,307 @@
+<dashboard version="2" theme="dark">
+  <label>Buttercup Enterprises</label>
+  <description>Splunk4Rookies workshop dashboard (Labs 3–7): four team panels on one Dashboard Studio Absolute canvas with Buttercup marketing background. Global time picker drives all searches.</description>
+  <definition><![CDATA[
+{
+  "title": "Buttercup Enterprises",
+  "description": "IT Operations, DevOps, Business Analytics, and Security & Fraud panels on access_combined workshop data (SA-S4R). SPL: docs/S4R-SPL-CATALOG.md.",
+  "inputs": {
+    "input_global_trp": {
+      "type": "input.timerange",
+      "title": "Global Time Range",
+      "options": {
+        "token": "global_time",
+        "defaultValue": "-1h,now"
+      }
+    }
+  },
+  "defaults": {
+    "dataSources": {
+      "ds.search": {
+        "options": {
+          "queryParameters": {
+            "earliest": "$global_time.earliest$",
+            "latest": "$global_time.latest$"
+          },
+          "refresh": "1m",
+          "refreshType": "delay"
+        }
+      }
+    },
+    "visualizations": {
+      "global": {
+        "showProgressBar": true,
+        "showLastUpdated": true
+      }
+    }
+  },
+  "dataSources": {
+    "ds_itops_status": {
+      "type": "ds.search",
+      "name": "IT Ops status codes",
+      "options": {
+        "query": "index=main sourcetype=access_combined\n| timechart count by status limit=10"
+      }
+    },
+    "ds_devops_platform": {
+      "type": "ds.search",
+      "name": "DevOps top platforms",
+      "options": {
+        "query": "index=main sourcetype=access_combined\n| eval platform=if(isnull(platform),\"Other\",platform)\n| top limit=20 platform showperc=f"
+      }
+    },
+    "ds_devops_browser_failures": {
+      "type": "ds.search",
+      "name": "DevOps browser failures",
+      "options": {
+        "query": "index=main sourcetype=access_combined status>=400\n| timechart count by useragent limit=5 useother=f"
+      }
+    },
+    "ds_business_lost_revenue": {
+      "type": "ds.search",
+      "name": "Business lost revenue",
+      "options": {
+        "query": "index=main sourcetype=access_combined action=purchase status>=400\n| lookup product_codes.csv product_id\n| timechart sum(product_price)"
+      }
+    },
+    "ds_security_geo": {
+      "type": "ds.search",
+      "name": "Security geographic activity",
+      "options": {
+        "query": "index=main sourcetype=access_combined\n| iplocation clientip\n| geostats count by City"
+      }
+    }
+  },
+  "visualizations": {
+    "viz_itops_status": {
+      "type": "splunk.column",
+      "title": "IT Ops — Success vs Failure Over Time",
+      "description": "Stacked column: web server status codes over time.",
+      "dataSources": {
+        "primary": "ds_itops_status"
+      },
+      "options": {
+        "stackMode": "stacked",
+        "legendDisplay": "bottom",
+        "xAxisTitleText": "Time",
+        "yAxisTitleText": "Request count",
+        "backgroundColor": "transparent"
+      },
+      "containerOptions": {
+        "title": {
+          "color": "#FFFFFF"
+        },
+        "description": {
+          "color": "#E0E0E0"
+        }
+      }
+    },
+    "viz_devops_platform": {
+      "type": "splunk.bar",
+      "title": "DevOps — Top Customer Platforms",
+      "description": "Most common operating systems (platform field extraction).",
+      "dataSources": {
+        "primary": "ds_devops_platform"
+      },
+      "options": {
+        "orientation": "horizontal",
+        "legendDisplay": "off",
+        "xAxisTitleText": "Count",
+        "yAxisTitleText": "Platform",
+        "backgroundColor": "transparent"
+      },
+      "containerOptions": {
+        "title": {
+          "color": "#FFFFFF"
+        },
+        "description": {
+          "color": "#E0E0E0"
+        }
+      }
+    },
+    "viz_devops_browser_failures": {
+      "type": "splunk.area",
+      "title": "DevOps — Top Failing Browsers Over Time",
+      "description": "Area chart: HTTP 4xx/5xx failures by user agent (top 5).",
+      "dataSources": {
+        "primary": "ds_devops_browser_failures"
+      },
+      "options": {
+        "legendDisplay": "bottom",
+        "xAxisTitleText": "Time",
+        "yAxisTitleText": "Failure count",
+        "backgroundColor": "transparent"
+      },
+      "containerOptions": {
+        "title": {
+          "color": "#FFFFFF"
+        },
+        "description": {
+          "color": "#E0E0E0"
+        }
+      }
+    },
+    "viz_business_lost_revenue": {
+      "type": "splunk.area",
+      "title": "Business Analytics — Lost Revenue",
+      "description": "Failed purchases enriched with product_codes lookup (USD).",
+      "dataSources": {
+        "primary": "ds_business_lost_revenue"
+      },
+      "options": {
+        "legendDisplay": "off",
+        "xAxisTitleText": "Time",
+        "yAxisTitleText": "Lost revenue (USD)",
+        "backgroundColor": "transparent"
+      },
+      "containerOptions": {
+        "title": {
+          "color": "#FFFFFF"
+        },
+        "description": {
+          "color": "#E0E0E0"
+        }
+      }
+    },
+    "viz_security_geo": {
+      "type": "splunk.map",
+      "title": "Security & Fraud — Activity by City",
+      "description": "Geographic activity heat map (iplocation + geostats).",
+      "dataSources": {
+        "primary": "ds_security_geo"
+      },
+      "options": {
+        "center": [
+          39.8283,
+          -98.5795
+        ],
+        "zoom": 3,
+        "backgroundColor": "transparent",
+        "showBaseLayer": true,
+        "layers": [
+          {
+            "type": "bubble",
+            "bubbleSize": "> primary | frameWithoutSeriesNames('geobin', 'latitude', 'longitude') | frameBySeriesTypes('number')",
+            "dataValues": "> primary | frameBySeriesTypes('number')"
+          }
+        ]
+      },
+      "context": {
+        "dataColorsEditorConfig": [
+          {
+            "to": 100,
+            "value": "#61CAFA"
+          },
+          {
+            "from": 100,
+            "to": 500,
+            "value": "#FAE75F"
+          },
+          {
+            "from": 500,
+            "value": "#EC4B43"
+          }
+        ]
+      },
+      "containerOptions": {
+        "title": {
+          "color": "#FFFFFF"
+        },
+        "description": {
+          "color": "#E0E0E0"
+        }
+      }
+    }
+  },
+  "layout": {
+    "options": {
+      "submitButton": false,
+      "showTitleAndDescription": false
+    },
+    "globalInputs": [
+      "input_global_trp"
+    ],
+    "tabs": {
+      "options": {
+        "showTabBar": false
+      },
+      "items": [
+        {
+          "label": "Buttercup Enterprises",
+          "layoutId": "layout_main"
+        }
+      ]
+    },
+    "layoutDefinitions": {
+      "layout_main": {
+        "type": "absolute",
+        "options": {
+          "width": 1440,
+          "height": 1404,
+          "display": "auto-scale",
+          "backgroundColor": "transparent",
+          "backgroundImage": {
+            "src": "/static/app/SA-S4R/Buttercup_Background.jpg",
+            "x": 0,
+            "y": 0,
+            "sizeType": "contain"
+          }
+        },
+        "structure": [
+          {
+            "type": "block",
+            "item": "viz_itops_status",
+            "position": {
+              "x": 48,
+              "y": 120,
+              "w": 660,
+              "h": 300
+            }
+          },
+          {
+            "type": "block",
+            "item": "viz_devops_platform",
+            "position": {
+              "x": 732,
+              "y": 120,
+              "w": 660,
+              "h": 300
+            }
+          },
+          {
+            "type": "block",
+            "item": "viz_devops_browser_failures",
+            "position": {
+              "x": 48,
+              "y": 440,
+              "w": 660,
+              "h": 280
+            }
+          },
+          {
+            "type": "block",
+            "item": "viz_business_lost_revenue",
+            "position": {
+              "x": 732,
+              "y": 440,
+              "w": 660,
+              "h": 280
+            }
+          },
+          {
+            "type": "block",
+            "item": "viz_security_geo",
+            "position": {
+              "x": 48,
+              "y": 740,
+              "w": 1344,
+              "h": 300
+            }
+          }
+        ]
+      }
+    }
+  }
+}
+  ]]></definition>
+</dashboard>
