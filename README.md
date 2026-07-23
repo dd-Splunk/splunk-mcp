@@ -2,6 +2,10 @@
 
 Local **proof-of-concept**: run **Splunk Enterprise** in Docker with the **Splunk MCP Server** app, and connect **Cursor**, **Claude Desktop**, or **Goose** via **`npx mcp-remote`** (Splunk 1.2 canonical config). Includes **Splunk4Rookies** sample data (**`SA-S4R`**) and an optional **Marp presenter deck** in **`demo-slides/`** ([`make marp-preview`](#splunk4rookies-presenter-deck-marp)). Secrets come from the **1Password CLI** (`op` + `tpl.env`) or a git-ignored **`.env`** (no 1Password required).
 
+## Disclaimer
+
+Community **proof-of-concept** for local development and workshops—not an official Splunk product, not supported by Splunk Inc., and not affiliated with Splunk or Cisco. **Splunk**, **Splunk4Rookies**, and related marks are trademarks of their respective owners. Use at your own risk; see [LICENSE](LICENSE) and [docs/SECURITY.md](docs/SECURITY.md).
+
 ## First time here? (Presales / SE demo)
 
 1. Read **[docs/PRESALES.md](docs/PRESALES.md)** end-to-end—it is the **demo runbook** (secrets, time budget, Cursor-first steps, checklist, handoff).
