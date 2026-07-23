@@ -23,7 +23,7 @@ make marp-html       # write demo-slides/s4r-demo-slides.html
 
 ## Claude Enterprise business case (local only)
 
-**Gitignored** (`demo-slides/claude-enterprise-*`) — keep internal licensing materials out of the public repo. Copy sources into `demo-slides/` locally if you use the Makefile targets below.
+**Gitignored** (`demo-slides/claude-enterprise-*`) — keep internal licensing materials out of the public repo. Copy sources into `demo-slides/` locally if you use the Makefile targets below. **`make marp-bizcase-*`** and **`make marp-onepager-pdf`** check for the source file first and print a clear error if it is missing.
 
 | File | Role |
 | ---- | ---- |

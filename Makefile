@@ -129,14 +129,18 @@ marp-serve: ## Serve S4R slides over HTTP (open http://localhost:8080/)
 marp-html: ## Export S4R slides to demo-slides/s4r-demo-slides.html
 	@cd demo-slides && marp --no-stdin s4r-demo-slides.md -o s4r-demo-slides.html
 
-marp-bizcase-preview: ## Preview Claude Enterprise business case slides
+marp-bizcase-preview: ## Preview Claude Enterprise business case slides (local sources)
+	@./scripts/require-bizcase-slides.sh claude-enterprise-bizcase-slides.md
 	@cd demo-slides && marp --no-stdin -p claude-enterprise-bizcase-slides.md
 
-marp-bizcase-html: ## Export business case slides to HTML
+marp-bizcase-html: ## Export business case slides to HTML (local sources)
+	@./scripts/require-bizcase-slides.sh claude-enterprise-bizcase-slides.md
 	@cd demo-slides && marp --no-stdin claude-enterprise-bizcase-slides.md -o claude-enterprise-bizcase-slides.html
 
-marp-bizcase-pdf: ## Export business case slides to PDF
+marp-bizcase-pdf: ## Export business case slides to PDF (local sources)
+	@./scripts/require-bizcase-slides.sh claude-enterprise-bizcase-slides.md
 	@cd demo-slides && marp --no-stdin --pdf claude-enterprise-bizcase-slides.md -o claude-enterprise-bizcase-slides.pdf
 
-marp-onepager-pdf: ## Export one-page business case memo to PDF
+marp-onepager-pdf: ## Export one-page business case memo to PDF (local sources)
+	@./scripts/require-bizcase-slides.sh claude-enterprise-one-pager.md
 	@cd demo-slides && marp --no-stdin --pdf claude-enterprise-one-pager.md -o claude-enterprise-one-pager.pdf
