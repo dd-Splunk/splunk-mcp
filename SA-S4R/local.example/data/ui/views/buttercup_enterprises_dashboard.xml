@@ -61,7 +61,7 @@
       "type": "ds.search",
       "name": "Business lost revenue",
       "options": {
-        "query": "index=main sourcetype=access_combined action=purchase status>=400\n| lookup product_codes.csv product_id\n| timechart sum(product_price)"
+        "query": "index=main sourcetype=access_combined action=purchase status>=400\n| lookup product_codes product_id\n| timechart sum(product_price)"
       }
     },
     "ds_security_geo": {

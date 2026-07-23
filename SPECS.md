@@ -62,7 +62,7 @@ Splunk AI Toolkit (2890) and Python for Scientific Computing (2882) are out of s
 
 `SA-S4R` provides the Splunk 4 Rookies-like dataset:
 
-- `product_codes.csv` lookup table
+- **`product_codes`** lookup (`lookups/product_codes.csv`)
 - `access_combined` samples for SA-Eventgen
 
 ## MCP client support

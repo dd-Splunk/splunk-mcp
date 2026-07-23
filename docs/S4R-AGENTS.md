@@ -50,7 +50,7 @@ Stakeholder question
 
 **Buttercup Enterprises** is a US online retailer (books, clothing, gifts). Base search and field conventions: **[S4R-SPL-CATALOG.md § Data contract](S4R-SPL-CATALOG.md#data-contract)**.
 
-Eventgen in **`SA-S4R`** emits workshop-shaped Apache access logs. Lookup **`product_codes.csv`** maps `product_id` → `product_price`. **Dashboard panels** may use a Lab 4 **`platform`** field extraction; **agents always use inline `rex`** from the catalog (MCP does not rely on saved extractions).
+Eventgen in **`SA-S4R`** emits workshop-shaped Apache access logs. Lookup **`product_codes`** (file **`lookups/product_codes.csv`**) maps `product_id` → `product_price`. **Dashboard panels** may use a Lab 4 **`platform`** field extraction; **agents always use inline `rex`** from the catalog (MCP does not rely on saved extractions).
 
 ## Splunk Power User (orchestrator)
 
@@ -93,7 +93,7 @@ Escalation rules live in each agent file (not duplicated here).
 | --- | ---- | --------- |
 | 3 | IT Ops | `timechart count by status` |
 | 4 | DevOps | `top platform`; `timechart by useragent` where `status>=400` |
-| 5 | Business Analytics | `lookup product_codes.csv` + `sum(product_price)` |
+| 5 | Business Analytics | `lookup product_codes` + `sum(product_price)` |
 | 6 | Security & Fraud | `iplocation clientip` + `geostats count by City` |
 | 7 | Power User | All panels + synthesis |
 

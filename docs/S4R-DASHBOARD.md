@@ -16,7 +16,7 @@ You are a Splunk power user for **Buttercup Enterprises**, a US online retailer 
 | Event shape | Apache-style access logs: `/product.screen?uid=…&product_id=…` and `/cart.do?action=…&product_id=…` |
 | Fields in repo | `action`, `product_id`, `uid`, `JSESSIONID` (`SA-S4R/default/props.conf`) |
 | Field to add (Lab 4) | **`platform`** — install with **`make s4r-dashboard-local`** (`local/props.conf` from **`local.example/`**) for saved dashboard panels; **agents/MCP** use inline `rex` in [S4R-SPL-CATALOG.md § Platform prefix](S4R-SPL-CATALOG.md#platform-prefix-lab-4--required-for-agents--mcp) |
-| Lookup | `product_codes.csv` → `product_id`, `product_name`, `product_price` (`SA-S4R/lookups/`) |
+| Lookup | **`product_codes`** → `product_id`, `product_name`, `product_price` (file: `SA-S4R/lookups/product_codes.csv`) |
 | Background asset | `/static/app/SA-S4R/Buttercup_Background.jpg` (repo: `SA-S4R/appserver/static/Buttercup_Background.jpg`) |
 
 Base search and field conventions: [S4R-SPL-CATALOG.md § Data contract](S4R-SPL-CATALOG.md#data-contract).
@@ -66,7 +66,7 @@ Failed purchases have `action=purchase` and HTTP error status. Enrich with looku
 | Visualization | Single value (or time series — workshop uses timechart) |
 | SPL | [§ Business Analytics — lost revenue over time](S4R-SPL-CATALOG.md#-business-analytics-lab-5) |
 
-Lookup: `SA-S4R/lookups/product_codes.csv` (see catalog **Data contract**).
+Lookup: **`product_codes`** (`SA-S4R/lookups/product_codes.csv`) — see catalog **Data contract**.
 
 ### 4. Security and Fraud — activity by geography (Lab 6)
 
@@ -95,7 +95,7 @@ Tasks:
 - [ ] Absolute layout with background image (not app-level CSS)
 - [ ] IT Ops: stacked column — `timechart count by status`
 - [ ] DevOps: bar — top `platform`; area — top 5 `useragent` where `status>=400`
-- [ ] Business: lost revenue — `action=purchase status>=400` + `lookup product_codes.csv` + `sum(product_price)`
+- [ ] Business: lost revenue — `action=purchase status>=400` + `lookup product_codes` + `sum(product_price)`
 - [ ] Security: map — `iplocation clientip` + `geostats count by City`
 - [ ] All panels respect global time range
 - [ ] Panel layout matches background “boxes” (workshop slide: finished dashboard mockup)

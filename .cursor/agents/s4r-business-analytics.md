@@ -24,13 +24,13 @@ How much **lost revenue** came from failed purchases on the Buttercup website?
 - If Splunk MCP is not in your tool list, **stop** and report: *Splunk MCP unavailable — operator should run `make verify-mcp-remote MCP_VERIFY_CLIENT=all` and reload MCP in Cursor.* Do not invent metrics or fallback to REST.
 - On search concurrency limits, wait a few seconds and **retry via MCP** only.
 
-**Rules:** Never invent prices — always `| lookup product_codes.csv product_id`. Report USD.
+**Rules:** Never invent prices — always `| lookup product_codes product_id`. Report USD.
 
 **Anchor search** (catalog § unavailable — still run via MCP):
 
 ```spl
 index=main sourcetype=access_combined action=purchase status>=400
-| lookup product_codes.csv product_id
+| lookup product_codes product_id
 | stats sum(product_price) as lost_revenue
 ```
 

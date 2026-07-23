@@ -21,7 +21,7 @@ SA-S4R/                         # tracked in git
 │   ├── data/ui/nav/default.xml   # barebones nav (Search, Dashboards, Alerts, …)
 │   ├── eventgen.conf           # Eventgen definitions (baseline + optional attack stanza)
 │   ├── props.conf              # action, product_id, uid, JSESSIONID (platform → local.example)
-│   └── transforms.conf         # product_codes.csv lookup definition
+│   └── transforms.conf         # product_codes lookup (file: lookups/product_codes.csv)
 ├── lookups/
 │   └── product_codes.csv       # Demo lookup for Lab 5
 ├── metadata/
@@ -130,10 +130,10 @@ See **`SA-S4R/local.example/`** and [S4R-DASHBOARD.md](S4R-DASHBOARD.md).
 
 **`platform`** (Lab 4) is installed with the workshop dashboard via **`make s4r-dashboard-local`** → **`local/props.conf`** (template in **`local.example/props.conf`**). Agents/MCP still use inline `rex` per [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md).
 
-**`default/transforms.conf`** defines the **`product_codes.csv`** file lookup used in Lab 5:
+**`default/transforms.conf`** registers lookup **`product_codes`** (backed by **`lookups/product_codes.csv`**) for Lab 5:
 
 ```spl
-| lookup product_codes.csv product_id
+| lookup product_codes product_id
 ```
 
 ## Lookup table
