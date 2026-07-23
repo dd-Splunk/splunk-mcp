@@ -21,6 +21,7 @@ docker-compose.override.yml
 
 # Cursor — mcp.json may contain secrets; agent prompts and S4R rule are tracked
 .cursor/mcp.json
+.cursor/skills/
 **/.cursor/rules/*
 !**/.cursor/rules/s4r-buttercup-agents.mdc
 !**/.cursor/agents/**

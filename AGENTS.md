@@ -79,12 +79,12 @@ Splunk REST bootstrap (see **`docs/CONFIGURATION.md` § Appendix: setup-splunk.s
 
 - Prefer small commits; keep **`make up`**, **`make status`**, **`make verify-mcp-remote`** working.
 - When changing **`Makefile`**, **`compose.yml`**, or **`scripts/setup-splunk.sh`**, update **`docs/CONFIGURATION.md`**, **`docs/ARCHITECTURE.md`**, and/or **`docs/TROUBLESHOOTING.md`** as needed; refresh or expire Vellem **`splunk-mcp`** folder notes when behavior changes.
-- Lint before push: **`pre-commit run --all-files`** (**shellcheck** on **`scripts/*.sh`**, **markdownlint-cli2** on Markdown). Requires **shellcheck** on PATH (`brew install shellcheck`) and **Node/npx**. Auto-fix Markdown: `npx --yes markdownlint-cli2 --fix`.
+- Lint before push: **`pre-commit run --all-files`** (**gitleaks**, **shellcheck** on **`scripts/*.sh`**, **markdownlint-cli2** on Markdown). Requires **shellcheck** on PATH (`brew install shellcheck`) and **Node/npx**. Auto-fix Markdown: `npx --yes markdownlint-cli2 --fix`.
 - **License:** contributions are under **[LICENSE](LICENSE)** (MIT).
 
 ## CI
 
-GitHub Actions: **`ci.yml`** (**pre-commit**: system **shellcheck** + **markdownlint**) on pushes/PRs to **`main`** / **`master`**; **`package-s4r.yml`** builds **`SA-S4R.spl`** and publishes a PoC **`latest`** release when **`SA-S4R/`** or that workflow changes (or on **`workflow_dispatch`**). See **`docs/CI_CD.md`** for triggers, permissions, and PoC limitations.
+GitHub Actions: **`ci.yml`** (**gitleaks** full history + **pre-commit**: **gitleaks**, **shellcheck** + **markdownlint**) on pushes/PRs to **`main`** / **`master`**; **`package-s4r.yml`** builds **`SA-S4R.spl`** and publishes a PoC **`latest`** release when **`SA-S4R/`** or that workflow changes (or on **`workflow_dispatch`**). See **`docs/CI_CD.md`** for triggers, permissions, and PoC limitations.
 
 ## Cursor Cloud specific instructions
 
@@ -133,4 +133,4 @@ The script writes gitignored **`docker-compose.override.yml`** (ext4 bind mount 
 ### After `make up`
 
 - **MCP token:** `make update-mcp-client MCP_CLIENT=cursor` (writes gitignored `.cursor/mcp.json`). Drive the endpoint with **`npx mcp-remote`** (session handshake); raw `curl` is unreliable for tool execution.
-- **Lint:** `pre-commit run --all-files` — `shellcheck` (system) + `pre-commit` on `~/.local/bin` PATH; `markdownlint-cli2` via `npx`.
+- **Lint:** `pre-commit run --all-files` — **gitleaks**, `shellcheck` (system) + `pre-commit` on `~/.local/bin` PATH; `markdownlint-cli2` via `npx`.

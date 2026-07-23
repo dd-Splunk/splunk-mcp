@@ -1,0 +1,23 @@
+# Gitleaks config for splunk-mcp (local PoC). Allow documented placeholders only.
+title = "splunk-mcp gitleaks"
+
+[allowlist]
+description = "Tracked templates and documented example credentials (not live secrets)"
+paths = [
+  '''(?i)\.cursor/mcp\.json\.example$''',
+  '''(?i)tpl\.env\.example$''',
+  '''(?i)\.env\.example$''',
+  '''(?i)docs/API_REFERENCE\.md$''',
+  '''(?i)docs/TROUBLESHOOTING\.md$''',
+  '''(?i)docs/INSTALLATION\.md$''',
+]
+
+regexes = [
+  '''op://YourVault/''',
+  '''REPLACE_AFTER_make_update-cursor-config''',
+  '''your_password_here''',
+  '''your_splunker_password''',
+  '''(?i)password=changeme''',
+  '''(?i)password=newpassword''',
+  '''ADMIN_PASS="password"''',
+]

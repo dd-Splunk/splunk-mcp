@@ -19,7 +19,8 @@ Automation in this repo is intentionally small: it supports a **local PoC** stac
 
 **What it runs**
 
-- **pre-commit** (**.pre-commit-config.yaml**): **shellcheck** on **`scripts/*.sh`**, **markdownlint-cli2** on project Markdown (via **`.markdownlint-cli2.jsonc`**)
+- **gitleaks** on the full git history (**.gitleaks.toml** allowlists PoC placeholders)
+- **pre-commit** (**.pre-commit-config.yaml**): **gitleaks** on tracked files, **shellcheck** on **`scripts/*.sh`**, **markdownlint-cli2** on project Markdown (via **`.markdownlint-cli2.jsonc`**)
 
 **Permissions**
 
@@ -29,7 +30,7 @@ Automation in this repo is intentionally small: it supports a **local PoC** stac
 
 - Does **not** build Docker images, start Splunk, run integration tests, or validate MCP connectivity.
 - Does **not** package Splunk apps or publish releases.
-- Match CI locally: `pip install pre-commit && pre-commit install`, then **`pre-commit run --all-files`** before pushing (requires **shellcheck** on PATH and **Node/npx** for markdownlint). CI installs **shellcheck** via **apt**; on macOS use **`brew install shellcheck`**.
+- Match CI locally: `pip install pre-commit && pre-commit install`, then **`pre-commit run --all-files`** before pushing (requires **shellcheck** on PATH and **Node/npx** for markdownlint). CI installs **shellcheck** via **apt**; on macOS use **`brew install shellcheck`**. Optional full-history scan: **`brew install gitleaks && gitleaks detect --source . --config .gitleaks.toml`**.
 
 ---
 

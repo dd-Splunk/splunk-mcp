@@ -2,6 +2,8 @@
 
 This document applies the workspace **development PoC** context: single host, Docker, localhost URLs, and AI clients using **`npx mcp-remote`** to Splunk’s MCP endpoint with bearer tokens in client config only.
 
+To report a vulnerability, see the repository root [**SECURITY.md**](../SECURITY.md) (GitHub security advisories).
+
 ## How this rule was applied
 
 Security guidance for **credentials**, **certificates**, and **transport** was applied as follows: we document where secrets live, forbid committing them, describe TLS weaknesses explicitly, and avoid recommending this layout for production or internet exposure. This matches the **no hardcoded credentials** and **digital certificate** workspace rules by steering users toward `.env` / vault references and explicit verification steps for any real certificates.
@@ -31,8 +33,8 @@ Confirm validity dates, key size (for RSA, at least 2048 bits; prefer modern cur
 
 ## MCP and network exposure
 
-- **Binding**: Compose publishes **8000** and **8089** to the host. Any process on the machine—or on the LAN if the host firewall allows—could reach those ports.
-- **Do not** port-forward these services to the public Internet without authentication hardening, reverse proxy, and network ACLs.
+- **Binding**: Compose publishes **8000** and **8089** on **`127.0.0.1` only** (see **`compose.yml`**). Other processes on the same machine can reach Splunk; remote hosts cannot unless you change the bind address or add port forwarding.
+- **Do not** bind to **`0.0.0.0`** or port-forward these services to the public Internet without authentication hardening, reverse proxy, and network ACLs.
 - MCP over HTTP(S) should be treated as **privileged**: the token grants access consistent with Splunk roles assigned to the MCP user (default **`splunker`**).
 
 ## Splunk roles and least privilege
