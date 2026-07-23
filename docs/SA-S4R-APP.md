@@ -20,7 +20,7 @@ SA-S4R/                         # tracked in git
 │   ├── app.conf                # id, label, version, launcher metadata
 │   ├── data/ui/nav/default.xml   # barebones nav (Search, Dashboards, Alerts, …)
 │   ├── eventgen.conf           # Eventgen definitions (baseline + optional attack stanza)
-│   ├── props.conf              # action, product_id, uid, JSESSIONID extractions
+│   ├── props.conf              # action, product_id, uid, JSESSIONID (platform → local.example)
 │   └── transforms.conf         # product_codes.csv lookup definition
 ├── lookups/
 │   └── product_codes.csv       # Demo lookup for Lab 5
@@ -42,10 +42,27 @@ SA-S4R/                         # tracked in git
     ├── nk_status.txt
     ├── nk_useragent.txt
     └── nk_product_id.txt
-
-# Created at runtime in the container (gitignored: **/local/, **/metadata/local.meta)
-# e.g. local/inputs.conf, local/app.conf
+local.example/                  # tracked workshop template → copy to local/
+└── local/                      # gitignored — Splunk UI customizations + workshop install
 ```
+
+## `default/` vs `local/` (Splunk best practice)
+
+Splunk apps split **shipped baseline** (`default/`) from **instance-specific overrides** (`local/`). **`local/` wins at runtime** when both define the same object.
+
+| Directory | Purpose in this repo | Who edits it |
+| --------- | -------------------- | ------------ |
+| **`default/`** | PoC baseline shipped in git and **`SA-S4R.spl`**: Eventgen, core props, barebones nav, lookups | **Maintainers only** — intentional product changes in git, not ad hoc Splunk UI saves |
+| **`local/`** | Workshop dashboard, nav tab, Lab 4 **`platform`** extraction, and anything you customize in Splunk Web | **You / attendees** — all direct Splunk interaction |
+| **`local.example/`** | Tracked template copied by **`make s4r-dashboard-local`** | Maintainers when updating the workshop pack |
+
+**Rules (Splunk and this repo):**
+
+1. **Splunk Web, Settings → Knowledge, nav editor, field extractor, Dashboard Studio saves** — must land under **`SA-S4R/local/`** only. **Never** save customizations into **`default/`** (Splunk will overwrite shipped objects on upgrade/reinstall).
+2. **Agents and contributors** — do not add workshop dashboards, nav tabs, field extractions, or saved searches under **`SA-S4R/default/`** in git. Put templates in **`local.example/`** and install with **`make s4r-dashboard-local`**.
+3. **Packaging** — **`package-s4r.yml`** excludes **`local/`** so instance-specific content is not published in **`SA-S4R.spl`**.
+
+If you already saved something to **`default/`** inside a running container, move it to **`local/`** (or re-export from Splunk into **`local/`**), then remove the duplicate from **`default/`**.
 
 ### Dashboard background (hint)
 
@@ -96,11 +113,22 @@ All use workshop-style `HTTP 1.1`, Buttercup referers, and a trailing response-t
 
 ## Navigation
 
-**`default/data/ui/nav/default.xml`** follows Splunk’s **barebones** app template (`share/splunk/app_templates/barebones/`): **Search** (default), **Analytics**, **Datasets**, **Reports**, **Alerts**, **Dashboards**, and **Modules**. Custom workshop dashboards (when added under `default/data/ui/views/`) appear under **Dashboards**.
+**`default/data/ui/nav/default.xml`** follows Splunk’s **barebones** app template (`share/splunk/app_templates/barebones/`): **Search** (default), **Analytics**, **Datasets**, **Reports**, **Alerts**, **Dashboards**, and **Modules**.
+
+The **Buttercup Enterprises** workshop tab and Dashboard Studio view live under **`local/`** only (gitignored). Install from the tracked template:
+
+```bash
+make s4r-dashboard-local
+make restart   # if Splunk is already running
+```
+
+See **`SA-S4R/local.example/`** and [S4R-DASHBOARD.md](S4R-DASHBOARD.md).
 
 ## Field extractions and lookup
 
 **`default/props.conf`** extracts `action`, `product_id`, `uid`, and `JSESSIONID` from the request line so workshop SPL such as `action=purchase` works without manual field extraction.
+
+**`platform`** (Lab 4) is installed with the workshop dashboard via **`make s4r-dashboard-local`** → **`local/props.conf`** (template in **`local.example/props.conf`**). Agents/MCP still use inline `rex` per [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md).
 
 **`default/transforms.conf`** defines the **`product_codes.csv`** file lookup used in Lab 5:
 
@@ -113,6 +141,8 @@ All use workshop-style `HTTP 1.1`, Buttercup referers, and a trailing response-t
 **`lookups/product_codes.csv`** maps product IDs to names and prices for the lost-revenue exercise.
 
 ## Customizing
+
+**Splunk Web:** save all knowledge objects, nav changes, field extractions, and dashboards under **`local/`** only — never **`default/`** (see **`default/` vs `local/`** above).
 
 - Edit **`samples/action.txt`**, **`status.txt`**, or **`useragent.txt`** to change categorical choices.
 - Tune **`interval`**, **`count`**, and **`randomizeCount`** per stanza in `eventgen.conf`.
@@ -167,9 +197,9 @@ See [S4R-AGENTS.md](S4R-AGENTS.md) for Power User delegation and [S4R-SPL-CATALO
 | `metadata/default.meta` | Export/ACL for shipped objects (`props`, `transforms`, lookup CSV, `eventgen.conf`) |
 | `metadata/meta.conf` | Default ACL for new objects created in-app |
 
-**Do not package** runtime paths: `local/`, `metadata/local.meta`, `.DS_Store` (excluded in **`package-s4r.yml`**). **`local/`** may contain HEC inputs or tokens from a live container — keep gitignored.
+**Do not package** runtime paths: `local/`, `metadata/local.meta`, `.DS_Store` (excluded in **`package-s4r.yml`**). **`local/`** holds workshop dashboard/nav overrides and may contain HEC inputs or tokens from a live container — keep gitignored.
 
-**Not yet in repo (workshop follow-ups):** Dashboard Studio view under `default/data/ui/views/`, **`platform`** field extraction (Lab 4), app icon under `appserver/static/`.
+**Workshop assets:** Dashboard Studio view, nav tab, and **`platform`** extraction template in **`local.example/`** (install with **`make s4r-dashboard-local`**). Optional follow-up: app icon under `appserver/static/`.
 
 ## See also
 
