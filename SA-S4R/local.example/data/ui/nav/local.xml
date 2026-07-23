@@ -1,0 +1,4 @@
+<!-- Workshop-only nav (install: make s4r-dashboard-local). Not shipped in default/. -->
+<nav search_view="search" color="#791CF8">
+  <view name="buttercup_enterprises_dashboard" />
+</nav>

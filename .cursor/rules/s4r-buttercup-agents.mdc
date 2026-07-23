@@ -17,5 +17,6 @@ When the user mentions **Buttercup**, **Splunk4Rookies**, **S4R**, **Labs 3–7*
 7. Splunk MCP for queries; Vellem `splunk-mcp` folder for PoC memory — never store secrets in Vellem.
 8. Presales stack check: `make demo-prep`.
 9. Workshop data mode: `make s4r-attack-nk-status` — catalog **§ Workshop modes** + `docs/SA-S4R-APP.md` for toggle.
+10. **SA-S4R app files:** direct Splunk UI customizations (nav, views, field extractions, saved searches) → **`SA-S4R/local/`** only — **never** **`default/`** (Splunk best practice). In git, workshop templates live in **`local.example/`**; install with **`make s4r-dashboard-local`**. Do not edit **`SA-S4R/default/`** for workshop assets.
 
 Architecture and demo script: `docs/S4R-AGENTS.md`. Dashboard layout: `docs/S4R-DASHBOARD.md`. Workshop hub: `docs/s4r/README.md`. Agent model/fg/bg: [`.cursor/agents/README.md`](../agents/README.md).

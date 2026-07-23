@@ -80,6 +80,7 @@ Splunk REST bootstrap (see **`docs/CONFIGURATION.md` § Appendix: setup-splunk.s
 - Prefer small commits; keep **`make up`**, **`make status`**, **`make verify-mcp-remote`** working.
 - When changing **`Makefile`**, **`compose.yml`**, or **`scripts/setup-splunk.sh`**, update **`docs/CONFIGURATION.md`**, **`docs/ARCHITECTURE.md`**, and/or **`docs/TROUBLESHOOTING.md`** as needed; refresh or expire Vellem **`splunk-mcp`** folder notes when behavior changes.
 - Lint before push: **`pre-commit run --all-files`** (**gitleaks**, **shellcheck** on **`scripts/*.sh`**, **markdownlint-cli2** on Markdown). Requires **shellcheck** on PATH (`brew install shellcheck`) and **Node/npx**. Auto-fix Markdown: `npx --yes markdownlint-cli2 --fix`.
+- **SA-S4R Splunk app:** direct Splunk UI customizations (nav, views, field extractions, saved searches) belong in **`SA-S4R/local/`** only — **never** in **`default/`** (Splunk best practice). Workshop templates go in **`local.example/`**; install with **`make s4r-dashboard-local`**. See **`docs/SA-S4R-APP.md`** § **`default/` vs `local/`**.
 - **License:** contributions are under **[LICENSE](LICENSE)** (MIT).
 
 ## CI
