@@ -21,7 +21,7 @@ The root [README.md](../README.md) stays short. **Pick one door:**
 | Document | Use when |
 | -------- | -------- |
 | **[PRESALES.md](PRESALES.md)** | **SE demo runbook** (includes [technical quick reference](PRESALES.md#technical-quick-reference)) |
-| [INSTALLATION.md](INSTALLATION.md) | Hardware, 1Password layout, long-form setup |
+| [INSTALLATION.md](INSTALLATION.md) | Hardware, 1Password layout, long-form setup, Cursor Cloud bootstrap pointer |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Purpose, components, init flow, MCP clients |
 | [demo-slides/S4R-DEMO.md](../demo-slides/S4R-DEMO.md) | Agentic demo presenter script |
 | [demo-slides/README.md](../demo-slides/README.md) | Marp deck build/preview |
