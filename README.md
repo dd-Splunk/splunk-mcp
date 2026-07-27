@@ -41,6 +41,8 @@ Splunkbase apps (see **`compose.yml`** for IDs, including **Splunk MCP Server**)
 ```bash
 make up                      # start stack, update all MCP clients
 make status                  # is Splunk answering?
+make verify                  # status + MCP client verification
+make demo-prep               # pre-demo status, MCP verify, warm-stack reminder
 make update-mcp-client MCP_CLIENT=cursor   # one client
 make verify-mcp-remote       # verify all clients + Splunk MCP API (default)
 make down                    # stop (no op / .env needed)
@@ -50,14 +52,18 @@ make down                    # stop (no op / .env needed)
 | ------- | ------- |
 | `make help` | All targets |
 | `make up` | Compose up, then **`update-mcp-clients`** |
+| `make cloud-bootstrap` | Cursor Cloud only: start Docker-in-Docker support, ext4 Splunk data mount, fake cgroup workaround, and local override files before `make up` |
 | `make update-mcp-clients` | Update Claude, Cursor, and Goose configs |
 | `make update-mcp-client` | One client (`MCP_CLIENT=claude\|cursor\|goose`) |
 | `make verify-mcp-remote` | Config check + Splunk MCP `tools/list` (`MCP_VERIFY_CLIENT=all` default) |
+| `make verify` | `make status` followed by `make verify-mcp-remote` |
+| `make demo-prep` | Pre-demo health check and warm-stack reminder |
+| `make s4r-attack-nk-status` / `enable` / `disable` | Inspect or toggle the optional S4R active-threat Eventgen mode; run `make restart` after enable/disable |
 | `make clean` | Destructive: volumes + **`.env`** (prompts; no `op` needed) |
 
 ## Splunk4Rookies presenter deck (Marp)
 
-Optional **19-slide** deck for the agentic Buttercup demo (`demo-slides/s4r-demo-slides.md`). Not required to run the Splunk stack.
+Optional **26-slide** deck for the agentic Buttercup demo (`demo-slides/s4r-demo-slides.md`). Not required to run the Splunk stack.
 
 **Dependencies:** [Marp CLI](https://github.com/marp-team/marp-cli) on `PATH` (`npm install -g @marp-team/marp-cli` or `brew install marp-cli`). Live preview/serve loads **Mermaid** from jsDelivr at view time (network needed unless you use exported HTML). Optional in-editor preview: [Marp for VS Code](https://marketplace.visualstudio.com/items?itemName=marp-team.marp-vscode).
 
@@ -89,7 +95,9 @@ Local development defaults: self-signed TLS, dev-oriented MCP settings, secrets 
 
 ## CI
 
-Pushes/PRs to **`main`** / **`master`**: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs **pre-commit** (shellcheck + markdownlint). One-time setup: `pip install pre-commit && pre-commit install`. Check all files: `pre-commit run --all-files`.
+Pushes/PRs to **`main`** / **`master`**: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs **gitleaks** across full history, then **pre-commit** (gitleaks on tracked files, shellcheck, markdownlint). One-time setup: `pip install pre-commit && pre-commit install`. Check all files: `pre-commit run --all-files`.
+
+The package workflow [`.github/workflows/package-s4r.yml`](.github/workflows/package-s4r.yml) builds **`SA-S4R.spl`** for the PoC **`latest`** release when `SA-S4R/` or the workflow changes; it excludes `SA-S4R/local/`.
 
 ## Repository layout (high level)
 

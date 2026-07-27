@@ -15,6 +15,16 @@ Security guidance for **credentials**, **certificates**, and **transport** was a
 - **`.env`**: Optional; hand-written from **`.env.example`** (Path B) and **git-ignored** when present. With **`tpl.env`** only, **`make up`** passes secrets via **`op run`** without creating `.env` (fewer secrets on disk).
 - **Do not** commit `.env`, token files, or private keys. The repo should remain safe if published.
 
+### Secret scanning
+
+Local pre-commit and CI both run **gitleaks** using [`.gitleaks.toml`](../.gitleaks.toml). GitHub Actions also runs a full-history gitleaks scan before the pre-commit job. Run the same checks locally before pushing:
+
+```bash
+pre-commit run --all-files
+```
+
+If gitleaks reports a real secret, rotate it outside git and remove it from history before publishing. Do not suppress findings for live credentials, bearer tokens, private keys, or machine-specific vault paths.
+
 ## TLS and trust
 
 - Splunk uses **HTTPS** on 8089 with a **self-signed** (or container-default) certificate.
