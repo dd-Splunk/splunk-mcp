@@ -12,6 +12,7 @@ Contributing and changing this PoC. Stack design: [ARCHITECTURE.md](ARCHITECTURE
 | SA-S4R app UI / knowledge objects | **`SA-S4R/local/`** only (never **`default/`**); workshop guide **`local/README`** (only tracked file under **`local/`**) — [SA-S4R-APP.md](SA-S4R-APP.md) |
 | Workshop SPL | [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md) only (agents reference this path) |
 | Agent prompts | `.cursor/agents/s4r-*.md`, [S4R-AGENTS.md](S4R-AGENTS.md) |
+| Marp decks / local-only business case targets | [demo-slides/README.md](../demo-slides/README.md); keep **`demo-slides/claude-enterprise-*`** files local and gitignored |
 
 Source of truth when docs disagree with code: [docs/README.md](README.md#source-of-truth-when-docs-disagree-with-code) and [AGENTS.md](../AGENTS.md).
 
@@ -33,7 +34,7 @@ Logs: `make logs` · shell in Splunk: `docker exec -it so1 bash`
 pre-commit run --all-files
 ```
 
-Requires **shellcheck** and **Node/npx** (markdownlint). See [CI_CD.md](CI_CD.md).
+Requires **shellcheck**, **Node/npx** (markdownlint), and the pre-commit-managed **gitleaks** hook. See [CI_CD.md](CI_CD.md).
 
 ## Extending the stack
 

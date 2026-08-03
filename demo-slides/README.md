@@ -42,6 +42,12 @@ make marp-onepager-pdf      # demo-slides/claude-enterprise-one-pager.pdf
 
 Replace **`[Your name]`**, **`[Manager name]`**, and KPI placeholders in the `.md` sources before re-exporting.
 
+Operational constraints:
+
+- The guard lives in **`scripts/require-bizcase-slides.sh`** and only checks for the expected source file under **`demo-slides/`** before Marp runs.
+- Keep the `claude-enterprise-*` prefix for local sources and exports so `.gitignore` continues to exclude them.
+- These targets are for private/local preparation only; do not add generated business-case PDFs or HTML to git.
+
 **Cursor / VS Code (optional):** install the [Marp for VS Code](https://marketplace.visualstudio.com/items?itemName=marp-team.marp-vscode) extension. Register the theme in workspace settings if preview looks unstyled:
 
 ```json

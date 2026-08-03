@@ -57,7 +57,7 @@ make down                    # stop (no op / .env needed)
 
 ## Splunk4Rookies presenter deck (Marp)
 
-Optional **19-slide** deck for the agentic Buttercup demo (`demo-slides/s4r-demo-slides.md`). Not required to run the Splunk stack.
+Optional **26-slide** deck for the agentic Buttercup demo (`demo-slides/s4r-demo-slides.md`). Not required to run the Splunk stack.
 
 **Dependencies:** [Marp CLI](https://github.com/marp-team/marp-cli) on `PATH` (`npm install -g @marp-team/marp-cli` or `brew install marp-cli`). Live preview/serve loads **Mermaid** from jsDelivr at view time (network needed unless you use exported HTML). Optional in-editor preview: [Marp for VS Code](https://marketplace.visualstudio.com/items?itemName=marp-team.marp-vscode).
 
@@ -89,7 +89,7 @@ Local development defaults: self-signed TLS, dev-oriented MCP settings, secrets 
 
 ## CI
 
-Pushes/PRs to **`main`** / **`master`**: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs **pre-commit** (shellcheck + markdownlint). One-time setup: `pip install pre-commit && pre-commit install`. Check all files: `pre-commit run --all-files`.
+Pushes to **`main`** / **`master`** and PRs: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs **gitleaks** on full history, then **pre-commit** (gitleaks, shellcheck, markdownlint). One-time setup: `pip install pre-commit && pre-commit install`. Check all files: `pre-commit run --all-files`.
 
 ## Repository layout (high level)
 
