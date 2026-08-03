@@ -41,6 +41,10 @@ make       # demo-slides/
 
 Replace **`[Your name]`**, **`[Manager name]`**, and KPI placeholders in the `.md` sources before re-exporting.
 
+Operational constraints:
+
+- Keep the `` prefix for local sources and exports so `.gitignore` continues to exclude them.
+
 **Cursor / VS Code (optional):** install the [Marp for VS Code](https://marketplace.visualstudio.com/items?itemName=marp-team.marp-vscode) extension. Register the theme in workspace settings if preview looks unstyled:
 
 ```json

@@ -6,7 +6,7 @@ Automation in this repo is intentionally small: it supports a **local PoC** stac
 
 | Workflow file | Purpose |
 | ------------- | ------- |
-| [.github/workflows/ci.yml](../.github/workflows/ci.yml) | Lint shell scripts and Markdown |
+| [.github/workflows/ci.yml](../.github/workflows/ci.yml) | Secret scanning plus shell and Markdown lint |
 | [.github/workflows/package-s4r.yml](../.github/workflows/package-s4r.yml) | Build **SA-S4R** as `SA-S4R.spl`, upload a CI artifact, publish a **moving `latest` GitHub Release** |
 
 ---
@@ -15,7 +15,8 @@ Automation in this repo is intentionally small: it supports a **local PoC** stac
 
 **Triggers**
 
-- **Push** and **pull_request** to **`main`** or **`master`**.
+- **Push** to **`main`** or **`master`**.
+- **pull_request** events (no branch filter in the workflow).
 
 **What it runs**
 
