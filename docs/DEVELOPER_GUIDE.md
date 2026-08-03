@@ -33,7 +33,7 @@ Logs: `make logs` · shell in Splunk: `docker exec -it so1 bash`
 pre-commit run --all-files
 ```
 
-Requires **shellcheck** and **Node/npx** (markdownlint). See [CI_CD.md](CI_CD.md).
+Requires **shellcheck**, **Node/npx** (markdownlint), and the pre-commit-managed **gitleaks** hook. See [CI_CD.md](CI_CD.md).
 
 ## Extending the stack
 
