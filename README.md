@@ -57,7 +57,7 @@ make down                    # stop (no op / .env needed)
 
 ## Splunk4Rookies presenter deck (Marp)
 
-Optional **19-slide** deck for the agentic Buttercup demo (`demo-slides/s4r-demo-slides.md`). Not required to run the Splunk stack.
+Optional **26-slide** deck for the agentic Buttercup demo (`demo-slides/s4r-demo-slides.md`). Not required to run the Splunk stack.
 
 **Dependencies:** [Marp CLI](https://github.com/marp-team/marp-cli) on `PATH` (`npm install -g @marp-team/marp-cli` or `brew install marp-cli`). Live preview/serve loads **Mermaid** from jsDelivr at view time (network needed unless you use exported HTML). Optional in-editor preview: [Marp for VS Code](https://marketplace.visualstudio.com/items?itemName=marp-team.marp-vscode).
 
@@ -66,6 +66,8 @@ make marp-preview    # preview window
 make marp-serve      # http://localhost:8080/
 make marp-html       # export demo-slides/s4r-demo-slides.html
 ```
+
+Internal  materials are local-only and gitignored under **``**. The optional **`make `** and **`make `** targets check for those local sources before exporting.
 
 Presenter script: [demo-slides/S4R-DEMO.md](demo-slides/S4R-DEMO.md). **Build, theme, Mermaid, troubleshooting:** [demo-slides/README.md](demo-slides/README.md).
 
