@@ -33,7 +33,7 @@ index=main sourcetype=access_combined
 | Success | `status` 2xx |
 | Failure (workshop) | `status>=400` |
 | Failed purchase | `action=purchase` AND `status>=400` |
-| Lookup | `\| lookup product_codes product_id` → `product_price`, `product_name`, `category` |
+| Lookup | `\| lookup product_codes product_id` → `product_price`, `product_name`, `category` ([stanza/file detail](SA-S4R-APP.md#lookup-table)) |
 | Currency | USD (Buttercup US retailer) |
 
 **Rules:** Never invent prices — always use the lookup. Distinguish `view` / `addtocart` / `remove` / `changequantity` from `purchase` failures.

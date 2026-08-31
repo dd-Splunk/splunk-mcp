@@ -24,7 +24,7 @@ The root [README.md](../README.md) stays short. **Pick one door:**
 | [INSTALLATION.md](INSTALLATION.md) | Hardware, 1Password layout, long-form setup |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Purpose, components, init flow, MCP clients |
 | [demo-slides/S4R-DEMO.md](../demo-slides/S4R-DEMO.md) | Agentic demo presenter script |
-| [demo-slides/README.md](../demo-slides/README.md) | Marp deck build/preview |
+| [demo-slides/README.md](../demo-slides/README.md) | Marp deck build/preview; local-only business-case targets |
 
 **Moved (redirect stubs):** [QUICK_START.md](QUICK_START.md) → PRESALES · [OVERVIEW.md](OVERVIEW.md) → ARCHITECTURE · [SETUP_SPLUNK_SCRIPT.md](SETUP_SPLUNK_SCRIPT.md) → CONFIGURATION appendix
 

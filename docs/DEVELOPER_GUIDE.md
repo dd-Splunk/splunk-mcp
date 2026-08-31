@@ -12,6 +12,7 @@ Contributing and changing this PoC. Stack design: [ARCHITECTURE.md](ARCHITECTURE
 | SA-S4R app UI / knowledge objects | **`SA-S4R/local/`** only (never **`default/`**); workshop guide **`local/README`** (only tracked file under **`local/`**) — [SA-S4R-APP.md](SA-S4R-APP.md) |
 | Workshop SPL | [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md) only (agents reference this path) |
 | Agent prompts | `.cursor/agents/s4r-*.md`, [S4R-AGENTS.md](S4R-AGENTS.md) |
+| Marp deck or export targets | [demo-slides/README.md](../demo-slides/README.md), [S4R-AGENTS.md](S4R-AGENTS.md), root [README.md](../README.md); keep local-only `demo-slides/claude-enterprise-*` sources gitignored |
 
 Source of truth when docs disagree with code: [docs/README.md](README.md#source-of-truth-when-docs-disagree-with-code) and [AGENTS.md](../AGENTS.md).
 
