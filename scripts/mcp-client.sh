@@ -22,6 +22,8 @@ Usage:
 
 All clients use npx mcp-remote to https://localhost:8089/services/mcp with a minted bearer token
 (stored only in client config files, not in this repo).
+
+verify runs client config checks, then an end-to-end npx mcp-remote stdio tools/list handshake.
 EOF
   exit "${1:-0}"
 }
@@ -280,7 +282,103 @@ verify_splunk_mcp() {
   if ! jq -e '.jsonrpc=="2.0" and (.result.tools|type=="array")' "$tmp" >/dev/null 2>&1; then
     die "Splunk MCP returned unexpected response: $endpoint"
   fi
-  echo "OK: Splunk MCP responded to tools/list ($endpoint)."
+  echo "OK: Splunk MCP direct tools/list ($endpoint)."
+}
+
+# Same path clients use: stdio → npx mcp-remote → HTTPS /services/mcp
+verify_mcp_remote_stdio() {
+  local endpoint token npx_cmd tls_insecure
+  endpoint=$(splunk_mcp_endpoint)
+  npx_cmd="$(npx_command)"
+  token="$(mint_mcp_token)" || die "could not mint MCP token for mcp-remote verify"
+  tls_insecure="${SPLUNK_MCP_TLS_INSECURE:-1}"
+  if [[ "$tls_insecure" == "1" || "$tls_insecure" == "true" || "$tls_insecure" == "yes" ]]; then
+    export NODE_TLS_REJECT_UNAUTHORIZED=0
+  else
+    unset NODE_TLS_REJECT_UNAUTHORIZED
+  fi
+  MCP_NPX_COMMAND="$npx_cmd" SPLUNK_MCP_ENDPOINT="$endpoint" \
+    python3 - "$token" <<'PY' || die "mcp-remote stdio tools/list failed (see errors above)"
+import json
+import os
+import select
+import subprocess
+import sys
+import time
+
+token = sys.argv[1]
+npx_cmd = os.environ["MCP_NPX_COMMAND"]
+endpoint = os.environ["SPLUNK_MCP_ENDPOINT"]
+header = f"Authorization: Bearer {token}"
+
+proc = subprocess.Popen(
+    [npx_cmd, "-y", "mcp-remote", endpoint, "--header", header],
+    stdin=subprocess.PIPE,
+    stdout=subprocess.PIPE,
+    stderr=subprocess.PIPE,
+    text=True,
+    bufsize=1,
+)
+
+def send(msg):
+    proc.stdin.write(json.dumps(msg) + "\n")
+    proc.stdin.flush()
+
+def read_json(timeout=45):
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        ready, _, _ = select.select([proc.stdout], [], [], 0.5)
+        if not ready:
+            if proc.poll() is not None:
+                break
+            continue
+        line = proc.stdout.readline()
+        if not line:
+            break
+        line = line.strip()
+        if not line:
+            continue
+        return json.loads(line)
+    return None
+
+stderr_tail = ""
+try:
+    send(
+        {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {},
+                "clientInfo": {"name": "splunk-mcp-verify", "version": "1.0"},
+            },
+        }
+    )
+    init_resp = read_json()
+    if not init_resp or "result" not in init_resp:
+        raise SystemExit(f"initialize failed: {init_resp!r}")
+
+    send({"jsonrpc": "2.0", "method": "notifications/initialized"})
+    send({"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}})
+    tools_resp = read_json()
+    tools = (tools_resp or {}).get("result", {}).get("tools")
+    if not isinstance(tools, list):
+        raise SystemExit(f"tools/list failed: {tools_resp!r}")
+finally:
+    proc.terminate()
+    try:
+        _, stderr_tail = proc.communicate(timeout=5)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        _, stderr_tail = proc.communicate(timeout=5)
+    if proc.returncode not in (0, None, -15) and stderr_tail:
+        for line in stderr_tail.strip().splitlines():
+            if "Bearer" in line:
+                line = line.split("Bearer", 1)[0] + "Bearer <redacted>"
+            print(line, file=sys.stderr)
+PY
+  echo "OK: npx mcp-remote stdio tools/list ($npx_cmd → $endpoint)."
 }
 
 cmd_update() {
@@ -300,17 +398,16 @@ cmd_verify() {
       for c in $VALID_CLIENTS; do
         verify_client_config "$c"
       done
-      verify_splunk_mcp
       ;;
     claude | cursor | goose)
       verify_client_config "$client"
       ;;
     *)
-      valid_client "$client" || die "unknown client '$client' (use: $VALID_CLIENTS or all)"
-      verify_client_config "$client"
-      verify_splunk_mcp
+      die "unknown client '$client' (use: $VALID_CLIENTS or all)"
       ;;
   esac
+  verify_splunk_mcp
+  verify_mcp_remote_stdio
 }
 
 main() {

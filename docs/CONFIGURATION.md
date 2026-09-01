@@ -124,7 +124,7 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 | `update-mcp-clients` | `scripts/mcp-client.sh update` for claude, cursor, goose |
 | `update-mcp-client` | One client: `MCP_CLIENT=claude\|cursor\|goose` |
 | `update-claude-config` / `update-cursor-config` / `update-goose-config` | Aliases for `update-mcp-client` |
-| `verify-mcp-remote` | `scripts/mcp-client.sh verify` (`MCP_VERIFY_CLIENT=all` by default) |
+| `verify-mcp-remote` | `scripts/mcp-client.sh verify` — client config + direct `tools/list` + **`npx mcp-remote` stdio** e2e (`MCP_VERIFY_CLIENT=all` by default) |
 | `cloud-bootstrap` | `scripts/cloud-bootstrap.sh` — Cursor Cloud VM prep before `make up` (`CLOUD_BOOTSTRAP_ARGS` for flags) |
 | `down` / `restart` / `logs` / `status` | Lifecycle only (no secrets / `op` required) |
 | `clean` | `docker compose down -v` then remove `.env` (no `op` required) |
