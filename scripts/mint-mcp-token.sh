@@ -43,6 +43,24 @@ parse_mcp_token_body() {
   echo "$body" | jq -r '.token // .entry[0].content.token // empty' 2>/dev/null || true
 }
 
+parse_mcp_token_wait_reason() {
+  local body="$1"
+  local msg
+  msg="$(echo "$body" | jq -r '.messages[0].text // empty' 2>/dev/null || true)"
+  if [[ -n "$msg" ]]; then
+    printf '%s' "$msg"
+    return
+  fi
+  msg="$(echo "$body" | sed -n 's/.*<msg type="ERROR">\([^<]*\)<\/msg>.*/\1/p' | head -n 1)"
+  if [[ -n "$msg" ]]; then
+    printf '%s' "$msg"
+    return
+  fi
+  if [[ -z "$body" ]]; then
+    printf '%s' "empty response"
+  fi
+}
+
 # Order: splunk-init (user/roles) → Splunk API → Splunkbase MCP app mcp_token endpoint.
 wait_for_mcp_token() {
   local rest_user mcp_user host port url body token msg
@@ -76,7 +94,7 @@ wait_for_mcp_token() {
       return 0
     fi
     if (( n % 6 == 0 )); then
-      msg="$(echo "$body" | jq -r '.messages[0].text // empty' 2>/dev/null || true)"
+      msg="$(parse_mcp_token_wait_reason "$body")"
       if [[ -n "$msg" ]]; then
         echo "  still waiting (${n}/${attempts}): ${msg}" >&2
       else

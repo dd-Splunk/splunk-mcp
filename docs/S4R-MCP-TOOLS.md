@@ -29,7 +29,7 @@ Natural-language prompts such as *“start the North Korean attack simulation”
 | ---- | ---- |
 | `bin/s4r_workshop_mode.py` | REST handler — edits `[attack.nk.purchase.sample]` in `eventgen.conf`, reloads Eventgen modinput |
 | `restmap.conf` | Exposes `/servicesNS/nobody/SA-S4R/s4r_workshop_mode` |
-| `authorize.conf` | Capability `s4r_workshop_control` (granted to `mcp_user`) |
+| `authorize.conf` | Capability `s4r_workshop_control` — stanza **`[capability::s4r_workshop_control]`** (two colons); granted to `mcp_user` after the app loads |
 | `s4r_mcp_tools.json` | MCP tool definitions (batch replace payload) |
 | `tool_input_payload_signatures.json` | Input schemas for app-packaged tool registration |
 | `tools.conf` | App-packaged tool metadata; saved-search tools reference `savedsearches.conf` |
