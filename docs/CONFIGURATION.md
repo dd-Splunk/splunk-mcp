@@ -4,9 +4,9 @@
 
 | App ID | App | Pinned release |
 | ------ | --- | -------------- |
-| 1924 | SA-Eventgen (sample data / Eventgen modinput) | 8.2.2 |
-| 4353 | Config Explorer (optional UI utility) | 1.8.25 |
-| 7931 | Splunk MCP Server (required for `/services/mcp`) | 1.3.0 |
+| 1924 | SA-Eventgen (sample data / Eventgen modinput) | 8.2.1 |
+| 4353 | Config Explorer (optional UI utility) | 1.8.26 |
+| 7931 | Splunk MCP Server (required for `/services/mcp`) | 1.3.1 |
 | 7245 | Splunk AI Assistant for SPL | 2.2.0 |
 
 Check current Splunkbase releases: `https://splunkbase.splunk.com/api/v1/app/<id>/release/` (first entry is latest). Update the `/release/VERSION/` segment in **`compose.yml`** when bumping.
@@ -194,13 +194,15 @@ make up
 make verify
 ```
 
-**Prerequisites:** set Cursor Cloud environment secrets `SPLUNKBASE_USER` and `SPLUNKBASE_PASS`.
+**Prerequisites (`.env` creation):** prefer **Path A** — **`tpl.env`** with your `op://` paths + **`op`** signed in (or **`OP_SERVICE_ACCOUNT_TOKEN`** in Cursor Cloud secrets). Fallback **Path B:** set **`SPLUNKBASE_USER`** / **`SPLUNKBASE_PASS`** only in Cursor Cloud secrets (admin/MCP passwords are generated).
 
 | Flag / env | Purpose |
 | ---------- | ------- |
 | `--wipe` | Reformat ext4 Splunk data + `docker compose down -v` (use when changing Splunk major versions) |
 | `--image IMAGE` / `SPLUNK_IMAGE` | Default `splunk/splunk:10.4.1` |
 | `--force-env` | Recreate gitignored `.env` |
+| `ENV_FILE` | 1Password template (default **`tpl.env`**) |
+| `OP_SERVICE_ACCOUNT_TOKEN` | Headless **`op`** on Cursor Cloud (no desktop sign-in) |
 | `CLOUD_SPLUNKDB_MOUNT` | Default `/mnt/splunkdb` (bind-mounted as `so1-var`) |
 
 Writes gitignored **`docker-compose.override.yml`** (ext4 bind + fake cgroup for 10.4.x). Full notes: [AGENTS.md](../AGENTS.md) § Cursor Cloud.
