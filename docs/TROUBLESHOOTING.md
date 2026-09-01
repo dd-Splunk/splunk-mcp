@@ -342,6 +342,22 @@ make up
 
 ---
 
+#### Issue: SA-S4R MCP tools missing from `tools/list`
+
+**Error**: Cursor/Claude show generic Splunk tools but not `SA-S4R_query_nk_demo_state` (or other `SA-S4R_*` tools)
+
+**Cause**: Registration runs on the **host** after `splunk-init` (`make up` → `make register-s4r-mcp-tools`). Older stacks skipped it because `splunk-init` only mounts `setup-splunk.sh`.
+
+**Solution**:
+
+```bash
+make register-s4r-mcp-tools
+```
+
+Requires **`jq`** on the host ([INSTALLATION.md](INSTALLATION.md)). See [S4R-MCP-TOOLS.md](S4R-MCP-TOOLS.md).
+
+---
+
 #### Issue: Splunk AI Toolkit / Connection Management (out of scope)
 
 **Splunk AI Toolkit** (2890) and **Python for Scientific Computing** (2882) are **not** installed by this stack. If you add them manually from Splunkbase, install **2882** before **2890** and set **`MLTK_ROLE`** (e.g. `mltk_dsdl_admin`) in **`.env`** so **`setup-splunk.sh`** can assign the role on the next **`make up`**.
