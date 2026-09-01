@@ -132,21 +132,23 @@ update_cursor() {
 
 update_goose() {
   command -v jq >/dev/null 2>&1 || die "jq required for Goose (brew install jq)"
-  local endpoint token header tls_insecure dir file npx_cmd
+  local endpoint token header tls_insecure dir file npx_cmd wrapper
   endpoint=$(splunk_mcp_endpoint)
   npx_cmd="$(npx_command)"
   token="$(mint_mcp_token)" || die "could not mint MCP token"
   header="Authorization: Bearer ${token}"
   tls_insecure="${SPLUNK_MCP_TLS_INSECURE:-1}"
+  wrapper="${ROOT}/scripts/mcp-remote-splunk.sh"
+  [[ -x "$wrapper" ]] || die "missing executable wrapper: $wrapper"
   dir="${HOME}/.config/goose"
   file="${dir}/config.yaml"
   mkdir -p "$dir"
   [[ -f "$file" ]] || printf 'extensions: {}\n' >"$file"
-  python3 - "$file" "$endpoint" "$header" "$tls_insecure" "$npx_cmd" <<'PY'
+  python3 - "$file" "$endpoint" "$header" "$tls_insecure" "$wrapper" "$npx_cmd" <<'PY'
 import re
 import sys
 
-config_file, endpoint, header, tls_insecure, npx_cmd = sys.argv[1:6]
+config_file, endpoint, header, tls_insecure, wrapper, npx_cmd = sys.argv[1:7]
 with open(config_file, encoding="utf-8") as f:
     content = f.read()
 
@@ -163,12 +165,15 @@ end_of_line = content.find("\n", extensions_match.end())
 if end_of_line == -1:
     end_of_line = len(content)
 
-env_block = ""
+env_block = "    envs: {}\n    env_keys: []\n"
 if tls_insecure.lower() in ("1", "true", "yes"):
-    env_block = """
-    envs:
+    env_block = """    envs:
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
-"""
+      MCP_NPX_COMMAND: {npx_cmd!r}
+      SPLUNK_MCP_TLS_INSECURE: "1"
+    env_keys:
+      - NODE_TLS_REJECT_UNAUTHORIZED
+""".format(npx_cmd=npx_cmd)
 
 new_entry = f"""
   splunk-mcp-server:
@@ -176,15 +181,12 @@ new_entry = f"""
     type: stdio
     name: splunk-mcp-server
     description: Splunk MCP Server
-    cmd: {npx_cmd!r}
+    cmd: {wrapper!r}
     args:
-      - -y
-      - mcp-remote
       - {endpoint!r}
       - --header
       - {header!r}
-    env_keys: []{env_block}
-    timeout: 300
+{env_block}    timeout: 300
     bundled: null
     available_tools: []"""
 
@@ -192,7 +194,7 @@ content = content[:end_of_line] + new_entry + content[end_of_line:]
 with open(config_file, "w", encoding="utf-8") as f:
     f.write(content)
 PY
-  echo "Updated Goose: $file ($npx_cmd mcp-remote → $endpoint)"
+  echo "Updated Goose: $file ($wrapper → $endpoint)"
   echo "Bearer token stored in Goose config only (not in this repo)."
   echo "Restart Goose for changes to take effect."
 }
@@ -253,10 +255,17 @@ if re.search(r"cmd:\s*node\b", section) and ".mjs" in section:
         "goose splunk-mcp-server still uses node + bridge script "
         "(run: make update-mcp-client MCP_CLIENT=goose)"
     )
-if not re.search(r"cmd:\s*(\S+/)?npx\b", section):
-    sys.exit("goose splunk-mcp-server should use npx in cmd")
-if "mcp-remote" not in section:
-    sys.exit("goose splunk-mcp-server should use mcp-remote in args")
+if not re.search(r"cmd:\s*(\S+/)?npx\b", section) and "mcp-remote-splunk.sh" not in section:
+    sys.exit("goose splunk-mcp-server should use mcp-remote-splunk.sh or npx in cmd")
+if "mcp-remote" not in section and "mcp-remote-splunk.sh" not in section:
+    sys.exit("goose splunk-mcp-server should use mcp-remote (directly or via wrapper)")
+tls_insecure = __import__("os").environ.get("SPLUNK_MCP_TLS_INSECURE", "1").lower()
+if tls_insecure in ("1", "true", "yes"):
+    if "NODE_TLS_REJECT_UNAUTHORIZED" not in section and "mcp-remote-splunk.sh" not in section:
+        sys.exit(
+            "goose splunk-mcp-server missing NODE_TLS_REJECT_UNAUTHORIZED "
+            "(run: make update-mcp-client MCP_CLIENT=goose)"
+        )
 PY
       ;;
   esac

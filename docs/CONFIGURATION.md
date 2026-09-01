@@ -166,8 +166,8 @@ Summary of what runs **inside** `splunk-init` with `SPLUNK_HOST=so1`:
 - Path: **`~/.config/goose/config.yaml`** (Unix/Linux and macOS).
 - Same Splunk MCP Server **1.2** pattern as Claude/Cursor: **`npx mcp-remote`**, endpoint **`https://localhost:8089/services/mcp`**, encrypted bearer token.
 - Goose uses **extensions** with `type: stdio` (different YAML shape from Claude’s `mcpServers`).
-- `scripts/mcp-client.sh update goose` adds or updates the `splunk-mcp-server` extension entry.
-- TLS dev override uses Goose’s **`envs`** field (not `env`), e.g. `NODE_TLS_REJECT_UNAUTHORIZED=0` when **`SPLUNK_MCP_TLS_INSECURE=1`**.
+- `scripts/mcp-client.sh update goose` adds or updates the `splunk-mcp-server` extension entry via **`scripts/mcp-remote-splunk.sh`** (sets `NODE_TLS_REJECT_UNAUTHORIZED` in-process; Goose Desktop may not forward `envs` reliably).
+- TLS dev override also uses Goose’s **`envs`** and **`env_keys`** (not `env`), e.g. `NODE_TLS_REJECT_UNAUTHORIZED=0` when **`SPLUNK_MCP_TLS_INSECURE=1`**.
 - Idempotent: safely updates or creates the extension without corrupting existing config.
 - Requires Python 3 for YAML regex manipulation.
 
@@ -176,7 +176,7 @@ Summary of what runs **inside** `splunk-init` with `SPLUNK_HOST=so1`:
 | Variable | Used by | Purpose |
 | -------- | ------- | ------- |
 | `SPLUNK_MCP_ENDPOINT` | `mcp-client.sh` | Splunk MCP URL for `mcp-remote` (default `https://localhost:8089/services/mcp`) |
-| `SPLUNK_MCP_TLS_INSECURE` | `mcp-client.sh` | If `1` (default), add `NODE_TLS_REJECT_UNAUTHORIZED=0` to Claude/Cursor config (dev/self-signed only) |
+| `SPLUNK_MCP_TLS_INSECURE` | `mcp-client.sh` | If `1` (default), add `NODE_TLS_REJECT_UNAUTHORIZED=0` to Claude/Cursor config and Goose `envs` / wrapper (dev/self-signed only) |
 | `SPLUNK_MCP_USER` | `setup-splunk.sh` | Splunk account to create/update (default `splunker`) |
 | `SPLUNK_MLTK_USER` | `setup-splunk.sh` | Which Splunk user gets `MLTK_ROLE` when set (default: same as `SPLUNK_MCP_USER`) |
 | `MLTK_ROLE` | `setup-splunk.sh` | MLTK Splunk role to assign; empty by default (Splunk AI Toolkit not in `SPLUNK_APPS_URL`) |
