@@ -143,9 +143,7 @@ Stakeholders ask **outcome questions** — the assistant runs governed searches 
 **Examples:**
 
 > *Is my website losing money?*
-
 > *Are we losing sales because checkout is failing, or because customers never reach purchase?*
-
 > *Which product categories cost us the most in failed checkout revenue?*
 
 No SPL in the prompt. The model reads `docs/S4R-SPL-CATALOG.md` and calls **`splunk_run_query`** via Splunk MCP.
@@ -400,7 +398,7 @@ flowchart TB
 <br>
 
 | Team | Finding | Severity |
-|------|---------|----------|
+| ------ | --------- | -------- |
 | IT Ops | 503/404 dominate | Critical |
 | DevOps | Flat ~40% all platforms | High, escalate IT Ops |
 | Business Analytics | Revenue lost via lookup | Critical |
