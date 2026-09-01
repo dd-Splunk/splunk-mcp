@@ -96,7 +96,8 @@ Apply at the **top** of a slide (before the `#` title):
 | `diagram` | Smaller body text; full-width Mermaid |
 | `diagram-split` | Diagram + table side by side (~62% / ~34%) |
 | `diagram-split-equal` | With `diagram-split` — 50/50 columns (S15) |
-| `compact` | Smaller body + blockquotes for dense prompt lists (S25) |
+| `compact` | Smaller body, tables, and blockquotes for dense slides (S10, S21, S25, S26) |
+| *(HTML)* `.two-col` | Two equal columns inside a compact slide (S10 prompts) |
 
 Example:
 
@@ -139,24 +140,24 @@ Deck follows **three steps**: Workshop dashboard build → business Q&A → agen
 | 6 | Step 1 — What you get | Artifacts |
 | 7 | Step 2 — Ask business questions without SPL | `lead` section divider |
 | 8 | Step 2 — Business questions in plain English | Example prompts |
-| 9 | Splunk MCP guardrails | `diagram-split` |
-| 10 | Step 2 — Live demo prompt | Single-assistant business ask |
+| 9 | Splunk MCP guardrails | `diagram-split`; `SA-S4R_*` workshop tools |
+| 10 | Step 2 — Live demo prompt | `compact`; two-column Business + Security asks |
 | 11 | Step 3 — Agentic orchestration for specialists | `lead` section divider |
 | 12 | The challenge | |
 | 13 | Agentic Architecture | `diagram`; User / Agentic / Splunk platform subgraphs |
 | 14 | Agents Artifacts defined | |
-| 15 | Two workshop data modes | `diagram-split-equal`; shell-styled `make` nodes |
+| 15 | Two workshop data modes | MCP NK toggle (`mode=infrastructure` / `threat`); caption has tool names |
 | 16 | Step 3 — Demo 1: Infrastructure story | |
 | 17 | Step 3 — delegation flow | `diagram`; executive synthesis |
 | 18 | Buttercup Insights | |
 | 19 | Additional Business questions (1 of 2) | Checkout, merchandising, mobile vs platform |
 | 20 | Additional Business questions (2 of 2) | International, fraud vs reliability |
-| 21 | Step 3 — Demo 2: North Korea attack | |
+| 21 | Step 3 — Demo 2: North Korea attack | `compact`; chat enable + Power User ask |
 | 22 | Takeaways | All three steps |
 | 23 | Thank You | `lead lead-hero` |
 | 24 | Appendix — before you start | |
 | 25 | Appendix — copy-paste prompts | `compact` — Steps 1–3 prompts |
-| 26 | Appendix — troubleshooting | |
+| 26 | Appendix — troubleshooting | `compact` table |
 
 ## Theme highlights (`splunk.css`)
 

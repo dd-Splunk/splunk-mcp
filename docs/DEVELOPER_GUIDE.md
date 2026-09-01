@@ -17,7 +17,7 @@ Contributing and changing this PoC. Stack design: [ARCHITECTURE.md](ARCHITECTURE
 | Marp slides, theme, or `make marp-*` targets | [demo-slides/README.md](../demo-slides/README.md), [demo-slides/S4R-DEMO.md](../demo-slides/S4R-DEMO.md), and [CONFIGURATION.md § Makefile targets](CONFIGURATION.md#makefile-targets) |
 | Secret scanning or pre-commit hooks (`.gitleaks.toml`, `.pre-commit-config.yaml`, CI lint) | [CI_CD.md](CI_CD.md), [SECURITY.md](SECURITY.md), and root [SECURITY.md](../SECURITY.md) |
 
-Source of truth when docs disagree with code: [docs/README.md](README.md#source-of-truth-when-docs-disagree-with-code) and [AGENTS.md](../AGENTS.md).
+Source of truth when docs disagree with code: [README.md](README.md#source-of-truth-code-wins) and [AGENTS.md](../AGENTS.md).
 
 ## Local test loop
 
@@ -53,5 +53,5 @@ Requires **shellcheck** and **Node/npx** (markdownlint); pre-commit also runs **
 ## Resources
 
 - Splunk REST: <https://docs.splunk.com/Documentation/Splunk/latest/RESTREF>
-- Splunk MCP 1.2 clients: [API_REFERENCE.md](API_REFERENCE.md)
+- Splunk MCP 1.3 clients: [API_REFERENCE.md](API_REFERENCE.md) · auth: [CONFIGURATION.md](CONFIGURATION.md#splunk-mcp-authentication-13)
 - MCP: <https://modelcontextprotocol.io/>
