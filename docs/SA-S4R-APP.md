@@ -6,7 +6,7 @@
 /opt/splunk/etc/apps/SA-S4R
 ```
 
-It is labeled in `default/app.conf` and is visible in Splunk Web as **Splunk4Rookies** (install folder name and **`[package] id`** must remain **`SA-S4R`** — Eventgen sample paths are hard-coded to that folder). **`[launcher] version`** is set in `app.conf` (bump when shipping a new `.spl`). The main purpose in this repo is to ship **Eventgen** sample data and supporting **lookups** so you can run searches against synthetic **`access_combined`** traffic without manual onboarding. **`appserver/static/Buttercup_Background.jpg`** is a static asset for a dashboard to be added later (not app-wide chrome).
+It is labeled in `default/app.conf` and is visible in Splunk Web as **Splunk4Rookies** (install folder name and **`[package] id`** must remain **`SA-S4R`** — Eventgen sample paths are hard-coded to that folder). **`[launcher] version`** is set in `app.conf` (bump when shipping a new `.spl`). The main purpose in this repo is to ship **Eventgen** sample data and supporting **lookups** so you can run searches against synthetic **`access_combined`** traffic without manual onboarding. **`appserver/static/Buttercup_Background.jpg`** is the dashboard background asset used by the workshop dashboard you create under **`local/`** (not app-wide chrome).
 
 Generated events match the **Splunk4Rookies** workshop **`noise_apache.log`** shape: `/product.screen` and `/cart.do?action=…` URIs, Buttercup referers, workshop-era user agents, and `HTTP 1.1` request lines.
 
@@ -15,7 +15,7 @@ Generated events match the **Splunk4Rookies** workshop **`noise_apache.log`** sh
 ```text
 SA-S4R/                         # tracked in git
 ├── appserver/static/
-│   └── Buttercup_Background.jpg  # Dashboard background (future)
+│   └── Buttercup_Background.jpg  # Dashboard background for the local/ workshop view
 ├── default/
 │   ├── app.conf                # id, label, version, launcher metadata
 │   ├── data/ui/nav/default.xml   # barebones nav (Search, Dashboards, Alerts, …)
@@ -65,7 +65,7 @@ If you already saved something to **`default/`** inside a running container, mov
 
 ### Dashboard background (hint)
 
-**`Buttercup_Background.jpg`** is for a **dashboard** you add later—not Splunk Web app chrome. Do not use **`application.css`** for this; reference the file from the dashboard’s own HTML or CSS.
+**`Buttercup_Background.jpg`** is for the **Buttercup Enterprises** workshop dashboard—not Splunk Web app chrome. Do not use **`application.css`** for this; create the dashboard under **`SA-S4R/local/`** per **`SA-S4R/local/README`** and [S4R-DASHBOARD.md](S4R-DASHBOARD.md), then reference the file from the dashboard’s own HTML or CSS.
 
 - **Repo path:** `SA-S4R/appserver/static/Buttercup_Background.jpg`
 - **Splunk Web URL:** `/static/app/SA-S4R/Buttercup_Background.jpg`
@@ -130,7 +130,14 @@ The **Buttercup Enterprises** workshop tab and Dashboard Studio view live under 
 
 ## Lookup table
 
-**`lookups/product_codes.csv`** maps product IDs to names and prices for the lost-revenue exercise.
+Use the transforms stanza name in SPL and saved searches:
+
+```spl
+| inputlookup product_codes
+| lookup product_codes product_id
+```
+
+The stanza **`[product_codes]`** in **`default/transforms.conf`** points at the backing file **`lookups/product_codes.csv`**. The CSV columns are **`product_id`**, **`product_name`**, **`product_price`**, and **`category`**. Keep the stanza name stable so catalog SPL, agents, and dashboards can use **`product_codes`** even if maintainers reorganize files later.
 
 ## Customizing
 

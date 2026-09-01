@@ -48,6 +48,8 @@ Automation in this repo is intentionally small: it supports a **local PoC** stac
 2. Uploads **`SA-S4R.spl`** as a **workflow artifact** (short retention; see below).
 3. **Deletes** any existing **`latest`** release and tag, **recreates** tag **`latest`** on the **current commit**, **force-pushes** the tag, and **creates** a GitHub Release titled **SA-S4R (latest)** with the `.spl` attached (marked as the repository’s **latest** release).
 
+The package excludes **`local/`** and **`metadata/local.meta`**. Workshop dashboard/nav/field-extraction overrides stay local to the running Splunk instance; git tracks only **`SA-S4R/local/README`** as the setup guide.
+
 **Permissions**
 
 - **`contents: write`** (required to push the **`latest`** tag and manage releases).
