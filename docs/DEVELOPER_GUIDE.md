@@ -7,11 +7,15 @@ Contributing and changing this PoC. Stack design: [ARCHITECTURE.md](ARCHITECTURE
 | Change | Update |
 | ------ | ------ |
 | `Makefile`, `compose.yml`, `scripts/setup-splunk.sh` | [CONFIGURATION.md](CONFIGURATION.md), [ARCHITECTURE.md](ARCHITECTURE.md), [TROUBLESHOOTING.md](TROUBLESHOOTING.md) as needed |
+| `scripts/cloud-bootstrap.sh` or Cursor Cloud bootstrap behavior | [CONFIGURATION.md § Cursor Cloud bootstrap](CONFIGURATION.md#cursor-cloud-bootstrap), [INSTALLATION.md](INSTALLATION.md), [TROUBLESHOOTING.md](TROUBLESHOOTING.md) as needed |
 | MCP client paths / token flow | [CONFIGURATION.md](CONFIGURATION.md), [API_REFERENCE.md](API_REFERENCE.md) |
 | SA-S4R Eventgen / NK toggle | [SA-S4R-APP.md](SA-S4R-APP.md), [s4r/README.md](s4r/README.md) |
 | SA-S4R app UI / knowledge objects | **`SA-S4R/local/`** only (never **`default/`**); workshop guide **`local/README`** (only tracked file under **`local/`**) — [SA-S4R-APP.md](SA-S4R-APP.md) |
+| `SA-S4R` packaging / `.github/workflows/package-s4r.yml` | [CI_CD.md](CI_CD.md), [SA-S4R-APP.md](SA-S4R-APP.md), and `SA-S4R/local/README` if package exclusions change |
 | Workshop SPL | [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md) only (agents reference this path) |
 | Agent prompts | `.cursor/agents/s4r-*.md`, [S4R-AGENTS.md](S4R-AGENTS.md) |
+| Marp slides, theme, or `make marp-*` targets | [demo-slides/README.md](../demo-slides/README.md), [demo-slides/S4R-DEMO.md](../demo-slides/S4R-DEMO.md), and [CONFIGURATION.md § Makefile targets](CONFIGURATION.md#makefile-targets); keep **``** files local and gitignored |
+| Secret scanning or pre-commit hooks (`.gitleaks.toml`, `.pre-commit-config.yaml`, CI lint) | [CI_CD.md](CI_CD.md), [SECURITY.md](SECURITY.md), and root [SECURITY.md](../SECURITY.md) |
 
 Source of truth when docs disagree with code: [README.md](README.md#source-of-truth-code-wins) and [AGENTS.md](../AGENTS.md).
 
@@ -21,8 +25,7 @@ Source of truth when docs disagree with code: [README.md](README.md#source-of-tr
 make down
 make clean          # destructive — removes volumes
 make up
-make status
-make verify-mcp-remote
+make verify         # status + MCP client verify
 ```
 
 Logs: `make logs` · shell in Splunk: `docker exec -it so1 bash`
@@ -33,7 +36,7 @@ Logs: `make logs` · shell in Splunk: `docker exec -it so1 bash`
 pre-commit run --all-files
 ```
 
-Requires **shellcheck**, **Node/npx** (markdownlint), and the pre-commit-managed **gitleaks** hook. See [CI_CD.md](CI_CD.md).
+Requires **shellcheck** and **Node/npx** (markdownlint); pre-commit also runs **gitleaks**. See [CI_CD.md](CI_CD.md).
 
 ## Extending the stack
 
