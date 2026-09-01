@@ -1,7 +1,6 @@
 # S4R-specific MCP tools
 
 **Status:** workshop mode tools implemented (`SA-S4R_query_nk_demo_state`, `SA-S4R_apply_nk_demo_state`, `SA-S4R_validate_nk_attack_traffic`, `SA-S4R_summarize_purchase_health`, `SA-S4R_geo_failed_purchases`).  
-**Branch:** `feature/s4r-mcp-tools`  
 **Related:** [S4R-AGENTS.md](S4R-AGENTS.md) · [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md) · [SA-S4R-APP.md](SA-S4R-APP.md) · [Splunk MCP 1.3 custom tools](https://help.splunk.com/en/splunk-enterprise/mcp-server-for-splunk-platform/1.3/managing-custom-tools-in-splunk-mcp-server)
 
 ## Problem
@@ -40,10 +39,10 @@ Natural-language prompts such as *“start the North Korean attack simulation”
 
 ### Bootstrap
 
-`scripts/setup-splunk.sh` (step 6):
+`make up` after **`splunk-init`** exits:
 
-1. Grants **`s4r_workshop_control`** to role **`mcp_user`** (with `mcp_tool_execute`).
-2. Runs **`scripts/register-s4r-mcp-tools.sh`** — `POST /services/mcp_tools` batch replace for app **`SA-S4R`**.
+1. **`scripts/setup-splunk.sh`** (inside `splunk-init`) grants **`s4r_workshop_control`** to role **`mcp_user`** (with `mcp_tool_execute`). `splunk-init` only mounts this script — it cannot run the host registrar.
+2. Host **`scripts/register-s4r-mcp-tools.sh`** — `POST /services/mcp_tools` batch replace for app **`SA-S4R`** (needs **`jq`** on the host; see [INSTALLATION.md](INSTALLATION.md)).
 
 Re-register after editing tool JSON (uses `.env` or `op run --env-file=tpl.env`, same as `make up`):
 

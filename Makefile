@@ -26,9 +26,12 @@ help: ## Show targets
 	@awk 'BEGIN {FS = ":.*##"; printf "Splunk MCP PoC\n\n"} \
 		/^[$$()% a-zA-Z_-]+:.*?##/ { printf "  make %-22s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
-up: ## Start stack and update MCP client configs
+up: ## Start stack, register S4R MCP tools, and update MCP client configs
 	@echo "Starting Splunk with MCP Server app..."
 	@./scripts/compose-up.sh
+	@echo ""
+	@echo "Registering SA-S4R workshop MCP tools..."
+	@$(MAKE) register-s4r-mcp-tools
 	@echo ""
 	@echo "Splunk Web UI:  https://localhost:8000"
 	@echo "Splunk MCP API: https://localhost:8089/services/mcp"
@@ -120,7 +123,7 @@ s4r-attack-nk-disable: ## Disable NK purchase-attack Eventgen stanza (default mo
 s4r-attack-nk-status: ## Show whether NK attack Eventgen stanza is enabled
 	@./scripts/toggle-s4r-attack-nk.sh status
 
-register-s4r-mcp-tools: ## Register SA-S4R workshop MCP tools with Splunk MCP Server
+register-s4r-mcp-tools: ## Register SA-S4R workshop MCP tools (also run by make up)
 	@./scripts/register-s4r-mcp-tools.sh
 
 marp-preview: ## Open S4R slide deck in Marp preview (single file)

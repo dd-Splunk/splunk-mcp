@@ -21,10 +21,10 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`. H
 
 ## How the stack boots
 
-- **`make up`**: runs **`scripts/compose-up.sh`** → **`docker compose up -d`** with secrets from **either** a gitignored **`.env`** on disk **or** **`op run --env-file=tpl.env`** when `.env` is absent (requires signed-in `op`). See **`Makefile`** for exact behavior.
+- **`make up`**: runs **`scripts/compose-up.sh`** → **`docker compose up -d`** with secrets from **either** a gitignored **`.env`** on disk **or** **`op run --env-file=tpl.env`** when `.env` is absent (requires signed-in `op`). After **`splunk-init`** exits **0**, **`make register-s4r-mcp-tools`** then **`make update-mcp-clients`**. See **`Makefile`** for exact behavior.
 - **`compose-up.sh`** requires non-empty **`SPLUNK_PASSWORD`**, **`SPLUNKBASE_USER`**, **`SPLUNKBASE_PASS`**, and **`SPLUNK_MCP_PASSWORD`** (both Path A and Path B), then **`scripts/wait-splunk-init.sh`** blocks until **`splunk-init`** exits **0**.
 - **`make down`**, **`make logs`**, **`make restart`**, **`make status`**, **`make clean`**: plain **`docker`** / **`docker compose`** only—no `op` or project secrets required.
-- **`make up`**: runs **`make update-mcp-clients`** (Claude, Cursor, Goose). Bearer tokens are written only to client configs, not the repo.
+- Bearer tokens from **`make update-mcp-clients`** are written only to client configs, not the repo.
 - **Secrets paths:** **Path A** — `tpl.env` + `op run` (no plaintext `.env`); **Path B** — hand-written **`.env`** from **`.env.example`** (plain values; Compose auto-loads it). If **`.env` is absent**, **`make up`** uses `op run --env-file=tpl.env`.
 - **`splunk-init`** runs **`scripts/setup-splunk.sh`** after **`so1`** is healthy.
 
@@ -34,11 +34,10 @@ Splunk REST bootstrap (see **`docs/CONFIGURATION.md` § Appendix: setup-splunk.s
 
 - MCP dev: **`ssl_verify=false`** on the Splunk MCP Server app (local dev only).
 - **SA-Eventgen**: enables the default modular input when the app is installed.
-- **Identity**: Splunk role **`mcp_user`** with capability **`mcp_tool_execute`**; user **`splunker`** (overridable via **`SPLUNK_MCP_USER`**) with roles **`user`** + **`mcp_user`**; MCP token minted for the same user. Optional **`MLTK_ROLE`** / **`SPLUNK_MLTK_USER`** only when Splunk AI Toolkit is installed manually (not in **`SPLUNK_APPS_URL`**).
-- **Token**: encrypted MCP token is minted by **`scripts/mint-mcp-token.sh`** (after **`splunk-init`** exits) and written only to client configs (not the repo).
+- **Identity**: Splunk role **`mcp_user`** with capabilities **`mcp_tool_execute`** and **`s4r_workshop_control`**; user **`splunker`** (overridable via **`SPLUNK_MCP_USER`**) with roles **`user`** + **`mcp_user`**. Optional **`MLTK_ROLE`** / **`SPLUNK_MLTK_USER`** only when Splunk AI Toolkit is installed manually (not in **`SPLUNK_APPS_URL`**).
 - **Password**: MCP user password is provided via **`SPLUNK_MCP_PASSWORD`** (env).
 
-**Not** in this script: **`claude_logs`** index or file monitors. Optional ingestion: enable the bind mount in **`compose.yml`**, create the index and monitor in Splunk—**`docs/CONFIGURATION.md`**.
+**Not** in this script: MCP token minting (**`scripts/mint-mcp-token.sh`**, after init), SA-S4R MCP tool registration (**`scripts/register-s4r-mcp-tools.sh`**, host after init), or **`claude_logs`** index/file monitors. Optional ingestion: enable the bind mount in **`compose.yml`**, create the index and monitor in Splunk—**`docs/CONFIGURATION.md`**.
 
 ## Client configuration scripts
 
@@ -67,6 +66,7 @@ Splunk REST bootstrap (see **`docs/CONFIGURATION.md` § Appendix: setup-splunk.s
 - **`MCP_CLIENT`**, **`MCP_VERIFY_CLIENT`**: single-client update/verify (default **`cursor`** / **`all`**)
 - **`SPLUNK_MCP_ENDPOINT`**, **`SPLUNK_MCP_TLS_INSECURE`**, **`MCP_NPX_COMMAND`**: see **`docs/CONFIGURATION.md`**
 - **`s4r-attack-nk-enable`** / **`s4r-attack-nk-disable`** / **`s4r-attack-nk-status`**: toggle optional NK purchase-attack Eventgen stanza; **`make restart`** after enable/disable — **`docs/SA-S4R-APP.md`**
+- **`register-s4r-mcp-tools`**: re-register SA-S4R workshop MCP tools after editing **`s4r_mcp_tools.json`** (`make up` already runs this)
 
 ## Common failure modes
 

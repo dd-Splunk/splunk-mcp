@@ -10,6 +10,7 @@ Contributing and changing this PoC. Stack design: [ARCHITECTURE.md](ARCHITECTURE
 | `scripts/cloud-bootstrap.sh` or Cursor Cloud bootstrap behavior | [CONFIGURATION.md § Cursor Cloud bootstrap](CONFIGURATION.md#cursor-cloud-bootstrap), [INSTALLATION.md](INSTALLATION.md), [TROUBLESHOOTING.md](TROUBLESHOOTING.md) as needed |
 | MCP client paths / token flow | [CONFIGURATION.md](CONFIGURATION.md), [API_REFERENCE.md](API_REFERENCE.md) |
 | SA-S4R Eventgen / NK toggle | [SA-S4R-APP.md](SA-S4R-APP.md), [s4r/README.md](s4r/README.md) |
+| SA-S4R MCP tools (`s4r_mcp_tools.json`, `tools.conf`) | [S4R-MCP-TOOLS.md](S4R-MCP-TOOLS.md); re-run **`make register-s4r-mcp-tools`** |
 | SA-S4R app UI / knowledge objects | **`SA-S4R/local/`** only (never **`default/`**); workshop guide **`local/README`** (only tracked file under **`local/`**) — [SA-S4R-APP.md](SA-S4R-APP.md) |
 | `SA-S4R` packaging / `.github/workflows/package-s4r.yml` | [CI_CD.md](CI_CD.md), [SA-S4R-APP.md](SA-S4R-APP.md), and `SA-S4R/local/README` if package exclusions change |
 | Workshop SPL | [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md) only (agents reference this path) |

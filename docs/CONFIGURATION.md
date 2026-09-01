@@ -69,9 +69,10 @@ Runs after `so1` is **healthy**. Uses Alpine, installs `curl` and `jq`, then run
 - `scripts/setup-splunk.sh` → `/setup-splunk.sh`
 - No host secrets mount (this repo does not write tokens/passwords to disk). See `compose.yml` for `SPLUNK_REST_USER`, `SPLUNK_MCP_USER`, `SPLUNK_MCP_PASSWORD`.
 
-### MCP token minting (host)
+### MCP token minting and S4R tools (host)
 
 - **`scripts/wait-splunk-init.sh`** — blocks until the **`splunk-init`** container exits `0` (`compose-up.sh` runs this after `docker compose up`).
+- **`scripts/register-s4r-mcp-tools.sh`** — after init: `POST /services/mcp_tools` for **SA-S4R** (`make up` runs this; also `make register-s4r-mcp-tools`).
 - **`scripts/mint-mcp-token.sh`** — after init: waits for Splunk API, polls **`mcp_token`**, prints encrypted token to stdout.
 - **`make update-mcp-client`** writes the token into Claude / Cursor / Goose configs only.
 
@@ -120,7 +121,7 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 
 | Target | Behavior |
 | ------ | -------- |
-| `up` | `scripts/compose-up.sh` (`.env` or `op run --env-file=tpl.env`), then `update-mcp-clients` |
+| `up` | `scripts/compose-up.sh` (`.env` or `op run --env-file=tpl.env`), then `register-s4r-mcp-tools`, then `update-mcp-clients` |
 | `update-mcp-clients` | `scripts/mcp-client.sh update` for claude, cursor, goose |
 | `update-mcp-client` | One client: `MCP_CLIENT=claude\|cursor\|goose` |
 | `update-claude-config` / `update-cursor-config` / `update-goose-config` | Aliases for `update-mcp-client` |
@@ -133,6 +134,7 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 | `s4r-attack-nk-enable` | Sets **`disabled = false`** on **`[attack.nk.purchase.sample]`** in **`SA-S4R/default/eventgen.conf`** (active-threat workshop mode); run **`make restart`** afterward |
 | `s4r-attack-nk-disable` | Sets **`disabled = true`** (default infrastructure-failure storyline) |
 | `s4r-attack-nk-status` | Prints whether the NK attack Eventgen stanza is enabled |
+| `register-s4r-mcp-tools` | Host `POST /services/mcp_tools` for **SA-S4R** (also run by `make up`); re-run after editing `s4r_mcp_tools.json` |
 | `marp-preview` / `marp-serve` / `marp-html` | Preview, serve, or export the S4R presenter deck under `demo-slides/` |
 | `` / `` / `` | Preview or export gitignored  slides; fails early if local source is absent |
 
@@ -269,7 +271,7 @@ The script bootstraps a **local Splunk Enterprise PoC** so that:
 
 The script is **`/bin/sh`**, uses **`set -eu`**, and talks to Splunk only through **HTTPS REST** (`curl -k` for local dev).
 
-**Out of scope:** **`claude_logs`** index and monitors—add them in Splunk if you enable the bind mount (see **Claude logs (macOS, optional)** under `compose.yml` above).
+**Out of scope:** **`claude_logs`** index and monitors—add them in Splunk if you enable the bind mount (see **Claude logs (macOS, optional)** under `compose.yml` above). SA-S4R MCP tool registration is **`scripts/register-s4r-mcp-tools.sh`** on the host after this script exits.
 
 ### Where it runs
 
@@ -324,7 +326,7 @@ Deprecated names (still read if new names unset): `SPLUNK_USER`, `SPLUNKER_USERN
 flowchart TD
   A[Start set -eu] --> B[Enable Eventgen modinput]
   B --> C[MCP app: ssl_verify=false]
-  C --> D[Ensure role mcp_user + capability mcp_tool_execute]
+  C --> D[Ensure role mcp_user + mcp_tool_execute + s4r_workshop_control]
   D --> E[Resolve splunker password from env]
   E --> F[Create or update user SPLUNK_MCP_USER]
   F --> D2[Add MLTK_ROLE to SPLUNK_MLTK_USER]
@@ -339,7 +341,7 @@ The script uses **basic auth** on every `auth_curl` call: `-u "${SPLUNK_REST_USE
 | ---- | ------ | ---------------------------------------- | ----- |
 | Eventgen | POST | `/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default/enable` | Fallback: same URL with `disabled=0` |
 | MCP TLS dev | POST | `/servicesNS/nobody/Splunk_MCP_Server/configs/conf-mcp/server` | Body: `ssl_verify=false` |
-| Role | GET/POST | `/services/authorization/roles/mcp_user` | Body: `capabilities=mcp_tool_execute`, `srchJobsQuota=5` |
+| Role | GET/POST | `/services/authorization/roles/mcp_user` | Body: `capabilities=mcp_tool_execute`, `capabilities=s4r_workshop_control`, `srchJobsQuota=5` |
 | Admin + MLTK | GET/POST | `/services/authentication/users/{SPLUNK_MLTK_USER}` | Merge `roles[]`, including `MLTK_ROLE` |
 | User | POST | `/services/authentication/users` or `.../users/{name}` | Bodies: `roles=user`, `roles=mcp_user`, `locked-out=false` |
 

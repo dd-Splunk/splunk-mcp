@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Register SA-S4R workshop MCP tools with Splunk MCP Server (idempotent batch replace).
-# Secrets: .env (Path B) or op run --env-file=tpl.env (Path A) — same as make up / mint-mcp-token.sh.
+# Host-side: `make up` runs this after splunk-init; re-run with `make register-s4r-mcp-tools`.
+# Secrets: .env (Path B) or op run --env-file=tpl.env (Path A) — same as mint-mcp-token.sh.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

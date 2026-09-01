@@ -156,7 +156,7 @@ Two storylines share the same baseline traffic; the NK stanza is toggled without
 | **Infrastructure** (default) | `make s4r-attack-nk-disable` or MCP **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) | MCP reloads Eventgen modinput; `make restart` if signal is slow |
 | **Active threat** | `make s4r-attack-nk-enable` or MCP **`SA-S4R_apply_nk_demo_state`** (`mode=threat`) | Same |
 
-Check current mode: **`SA-S4R_query_nk_demo_state`** (MCP), **`make s4r-attack-nk-status`**, or read `[attack.nk.purchase.sample]` in **`eventgen.conf`**. Script: **`scripts/toggle-s4r-attack-nk.sh`** (`enable` \| `disable` \| `status`). MCP registration: **`scripts/register-s4r-mcp-tools.sh`** — see [S4R-MCP-TOOLS.md](S4R-MCP-TOOLS.md).
+Check current mode: **`SA-S4R_query_nk_demo_state`** (MCP), **`make s4r-attack-nk-status`**, or read `[attack.nk.purchase.sample]` in **`eventgen.conf`**. Script: **`scripts/toggle-s4r-attack-nk.sh`** (`enable` \| `disable` \| `status`). MCP tools are registered on **`make up`**; re-register with **`make register-s4r-mcp-tools`** — see [S4R-MCP-TOOLS.md](S4R-MCP-TOOLS.md).
 
 Wait **1–2 minutes** after restart before validating in Search (narrow time range to **last 15m** so old uniform traffic does not mask the attack).
 
@@ -181,7 +181,7 @@ Canonical queries for both workshop modes: **[S4R-SPL-CATALOG.md § Workshop mod
 - **`S4R Geo Failed Purchase Hotspots`** — Security geo over **last 24h**: top failed-purchase country/city/IP hotspots plus top cities by overall activity (`iplocation`). MCP tool: **`SA-S4R_geo_failed_purchases`**.
 - **`S4R Validate NK Attack Traffic`** — NK geo check over **last 15m**; rows appear when threat mode is producing **North Korea** or **175.45.*** failed purchases. Empty results mean no NK signal yet (wait 1–2 min after enable, or confirm mode with **`SA-S4R_query_nk_demo_state`**). MCP tool: **`SA-S4R_validate_nk_attack_traffic`**.
 
-`make register-s4r-mcp-tools` reloads **`conf-savedsearches`** so new stanzas are visible without **`make restart`**.
+`make up` registers the MCP tools after init. **`make register-s4r-mcp-tools`** re-runs that step and reloads **`conf-savedsearches`** so new stanzas are visible without **`make restart`**.
 
 NK attack token sources: **`samples/nk_clientip.txt`**, **`nk_status.txt`**, **`nk_useragent.txt`**, **`nk_product_id.txt`**.
 

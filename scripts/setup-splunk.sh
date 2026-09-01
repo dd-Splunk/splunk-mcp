@@ -7,7 +7,9 @@
 #   3. Role mcp_user with capability mcp_tool_execute and srchJobsQuota=5
 #   4. User SPLUNK_MCP_USER (default splunker): roles user + mcp_user
 #   5. Merge MLTK_ROLE onto SPLUNK_MLTK_USER (requires jq; non-fatal if MLTK app is absent)
-#   6. Register SA-S4R workshop MCP tools (SA-S4R_query_nk_demo_state, SA-S4R_apply_nk_demo_state)
+#
+# SA-S4R MCP tool registration is host-side after this script exits
+# (`make up` → `make register-s4r-mcp-tools`). splunk-init only mounts this file.
 #
 # Required env: SPLUNK_PASSWORD.
 # Refuses SPLUNK_MCP_USER=admin (do not use admin as MCP execution user).
@@ -292,18 +294,6 @@ fi
 if [ -n "${MLTK_ROLE}" ]; then
   echo "👤 Ensuring user '${SPLUNK_MLTK_USER}' has role ${MLTK_ROLE}..."
   ensure_mltk_role
-fi
-
-# --- 6. SA-S4R workshop MCP tools ---
-if [ -f "${0%/*}/register-s4r-mcp-tools.sh" ]; then
-  echo "🧰 Registering SA-S4R workshop MCP tools..."
-  if "${0%/*}/register-s4r-mcp-tools.sh"; then
-    :
-  else
-    echo "⚠️  SA-S4R MCP tool registration failed (is Splunk MCP Server installed?)"
-  fi
-else
-  echo "⚠️  register-s4r-mcp-tools.sh not found; skipping SA-S4R MCP tool registration"
 fi
 
 echo "✅ Setup complete!"
