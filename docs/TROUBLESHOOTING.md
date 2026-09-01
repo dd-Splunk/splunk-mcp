@@ -478,7 +478,9 @@ make verify-mcp-remote MCP_VERIFY_CLIENT=goose
 # Restart Goose
 ```
 
-Confirm `~/.config/goose/config.yaml` has **`command: npx`**, **`mcp-remote`**, endpoint **`https://localhost:8089/services/mcp`**, and bearer token under the extension args. TLS dev override belongs in **`envs`**, not `env`.
+Confirm `~/.config/goose/config.yaml` has **`cmd: npx`** (or full path to `npx`), **`mcp-remote`**, endpoint **`https://localhost:8089/services/mcp`**, and bearer token under the extension args. TLS dev override belongs in **`envs`**, not `env`.
+
+If Goose still references **`scripts/mcp-stdio-http-bridge.mjs`**, that layout was removed — re-run **`make update-mcp-client MCP_CLIENT=goose`** and restart Goose.
 
 ---
 

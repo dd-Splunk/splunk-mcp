@@ -236,6 +236,21 @@ m = re.search(
 if not m:
     sys.exit("splunk-mcp-server block not found")
 section = m.group(0)
+if "mcp-stdio-http-bridge" in section:
+    sys.exit(
+        "goose splunk-mcp-server still uses removed scripts/mcp-stdio-http-bridge.mjs "
+        "(run: make update-mcp-client MCP_CLIENT=goose)"
+    )
+if re.search(r"\bMCP_URL\b", section):
+    sys.exit(
+        "goose splunk-mcp-server still uses legacy MCP_URL proxy layout "
+        "(run: make update-mcp-client MCP_CLIENT=goose)"
+    )
+if re.search(r"cmd:\s*node\b", section) and ".mjs" in section:
+    sys.exit(
+        "goose splunk-mcp-server still uses node + bridge script "
+        "(run: make update-mcp-client MCP_CLIENT=goose)"
+    )
 if not re.search(r"cmd:\s*(\S+/)?npx\b", section):
     sys.exit("goose splunk-mcp-server should use npx in cmd")
 if "mcp-remote" not in section:
