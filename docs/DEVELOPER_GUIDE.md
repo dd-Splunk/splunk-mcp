@@ -13,7 +13,7 @@ Contributing and changing this PoC. Stack design: [ARCHITECTURE.md](ARCHITECTURE
 | Workshop SPL | [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md) only (agents reference this path) |
 | Agent prompts | `.cursor/agents/s4r-*.md`, [S4R-AGENTS.md](S4R-AGENTS.md) |
 
-Source of truth when docs disagree with code: [docs/README.md](README.md#source-of-truth-when-docs-disagree-with-code) and [AGENTS.md](../AGENTS.md).
+Source of truth when docs disagree with code: [README.md](README.md#source-of-truth-code-wins) and [AGENTS.md](../AGENTS.md).
 
 ## Local test loop
 
