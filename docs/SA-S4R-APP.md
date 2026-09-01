@@ -146,10 +146,10 @@ Two storylines share the same baseline traffic; the NK stanza is toggled without
 
 | Mode | Enable / disable | After toggle |
 | ---- | ---------------- | ------------ |
-| **Infrastructure** (default) | `make s4r-attack-nk-disable` | `make restart` (recommended) |
-| **Active threat** | `make s4r-attack-nk-enable` | `make restart` (required) |
+| **Infrastructure** (default) | `make s4r-attack-nk-disable` or MCP **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) | MCP reloads Eventgen modinput; `make restart` if signal is slow |
+| **Active threat** | `make s4r-attack-nk-enable` or MCP **`SA-S4R_apply_nk_demo_state`** (`mode=threat`) | Same |
 
-Check current mode: **`make s4r-attack-nk-status`**. Script: **`scripts/toggle-s4r-attack-nk.sh`** (`enable` \| `disable` \| `status`). Sets **`disabled = false`** or **`disabled = true`** on **`[attack.nk.purchase.sample]`** in **`eventgen.conf`**.
+Check current mode: **`SA-S4R_query_nk_demo_state`** (MCP), **`make s4r-attack-nk-status`**, or read `[attack.nk.purchase.sample]` in **`eventgen.conf`**. Script: **`scripts/toggle-s4r-attack-nk.sh`** (`enable` \| `disable` \| `status`). MCP registration: **`scripts/register-s4r-mcp-tools.sh`** — see [S4R-MCP-TOOLS.md](S4R-MCP-TOOLS.md).
 
 Wait **1–2 minutes** after restart before validating in Search (narrow time range to **last 15m** so old uniform traffic does not mask the attack).
 
@@ -167,6 +167,14 @@ Power User synthesis: **infrastructure** → “fix the web tier”; **active th
 #### Validation SPL
 
 Canonical queries for both workshop modes: **[S4R-SPL-CATALOG.md § Workshop modes](S4R-SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat)** (and per-team § in the same file). Agents and dashboards should use that catalog — not duplicate SPL here.
+
+**Saved searches (Splunk4Rookies app):**
+
+- **`S4R Summarize Purchase Health`** — Business KPIs over **last 24h**: total lost revenue (`product_codes` lookup), success vs failure purchase counts, top 5 products by lost revenue. MCP tool: **`SA-S4R_summarize_purchase_health`**.
+- **`S4R Geo Failed Purchase Hotspots`** — Security geo over **last 24h**: top failed-purchase country/city/IP hotspots plus top cities by overall activity (`iplocation`). MCP tool: **`SA-S4R_geo_failed_purchases`**.
+- **`S4R Validate NK Attack Traffic`** — NK geo check over **last 15m**; rows appear when threat mode is producing **North Korea** or **175.45.*** failed purchases. Empty results mean no NK signal yet (wait 1–2 min after enable, or confirm mode with **`SA-S4R_query_nk_demo_state`**). MCP tool: **`SA-S4R_validate_nk_attack_traffic`**.
+
+`make register-s4r-mcp-tools` reloads **`conf-savedsearches`** so new stanzas are visible without **`make restart`**.
 
 NK attack token sources: **`samples/nk_clientip.txt`**, **`nk_status.txt`**, **`nk_useragent.txt`**, **`nk_product_id.txt`**.
 

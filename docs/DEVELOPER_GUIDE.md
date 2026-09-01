@@ -13,7 +13,7 @@ Contributing and changing this PoC. Stack design: [ARCHITECTURE.md](ARCHITECTURE
 | Workshop SPL | [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md) only (agents reference this path) |
 | Agent prompts | `.cursor/agents/s4r-*.md`, [S4R-AGENTS.md](S4R-AGENTS.md) |
 
-Source of truth when docs disagree with code: [docs/README.md](README.md#source-of-truth-when-docs-disagree-with-code) and [AGENTS.md](../AGENTS.md).
+Source of truth when docs disagree with code: [README.md](README.md#source-of-truth-code-wins) and [AGENTS.md](../AGENTS.md).
 
 ## Local test loop
 
@@ -50,5 +50,5 @@ Requires **shellcheck**, **Node/npx** (markdownlint), and the pre-commit-managed
 ## Resources
 
 - Splunk REST: <https://docs.splunk.com/Documentation/Splunk/latest/RESTREF>
-- Splunk MCP 1.2 clients: [API_REFERENCE.md](API_REFERENCE.md)
+- Splunk MCP 1.3 clients: [API_REFERENCE.md](API_REFERENCE.md) · auth: [CONFIGURATION.md](CONFIGURATION.md#splunk-mcp-authentication-13)
 - MCP: <https://modelcontextprotocol.io/>

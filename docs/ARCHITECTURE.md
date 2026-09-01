@@ -26,7 +26,7 @@ You need valid **Splunkbase** credentials via **`tpl.env`** or **`.env`** (Path 
 
 ## Client connections
 
-Per [Splunk MCP Server 1.2](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/1.2/connecting-to-the-mcp-server-and-settings), **Claude**, **Cursor**, and **Goose** use **`npx mcp-remote`** to **`https://localhost:8089/services/mcp`** with an **encrypted** bearer token (`make update-mcp-clients`).
+Per [Splunk MCP Server 1.3](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/1.3/connecting-to-the-mcp-server-and-settings), **Claude**, **Cursor**, and **Goose** in this PoC use **`npx mcp-remote`** (Goose via **`scripts/mcp-remote-splunk.sh`**) to **`https://localhost:8089/services/mcp`** with an **encrypted** bearer token (`make update-mcp-clients`). **Splunk Cloud** customers may alternatively use **OAuth 2.1** in Cursor—see [CONFIGURATION.md](CONFIGURATION.md#splunk-mcp-authentication-13) and [PRESALES.md](PRESALES.md#splunk-cloud-stacks-oauth-vs-this-poc).
 
 ## Secrets flow
 
@@ -303,6 +303,7 @@ docker run --rm -v so1-etc:/data -v ~/backups:/backup \
 ## Related reading
 
 - [CONFIGURATION.md](CONFIGURATION.md) — Compose, env, clients, `setup-splunk.sh` appendix
+- [SPECS.md](SPECS.md) — requirements and acceptance criteria
 - [SECURITY.md](SECURITY.md) — threat model and limitations
 - [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — failures and recovery
 - [s4r/README.md](s4r/README.md) — Splunk4Rookies workshop docs

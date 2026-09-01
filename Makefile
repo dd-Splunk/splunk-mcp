@@ -17,7 +17,7 @@ export ENV_FILE ENV_OUT ENV_EXAMPLE OP DC
 .PHONY: help up down restart clean logs status demo-prep verify cloud-bootstrap \
 	update-mcp-clients update-mcp-client verify-mcp-remote \
 	update-claude-config update-cursor-config update-goose-config \
-	s4r-attack-nk-enable s4r-attack-nk-disable s4r-attack-nk-status \
+	s4r-attack-nk-enable s4r-attack-nk-disable s4r-attack-nk-status register-s4r-mcp-tools \
 	marp-preview marp-serve marp-html \
 	   \
 	
@@ -119,6 +119,9 @@ s4r-attack-nk-disable: ## Disable NK purchase-attack Eventgen stanza (default mo
 
 s4r-attack-nk-status: ## Show whether NK attack Eventgen stanza is enabled
 	@./scripts/toggle-s4r-attack-nk.sh status
+
+register-s4r-mcp-tools: ## Register SA-S4R workshop MCP tools with Splunk MCP Server
+	@./scripts/register-s4r-mcp-tools.sh
 
 marp-preview: ## Open S4R slide deck in Marp preview (single file)
 	@cd demo-slides && marp --no-stdin -p s4r-demo-slides.md

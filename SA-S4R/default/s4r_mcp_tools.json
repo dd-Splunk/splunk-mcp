@@ -1,0 +1,161 @@
+{
+  "external_app_id": "SA-S4R",
+  "tools": [
+    {
+      "name": "query_nk_demo_state",
+      "title": "Query Buttercup NK demo state",
+      "description": "READ-ONLY status check for the Splunk4Rookies Eventgen storyline. Returns infrastructure (NK attack stanza off, default) or threat (NK purchase-attack traffic on). Never changes configuration.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "_meta": {
+        "external_app_id": "SA-S4R",
+        "external_app_registered": true,
+        "tags": ["s4r", "workshop", "read"],
+        "execution": {
+          "type": "api",
+          "method": "GET",
+          "endpoint": "/servicesNS/nobody/SA-S4R/s4r_workshop_mode",
+          "params": {
+            "output_mode": "json"
+          }
+        }
+      }
+    },
+    {
+      "name": "apply_nk_demo_state",
+      "title": "Apply Buttercup NK demo state change",
+      "description": "WRITE action: enable or disable the Eventgen North Korea purchase-attack stanza. Use only when the user explicitly asks to start or stop the NK attack demo. Argument mode=infrastructure turns NK off; mode=threat turns NK on.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": ["infrastructure", "threat"],
+            "description": "infrastructure = disable NK attack stanza; threat = enable NK geo attack on failed purchases"
+          }
+        },
+        "required": ["mode"]
+      },
+      "_meta": {
+        "external_app_id": "SA-S4R",
+        "external_app_registered": true,
+        "tags": ["s4r", "workshop", "write"],
+        "examples": [
+          {
+            "name": "Start NK attack simulation",
+            "description": "Enable North Korean purchase-attack Eventgen traffic",
+            "arguments": { "mode": "threat" },
+            "expected_use": "User asks to start the NK attack storyline for the demo"
+          },
+          {
+            "name": "Return to infrastructure mode",
+            "description": "Disable NK attack stanza",
+            "arguments": { "mode": "infrastructure" },
+            "expected_use": "User asks to stop the threat simulation"
+          }
+        ],
+        "execution": {
+          "type": "api",
+          "method": "POST",
+          "endpoint": "/servicesNS/nobody/SA-S4R/s4r_workshop_mode",
+          "headers": {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+          },
+          "params": {
+            "output_mode": "json"
+          },
+          "body": {
+            "mode": "$mode$"
+          }
+        }
+      }
+    },
+    {
+      "name": "validate_nk_attack_traffic",
+      "title": "Validate North Korea attack traffic",
+      "description": "READ-ONLY workshop check backed by saved search S4R Validate NK Attack Traffic. Returns failed purchases from North Korea or 175.45.* client IPs (default last 15m). Empty results mean no NK geo signal yet — confirm threat mode with query_nk_demo_state.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "_meta": {
+        "external_app_id": "SA-S4R",
+        "external_app_registered": true,
+        "tags": ["s4r", "workshop", "read", "security"],
+        "examples": [
+          {
+            "name": "Confirm NK attack data is flowing",
+            "description": "After enabling threat mode, verify Pyongyang / 175.45.* failed purchases appear",
+            "arguments": {},
+            "expected_use": "User enabled NK simulation and wants to confirm Eventgen traffic is visible in Search"
+          }
+        ],
+        "execution": {
+          "type": "spl",
+          "template": "| savedsearch \"S4R Validate NK Attack Traffic\"",
+          "row_limiter": true,
+          "time_range": false
+        }
+      }
+    },
+    {
+      "name": "geo_failed_purchases",
+      "title": "Geo failed purchase hotspots",
+      "description": "READ-ONLY Security & Fraud panel backed by saved search S4R Geo Failed Purchase Hotspots. Returns top failed-purchase geo hotspots (Country, City, clientip) and top cities by overall web activity (default last 24h). In threat mode expect North Korea / Pyongyang and 175.45.* IPs to dominate hotspots; use validate_nk_attack_traffic for a focused NK check (last 15m).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "_meta": {
+        "external_app_id": "SA-S4R",
+        "external_app_registered": true,
+        "tags": ["s4r", "workshop", "read", "security"],
+        "examples": [
+          {
+            "name": "Where are failed purchases concentrated?",
+            "description": "Geo hotspots for checkout failures and top cities by volume",
+            "arguments": {},
+            "expected_use": "User asks about geographic fraud indicators or failed-purchase concentration"
+          }
+        ],
+        "execution": {
+          "type": "spl",
+          "template": "| savedsearch \"S4R Geo Failed Purchase Hotspots\"",
+          "row_limiter": true,
+          "time_range": false
+        }
+      }
+    },
+    {
+      "name": "summarize_purchase_health",
+      "title": "Summarize Buttercup purchase health",
+      "description": "READ-ONLY Business Analytics KPIs backed by saved search S4R Summarize Purchase Health. Returns lost revenue (product_codes lookup), success vs failure purchase counts, and top products by lost revenue (default last 24h). Use for questions like whether the site is losing money from failed checkouts.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "_meta": {
+        "external_app_id": "SA-S4R",
+        "external_app_registered": true,
+        "tags": ["s4r", "workshop", "read", "business"],
+        "examples": [
+          {
+            "name": "Checkout revenue at risk",
+            "description": "Total lost revenue and failed purchase volume",
+            "arguments": {},
+            "expected_use": "User asks if the website is losing money or how much failed checkout costs"
+          }
+        ],
+        "execution": {
+          "type": "spl",
+          "template": "| savedsearch \"S4R Summarize Purchase Health\"",
+          "row_limiter": true,
+          "time_range": false
+        }
+      }
+    }
+  ]
+}

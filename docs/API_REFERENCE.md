@@ -159,7 +159,7 @@ curl -k -u "splunker:${SPLUNK_MCP_PASSWORD}" \
 
 ## Claude Desktop / Cursor MCP Integration
 
-Official client shape (Splunk MCP Server **1.2**): [Connecting to the MCP Server and settings](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/1.2/connecting-to-the-mcp-server-and-settings).
+Official client shape (Splunk MCP Server **1.3**): [Connecting to the MCP Server and settings](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/1.3/connecting-to-the-mcp-server-and-settings). Auth modes (token vs OAuth): [CONFIGURATION.md](CONFIGURATION.md#splunk-mcp-authentication-13).
 
 ### Configuration Structure
 
