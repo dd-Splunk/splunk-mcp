@@ -102,6 +102,8 @@ The sections below mirror slide content and **speaker script**; if the deck and 
 
 ---
 
+<a id="slides-7-10-step-2-business-questions-without-spl"></a>
+
 ## Slides 7–10 — Step 2: Business questions without SPL
 
 **Slide 7:** Section divider — end-user mode.
@@ -228,7 +230,7 @@ Timings are approximate. Adjust for audience questions.
 
 **Show:** Slides 7–9 (MCP guardrails).
 
-**Do:** Cursor — [Step 2 prompt](#slides-7-10--step-2-business-questions-without-spl) (single assistant, no delegation).
+**Do:** Cursor — [Step 2 prompt](#slides-7-10-step-2-business-questions-without-spl) (single assistant, no delegation).
 
 **Narrate:** *“Catalog-backed SPL, `splunk_run_query`, plain-language answer.”*
 
