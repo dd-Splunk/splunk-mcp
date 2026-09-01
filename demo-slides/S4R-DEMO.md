@@ -110,13 +110,19 @@ The sections below mirror slide content and **speaker script**; if the deck and 
 
 **Slide 8:** Example business prompts (*Is my website losing money?*, checkout funnel, merchandising).
 
-**Slide 9:** Splunk MCP sequence diagram + identity table (`splunker`, bearer token, `splunk_run_query`).
+**Slide 9:** Splunk MCP sequence diagram + identity table (`splunker`, bearer token, `splunk_run_query`, **`SA-S4R_*`** workshop tools).
 
-**Slide 10 — Live demo prompt:**
+**Slide 10 — Live demo prompt** (two columns on-screen):
 
 > *Using the Buttercup SPL catalog: is the website losing money? Summarize business impact from failed purchases.*
 
-*Speaker note:* Single assistant — no delegation. Catalog-backed SPL; plain-language answer.
+*Speaker note:* Single assistant — no delegation. Prefer **`SA-S4R_summarize_purchase_health`**; plain-language answer.
+
+**Optional Step 2 (Security)** — right column:
+
+> *Where are failed purchases concentrated geographically? Any anomalies worth review?*
+
+*Watch for:* **`SA-S4R_geo_failed_purchases`**
 
 ---
 
@@ -130,7 +136,7 @@ The sections below mirror slide content and **speaker script**; if the deck and 
 
 **Slide 14 — Agents Artifacts defined:** `S4R-SPL-CATALOG.md`, `.cursor/agents/s4r-*.md`, `.cursor/mcp.json`, `S4R-AGENTS.md`.
 
-**Slide 15 — Two workshop data modes:** infrastructure vs NK threat; `make s4r-attack-nk-disable` / `enable`.
+**Slide 15 — Two workshop data modes:** infrastructure vs NK threat; prefer **`SA-S4R_apply_nk_demo_state`** / **`SA-S4R_query_nk_demo_state`** in chat; `make s4r-attack-nk-*` as operator fallback.
 
 **Slide 16 — Demo 1 (infrastructure):**
 
@@ -142,9 +148,9 @@ The sections below mirror slide content and **speaker script**; if the deck and 
 
 **Slides 19–20 — Additional Business questions:** checkout, merchandising, mobile, international, fraud vs reliability (Step 2 or Step 3).
 
-**Slide 21 — Demo 2 (North Korea attack):** enable NK mode; ask fraud vs infrastructure; **last 15 minutes**.
+**Slide 21 — Demo 2 (North Korea attack):** compact slide — enable threat via chat (`SA-S4R_apply_nk_demo_state`) or one-line `make` fallback; then Power User ask; **last 15 minutes**. Validate with **`SA-S4R_validate_nk_attack_traffic`**.
 
-*Speaker notes:* See original Demo 1/2 detail below; cleanup `make s4r-attack-nk-disable && make restart`.
+*Speaker notes:* See original Demo 1/2 detail below; cleanup **`SA-S4R_apply_nk_demo_state`** (`infrastructure`) or `make s4r-attack-nk-disable && make restart`.
 
 ---
 
@@ -232,7 +238,7 @@ Timings are approximate. Adjust for audience questions.
 
 **Do:** Cursor — [Step 2 prompt](#slides-7-10-step-2-business-questions-without-spl) (single assistant, no delegation).
 
-**Narrate:** *“Catalog-backed SPL, `splunk_run_query`, plain-language answer.”*
+**Narrate:** *“Governed workshop tool — `SA-S4R_summarize_purchase_health` — or catalog SPL via `splunk_run_query`; plain-language answer.”*
 
 **Show:** Slide 10.
 
@@ -257,8 +263,8 @@ Optional: `make verify-mcp-remote MCP_VERIFY_CLIENT=cursor` in terminal (fast).
 **Narrate while it runs:**
 
 - *“Power User is delegating…”*
-- *“There’s `splunk_run_query` — that’s SPL from the catalog.”*
-- *“IT Ops owns status codes; Business owns lookup revenue.”*
+- *“There’s `SA-S4R_summarize_purchase_health` or `splunk_run_query` — governed SPL from the catalog.”*
+- *“IT Ops owns status codes; Business owns lookup revenue; Security may call `SA-S4R_geo_failed_purchases`.”*
 
 **If delegation is slow:** Call out one team only first: *“IT Ops only — success vs failure from catalog § IT Ops.”*
 
@@ -278,11 +284,15 @@ Optional: `make verify-mcp-remote MCP_VERIFY_CLIENT=cursor` in terminal (fast).
 
 ### 0:15 — Step 3 Demo 2 live (4 min)
 
-**Do:** Terminal — NK enable commands (see Slide 21). Wait for events (~2 min can overlap with talking).
+**Do:** Cursor chat — enable threat first:
 
-**Do:** Cursor — Step 3 Demo 2 prompt (**last 15 minutes**).
+> *Start the North Korean attack simulation for the Buttercup workshop.*
 
-**Narrate:** *“Security should surface North Korea on failed purchases; DevOps should see scripted user agents; IT Ops still sees 503 from baseline traffic.”*
+Wait ~2 min; optional **`SA-S4R_validate_nk_attack_traffic`**. Then Step 3 Demo 2 prompt (**last 15 minutes**).
+
+**Terminal fallback:** `make s4r-attack-nk-enable && make restart` (see Slide 21).
+
+**Narrate:** *“Security should surface North Korea on failed purchases (`SA-S4R_geo_failed_purchases` / validate NK tool); DevOps should see scripted user agents; IT Ops still sees 503 from baseline traffic.”*
 
 **Say:** *“Verdict: mixed — infrastructure still broken, but Security has a lead for investigation.”*
 
@@ -294,7 +304,7 @@ Optional: `make verify-mcp-remote MCP_VERIFY_CLIENT=cursor` in terminal (fast).
 
 **Say:** *“Build, ask, orchestrate — one catalog in git, live answers from Splunk MCP.”*
 
-**Cleanup:** `make s4r-attack-nk-disable && make restart`
+**Cleanup:** **`SA-S4R_apply_nk_demo_state`** (`infrastructure`) or `make s4r-attack-nk-disable && make restart`
 
 ---
 
@@ -321,7 +331,7 @@ On-screen table: **deck slide 26**. Expanded detail below for presenters.
 | ------- | ---------------- |
 | MCP tools missing | `make update-cursor-config`; restart Cursor |
 | No events | `make status`; `docker logs splunk-init` |
-| NK mode no signal | `make s4r-attack-nk-status`; `make restart`; search **last 15m** |
+| NK mode no signal | **`SA-S4R_query_nk_demo_state`**; **`SA-S4R_validate_nk_attack_traffic`**; `make restart`; search **last 15m** |
 | Concurrency limit | Wait; run one team at a time |
 | Token / 401 | `make up` or `make update-mcp-client MCP_CLIENT=cursor` |
 
@@ -362,7 +372,7 @@ Short on-slide versions: **deck slide 25**. Long-form prompts for live demos:
 ```text
 As Buttercup Power User for Splunk4Rookies: is the shop losing money?
 Delegate to IT Ops, DevOps, Business Analytics, and Security & Fraud.
-Read docs/S4R-SPL-CATALOG.md for SPL. Splunk MCP only — splunk_run_query; never Splunk REST or curl for searches.
+Read docs/S4R-SPL-CATALOG.md for SPL. Splunk MCP only — splunk_run_query and SA-S4R_* workshop tools; never Splunk REST or curl for searches.
 Synthesize one executive answer with the Power User template.
 ```
 
@@ -370,8 +380,8 @@ Synthesize one executive answer with the Power User template.
 
 ```text
 As Buttercup Power User: is the money loss bad infrastructure or an active threat?
-Check make s4r-attack-nk-status. Delegate to all four teams.
-Use docs/S4R-SPL-CATALOG.md including § Workshop modes. Splunk MCP only — no REST/curl for searches. Time range: last 15 minutes.
+Check SA-S4R_query_nk_demo_state (fallback: make s4r-attack-nk-status). Delegate to all four teams.
+Use docs/S4R-SPL-CATALOG.md including § Workshop modes. Splunk MCP only — SA-S4R_* tools and splunk_run_query; no REST/curl for searches. Time range: last 15 minutes.
 Synthesize with clear verdict and recommended actions.
 ```
 
@@ -380,7 +390,7 @@ Synthesize with clear verdict and recommended actions.
 ```text
 You are the S4R [IT Ops|DevOps|Business Analytics|Security & Fraud] agent.
 Read .cursor/agents/s4r-[team].md and docs/S4R-SPL-CATALOG.md § [section].
-Run searches via splunk_run_query (MCP only — no REST/curl). Return only that team's summary.
+Run searches via splunk_run_query or SA-S4R_* workshop tools (MCP only — no REST/curl). Return only that team's summary.
 ```
 
 ---
@@ -393,7 +403,7 @@ Same delegation pattern as Demo 1 unless noted. Infrastructure mode, **last 24 h
 
 ```text
 As Buttercup Power User: are we losing sales because checkout is failing, or because customers never get to purchase?
-Delegate to all four teams. Read docs/S4R-SPL-CATALOG.md per team. Splunk MCP only — splunk_run_query; never REST or curl.
+Delegate to all four teams. Read docs/S4R-SPL-CATALOG.md per team. Splunk MCP only — SA-S4R_* tools and splunk_run_query; never REST or curl.
 Synthesize one executive answer with the Power User template.
 ```
 

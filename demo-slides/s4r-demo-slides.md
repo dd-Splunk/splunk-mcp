@@ -146,7 +146,7 @@ Stakeholders ask **outcome questions** — the assistant runs governed searches 
 > *Are we losing sales because checkout is failing, or because customers never reach purchase?*
 > *Which product categories cost us the most in failed checkout revenue?*
 
-No SPL in the prompt. The model reads `docs/S4R-SPL-CATALOG.md` and calls **`splunk_run_query`** via Splunk MCP.
+No SPL in the prompt. The assistant uses governed **`SA-S4R_*`** workshop tools when they fit, or reads `docs/S4R-SPL-CATALOG.md` and calls **`splunk_run_query`** via Splunk MCP.
 
 <!--
 Step 2 can be a single assistant — no delegation required. Good for executives and workshop attendees who finished the dashboard and want answers, not panels.
@@ -167,8 +167,8 @@ sequenceDiagram
   participant MCP as Splunk MCP
   participant S as splunker
   U->>A: Natural language question
-  A->>A: Read SPL catalog section
-  A->>MCP: splunk_run_query
+  A->>A: Read catalog or pick SA-S4R tool
+  A->>MCP: splunk_run_query or SA-S4R_*
   MCP->>S: REST search
   S-->>MCP: JSON results
   MCP-->>A: Rows and aggregates
@@ -181,7 +181,8 @@ sequenceDiagram
 | -------- | ------- |
 | `splunker` | MCP searches (`mcp_tool_execute`) |
 | Bearer token | Client auth — not in git |
-| `splunk_run_query` | Primary demo tool |
+| `splunk_run_query` | Ad-hoc catalog SPL |
+| `SA-S4R_*` | Governed workshop tools (KPIs, geo, NK mode) |
 
 </div>
 </div>
@@ -192,19 +193,34 @@ Read-only demo discipline; token minted at make up. Cursor spawns npx mcp-remote
 
 ---
 
+<!-- _class: compact -->
+
 # Step 2 — Live demo prompt
 
 **Ask Cursor (no agent delegation):**
 
+<div class="two-col">
+<div>
+
+**Business**
+
 > *Using the Buttercup SPL catalog: is the website losing money? Summarize business impact from failed purchases.*
 
-**Watch for:**
+Watch: **`SA-S4R_summarize_purchase_health`**
 
-1. Catalog-backed SPL — not invented field names or prices
-2. Tool call: `splunk_run_query`
-3. Plain-language answer — revenue and failure rate, not a query dump
+</div>
+<div>
 
-**Expected (infrastructure mode):** Yes — high purchase failure; lost revenue from failed checkouts.
+**Security (optional)**
+
+> *Where are failed purchases concentrated geographically? Any anomalies worth review?*
+
+Watch: **`SA-S4R_geo_failed_purchases`**
+
+</div>
+</div>
+
+**Expected (infrastructure):** Yes — high purchase failure; lost revenue from failed checkouts.
 
 <!--
 Default data mode = infrastructure (~40% 503/404 everywhere). This is the lightweight path before introducing the orchestrator in Step 3.
@@ -305,9 +321,9 @@ SPL is not duplicated in every agent file — agents reference the catalog. Same
 
 ---
 
-# Two workshop data modes
-
 <!-- _class: diagram diagram-split diagram-split-equal -->
+
+# Two workshop data modes
 
 <div class="diagram-table-row">
 
@@ -317,8 +333,8 @@ flowchart TB
   NK["NK attack sample"]
   M1["Infrastructure story"]
   M2["Active threat story"]
-  C1["make s4r-attack-nk-disable"]
-  C2["make s4r-attack-nk-enable"]
+  C1["mode=infrastructure"]
+  C2["mode=threat"]
   BASE --> M1
   BASE --> NK
   NK --> M2
@@ -330,17 +346,15 @@ flowchart TB
 
 <div class="diagram-table-col">
 
-| Mode | Command | Security sees |
-| ---- | ------- | ------------- |
-| Infrastructure | `make s4r-attack-nk-disable` | Flat geo |
-| Active threat | `make s4r-attack-nk-enable` + `make restart` | Pyongyang tops failed purchases |
+| Mode | Toggle | Security sees |
+| ---- | ------ | ------------- |
+| Infrastructure | `infrastructure` | Flat geo |
+| Active threat | `threat` | Pyongyang hotspot |
 
 </div>
 </div>
 
-<br>
-
-Search **last 15m** after enabling threat mode.
+Chat: **`SA-S4R_apply_nk_demo_state`** · check **`SA-S4R_query_nk_demo_state`** · fallback `make s4r-attack-nk-*` · after threat: **last 15m**
 
 ---
 
@@ -353,7 +367,7 @@ Search **last 15m** after enabling threat mode.
 **Watch for:**
 
 1. Delegation to four specialists (parallel or sequential)
-2. Tool calls: `splunk_run_query`
+2. Tool calls: **`SA-S4R_*`** workshop tools and/or `splunk_run_query`
 3. SPL from catalog sections — not invented
 4. One synthesis table — not four SPL dumps
 
@@ -439,25 +453,24 @@ Use case 5 / Demo 2: make s4r-attack-nk-enable before ask. Attendees can swap qu
 
 ---
 
+<!-- _class: compact -->
+
 # Step 3 — Demo 2: North Korea attack
 
-**Ask Cursor:**
+**Enable threat first** (chat), then wait ~2 min:
+
+> *Start the North Korean attack simulation for the Buttercup workshop.*
+
+Watch: **`SA-S4R_apply_nk_demo_state`** (`threat`) → **`SA-S4R_validate_nk_attack_traffic`**. Fallback: `make s4r-attack-nk-enable && make restart`
+
+**Then ask Cursor (Power User):**
 
 > *As Buttercup Power User: is the money loss due to bad infrastructure or an active threat? Delegate to all four teams. Use the last 15 minutes.*
 
-**Terminal (before ask):**
-
-```bash
-make s4r-attack-nk-enable
-make restart
-# wait ~2 minutes
-make s4r-attack-nk-status    # enabled
-```
-
-**Expected shift:** Security and Fraud leads — NK; IT Ops still sees 503/404 from baseline.
+**Expected:** Security leads on NK geo; IT Ops still sees 503/404 from baseline.
 
 <!--
-Verdict: mixed — infrastructure still broken, but Security has a lead. Cleanup after demo: make s4r-attack-nk-disable and make restart.
+Verdict: mixed — infrastructure still broken, but Security has a lead. Cleanup after demo: SA-S4R_apply_nk_demo_state (infrastructure) or make s4r-attack-nk-disable and make restart.
 -->
 
 ---
@@ -465,7 +478,7 @@ Verdict: mixed — infrastructure still broken, but Security has a lead. Cleanup
 # Takeaways
 
 1. **Step 1 — Workshop:** Natural language builds the **S4R dashboard** from `S4R-DASHBOARD.md` + SPL catalog.
-2. **Step 2 — Business user:** Ask **outcome questions**; Splunk MCP returns live answers — no SPL required.
+2. **Step 2 — Business user:** Ask **outcome questions**; Splunk MCP returns live answers via **`SA-S4R_*`** tools or catalog SPL — no SPL required from the user.
 3. **Step 3 — Agentic:** **Power User** orchestrates IT Ops, DevOps, Business Analytics, Security and Fraud → **executive synthesis**.
 4. **Same data, same catalog** — infrastructure vs threat modes without rewriting prompts.
 
@@ -485,7 +498,7 @@ Verdict: mixed — infrastructure still broken, but Security has a lead. Cleanup
 
 ```bash
 make demo-prep
-make s4r-attack-nk-status    # expect: disabled
+make s4r-attack-nk-status    # expect: disabled (or SA-S4R_query_nk_demo_state → infrastructure)
 ```
 
 | Check | Action |
@@ -510,15 +523,28 @@ make s4r-attack-nk-status    # expect: disabled
 
 > *Using the Buttercup SPL catalog: is the website losing money? Summarize business impact from failed purchases.*
 
+**Watch for:** **`SA-S4R_summarize_purchase_health`**
+
+**Step 2 — Security question (optional):**
+
+> *Where are failed purchases concentrated geographically? Flag anything unusual.*
+
+**Watch for:** **`SA-S4R_geo_failed_purchases`**
+
 **Step 3 — Demo 1 (orchestrator):**
 
 > *As Buttercup Power User: is the shop losing money? Delegate to all four teams.*
 
 **Step 3 — Demo 2 (threat):**
 
+> *Start the North Korean attack simulation.* (then wait ~2 min)
 > *As Buttercup Power User: is the money loss due to bad infrastructure or an active threat? Delegate to all four teams. Use the last 15 minutes.*
 
+**Cleanup:** *Return to infrastructure mode* → **`SA-S4R_apply_nk_demo_state`** (`infrastructure`) or `make s4r-attack-nk-disable && make restart`
+
 ---
+
+<!-- _class: compact -->
 
 # Appendix — troubleshooting
 
@@ -526,7 +552,7 @@ make s4r-attack-nk-status    # expect: disabled
 | ------- | ---------------- |
 | MCP tools missing | `make update-cursor-config`; restart Cursor |
 | No events | `make status`; `docker logs splunk-init` |
-| NK mode no signal | `make s4r-attack-nk-status`; `make restart`; search **last 15m** |
+| NK mode no signal | `SA-S4R_query_nk_demo_state` / validate NK; search **last 15m** |
 | Concurrency limit | Wait; run one team at a time |
 | Token / 401 | `make up` or `make update-mcp-client MCP_CLIENT=cursor` |
 

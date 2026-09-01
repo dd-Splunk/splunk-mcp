@@ -1,8 +1,8 @@
-# S4R-specific MCP tools (prep)
+# S4R-specific MCP tools
 
-**Status:** design / branch prep — not implemented.  
+**Status:** workshop mode tools implemented (`SA-S4R_query_nk_demo_state`, `SA-S4R_apply_nk_demo_state`, `SA-S4R_validate_nk_attack_traffic`, `SA-S4R_summarize_purchase_health`, `SA-S4R_geo_failed_purchases`).  
 **Branch:** `feature/s4r-mcp-tools`  
-**Related:** [S4R-AGENTS.md](S4R-AGENTS.md) · [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md) · [Splunk MCP 1.3 tool namespacing](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/1.3/connecting-to-the-mcp-server-and-settings)
+**Related:** [S4R-AGENTS.md](S4R-AGENTS.md) · [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md) · [SA-S4R-APP.md](SA-S4R-APP.md) · [Splunk MCP 1.3 custom tools](https://help.splunk.com/en/splunk-enterprise/mcp-server-for-splunk-platform/1.3/managing-custom-tools-in-splunk-mcp-server)
 
 ## Problem
 
@@ -10,79 +10,85 @@ Workshop agents today use **generic** Splunk MCP tools (`splunk_run_query`, `sai
 
 - Models must read the catalog and compose SPL (higher token cost, more drift).
 - Workshop guardrails (time range, `platform` rex, lookup joins, NK threat mode) are repeated in every agent prompt.
-- Demo operators toggle NK attack mode via Makefile, not via MCP.
+- Demo operators toggled NK attack mode via Makefile only (now also via MCP).
 
-## Goal
+## Implemented: workshop mode via MCP
 
-Expose a small, **namespaced** set of workshop tools (proposed prefix **`s4r_`**) so agents can call governed, catalog-backed operations without hand-writing SPL each time.
+Natural-language prompts such as *“start the North Korean attack simulation”* map to MCP tools that call a **custom REST handler** in **SA-S4R** (not raw Splunk REST from the agent).
 
-## Non-goals (initial)
+| Tool | Type | Purpose |
+| ---- | ---- | ------- |
+| `SA-S4R_query_nk_demo_state` | API `GET` | READ-ONLY: returns `infrastructure` or `threat` |
+| `SA-S4R_apply_nk_demo_state` | API `POST` | WRITE: sets `mode` to `infrastructure` or `threat` |
+| `SA-S4R_validate_nk_attack_traffic` | SPL (saved search) | READ-ONLY: runs **`S4R Validate NK Attack Traffic`** — confirms NK / `175.45.*` failed purchases in **last 15m** |
+| `SA-S4R_summarize_purchase_health` | SPL (saved search) | READ-ONLY: runs **`S4R Summarize Purchase Health`** — lost revenue, checkout outcomes, top products (**last 24h**) |
+| `SA-S4R_geo_failed_purchases` | SPL (saved search) | READ-ONLY: runs **`S4R Geo Failed Purchase Hotspots`** — failed-purchase geo hotspots + top cities (**last 24h**) |
 
-- Replacing Splunk MCP Server or forking the Splunkbase app (7931).
-- Customer Splunk Cloud OAuth flows (see [PRESALES.md § Splunk Cloud](PRESALES.md#splunk-cloud-stacks-oauth-vs-this-poc)).
-- Writing arbitrary SPL from a single mega-tool (keep least privilege).
+### App files (`SA-S4R/default/`)
 
-## Current stack (unchanged for now)
+| File | Role |
+| ---- | ---- |
+| `bin/s4r_workshop_mode.py` | REST handler — edits `[attack.nk.purchase.sample]` in `eventgen.conf`, reloads Eventgen modinput |
+| `restmap.conf` | Exposes `/servicesNS/nobody/SA-S4R/s4r_workshop_mode` |
+| `authorize.conf` | Capability `s4r_workshop_control` (granted to `mcp_user`) |
+| `s4r_mcp_tools.json` | MCP tool definitions (batch replace payload) |
+| `tool_input_payload_signatures.json` | Input schemas for app-packaged tool registration |
+| `tools.conf` | App-packaged tool metadata; saved-search tools reference `savedsearches.conf` |
+| `savedsearches.conf` | Governed SPL (e.g. **`S4R Validate NK Attack Traffic`**, **`S4R Summarize Purchase Health`**, **`S4R Geo Failed Purchase Hotspots`**) |
 
-| Layer | Today |
-| ----- | ----- |
-| MCP transport | `npx mcp-remote` → `https://localhost:8089/services/mcp` |
-| Auth | Encrypted bearer token (`make update-mcp-clients`) |
-| Execution user | `splunker` / `mcp_user` / `mcp_tool_execute` |
-| Agent data path | `splunk_run_query` + catalog § per team |
+`make` targets (`s4r-attack-nk-enable` / `disable` / `status`) remain as operator fallbacks; they edit the same `default/eventgen.conf` stanza.
 
-## Candidate tools (draft)
+### Bootstrap
+
+`scripts/setup-splunk.sh` (step 6):
+
+1. Grants **`s4r_workshop_control`** to role **`mcp_user`** (with `mcp_tool_execute`).
+2. Runs **`scripts/register-s4r-mcp-tools.sh`** — `POST /services/mcp_tools` batch replace for app **`SA-S4R`**.
+
+Re-register after editing tool JSON (uses `.env` or `op run --env-file=tpl.env`, same as `make up`):
+
+```bash
+make register-s4r-mcp-tools   # or: ./scripts/register-s4r-mcp-tools.sh
+```
+
+Tool names are intentionally distinct (`query_*` vs `apply_*`) so Splunk MCP collision detection does not flag the read/write pair as ambiguous.
+
+### Security
+
+- **`splunker`** invokes MCP tools only; it does not get `admin` or broad `edit_local_apps`.
+- **`SA-S4R_apply_nk_demo_state`** is a configuration write — agents should call it only on explicit user request.
+- Handler allowlists `mode` to `infrastructure` \| `threat` only.
+
+### Agent usage
+
+1. **Read mode** before infrastructure-vs-threat synthesis: `SA-S4R_query_nk_demo_state`.
+2. **Set mode** when the user asks to start/stop the NK storyline: `SA-S4R_apply_nk_demo_state({ "mode": "threat" })`.
+3. **Validate NK data** after enabling threat mode (~1–2 min): `SA-S4R_validate_nk_attack_traffic` (or saved search **`S4R Validate NK Attack Traffic`** in Splunk UI).
+4. **Business KPIs** (lost revenue, checkout failure): `SA-S4R_summarize_purchase_health` — prefer over hand-written SPL for catalog § Business Analytics totals.
+5. **Security geo** (failed-purchase hotspots, top cities): `SA-S4R_geo_failed_purchases` — prefer for catalog § Security & Fraud geo panels (**last 24h**). Pair with **`SA-S4R_validate_nk_attack_traffic`** when confirming NK threat signal (**last 15m**).
+
+## M2: saved-search MCP tools
+
+**M2** is catalog-backed **saved search → MCP tool** wiring: SPL lives in **`savedsearches.conf`**; the MCP tool runs that search (via `| savedsearch` in `s4r_mcp_tools.json` + matching `tools.conf` stanza). Shipped: **`validate_nk_attack_traffic`**, **`summarize_purchase_health`**, **`geo_failed_purchases`**. Additional catalog queries (IT Ops, DevOps) can follow the same pattern.
+
+## Candidate tools (not yet implemented)
 
 | Tool | Purpose | Backing |
 | ---- | ------- | ------- |
-| `s4r_get_workshop_mode` | Return infrastructure vs NK threat mode | `make s4r-attack-nk-status` logic / Eventgen stanza |
 | `s4r_list_catalog_sections` | List team sections and one-line intent | `S4R-SPL-CATALOG.md` structure |
 | `s4r_run_team_query` | Run a **pre-approved** catalog query by team + query id | Catalog snippets + `splunk_run_query` |
-| `s4r_summarize_purchase_health` | High-level Buttercup KPIs (failure %, lost revenue) | Catalog § Business + lookups |
-| `s4r_geo_failed_purchases` | Security storyline helper | Catalog § Security & Fraud |
-
-Exact names and parameters TBD after Splunk MCP **tool management** / allowlist review (1.3 Guardrails).
-
-## Implementation options (to decide)
-
-1. **Sidecar MCP server (stdio)** — small Node/Python MCP in this repo; proxies to Splunk REST or calls `splunk_run_query` internally; registered as a second MCP server in Cursor/Goose.
-2. **Splunk app extension** — if/when Splunk MCP supports custom tools in `SA-S4R` (investigate app hooks; may be out of scope for PoC).
-3. **Thin wrapper over catalog** — generate tool schemas from `S4R-SPL-CATALOG.md` at build time (single source of truth).
-
-**Recommendation for PoC:** option **1** — sidecar stdio server, versioned in-repo, no Splunkbase publish required for v0.
-
-## Security / guardrails
-
-- Read-only searches only; no `| delete`, `| collect`, or index mutation.
-- Enforce catalog allowlist (query ids), not free-form SPL parameters except bounded time range.
-- Same MCP user (`splunker`); no elevation to `admin`.
-- Do not embed secrets in tool definitions; reuse existing client token flow.
-
-## Agent impact
-
-| File | Change (later) |
-| ---- | -------------- |
-| `.cursor/agents/s4r-*.md` | Prefer `s4r_*` tools where available; fallback to catalog + `splunk_run_query` |
-| `docs/S4R-AGENTS.md` | Document tool layer in educational model diagram |
-| `scripts/mcp-client.sh` | Optional second MCP server entry (`s4r-mcp` or merged config) |
-| `Makefile` | `verify-s4r-mcp` target |
 
 ## Milestones
 
-- [ ] **M0** — This doc + branch (`feature/s4r-mcp-tools`)
-- [ ] **M1** — Spike: sidecar MCP lists `s4r_get_workshop_mode` + one `s4r_run_team_query`
-- [ ] **M2** — Wire into `make update-mcp-clients` / `.cursor/mcp.json.example`
-- [ ] **M3** — Update Power User + one specialist agent to use tools; `make verify` path
-- [ ] **M4** — Demo slides / S4R-DEMO.md mention tool layer
-
-## Open questions
-
-1. Does Splunk MCP Server 1.3 allow **custom** tools from a companion app, or only `splunk_*` / `saia_*`?
-2. One MCP server vs two in client config (Splunk + S4R sidecar)?
-3. Should `s4r_*` tools call Splunk REST directly or delegate to `splunk_run_query` via loopback MCP?
+- [x] **M0** — Design doc + branch
+- [x] **M1** — REST handler + MCP registration for workshop mode
+- [x] **M2** — Saved-search MCP tools (`validate_nk_attack_traffic`, `summarize_purchase_health`, `geo_failed_purchases`); more catalog queries optional
+- [ ] **M3** — Update all specialist agents; `make verify` path for S4R tools
+- [x] **M4** — Demo slides / S4R-DEMO.md mention governed tools + in-chat NK toggle
 
 ## References
 
-- Splunk MCP tool namespacing: `splunk_`, `saia_` — [Connecting (1.3)](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/1.3/connecting-to-the-mcp-server-and-settings)
+- Splunk MCP custom tools: [Managing custom tools (1.3)](https://help.splunk.com/en/splunk-enterprise/mcp-server-for-splunk-platform/1.3/managing-custom-tools-in-splunk-mcp-server)
 - Workshop SPL: [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md)
+- Eventgen / NK toggle: [SA-S4R-APP.md](SA-S4R-APP.md)
 - MCP client wiring: [CONFIGURATION.md](CONFIGURATION.md)
