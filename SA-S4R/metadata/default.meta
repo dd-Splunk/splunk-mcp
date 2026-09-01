@@ -16,3 +16,12 @@ export = system
 [lookup-table-files/product_codes.csv]
 access = read : [ * ], write : [ admin, sc_admin ]
 export = system
+
+[authorize]
+export = system
+
+[savedsearches]
+export = system
+
+[tools]
+export = system
