@@ -292,12 +292,7 @@ verify_mcp_remote_stdio() {
   npx_cmd="$(npx_command)"
   token="$(mint_mcp_token)" || die "could not mint MCP token for mcp-remote verify"
   tls_insecure="${SPLUNK_MCP_TLS_INSECURE:-1}"
-  if [[ "$tls_insecure" == "1" || "$tls_insecure" == "true" || "$tls_insecure" == "yes" ]]; then
-    export NODE_TLS_REJECT_UNAUTHORIZED=0
-  else
-    unset NODE_TLS_REJECT_UNAUTHORIZED
-  fi
-  MCP_NPX_COMMAND="$npx_cmd" SPLUNK_MCP_ENDPOINT="$endpoint" \
+  MCP_NPX_COMMAND="$npx_cmd" SPLUNK_MCP_ENDPOINT="$endpoint" SPLUNK_MCP_TLS_INSECURE="$tls_insecure" \
     python3 - "$token" <<'PY' || die "mcp-remote stdio tools/list failed (see errors above)"
 import json
 import os
@@ -309,7 +304,14 @@ import time
 token = sys.argv[1]
 npx_cmd = os.environ["MCP_NPX_COMMAND"]
 endpoint = os.environ["SPLUNK_MCP_ENDPOINT"]
+tls_insecure = os.environ.get("SPLUNK_MCP_TLS_INSECURE", "1")
 header = f"Authorization: Bearer {token}"
+
+env = os.environ.copy()
+if tls_insecure.lower() in ("1", "true", "yes"):
+    env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0"
+else:
+    env.pop("NODE_TLS_REJECT_UNAUTHORIZED", None)
 
 proc = subprocess.Popen(
     [npx_cmd, "-y", "mcp-remote", endpoint, "--header", header],
@@ -318,6 +320,7 @@ proc = subprocess.Popen(
     stderr=subprocess.PIPE,
     text=True,
     bufsize=1,
+    env=env,
 )
 
 def send(msg):
