@@ -240,6 +240,8 @@ index=main sourcetype=access_combined action=purchase
 
 **Expected finding (infrastructure mode):** Cities fail at ~same rate; ~1 event per IP. **Expected (threat mode):** **North Korea** / **Pyongyang** and **175.45.*** IPs dominate failed purchases.
 
+**MCP tool:** **`SA-S4R_geo_failed_purchases`** runs saved search **`S4R Geo Failed Purchase Hotspots`** (hotspots + top cities, **last 24h**). For NK-only confirmation after enabling threat mode, use **`SA-S4R_validate_nk_attack_traffic`** (**last 15m**).
+
 ### Panel — activity by city (Lab 6 — map)
 
 Lab guide search:
