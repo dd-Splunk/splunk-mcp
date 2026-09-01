@@ -1,12 +1,12 @@
 # AGENTS.md
 
-Repo-specific guidance for AI agents and contributors working in `splunk-mcp`.
+Repo-specific guidance for AI agents and contributors working in `splunk-mcp`. Human documentation index: **`docs/README.md`**.
 
 ## What this repo is
 
 - **Purpose**: local PoC that runs **Splunk Enterprise** in Docker and exposes **Splunk MCP Server** on `https://localhost:8089/services/mcp`.
 - **Client bridge**: **Claude Desktop**, **Cursor**, and **Goose** use **`npx mcp-remote`** to `https://localhost:8089/services/mcp` (token minted at `make update-*-config` after **`splunk-init`** completes; stored only in client config, not the repo). See `make update-mcp-clients` or `make update-mcp-client MCP_CLIENT=…`. **SE / presales**: **`docs/PRESALES.md`**.
-- **Sample app**: **`SA-S4R`** (UI label **Splunk4Rookies**) — bind-mounted Eventgen traffic, lookups, dashboard assets. Workshop hub: **`docs/s4r/README.md`**. SPL runbook: **`docs/S4R-SPL-CATALOG.md`**. Data: **`docs/SA-S4R-APP.md`**. Dashboard layout: **`docs/S4R-DASHBOARD.md`**. Agents: **`docs/S4R-AGENTS.md`** + **`.cursor/agents/`**.
+- **Sample app**: **`SA-S4R`** (UI label **Splunk4Rookies**) — bind-mounted Eventgen traffic, lookups, workshop assets in **`local/`**. Workshop hub: **`docs/s4r/README.md`**. SPL runbook: **`docs/S4R-SPL-CATALOG.md`**. Data: **`docs/SA-S4R-APP.md`**. Dashboard build spec: **`docs/S4R-DASHBOARD.md`**. Agents: **`docs/S4R-AGENTS.md`** + **`.cursor/agents/`**.
 - **Session memory (Vellem)**: when the **vellem** MCP server is enabled in Cursor, start with **`search_notes_semantic`** on folder **`splunk-mcp`** (boot, verify, troubleshooting) before deep doc reads. Use **`list_expiring_contexts`** to avoid stale notes. After demos or non-obvious fixes, capture outcomes in Vellem (**`add_decision_note`** / **`append_to_daily`**) — not in git. Splunk MCP handles live data; Vellem holds repo-specific memory (no secrets).
 
 ## Golden rules (don’t break these)
@@ -93,7 +93,9 @@ This section is for cloud agents running in the Cursor Cloud VM (Docker-in-Docke
 
 ### Quick start
 
-1. Add **Cursor Cloud environment secrets**: `SPLUNKBASE_USER` and `SPLUNKBASE_PASS` (splunk.com account that can download Splunkbase apps).
+1. **Secrets (pick one):**
+   - **Path A (preferred):** copy your local **`tpl.env`** into the Cloud workspace (`cp tpl.env.example tpl.env` then edit `op://` paths), install **`op`**, and set **`OP_SERVICE_ACCOUNT_TOKEN`** as a Cursor Cloud secret (or sign in to `op` if the VM supports it). Bootstrap resolves **all** secrets from 1Password—same as local **`make up`**.
+   - **Path B (fallback):** set Cursor Cloud secrets **`SPLUNKBASE_USER`** and **`SPLUNKBASE_PASS`** only; bootstrap generates random admin/MCP passwords.
 2. Bootstrap (idempotent per boot):
 
    ```bash
