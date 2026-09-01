@@ -562,6 +562,27 @@ make logs | grep -i "space\|disk"
 
 ---
 
+#### Issue: S4R dashboard or platform field is missing
+
+**Symptoms**: The Buttercup Enterprises dashboard tab is absent, dashboard edits disappear after rebuild, or panels that use **`platform`** return empty results.
+
+**Cause**: Workshop UI and field-extraction assets must live under **`SA-S4R/local/`**. Fresh clones contain only the tracked **`SA-S4R/local/README`** guide; Dashboard Studio exports, nav overrides, **`local/props.conf`**, and **`metadata/local.meta`** are created locally and are not packaged into **`SA-S4R.spl`**.
+
+**Solution**:
+
+1. Follow **`SA-S4R/local/README`** to create the local dashboard, nav tab, metadata, and Lab 4 **`platform`** extraction.
+2. If Splunk is already running, restart it after editing files under **`local/`**:
+
+   ```bash
+   make restart
+   ```
+
+3. If you saved workshop objects under **`default/`**, move or re-export them under **`local/`** and remove the duplicate default copy.
+
+See [SA-S4R-APP.md § `default/` vs `local/`](SA-S4R-APP.md#default-vs-local-splunk-best-practice) and [S4R-DASHBOARD.md](S4R-DASHBOARD.md).
+
+---
+
 #### Issue: NK attack workshop mode not visible in Search
 
 **Symptoms**: `make s4r-attack-nk-enable` ran but no `175.45.*` IPs, `python-requests`, or North Korea in `iplocation` results.
