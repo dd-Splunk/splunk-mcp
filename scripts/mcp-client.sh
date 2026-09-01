@@ -70,7 +70,7 @@ merge_json_mcp_server() {
   fi
 }
 
-# Splunk MCP Server 1.2 client shape: npx mcp-remote + encrypted bearer token
+# Splunk MCP Server 1.3 client shape: npx mcp-remote + encrypted bearer token
 mcp_servers_block_mcp_remote_jq() {
   local endpoint="$1" token="$2" npx_cmd="$3"
   local tls_insecure="${SPLUNK_MCP_TLS_INSECURE:-1}"

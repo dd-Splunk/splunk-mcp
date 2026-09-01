@@ -26,7 +26,7 @@ Local PoC: **Splunk Enterprise** + **Splunk MCP Server** in Docker, optional **S
 | [PRESALES.md](PRESALES.md) | Demo runbook, secrets paths, checklist |
 | [INSTALLATION.md](INSTALLATION.md) | Hardware, 1Password, verification |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Components, boot flow, MCP clients |
-| [CONFIGURATION.md](CONFIGURATION.md) | Compose, env, client configs, setup script |
+| [CONFIGURATION.md](CONFIGURATION.md) | Compose, env, MCP auth (token vs OAuth), client configs, setup script |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Ports, init, Splunkbase, MCP errors |
 | [SECURITY.md](SECURITY.md) | Secrets, TLS, vulnerability reporting |
 | [API_REFERENCE.md](API_REFERENCE.md) | Splunk REST and MCP endpoints |
