@@ -4,7 +4,7 @@
 # Execution order:
 #   1. Enable SA-Eventgen modinput_eventgen://default (when the app is installed)
 #   2. Splunk MCP Server: ssl_verify=false (local dev only; uses curl -k)
-#   3. Role mcp_user with capability mcp_tool_execute and srchJobsQuota=5
+#   3. Role mcp_user with mcp_tool_execute (required) and s4r_workshop_control (best-effort after SA-S4R load)
 #   4. User SPLUNK_MCP_USER (default splunker): roles user + mcp_user
 #   5. Merge MLTK_ROLE onto SPLUNK_MLTK_USER (requires jq; non-fatal if MLTK app is absent)
 #
@@ -214,32 +214,57 @@ auth_curl -X POST "${SPLUNK_URL}/servicesNS/nobody/Splunk_MCP_Server/configs/con
   && echo "✅ SSL verification disabled" || echo "⚠️  SSL verification setting may already be disabled"
 
 # --- 3. MCP role (mcp_user) ---
+# Grant mcp_tool_execute first. Unknown custom capabilities (s4r_workshop_control
+# before SA-S4R authorize.conf is loaded, or a bad stanza) make Splunk reject the
+# entire role POST — then splunker is never created and mcp_token mint hangs.
 echo "👤 Ensuring role 'mcp_user' exists with capability mcp_tool_execute and srchJobsQuota=5..."
 ROLE_URL="${SPLUNK_URL}/services/authorization/roles/mcp_user"
+ROLE_COLLECTION="${SPLUNK_URL}/services/authorization/roles"
 
 role_exists=0
 AUTH_CURL_QUIET=1 auth_curl "${ROLE_URL}?output_mode=json" >/dev/null && role_exists=1
 cleanup_last_body
 
 if [ "${role_exists}" = "1" ]; then
-  set -- -X POST "${ROLE_URL}" \
+  must auth_curl -X POST "${ROLE_URL}" \
     -d "capabilities=mcp_tool_execute" \
-    -d "capabilities=s4r_workshop_control" \
-    -d "srchJobsQuota=5"
-  role_ok_msg="✅ Updated role mcp_user (mcp_tool_execute, s4r_workshop_control, srchJobsQuota=5)"
-  role_fail_msg="⚠️  Failed to update role mcp_user"
-fi
-if [ "${role_exists}" = "0" ]; then
-  set -- -X POST "${SPLUNK_URL}/services/authorization/roles" \
+    -d "srchJobsQuota=5" \
+    -H "Content-Type: application/x-www-form-urlencoded" >/dev/null
+  echo "✅ Updated role mcp_user (mcp_tool_execute, srchJobsQuota=5)"
+else
+  must auth_curl -X POST "${ROLE_COLLECTION}" \
     -d "name=mcp_user" \
     -d "capabilities=mcp_tool_execute" \
-    -d "capabilities=s4r_workshop_control" \
-    -d "srchJobsQuota=5"
-  role_ok_msg="✅ Created role mcp_user (mcp_tool_execute, s4r_workshop_control, srchJobsQuota=5)"
-  role_fail_msg="⚠️  Failed to create role mcp_user"
+    -d "srchJobsQuota=5" \
+    -H "Content-Type: application/x-www-form-urlencoded" >/dev/null
+  echo "✅ Created role mcp_user (mcp_tool_execute, srchJobsQuota=5)"
 fi
-auth_curl "$@" -H "Content-Type: application/x-www-form-urlencoded" >/dev/null \
-  && echo "${role_ok_msg}" || echo "${role_fail_msg}"
+cleanup_last_body
+
+echo "👤 Granting s4r_workshop_control on mcp_user (after SA-S4R authorize.conf load)..."
+AUTH_CURL_QUIET=1 auth_curl -X POST "${SPLUNK_URL}/services/apps/local/SA-S4R/_reload" >/dev/null || true
+cleanup_last_body
+s4r_cap_ok=0
+n=0
+while [ "$n" -lt 8 ]; do
+  if AUTH_CURL_QUIET=1 auth_curl -X POST "${ROLE_URL}" \
+    -d "capabilities=mcp_tool_execute" \
+    -d "capabilities=s4r_workshop_control" \
+    -d "srchJobsQuota=5" \
+    -H "Content-Type: application/x-www-form-urlencoded" >/dev/null; then
+    s4r_cap_ok=1
+    echo "✅ Granted s4r_workshop_control on mcp_user"
+    break
+  fi
+  cleanup_last_body
+  n=$((n + 1))
+  sleep 2
+  AUTH_CURL_QUIET=1 auth_curl -X POST "${SPLUNK_URL}/services/apps/local/SA-S4R/_reload" >/dev/null || true
+  cleanup_last_body
+done
+if [ "${s4r_cap_ok}" = "0" ]; then
+  echo "⚠️  Could not grant s4r_workshop_control (REST handler still uses mcp_tool_execute). Check SA-S4R/default/authorize.conf stanza [capability::s4r_workshop_control]."
+fi
 cleanup_last_body
 
 # --- 4. MCP user (SPLUNK_MCP_USER; default account name splunker) ---
@@ -273,17 +298,15 @@ if [ "${user_exists}" = "1" ]; then
   user_ok_msg="✅ Updated user ${SPLUNK_MCP_USER}"
   is_truthy "${FORCE_SPLUNK_MCP_PASSWORD}" && user_ok_msg="${user_ok_msg} (password + roles)"
   ! is_truthy "${FORCE_SPLUNK_MCP_PASSWORD}" && user_ok_msg="${user_ok_msg} (roles)"
-  user_fail_msg="⚠️  Failed to update user ${SPLUNK_MCP_USER}"
-  auth_curl -X POST "${USER_URL}" "$@" \
-    -H "Content-Type: application/x-www-form-urlencoded" >/dev/null \
-    && echo "${user_ok_msg}" || echo "${user_fail_msg}"
+  must auth_curl -X POST "${USER_URL}" "$@" \
+    -H "Content-Type: application/x-www-form-urlencoded" >/dev/null
+  echo "${user_ok_msg}"
 fi
 if [ "${user_exists}" = "0" ]; then
-  auth_curl -X POST "${SPLUNK_URL}/services/authentication/users" \
+  must auth_curl -X POST "${SPLUNK_URL}/services/authentication/users" \
     -d "name=${SPLUNK_MCP_USER}" -d "password=${SPLUNK_MCP_PASSWORD}" "$@" \
-    -H "Content-Type: application/x-www-form-urlencoded" >/dev/null \
-    && echo "✅ Created user ${SPLUNK_MCP_USER} (roles user + mcp_user)" \
-    || echo "⚠️  Failed to create user ${SPLUNK_MCP_USER}"
+    -H "Content-Type: application/x-www-form-urlencoded" >/dev/null
+  echo "✅ Created user ${SPLUNK_MCP_USER} (roles user + mcp_user)"
 fi
 cleanup_last_body
 

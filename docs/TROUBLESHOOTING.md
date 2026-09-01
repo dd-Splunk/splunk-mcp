@@ -311,6 +311,22 @@ make down && make up
 
 ---
 
+#### Issue: `mcp_token` wait never finishes / `splunker` missing
+
+**Error**: `make up` hangs on `Waiting for Splunk MCP Server mcp_token endpoint…`
+
+**Cause**: `splunk-init` exited 0 but never created role **`mcp_user`** / user **`splunker`**. Classic log line: `This user doesn't have permissions to assign capability=s4r_workshop_control` — Splunk rejects the whole role POST when that capability is unknown (wrong `authorize.conf` stanza or app not loaded yet).
+
+**Solution**: Confirm with `docker logs splunk-init`. Fixed path: **`[capability::s4r_workshop_control]`** (two colons) in **`SA-S4R/default/authorize.conf`**; init creates the role with **`mcp_tool_execute` first**, then grants the custom cap. Recycle init or:
+
+```bash
+make down && make up
+```
+
+On a stack that already finished init without `splunker`, re-run **`docker start splunk-init`** after pulling the fix, or wait for the next **`make up`**.
+
+---
+
 #### Issue: Splunk MCP app not installed
 
 **Error**: MCP endpoint returns 404
