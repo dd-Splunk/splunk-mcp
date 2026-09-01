@@ -27,6 +27,18 @@ Optional: **Git** to clone; an editor (e.g. VS Code) to edit `tpl.env` (from **`
 
 **Without 1Password:** you can still run the stack with a git-ignored **`.env`** file containing plain values for `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, and optional `SPLUNK_IMAGE` / `TZ`. See **[PRESALES.md](PRESALES.md)** (Path B).
 
+### Cursor Cloud
+
+Cursor Cloud VMs need one-time **per-boot** bootstrap before `make up` because Docker-in-Docker and Splunk's data filesystem are not ready by default. Add Cursor Cloud environment secrets **`SPLUNKBASE_USER`** and **`SPLUNKBASE_PASS`**, then run:
+
+```bash
+make cloud-bootstrap
+make up
+make verify
+```
+
+This writes gitignored local runtime files (`.env` and `docker-compose.override.yml`). Flags such as `--wipe`, `--image`, and `--force-env` are documented in [CONFIGURATION.md § Cursor Cloud bootstrap](CONFIGURATION.md#cursor-cloud-bootstrap); common VM-specific failures are in [TROUBLESHOOTING.md § Cursor Cloud](TROUBLESHOOTING.md#cursor-cloud-docker-in-docker).
+
 ## 1Password
 
 ### Create items (example names)
