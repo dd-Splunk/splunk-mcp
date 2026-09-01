@@ -288,30 +288,54 @@ section.diagram-split .diagram-table-col td {
     text-align: left;
 }
 
-/* Equal 50/50 columns (slide 7) */
+/* Equal 50/50 columns (slide 15) */
 section.diagram-split-equal .diagram-table-row {
-    align-items: stretch;
+    align-items: center;
+    min-height: 0;
+    gap: 1.75em;
+    flex: 0 0 auto;
 }
 
 section.diagram-split-equal .diagram-table-row > .mermaid {
-    flex: 1 1 50%;
+    flex: 1 1 48%;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
 }
 
 section.diagram-split-equal .diagram-table-col {
-    flex: 1 1 50%;
+    flex: 1 1 52%;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+    min-width: 0;
 }
 
 section.diagram-split-equal .diagram-table-col table {
-    font-size: 0.85em;
+    font-size: 0.72em;
+    width: 100%;
+}
+
+section.diagram-split-equal .diagram-table-col th,
+section.diagram-split-equal .diagram-table-col td {
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 section.diagram-split-equal .diagram-table-row .mermaid svg {
     max-width: 100%;
-    width: 100%;
+    max-height: 400px;
+    width: auto;
+    overflow: hidden !important;
+}
+
+section.diagram-split > p:last-of-type {
+    font-size: 0.78em;
+    line-height: 1.3;
+    margin: 0.55em 0 0;
+    flex-shrink: 0;
+    overflow-wrap: anywhere;
 }
 
 /* Dense appendix slides — multiple prompts/blockquotes (e.g. slide 25) */
@@ -338,6 +362,40 @@ section.compact blockquote {
 
 section.compact blockquote p {
     margin: 0;
+}
+
+section.compact table {
+    font-size: 0.78em;
+    margin: 0.3em auto;
+    width: 100%;
+}
+
+section.compact th,
+section.compact td {
+    padding: 0.18em 0.4em;
+}
+
+section.compact ol,
+section.compact ul {
+    margin: 0.12em 0 0.2em;
+    padding-left: 1.2em;
+}
+
+/* Side-by-side prompts (e.g. slide 10 business vs security) */
+.two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.35em 1.1em;
+    align-items: start;
+    margin: 0.1em 0 0.25em;
+}
+
+.two-col p {
+    margin: 0.1em 0;
+}
+
+.two-col blockquote {
+    margin: 0.1em 0 0.2em;
 }
 
 /* Tables on dark slides — beat @import default tr/td backgrounds */

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Mint Splunk MCP encrypted bearer token (stdout only). Used for Claude/Cursor mcp-remote config.
 # Splunk MCP Server 1.0+ requires encrypted tokens (not legacy JWT / cloud *.api.scs.splunk.com endpoint).
-# See: https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/1.2/connecting-to-the-mcp-server-and-settings
+# See: https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/1.3/connecting-to-the-mcp-server-and-settings
 # Requires Splunk on localhost:8089 and secrets from .env or op run + tpl.env.
 
 set -euo pipefail
