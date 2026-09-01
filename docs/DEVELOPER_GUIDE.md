@@ -50,5 +50,5 @@ Requires **shellcheck** and **Node/npx** (markdownlint). See [CI_CD.md](CI_CD.md
 ## Resources
 
 - Splunk REST: <https://docs.splunk.com/Documentation/Splunk/latest/RESTREF>
-- Splunk MCP 1.2 clients: [API_REFERENCE.md](API_REFERENCE.md)
+- Splunk MCP 1.3 clients: [API_REFERENCE.md](API_REFERENCE.md) · auth: [CONFIGURATION.md](CONFIGURATION.md#splunk-mcp-authentication-13)
 - MCP: <https://modelcontextprotocol.io/>
