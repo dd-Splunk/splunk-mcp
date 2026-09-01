@@ -22,6 +22,8 @@ Usage:
 
 All clients use npx mcp-remote to https://localhost:8089/services/mcp with a minted bearer token
 (stored only in client config files, not in this repo).
+
+verify runs client config checks, then an end-to-end npx mcp-remote stdio tools/list handshake.
 EOF
   exit "${1:-0}"
 }
@@ -68,7 +70,7 @@ merge_json_mcp_server() {
   fi
 }
 
-# Splunk MCP Server 1.2 client shape: npx mcp-remote + encrypted bearer token
+# Splunk MCP Server 1.3 client shape: npx mcp-remote + encrypted bearer token
 mcp_servers_block_mcp_remote_jq() {
   local endpoint="$1" token="$2" npx_cmd="$3"
   local tls_insecure="${SPLUNK_MCP_TLS_INSECURE:-1}"
@@ -130,21 +132,23 @@ update_cursor() {
 
 update_goose() {
   command -v jq >/dev/null 2>&1 || die "jq required for Goose (brew install jq)"
-  local endpoint token header tls_insecure dir file npx_cmd
+  local endpoint token header tls_insecure dir file npx_cmd wrapper
   endpoint=$(splunk_mcp_endpoint)
   npx_cmd="$(npx_command)"
   token="$(mint_mcp_token)" || die "could not mint MCP token"
   header="Authorization: Bearer ${token}"
   tls_insecure="${SPLUNK_MCP_TLS_INSECURE:-1}"
+  wrapper="${ROOT}/scripts/mcp-remote-splunk.sh"
+  [[ -x "$wrapper" ]] || die "missing executable wrapper: $wrapper"
   dir="${HOME}/.config/goose"
   file="${dir}/config.yaml"
   mkdir -p "$dir"
   [[ -f "$file" ]] || printf 'extensions: {}\n' >"$file"
-  python3 - "$file" "$endpoint" "$header" "$tls_insecure" "$npx_cmd" <<'PY'
+  python3 - "$file" "$endpoint" "$header" "$tls_insecure" "$wrapper" "$npx_cmd" <<'PY'
 import re
 import sys
 
-config_file, endpoint, header, tls_insecure, npx_cmd = sys.argv[1:6]
+config_file, endpoint, header, tls_insecure, wrapper, npx_cmd = sys.argv[1:7]
 with open(config_file, encoding="utf-8") as f:
     content = f.read()
 
@@ -161,12 +165,15 @@ end_of_line = content.find("\n", extensions_match.end())
 if end_of_line == -1:
     end_of_line = len(content)
 
-env_block = ""
+env_block = "    envs: {}\n    env_keys: []\n"
 if tls_insecure.lower() in ("1", "true", "yes"):
-    env_block = """
-    envs:
+    env_block = """    envs:
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
-"""
+      MCP_NPX_COMMAND: {npx_cmd!r}
+      SPLUNK_MCP_TLS_INSECURE: "1"
+    env_keys:
+      - NODE_TLS_REJECT_UNAUTHORIZED
+""".format(npx_cmd=npx_cmd)
 
 new_entry = f"""
   splunk-mcp-server:
@@ -174,15 +181,12 @@ new_entry = f"""
     type: stdio
     name: splunk-mcp-server
     description: Splunk MCP Server
-    cmd: {npx_cmd!r}
+    cmd: {wrapper!r}
     args:
-      - -y
-      - mcp-remote
       - {endpoint!r}
       - --header
       - {header!r}
-    env_keys: []{env_block}
-    timeout: 300
+{env_block}    timeout: 300
     bundled: null
     available_tools: []"""
 
@@ -190,7 +194,7 @@ content = content[:end_of_line] + new_entry + content[end_of_line:]
 with open(config_file, "w", encoding="utf-8") as f:
     f.write(content)
 PY
-  echo "Updated Goose: $file ($npx_cmd mcp-remote → $endpoint)"
+  echo "Updated Goose: $file ($wrapper → $endpoint)"
   echo "Bearer token stored in Goose config only (not in this repo)."
   echo "Restart Goose for changes to take effect."
 }
@@ -236,10 +240,32 @@ m = re.search(
 if not m:
     sys.exit("splunk-mcp-server block not found")
 section = m.group(0)
-if not re.search(r"cmd:\s*(\S+/)?npx\b", section):
-    sys.exit("goose splunk-mcp-server should use npx in cmd")
-if "mcp-remote" not in section:
-    sys.exit("goose splunk-mcp-server should use mcp-remote in args")
+if "mcp-stdio-http-bridge" in section:
+    sys.exit(
+        "goose splunk-mcp-server still uses removed scripts/mcp-stdio-http-bridge.mjs "
+        "(run: make update-mcp-client MCP_CLIENT=goose)"
+    )
+if re.search(r"\bMCP_URL\b", section):
+    sys.exit(
+        "goose splunk-mcp-server still uses legacy MCP_URL proxy layout "
+        "(run: make update-mcp-client MCP_CLIENT=goose)"
+    )
+if re.search(r"cmd:\s*node\b", section) and ".mjs" in section:
+    sys.exit(
+        "goose splunk-mcp-server still uses node + bridge script "
+        "(run: make update-mcp-client MCP_CLIENT=goose)"
+    )
+if not re.search(r"cmd:\s*(\S+/)?npx\b", section) and "mcp-remote-splunk.sh" not in section:
+    sys.exit("goose splunk-mcp-server should use mcp-remote-splunk.sh or npx in cmd")
+if "mcp-remote" not in section and "mcp-remote-splunk.sh" not in section:
+    sys.exit("goose splunk-mcp-server should use mcp-remote (directly or via wrapper)")
+tls_insecure = __import__("os").environ.get("SPLUNK_MCP_TLS_INSECURE", "1").lower()
+if tls_insecure in ("1", "true", "yes"):
+    if "NODE_TLS_REJECT_UNAUTHORIZED" not in section and "mcp-remote-splunk.sh" not in section:
+        sys.exit(
+            "goose splunk-mcp-server missing NODE_TLS_REJECT_UNAUTHORIZED "
+            "(run: make update-mcp-client MCP_CLIENT=goose)"
+        )
 PY
       ;;
   esac
@@ -265,7 +291,106 @@ verify_splunk_mcp() {
   if ! jq -e '.jsonrpc=="2.0" and (.result.tools|type=="array")' "$tmp" >/dev/null 2>&1; then
     die "Splunk MCP returned unexpected response: $endpoint"
   fi
-  echo "OK: Splunk MCP responded to tools/list ($endpoint)."
+  echo "OK: Splunk MCP direct tools/list ($endpoint)."
+}
+
+# Same path clients use: stdio → npx mcp-remote → HTTPS /services/mcp
+verify_mcp_remote_stdio() {
+  local endpoint token npx_cmd tls_insecure
+  endpoint=$(splunk_mcp_endpoint)
+  npx_cmd="$(npx_command)"
+  token="$(mint_mcp_token)" || die "could not mint MCP token for mcp-remote verify"
+  tls_insecure="${SPLUNK_MCP_TLS_INSECURE:-1}"
+  MCP_NPX_COMMAND="$npx_cmd" SPLUNK_MCP_ENDPOINT="$endpoint" SPLUNK_MCP_TLS_INSECURE="$tls_insecure" \
+    python3 - "$token" <<'PY' || die "mcp-remote stdio tools/list failed (see errors above)"
+import json
+import os
+import select
+import subprocess
+import sys
+import time
+
+token = sys.argv[1]
+npx_cmd = os.environ["MCP_NPX_COMMAND"]
+endpoint = os.environ["SPLUNK_MCP_ENDPOINT"]
+tls_insecure = os.environ.get("SPLUNK_MCP_TLS_INSECURE", "1")
+header = f"Authorization: Bearer {token}"
+
+env = os.environ.copy()
+if tls_insecure.lower() in ("1", "true", "yes"):
+    env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0"
+else:
+    env.pop("NODE_TLS_REJECT_UNAUTHORIZED", None)
+
+proc = subprocess.Popen(
+    [npx_cmd, "-y", "mcp-remote", endpoint, "--header", header],
+    stdin=subprocess.PIPE,
+    stdout=subprocess.PIPE,
+    stderr=subprocess.PIPE,
+    text=True,
+    bufsize=1,
+    env=env,
+)
+
+def send(msg):
+    proc.stdin.write(json.dumps(msg) + "\n")
+    proc.stdin.flush()
+
+def read_json(timeout=45):
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        ready, _, _ = select.select([proc.stdout], [], [], 0.5)
+        if not ready:
+            if proc.poll() is not None:
+                break
+            continue
+        line = proc.stdout.readline()
+        if not line:
+            break
+        line = line.strip()
+        if not line:
+            continue
+        return json.loads(line)
+    return None
+
+stderr_tail = ""
+try:
+    send(
+        {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {},
+                "clientInfo": {"name": "splunk-mcp-verify", "version": "1.0"},
+            },
+        }
+    )
+    init_resp = read_json()
+    if not init_resp or "result" not in init_resp:
+        raise SystemExit(f"initialize failed: {init_resp!r}")
+
+    send({"jsonrpc": "2.0", "method": "notifications/initialized"})
+    send({"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}})
+    tools_resp = read_json()
+    tools = (tools_resp or {}).get("result", {}).get("tools")
+    if not isinstance(tools, list):
+        raise SystemExit(f"tools/list failed: {tools_resp!r}")
+finally:
+    proc.terminate()
+    try:
+        _, stderr_tail = proc.communicate(timeout=5)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        _, stderr_tail = proc.communicate(timeout=5)
+    if proc.returncode not in (0, None, -15) and stderr_tail:
+        for line in stderr_tail.strip().splitlines():
+            if "Bearer" in line:
+                line = line.split("Bearer", 1)[0] + "Bearer <redacted>"
+            print(line, file=sys.stderr)
+PY
+  echo "OK: npx mcp-remote stdio tools/list ($npx_cmd → $endpoint)."
 }
 
 cmd_update() {
@@ -285,17 +410,16 @@ cmd_verify() {
       for c in $VALID_CLIENTS; do
         verify_client_config "$c"
       done
-      verify_splunk_mcp
       ;;
     claude | cursor | goose)
       verify_client_config "$client"
       ;;
     *)
-      valid_client "$client" || die "unknown client '$client' (use: $VALID_CLIENTS or all)"
-      verify_client_config "$client"
-      verify_splunk_mcp
+      die "unknown client '$client' (use: $VALID_CLIENTS or all)"
       ;;
   esac
+  verify_splunk_mcp
+  verify_mcp_remote_stdio
 }
 
 main() {

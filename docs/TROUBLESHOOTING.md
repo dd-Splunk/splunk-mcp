@@ -11,7 +11,12 @@ Fresh Cursor Cloud VMs do not auto-start Docker or Splunk storage. Run once per 
 make up
 ```
 
-Requires `SPLUNKBASE_USER` / `SPLUNKBASE_PASS` as environment secrets. See [CONFIGURATION.md](CONFIGURATION.md#cursor-cloud-bootstrap) and [AGENTS.md](../AGENTS.md).
+Requires secrets when creating **`.env`** (first boot or after **`--force-env`**):
+
+- **Path A:** **`tpl.env`** + signed-in **`op`** (or **`OP_SERVICE_ACCOUNT_TOKEN`**) — resolves Splunkbase and all other secrets from 1Password, same as local **`make up`**.
+- **Path B:** Cursor Cloud secrets **`SPLUNKBASE_USER`** / **`SPLUNKBASE_PASS`** only.
+
+See [CONFIGURATION.md](CONFIGURATION.md#cursor-cloud-bootstrap) and [AGENTS.md](../AGENTS.md).
 
 ### KVStore status `failed` / MCP token mint fails
 
@@ -222,7 +227,7 @@ Edit **`tpl.env`** with your `op://` paths. **`tpl.env`** is gitignored—do not
    ```
 
 2. If not found, create items:
-   - See INSTALLATION.md for 1Password setup steps
+   - See [INSTALLATION.md](INSTALLATION.md) for 1Password setup steps
 
 3. Update `tpl.env` if paths are different:
 
@@ -473,7 +478,9 @@ make verify-mcp-remote MCP_VERIFY_CLIENT=goose
 # Restart Goose
 ```
 
-Confirm `~/.config/goose/config.yaml` has **`command: npx`**, **`mcp-remote`**, endpoint **`https://localhost:8089/services/mcp`**, and bearer token under the extension args. TLS dev override belongs in **`envs`**, not `env`.
+Confirm `~/.config/goose/config.yaml` has **`cmd: npx`** (or full path to `npx`), **`mcp-remote`**, endpoint **`https://localhost:8089/services/mcp`**, and bearer token under the extension args. TLS dev override belongs in **`envs`**, not `env`.
+
+If Goose still references **`scripts/mcp-stdio-http-bridge.mjs`**, that layout was removed — re-run **`make update-mcp-client MCP_CLIENT=goose`** and restart Goose.
 
 ---
 
@@ -589,7 +596,7 @@ If still empty, confirm **SA-Eventgen** modinput is enabled (`make status`, [CON
 
 - REST basic auth as `splunker` returns HTTP **500**: *"For security reasons, your account has been locked out"*
 - `GET .../authentication/users/splunker?output_mode=json` shows **`"locked-out": true`**
-- **`make verify-mcp-remote MCP_VERIFY_CLIENT=cursor`** may still pass (config-only check)
+- **`make verify-mcp-remote MCP_VERIFY_CLIENT=cursor`** may still pass while Splunk REST is locked (direct `tools/list` uses admin token mint; stdio `mcp-remote` path is also exercised)
 - **MCP bearer token** (`tools/list`, `splunk_run_query`) may still work — token mint uses **`admin`**, not `splunker` password
 
 **Cause**: Splunk locks local accounts after repeated failed login attempts. Common PoC triggers:

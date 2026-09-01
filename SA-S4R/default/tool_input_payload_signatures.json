@@ -1,0 +1,29 @@
+{
+  "query_nk_demo_state": {
+    "type": "object",
+    "properties": {}
+  },
+  "apply_nk_demo_state": {
+    "type": "object",
+    "properties": {
+      "mode": {
+        "type": "string",
+        "enum": ["infrastructure", "threat"],
+        "description": "infrastructure = disable NK attack stanza; threat = enable NK geo attack on failed purchases"
+      }
+    },
+    "required": ["mode"]
+  },
+  "validate_nk_attack_traffic": {
+    "type": "object",
+    "properties": {}
+  },
+  "summarize_purchase_health": {
+    "type": "object",
+    "properties": {}
+  },
+  "geo_failed_purchases": {
+    "type": "object",
+    "properties": {}
+  }
+}

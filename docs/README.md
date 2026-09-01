@@ -1,63 +1,49 @@
-# Documentation index
+# Documentation
 
-The root [README.md](../README.md) stays short. **Pick one door:**
+Local PoC: **Splunk Enterprise** + **Splunk MCP Server** in Docker, optional **Splunk4Rookies** workshop (**SA-S4R**).
 
-| Role | Start here |
-| ---- | ---------- |
-| **SE / presales demo** | [PRESALES.md](PRESALES.md) |
-| **Splunk4Rookies workshop** | [s4r/README.md](s4r/README.md) |
-| **Install / operate stack** | [INSTALLATION.md](INSTALLATION.md) → [CONFIGURATION.md](CONFIGURATION.md) |
-| **Change the repo** | [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) |
+## Start here
 
-## Source of truth (when docs disagree with code)
+| I want to… | Read |
+| ---------- | ---- |
+| Run or demo the stack (SE / presales) | [PRESALES.md](PRESALES.md) |
+| Install from scratch (long form) | [INSTALLATION.md](INSTALLATION.md) |
+| Splunk4Rookies workshop (SPL, dashboard, agents) | [s4r/README.md](s4r/README.md) |
+| Change the repo or use AI agents | [AGENTS.md](../AGENTS.md) |
+| Present the agentic demo (Marp) | [demo-slides/README.md](../demo-slides/README.md) |
 
-1. [`Makefile`](../Makefile) — `make up` uses `op run` or `.env`; lifecycle targets use plain `docker compose`
-2. [`compose.yml`](../compose.yml) — services, ports, `SPLUNK_APPS_URL`, mounts
-3. [`scripts/setup-splunk.sh`](../scripts/setup-splunk.sh) — REST bootstrap ([CONFIGURATION.md § Appendix](CONFIGURATION.md#appendix-setup-splunksh))
-4. [`AGENTS.md`](../AGENTS.md) — contributor rules and verification commands
+## Source of truth (code wins)
 
-## Getting started
+1. [`Makefile`](../Makefile)
+2. [`compose.yml`](../compose.yml)
+3. [`scripts/setup-splunk.sh`](../scripts/setup-splunk.sh) — narrative in [CONFIGURATION.md § Appendix](CONFIGURATION.md#appendix-setup-splunksh)
+4. [AGENTS.md](../AGENTS.md)
 
-| Document | Use when |
-| -------- | -------- |
-| **[PRESALES.md](PRESALES.md)** | **SE demo runbook** (includes [technical quick reference](PRESALES.md#technical-quick-reference)) |
-| [INSTALLATION.md](INSTALLATION.md) | Hardware, 1Password layout, long-form setup, Cursor Cloud bootstrap pointer |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Purpose, components, init flow, MCP clients |
-| [demo-slides/S4R-DEMO.md](../demo-slides/S4R-DEMO.md) | Agentic demo presenter script |
-| [demo-slides/README.md](../demo-slides/README.md) | Marp deck build/preview |
+## Stack and operations
 
-**Moved (redirect stubs):** [QUICK_START.md](QUICK_START.md) → PRESALES · [OVERVIEW.md](OVERVIEW.md) → ARCHITECTURE · [SETUP_SPLUNK_SCRIPT.md](SETUP_SPLUNK_SCRIPT.md) → CONFIGURATION appendix
+| Document | Purpose |
+| -------- | ------- |
+| [PRESALES.md](PRESALES.md) | Demo runbook, secrets paths, checklist |
+| [INSTALLATION.md](INSTALLATION.md) | Hardware, 1Password, verification |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Components, boot flow, MCP clients |
+| [CONFIGURATION.md](CONFIGURATION.md) | Compose, env, MCP auth (token vs OAuth), client configs, setup script |
+| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Ports, init, Splunkbase, MCP errors |
+| [SECURITY.md](SECURITY.md) | Secrets, TLS, vulnerability reporting |
+| [API_REFERENCE.md](API_REFERENCE.md) | Splunk REST and MCP endpoints |
+| [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) | What to edit when, test loop, lint |
+| [CI_CD.md](CI_CD.md) | GitHub Actions, SA-S4R package release |
+| [SPECS.md](SPECS.md) | Requirements and acceptance criteria |
 
 ## Splunk4Rookies (S4R)
 
-Hub: **[s4r/README.md](s4r/README.md)**
+| Document | Purpose |
+| -------- | ------- |
+| [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md) | **Canonical SPL** (Labs 3–7; agents) |
+| [S4R-DASHBOARD.md](S4R-DASHBOARD.md) | Dashboard Studio build spec (workshop **`local/`**) |
+| [SA-S4R-APP.md](SA-S4R-APP.md) | Eventgen, NK toggle, **`default/` vs `local/`** |
+| [S4R-AGENTS.md](S4R-AGENTS.md) | Multi-agent demo architecture |
 
-| Document | Use when |
-| -------- | -------- |
-| [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md) | **Canonical SPL** (Labs 3–7; agent runbook) |
-| [S4R-DASHBOARD.md](S4R-DASHBOARD.md) | Dashboard Studio layout (Labs 3–7) |
-| [SA-S4R-APP.md](SA-S4R-APP.md) | Eventgen, NK toggle, app assets |
-| [S4R-AGENTS.md](S4R-AGENTS.md) | Agent architecture and demo beats |
-
-**Moved:** [What Does the Business Want to See.md](What%20Does%20the%20Business%20Want%20to%20See.md) → [S4R-DASHBOARD.md](S4R-DASHBOARD.md)
-
-## Design and operations
-
-| Document | Use when |
-| -------- | -------- |
-| [CONFIGURATION.md](CONFIGURATION.md) | Compose, env, clients, **`setup-splunk.sh` appendix** |
-| [SECURITY.md](SECURITY.md) | Dev-only risks, tokens, TLS |
-| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Ports, health, token, Splunkbase, MCP errors |
-| [CI_CD.md](CI_CD.md) | GitHub Actions, SA-S4R package release |
-
-## API and development
-
-| Document | Use when |
-| -------- | -------- |
-| [API_REFERENCE.md](API_REFERENCE.md) | Splunk REST and MCP |
-| [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) | What to edit when, test loop, lint |
-
-## Suggested reading order
+## Suggested order
 
 1. [PRESALES.md](PRESALES.md) (demos) **or** [INSTALLATION.md](INSTALLATION.md) (full setup)
 2. [CONFIGURATION.md](CONFIGURATION.md) before changing env or clients

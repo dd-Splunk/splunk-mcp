@@ -7,6 +7,7 @@
 #   3. Role mcp_user with capability mcp_tool_execute and srchJobsQuota=5
 #   4. User SPLUNK_MCP_USER (default splunker): roles user + mcp_user
 #   5. Merge MLTK_ROLE onto SPLUNK_MLTK_USER (requires jq; non-fatal if MLTK app is absent)
+#   6. Register SA-S4R workshop MCP tools (SA-S4R_query_nk_demo_state, SA-S4R_apply_nk_demo_state)
 #
 # Required env: SPLUNK_PASSWORD.
 # Refuses SPLUNK_MCP_USER=admin (do not use admin as MCP execution user).
@@ -219,14 +220,20 @@ AUTH_CURL_QUIET=1 auth_curl "${ROLE_URL}?output_mode=json" >/dev/null && role_ex
 cleanup_last_body
 
 if [ "${role_exists}" = "1" ]; then
-  set -- -X POST "${ROLE_URL}" -d "capabilities=mcp_tool_execute" -d "srchJobsQuota=5"
-  role_ok_msg="✅ Updated role mcp_user (capabilities=mcp_tool_execute, srchJobsQuota=5)"
+  set -- -X POST "${ROLE_URL}" \
+    -d "capabilities=mcp_tool_execute" \
+    -d "capabilities=s4r_workshop_control" \
+    -d "srchJobsQuota=5"
+  role_ok_msg="✅ Updated role mcp_user (mcp_tool_execute, s4r_workshop_control, srchJobsQuota=5)"
   role_fail_msg="⚠️  Failed to update role mcp_user"
 fi
 if [ "${role_exists}" = "0" ]; then
   set -- -X POST "${SPLUNK_URL}/services/authorization/roles" \
-    -d "name=mcp_user" -d "capabilities=mcp_tool_execute" -d "srchJobsQuota=5"
-  role_ok_msg="✅ Created role mcp_user (capabilities=mcp_tool_execute, srchJobsQuota=5)"
+    -d "name=mcp_user" \
+    -d "capabilities=mcp_tool_execute" \
+    -d "capabilities=s4r_workshop_control" \
+    -d "srchJobsQuota=5"
+  role_ok_msg="✅ Created role mcp_user (mcp_tool_execute, s4r_workshop_control, srchJobsQuota=5)"
   role_fail_msg="⚠️  Failed to create role mcp_user"
 fi
 auth_curl "$@" -H "Content-Type: application/x-www-form-urlencoded" >/dev/null \
@@ -285,6 +292,18 @@ fi
 if [ -n "${MLTK_ROLE}" ]; then
   echo "👤 Ensuring user '${SPLUNK_MLTK_USER}' has role ${MLTK_ROLE}..."
   ensure_mltk_role
+fi
+
+# --- 6. SA-S4R workshop MCP tools ---
+if [ -f "${0%/*}/register-s4r-mcp-tools.sh" ]; then
+  echo "🧰 Registering SA-S4R workshop MCP tools..."
+  if "${0%/*}/register-s4r-mcp-tools.sh"; then
+    :
+  else
+    echo "⚠️  SA-S4R MCP tool registration failed (is Splunk MCP Server installed?)"
+  fi
+else
+  echo "⚠️  register-s4r-mcp-tools.sh not found; skipping SA-S4R MCP tool registration"
 fi
 
 echo "✅ Setup complete!"

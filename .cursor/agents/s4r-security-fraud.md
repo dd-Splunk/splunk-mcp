@@ -15,7 +15,7 @@ Show website activity by **geographic location**. Where is volume or failure con
 
 ## SPL runbook
 
-**Before any search:** read **`docs/S4R-SPL-CATALOG.md` § Security & Fraud**. For infrastructure-vs-threat asks, also read **§ Workshop modes**. Run queries via Splunk MCP (`splunk_run_query`).
+**Before any search:** read **`docs/S4R-SPL-CATALOG.md` § Security & Fraud**. For infrastructure-vs-threat asks, also read **§ Workshop modes**. Prefer **`SA-S4R_geo_failed_purchases`** for geo hotspot panels; use **`SA-S4R_validate_nk_attack_traffic`** after threat mode is enabled (NK signal, last 15m). Use **`splunk_run_query`** for drill-downs not covered by those tools.
 
 ## Query execution (MCP only)
 
