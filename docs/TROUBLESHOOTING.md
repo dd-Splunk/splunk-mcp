@@ -11,7 +11,12 @@ Fresh Cursor Cloud VMs do not auto-start Docker or Splunk storage. Run once per 
 make up
 ```
 
-Requires `SPLUNKBASE_USER` / `SPLUNKBASE_PASS` as environment secrets. See [CONFIGURATION.md](CONFIGURATION.md#cursor-cloud-bootstrap) and [AGENTS.md](../AGENTS.md).
+Requires secrets when creating **`.env`** (first boot or after **`--force-env`**):
+
+- **Path A:** **`tpl.env`** + signed-in **`op`** (or **`OP_SERVICE_ACCOUNT_TOKEN`**) — resolves Splunkbase and all other secrets from 1Password, same as local **`make up`**.
+- **Path B:** Cursor Cloud secrets **`SPLUNKBASE_USER`** / **`SPLUNKBASE_PASS`** only.
+
+See [CONFIGURATION.md](CONFIGURATION.md#cursor-cloud-bootstrap) and [AGENTS.md](../AGENTS.md).
 
 ### KVStore status `failed` / MCP token mint fails
 
@@ -222,7 +227,7 @@ Edit **`tpl.env`** with your `op://` paths. **`tpl.env`** is gitignored—do not
    ```
 
 2. If not found, create items:
-   - See INSTALLATION.md for 1Password setup steps
+   - See [INSTALLATION.md](INSTALLATION.md) for 1Password setup steps
 
 3. Update `tpl.env` if paths are different:
 

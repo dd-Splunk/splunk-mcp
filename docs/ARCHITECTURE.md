@@ -303,6 +303,7 @@ docker run --rm -v so1-etc:/data -v ~/backups:/backup \
 ## Related reading
 
 - [CONFIGURATION.md](CONFIGURATION.md) — Compose, env, clients, `setup-splunk.sh` appendix
+- [SPECS.md](SPECS.md) — requirements and acceptance criteria
 - [SECURITY.md](SECURITY.md) — threat model and limitations
 - [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — failures and recovery
 - [s4r/README.md](s4r/README.md) — Splunk4Rookies workshop docs
