@@ -5,6 +5,19 @@
     "docs/**/*.md",
     "README.md",
     "AGENTS.md",
-    ".github/**/*.md"
+    ".github/**/*.md",
+    "demo-slides/**/*.md"
+  ],
+  "ignores": [
+    "",
+    "demo-slides/index.md"
+  ],
+  "configOverrides": [
+    {
+      "globs": ["demo-slides/s4r-demo-slides.md"],
+      "config": {
+        "MD025": false
+      }
+    }
   ]
 }

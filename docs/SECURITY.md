@@ -1,19 +1,31 @@
+# Security
+
+This repository is a **local Splunk MCP development PoC**. It is not hardened for production or internet-facing deployment.
+
+## Reporting a vulnerability
+
+If you believe you have found a security issue in this project:
+
+1. **Do not** open a public GitHub issue for undisclosed vulnerabilities.
+2. Use **GitHub private security advisories**: repository **Security** tab → **Report a vulnerability**.
+3. Include steps to reproduce, affected paths or commands, and impact.
+
+We will acknowledge reports as quickly as practicable for a community PoC.
+
+**Supported versions:** only the latest commit on **`main`** is maintained (see [CI_CD.md](CI_CD.md)).
+
+**Secret scanning:** CI and pre-commit run **gitleaks**. Do not commit credentials, vault paths, or bearer tokens—even in “temporary” examples.
+
 ## Scope
 
-This document applies the workspace **development PoC** context: single host, Docker, localhost URLs, and AI clients using **`npx mcp-remote`** to Splunk’s MCP endpoint with bearer tokens in client config only.
-
-To report a vulnerability, see the repository root [**SECURITY.md**](../SECURITY.md) (GitHub security advisories).
-
-## How this rule was applied
-
-Security guidance for **credentials**, **certificates**, and **transport** was applied as follows: we document where secrets live, forbid committing them, describe TLS weaknesses explicitly, and avoid recommending this layout for production or internet exposure. This matches the **no hardcoded credentials** and **digital certificate** workspace rules by steering users toward `.env` / vault references and explicit verification steps for any real certificates.
+This document applies to the workspace **development PoC** context: single host, Docker, localhost URLs, and AI clients using **`npx mcp-remote`** to Splunk’s MCP endpoint with bearer tokens in client config only.
 
 ## Credential handling
 
 - **`tpl.env.example`** (tracked): Placeholder `op://` paths only—safe to publish.
 - **`tpl.env`** (gitignored): Your local file from **`cp tpl.env.example tpl.env`**; may contain real `op://` paths—**never commit**.
-- **`.env`**: Optional; hand-written from **`.env.example`** (Path B) and **git-ignored** when present. With **`tpl.env`** only, **`make up`** passes secrets via **`op run`** without creating `.env` (fewer secrets on disk).
-- **Do not** commit `.env`, token files, or private keys. The repo should remain safe if published.
+- **`.env`**: Optional; hand-written from **`.env.example`** (Path B) and **git-ignored** when present. With **`tpl.env`** only, **`make up`** passes secrets via **`op run`** without creating `.env`.
+- **Do not** commit `.env`, token files, or private keys. See [AGENTS.md](../AGENTS.md).
 
 ### Secret scanning
 
@@ -28,49 +40,40 @@ If gitleaks reports a real secret, rotate it outside git and remove it from hist
 ## TLS and trust
 
 - Splunk uses **HTTPS** on 8089 with a **self-signed** (or container-default) certificate.
-- Clients (`npx mcp-remote`) talk to Splunk over HTTPS; this PoC may set **`NODE_TLS_REJECT_UNAUTHORIZED=0`** for self-signed localhost certs. That is acceptable only on **loopback** in a trusted dev machine context.
-- **Production-style** deployments should use proper CA-issued certificates (or organizational PKI), **enable** verification, and avoid disabling TLS checks in client env vars.
+- Clients may set **`NODE_TLS_REJECT_UNAUTHORIZED=0`** for self-signed localhost certs—acceptable only on **loopback** in a trusted dev machine context.
+- **Production-style** deployments should use proper CA-issued certificates, **enable** verification, and avoid disabling TLS checks in client env vars.
 
-### Certificate verification (operational)
-
-For any non-default certificate files you mount or trust, inspect with:
+For any non-default certificate files you mount or trust:
 
 ```bash
 openssl x509 -text -noout -in <file>
 ```
 
-Confirm validity dates, key size (for RSA, at least 2048 bits; prefer modern curves for EC), and signature algorithm (SHA-256 family, not MD5/SHA-1).
+Confirm validity dates, key size (RSA ≥2048 or modern EC curves), and signature algorithm (SHA-256 family, not MD5/SHA-1).
 
 ## MCP and network exposure
 
-- **Binding**: Compose publishes **8000** and **8089** on **`127.0.0.1` only** (see **`compose.yml`**). Other processes on the same machine can reach Splunk; remote hosts cannot unless you change the bind address or add port forwarding.
+- Compose publishes **8000** and **8089** on **`127.0.0.1` only** (see **`compose.yml`**).
 - **Do not** bind to **`0.0.0.0`** or port-forward these services to the public Internet without authentication hardening, reverse proxy, and network ACLs.
-- MCP over HTTP(S) should be treated as **privileged**: the token grants access consistent with Splunk roles assigned to the MCP user (default **`splunker`**).
+- MCP over HTTP(S) is **privileged**: the token grants access consistent with Splunk roles assigned to the MCP user (default **`splunker`**).
 
 ## Splunk roles and least privilege
 
 **`scripts/setup-splunk.sh`** does **not** grant **`admin`** to **`splunker`**. Do not add **`admin`** to MCP-capable accounts outside tightly controlled dev scenarios.
 
-For stricter experiments:
-
-- Reduce **`splunker`** (or your MCP user) to the minimum roles/capabilities required by the Splunk MCP Server app documentation.
-- Use a dedicated service account per environment.
-
 ## Token lifecycle
 
-- Tokens may be **time-limited** (see Splunk MCP app behavior and Splunk auth settings). In this repo, tokens are minted into client configs via `make update-mcp-client`; re-run that target to rotate.
+- Re-run **`make update-mcp-client`** to rotate tokens in client configs.
 
 ## Logging and privacy
 
-- **Claude log** monitoring (if enabled) ingests files from the host path into Splunk. Treat that index as **sensitive**; restrict Splunk access and disk permissions.
+- Optional **Claude log** ingestion (if enabled) is sensitive—restrict Splunk access and disk permissions.
 - Avoid logging full bearer tokens in Splunk searches or shell history.
 
 ## Checklist before any “production-like” use
 
-- [ ] Replace self-signed localhost TLS with validated certificates and remove `NODE_TLS_REJECT_UNAUTHORIZED=0`.
-- [ ] Restrict bind addresses and firewall rules; use VPN or private network where applicable.
-- [ ] Scope Splunk user roles to least privilege; avoid admin on MCP-only users.
-- [ ] Store secrets in a managed vault or secret store, not only flat `.env` on disk.
-- [ ] Enable Splunk audit and authentication logging; monitor for failed MCP/API auth.
-
-For broader MCP hardening patterns, see also Splunk and MCP security guidance relevant to your organization.
+- [ ] Replace self-signed localhost TLS with validated certificates; remove `NODE_TLS_REJECT_UNAUTHORIZED=0`.
+- [ ] Restrict bind addresses and firewall rules.
+- [ ] Scope Splunk user roles to least privilege.
+- [ ] Store secrets in a managed vault, not only flat `.env` on disk.
+- [ ] Enable Splunk audit and authentication logging.
