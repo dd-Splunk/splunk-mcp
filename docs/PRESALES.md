@@ -132,7 +132,7 @@ Show **Splunk MCP + multi-agent** — not a single mega-prompt. Open these files
 1. *“Is Buttercup losing money?”* — Power User delegates four teams; point at `splunk_run_query` in the tool trace.
 2. *“Infrastructure or active threat?”* — after `make s4r-attack-nk-enable` + `make restart`, repeat with **last 15m** time range.
 
-**Presenter deck:** [`demo-slides/s4r-demo-slides.md`](../demo-slides/s4r-demo-slides.md) (Marp — `make marp-preview` / `make marp-serve`). Script + timings: [S4R-DEMO.md](../demo-slides/S4R-DEMO.md). Workshop hub: [s4r/README.md](s4r/README.md). Summary: [S4R-AGENTS.md § Demo script](S4R-AGENTS.md#demo-script-agentic-buttercup--splunk-mcp).
+**Presenter deck:** [`demo-slides/s4r-demo-slides.md`](../demo-slides/s4r-demo-slides.md) (Marp — `make marp-preview` / `make marp-serve`). Script + timings: [S4R-DEMO.md](../demo-slides/S4R-DEMO.md). MCP architecture: [S4R-MCP-TOOLS.md](S4R-MCP-TOOLS.md). Workshop hub: [s4r/README.md](s4r/README.md). Summary: [S4R-AGENTS.md § Demo script](S4R-AGENTS.md#demo-script-agentic-buttercup--splunk-mcp).
 
 ## What this demo proves (and does not)
 

@@ -42,6 +42,7 @@ Local PoC: **Splunk Enterprise** + **Splunk MCP Server** in Docker, optional **S
 | [S4R-DASHBOARD.md](S4R-DASHBOARD.md) | Dashboard Studio build spec (workshop **`local/`**) |
 | [SA-S4R-APP.md](SA-S4R-APP.md) | Eventgen, NK toggle, **`default/` vs `local/`** |
 | [S4R-AGENTS.md](S4R-AGENTS.md) | Multi-agent demo architecture |
+| [S4R-MCP-TOOLS.md](S4R-MCP-TOOLS.md) | How SA-S4R augments Splunk MCP (definitions, files, registration) |
 
 ## Suggested order
 

@@ -365,14 +365,21 @@ section.compact blockquote p {
 }
 
 section.compact table {
-    font-size: 0.78em;
+    font-size: 0.72em;
     margin: 0.3em auto;
     width: 100%;
+    table-layout: fixed;
 }
 
 section.compact th,
 section.compact td {
-    padding: 0.18em 0.4em;
+    padding: 0.14em 0.28em;
+    overflow-wrap: anywhere;
+}
+
+section.compact td code {
+    font-size: 0.9em;
+    word-break: break-all;
 }
 
 section.compact ol,

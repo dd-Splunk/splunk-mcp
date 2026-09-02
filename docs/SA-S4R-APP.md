@@ -16,11 +16,19 @@ Generated events match the **Splunk4Rookies** workshop **`noise_apache.log`** sh
 SA-S4R/                         # tracked in git
 ├── appserver/static/
 │   └── Buttercup_Background.jpg  # Dashboard background for the local/ workshop view
+├── bin/
+│   └── s4r_workshop_mode.py    # REST handler: infrastructure vs NK threat mode
 ├── default/
 │   ├── app.conf                # id, label, version, launcher metadata
+│   ├── authorize.conf          # capability s4r_workshop_control
 │   ├── data/ui/nav/default.xml   # barebones nav (Search, Dashboards, Alerts, …)
 │   ├── eventgen.conf           # Eventgen definitions (baseline + optional attack stanza)
 │   ├── props.conf              # action, product_id, uid, JSESSIONID (platform → local/props.conf)
+│   ├── restmap.conf            # /s4r_workshop_mode for API MCP tools
+│   ├── savedsearches.conf      # Governed SPL backing SPL MCP tools
+│   ├── s4r_mcp_tools.json      # Batch-replace payload for POST /services/mcp_tools
+│   ├── tool_input_payload_signatures.json  # JSON Schema per tool name
+│   ├── tools.conf              # App-packaged SPL tool stanzas (Developer Day)
 │   └── transforms.conf         # product_codes lookup (file: lookups/product_codes.csv)
 ├── lookups/
 │   └── product_codes.csv       # Demo lookup for Lab 5
@@ -58,7 +66,7 @@ Splunk apps split **shipped baseline** (`default/`) from **instance-specific ove
 **Rules (Splunk and this repo):**
 
 1. **Splunk Web, Settings → Knowledge, nav editor, field extractor, Dashboard Studio saves** — must land under **`SA-S4R/local/`** only. **Never** save customizations into **`default/`** (Splunk will overwrite shipped objects on upgrade/reinstall).
-2. **Agents and contributors** — do not add workshop dashboards, nav tabs, field extractions, or saved searches under **`SA-S4R/default/`** in git. Document workshop setup in **`local/README`**; attendees create files under **`local/`** (or save from Splunk Web).
+2. **Agents and contributors** — do not add workshop dashboards, nav tabs, or Lab 4 field extractions under **`SA-S4R/default/`** in git. **Exception:** MCP packaging (`savedsearches.conf` for tool backing, `tools.conf`, `s4r_mcp_tools.json`, REST handler) is maintainer-owned in **`default/`** — [S4R-MCP-TOOLS.md](S4R-MCP-TOOLS.md). Document workshop UI setup in **`local/README`**.
 3. **Packaging** — **`package-s4r.yml`** excludes **`local/`** (entire directory) so instance-specific content is not published in **`SA-S4R.spl`**. In git, **`SA-S4R/local/**`** is ignored except **`local/README`** (see **`.gitignore`**).
 
 If you already saved something to **`default/`** inside a running container, move it to **`local/`** (or re-export from Splunk into **`local/`**), then remove the duplicate from **`default/`**.
@@ -201,6 +209,8 @@ See [S4R-AGENTS.md](S4R-AGENTS.md) for Power User delegation and [S4R-SPL-CATALO
 | File | Purpose |
 | ---- | ------- |
 | `default/app.conf` | **`[package] id`**, **`[launcher] version`**, UI label/description |
+| `default/tools.conf` | App-packaged MCP SPL tool stanzas (see [S4R-MCP-TOOLS.md](S4R-MCP-TOOLS.md)) |
+| `default/s4r_mcp_tools.json` | Batch-replace payload for Splunk MCP Server |
 | `metadata/default.meta` | Export/ACL for shipped objects (`props`, `transforms`, lookup CSV, `eventgen.conf`) |
 | `metadata/meta.conf` | Default ACL for new objects created in-app |
 
@@ -211,6 +221,6 @@ See [S4R-AGENTS.md](S4R-AGENTS.md) for Power User delegation and [S4R-SPL-CATALO
 ## See also
 
 - [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md) — canonical SPL for Labs 3–7 (agents + dashboards)
+- [S4R-MCP-TOOLS.md](S4R-MCP-TOOLS.md) — MCP architecture, definitions, config files
 - [S4R-DASHBOARD.md](S4R-DASHBOARD.md) — dashboard layout (Labs 3–7)
 - [ARCHITECTURE.md](ARCHITECTURE.md) — where SA-S4R fits in the stack
-- [ARCHITECTURE.md](ARCHITECTURE.md) — volumes and persistence

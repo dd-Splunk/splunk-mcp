@@ -4,7 +4,7 @@ Presenter slides for the **Splunk4Rookies agentic Buttercup demo**, built with [
 
 | File | Role |
 | ---- | ---- |
-| **`s4r-demo-slides.md`** | Source deck (26 slides + speaker notes) |
+| **`s4r-demo-slides.md`** | Source deck (32 slides + speaker notes) |
 | **`index.md`** | Symlink → `s4r-demo-slides.md` (for `marp -s` server mode) |
 | **`splunk.css`** | Custom theme (`/* @theme splunk */`) — dark background, orange titles |
 | **`.marprc.yml`** | CLI defaults: `themeSet`, `html: true` |
@@ -45,14 +45,9 @@ Operational constraints:
 
 - Keep the `` prefix for local sources and exports so `.gitignore` continues to exclude them.
 
-**Cursor / VS Code (optional):** install the [Marp for VS Code](https://marketplace.visualstudio.com/items?itemName=marp-team.marp-vscode) extension. Register the theme in workspace settings if preview looks unstyled:
+**Cursor / VS Code (optional):** install the [Marp for VS Code](https://marketplace.visualstudio.com/items?itemName=marp-team.marp-vscode) extension. Workspace settings in **`.vscode/settings.json`** register `demo-slides/splunk.css` as theme `splunk` and enable HTML (needed for Mermaid). Reload the window if you still see *The specified theme "splunk" is not recognized by Marp for VS Code* — the extension does **not** read `.marprc.yml` (that file is CLI-only).
 
-```json
-"markdown.marp.themes": ["./demo-slides/splunk.css"],
-"markdown.marp.enableHtml": true
-```
-
-Open `demo-slides/s4r-demo-slides.md` and use the Marp preview pane. Press **`P`** for presenter view (speaker notes). CLI targets (`make marp-*`) use `.marprc.yml` in this folder and do not require VS Code settings.
+Open `demo-slides/s4r-demo-slides.md` and use the Marp preview pane. Press **`P`** for presenter view (speaker notes). CLI targets (`make marp-*`) use `.marprc.yml` in this folder.
 
 ## Front matter
 
@@ -95,12 +90,12 @@ Apply at the **top** of a slide (before the `#` title):
 | Class | Use |
 | ----- | --- |
 | `lead` | Gradient title slide (centered) |
-| `lead-hero` | With `lead` — large hero title (S1, S14 Thank You) |
+| `lead-hero` | With `lead` — large hero title (S1, S29 Thank You) |
 | `diagram` | Smaller body text; full-width Mermaid |
 | `diagram-split` | Diagram + table side by side (~62% / ~34%) |
-| `diagram-split-equal` | With `diagram-split` — 50/50 columns (S15) |
-| `compact` | Smaller body, tables, and blockquotes for dense slides (S10, S21, S25, S26) |
-| *(HTML)* `.two-col` | Two equal columns inside a compact slide (S10 prompts) |
+| `diagram-split-equal` | With `diagram-split` — 50/50 columns (S21 data modes) |
+| `compact` | Smaller body, tables, and blockquotes for dense slides (S8, S11–12, S16, S27, S31–32) |
+| *(HTML)* `.two-col` | Two equal columns inside a compact slide (S16 prompts) |
 
 Example:
 
@@ -129,9 +124,9 @@ Numbers come from live MCP — do not read fixed amounts from slides.
 
 Visible in Marp **presenter view** (`P`).
 
-## Slide map (26)
+## Slide map (32)
 
-Deck follows **three steps**: Workshop dashboard build → business Q&A → agentic orchestration.
+Deck follows **three steps** plus a **MCP architecture** primer (Developer Day 2026) between Step 1 and Step 2.
 
 | # | Title | Notes |
 | - | ----- | ----- |
@@ -141,26 +136,32 @@ Deck follows **three steps**: Workshop dashboard build → business Q&A → agen
 | 4 | Step 1 — Build dashboards with natural language | `lead` section divider |
 | 5 | Step 1 — Workshop dashboard build | Labs 3–7 table |
 | 6 | Step 1 — What you get | Artifacts |
-| 7 | Step 2 — Ask business questions without SPL | `lead` section divider |
-| 8 | Step 2 — Business questions in plain English | Example prompts |
-| 9 | Splunk MCP guardrails | `diagram-split`; `SA-S4R_*` workshop tools |
-| 10 | Step 2 — Live demo prompt | `compact`; two-column Business + Security asks |
-| 11 | Step 3 — Agentic orchestration for specialists | `lead` section divider |
-| 12 | The challenge | |
-| 13 | Agentic Architecture | `diagram`; User / Agentic / Splunk platform subgraphs |
-| 14 | Agents Artifacts defined | |
-| 15 | Two workshop data modes | MCP NK toggle (`mode=infrastructure` / `threat`); caption has tool names |
-| 16 | Step 3 — Demo 1: Infrastructure story | |
-| 17 | Step 3 — delegation flow | `diagram`; executive synthesis |
-| 18 | Buttercup Insights | |
-| 19 | Additional Business questions (1 of 2) | Checkout, merchandising, mobile vs platform |
-| 20 | Additional Business questions (2 of 2) | International, fraud vs reliability |
-| 21 | Step 3 — Demo 2: North Korea attack | `compact`; chat enable + Power User ask |
-| 22 | Takeaways | All three steps |
-| 23 | Thank You | `lead lead-hero` |
-| 24 | Appendix — before you start | |
-| 25 | Appendix — copy-paste prompts | `compact` — Steps 1–3 prompts |
-| 26 | Appendix — troubleshooting | `compact` table |
+| 7 | Splunk MCP architecture — Apps as tools | `lead` section divider |
+| 8 | Apps as MCP tools | Existing apps → AI tools; saved search vs REST; `tools.conf` + signatures |
+| 9 | Splunk MCP architecture | `diagram-split`; native / Splunkbase / private `SA-S4R_*` |
+| 10 | How it works | `diagram`; app files → MCP registration |
+| 11 | `tools.conf` and signatures | `compact`; `[savedsearches:]` / `[restmap:]` |
+| 12 | SA-S4R workshop tools | `compact`; five `SA-S4R_*` tools |
+| 13 | Step 2 — Ask business questions without SPL | `lead` section divider |
+| 14 | Step 2 — Business questions in plain English | Example prompts |
+| 15 | Splunk MCP guardrails | `diagram-split`; `SA-S4R_*` workshop tools |
+| 16 | Step 2 — Live demo prompt | `compact`; two-column Business + Security asks |
+| 17 | Step 3 — Agentic orchestration for specialists | `lead` section divider |
+| 18 | The challenge | |
+| 19 | Agentic Architecture | `diagram`; User / Agentic / Splunk platform subgraphs |
+| 20 | Agents Artifacts defined | |
+| 21 | Two workshop data modes | MCP NK toggle (`mode=infrastructure` / `threat`); caption has tool names |
+| 22 | Step 3 — Demo 1: Infrastructure story | |
+| 23 | Step 3 — delegation flow | `diagram`; executive synthesis |
+| 24 | Buttercup Insights | |
+| 25 | Additional Business questions (1 of 2) | Checkout, merchandising, mobile vs platform |
+| 26 | Additional Business questions (2 of 2) | International, fraud vs reliability |
+| 27 | Step 3 — Demo 2: North Korea attack | `compact`; chat enable + Power User ask |
+| 28 | Takeaways | All three steps + MCP architecture |
+| 29 | Thank You | `lead lead-hero` |
+| 30 | Appendix — before you start | |
+| 31 | Appendix — copy-paste prompts | `compact` — Steps 1–3 prompts |
+| 32 | Appendix — troubleshooting | `compact` table |
 
 ## Theme highlights (`splunk.css`)
 
@@ -175,6 +176,7 @@ Deck follows **three steps**: Workshop dashboard build → business Q&A → agen
 | Issue | Fix |
 | ----- | --- |
 | Theme not applied / wrong colors | Theme name must be `splunk` in front matter **and** `/* @theme splunk */` in CSS; restart Marp preview |
+| *Theme "splunk" is not recognized by Marp for VS Code* | Register `./demo-slides/splunk.css` via `markdown.marp.themes` (see `.vscode/settings.json`); reload the window. Marp CLI does not need this. |
 | Mermaid shows as text | `html: true` in front matter and `.marprc.yml`; use `<pre class="mermaid">`; hard-refresh browser |
 | `marp -s` fails | Pass a **directory** (`make marp-serve`), not a file |
 | Diagram clipped on S4 | Full-width diagram slides cap SVG at 520px height; only grows when diagram is the last element |
@@ -183,6 +185,7 @@ Deck follows **three steps**: Workshop dashboard build → business Q&A → agen
 ## Related docs
 
 - [S4R-DEMO.md](S4R-DEMO.md) — presenter script and demo flow
+- [S4R-MCP-TOOLS.md](../docs/S4R-MCP-TOOLS.md) — MCP architecture, definitions, app config files; [Developer Day 2026 recordings](https://www.youtube.com/playlist?list=PLxkFdMSHYh3T2mFyCdg8iz9ef068gLdfJ)
 - [s4r/README.md](../docs/s4r/README.md) — Splunk4Rookies workshop hub
 - [PRESALES.md](../docs/PRESALES.md) — SE checklist
 - [S4R-AGENTS.md](../docs/S4R-AGENTS.md) — agent architecture

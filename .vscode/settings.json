@@ -1,0 +1,4 @@
+{
+  "markdown.marp.themes": ["./demo-slides/splunk.css"],
+  "markdown.marp.enableHtml": true
+}

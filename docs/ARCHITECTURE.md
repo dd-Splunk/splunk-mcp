@@ -118,12 +118,13 @@ make up
   │  │  ├─ Install apps from SPLUNK_APPS_URL
   │  │  └─ Wait for health
   │  └─ splunk-init (waits for so1 healthy)
-  └─ setup-splunk.sh (after so1 healthy)
-     ├─ Enable Eventgen modinput (if SA-Eventgen present)
-     ├─ Create/update role: mcp_user (capability mcp_tool_execute)
-     ├─ Create user: splunker
-     └─ (Token minted after splunk-init; stored only in client configs)
-
+  │     └─ setup-splunk.sh
+  │        ├─ Enable Eventgen modinput (if SA-Eventgen present)
+  │        ├─ Create/update role: mcp_user (capability mcp_tool_execute)
+  │        └─ Create user: splunker
+  └─ host (after splunk-init exits 0)
+     ├─ register-s4r-mcp-tools (POST /services/mcp_tools for SA-S4R)
+     └─ update-mcp-clients (token minted into client configs only)
 ```
 
 ## Security Architecture
@@ -226,8 +227,15 @@ Host **Claude** / **Cursor** / **Goose** configs are updated by **`scripts/mcp-c
 ### MCP Operation
 
 1. Client spawns **`npx mcp-remote`** with streamable HTTP to `/services/mcp` and an encrypted bearer token
-2. Splunk MCP Server processes the request (tool prefixes `splunk_`, `saia_`)
-3. Response is returned to the client
+2. Splunk MCP Server processes the request
+3. Built-in tools (`splunk_*`, `saia_*`) and **app tools** (`SA-S4R_*`) execute as **`splunker`**
+4. Response is returned to the client
+
+### App-augmented MCP tools (SA-S4R)
+
+Splunk Developer Day 2026 ([Apps with MCP Tools](https://www.youtube.com/watch?v=fjGCf0QiBJc) · [playlist](https://www.youtube.com/playlist?list=PLxkFdMSHYh3T2mFyCdg8iz9ef068gLdfJ)) / MCP Server 1.3: apps expose **SPL** (saved search) or **API** (REST) tools through Splunk MCP Server — no standalone MCP process. **SA-S4R** ships `tools.conf` plus a workshop-mode REST handler; `make up` batch-replaces and enables them via `POST /services/mcp_tools`.
+
+Definitions, file map, and tool catalog: [S4R-MCP-TOOLS.md](S4R-MCP-TOOLS.md). Workshop data: [SA-S4R-APP.md](SA-S4R-APP.md).
 
 ## Scalability Considerations
 
@@ -307,3 +315,4 @@ docker run --rm -v so1-etc:/data -v ~/backups:/backup \
 - [SECURITY.md](SECURITY.md) — threat model and limitations
 - [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — failures and recovery
 - [s4r/README.md](s4r/README.md) — Splunk4Rookies workshop docs
+- [S4R-MCP-TOOLS.md](S4R-MCP-TOOLS.md) — how SA-S4R registers MCP tools
