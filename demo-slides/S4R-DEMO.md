@@ -6,13 +6,13 @@ Presenter guide for **Splunk4Rookies** workshop follow-on or **SE presales**: sh
 
 **Duration:** 20 minutes (full) · 10 minutes (short — see [Short track](#short-track-10-minutes)).
 
-**Related:** [S4R-SPL-CATALOG.md](../docs/S4R-SPL-CATALOG.md) · [S4R-AGENTS.md](../docs/S4R-AGENTS.md) · [PRESALES.md](../docs/PRESALES.md) · [SA-S4R-APP.md](../docs/SA-S4R-APP.md) · [demo-slides/README.md](README.md) (Marp)
+**Related:** [S4R-SPL-CATALOG.md](../docs/S4R-SPL-CATALOG.md) · [S4R-MCP-TOOLS.md](../docs/S4R-MCP-TOOLS.md) · [S4R-AGENTS.md](../docs/S4R-AGENTS.md) · [PRESALES.md](../docs/PRESALES.md) · [SA-S4R-APP.md](../docs/SA-S4R-APP.md) · [demo-slides/README.md](README.md) (Marp)
 
 ---
 
 ## Before you start (5 minutes earlier)
 
-On-screen checklist: **deck slide 24** (Appendix — before you start).
+On-screen checklist: **deck slide 30** (Appendix — before you start).
 
 ```bash
 make demo-prep                    # status + MCP verify
@@ -34,7 +34,7 @@ make s4r-attack-nk-status         # expect: disabled (infrastructure mode)
 
 ## Slide deck (Marp)
 
-**Source:** [`demo-slides/s4r-demo-slides.md`](s4r-demo-slides.md) — **26 slides** with Splunk dark theme, client-side Mermaid, and HTML speaker notes.
+**Source:** [`demo-slides/s4r-demo-slides.md`](s4r-demo-slides.md) — **32 slides** with Splunk dark theme, client-side Mermaid, and HTML speaker notes.
 
 ```bash
 make marp-preview    # Marp preview window
@@ -102,17 +102,39 @@ The sections below mirror slide content and **speaker script**; if the deck and 
 
 ---
 
-<a id="slides-7-10-step-2-business-questions-without-spl"></a>
+<a id="slides-7-12-splunk-mcp-architecture"></a>
 
-## Slides 7–10 — Step 2: Business questions without SPL
+## Slides 7–12 — Splunk MCP architecture and S4R tools
 
-**Slide 7:** Section divider — end-user mode.
+Developer Day 2026: apps expose tools through **Splunk MCP Server** — recordings in the [Developer Day 2026 playlist](https://www.youtube.com/playlist?list=PLxkFdMSHYh3T2mFyCdg8iz9ef068gLdfJ). Primary session: **[Apps with MCP Tools](https://www.youtube.com/watch?v=fjGCf0QiBJc)**. Implementation: [S4R-MCP-TOOLS.md](../docs/S4R-MCP-TOOLS.md).
 
-**Slide 8:** Example business prompts (*Is my website losing money?*, checkout funnel, merchandising).
+**Slide 7:** Section divider — apps as tools.
 
-**Slide 9:** Splunk MCP sequence diagram + identity table (`splunker`, bearer token, `splunk_run_query`, **`SA-S4R_*`** workshop tools).
+**Slide 8 — Apps as MCP tools:** Session wording — existing Splunk apps into Cursor/Claude/AI Canvas; saved search vs REST; `tools.conf` + signatures; collision detection / rate limiting.
 
-**Slide 10 — Live demo prompt** (two columns on-screen):
+**Slide 9 — Architecture:** Native tools · Splunkbase app tools · private app (`SA-S4R_*`). Szebenyi deck three-layer diagram.
+
+**Slide 10 — How it works:** App files → MCP Tool Registration → saved search / REST handler.
+
+**Slide 11 — `tools.conf` and signatures:** Official `[savedsearches:]` / `[restmap:]` stanzas mapped to SA-S4R; Tool ID.
+
+**Slide 12 — SA-S4R workshop tools:** five tools (two API for NK mode, three SPL for KPIs / geo / NK validate).
+
+*Speaker note:* Technical / SE audiences: ~2 minutes. Workshop-only attendees can skip to Step 2. Agents call governed tools; they do not invent a second MCP server.
+
+---
+
+<a id="slides-13-16-step-2-business-questions-without-spl"></a>
+
+## Slides 13–16 — Step 2: Business questions without SPL
+
+**Slide 13:** Section divider — end-user mode.
+
+**Slide 14:** Example business prompts (*Is my website losing money?*, checkout funnel, merchandising).
+
+**Slide 15:** Splunk MCP sequence diagram + identity table (`splunker`, bearer token, `splunk_run_query`, **`SA-S4R_*`** workshop tools).
+
+**Slide 16 — Live demo prompt** (two columns on-screen):
 
 > *Using the Buttercup SPL catalog: is the website losing money? Summarize business impact from failed purchases.*
 
@@ -126,64 +148,65 @@ The sections below mirror slide content and **speaker script**; if the deck and 
 
 ---
 
-## Slides 11–21 — Step 3: Agentic orchestration
+## Slides 17–27 — Step 3: Agentic orchestration
 
-**Slide 11:** Section divider — Power User + four teams + executive synthesis.
+**Slide 17:** Section divider — Power User + four teams + executive synthesis.
 
-**Slide 12 — The challenge:** One log set → four questions → one executive answer.
+**Slide 18 — The challenge:** One log set → four questions → one executive answer.
 
-**Slide 13 — Agentic Architecture:** User → Power User → IT Ops / DevOps / Business Analytics / Security → catalog → MCP → synthesis.
+**Slide 19 — Agentic Architecture:** User → Power User → IT Ops / DevOps / Business Analytics / Security → catalog → MCP → synthesis.
 
-**Slide 14 — Agents Artifacts defined:** `S4R-SPL-CATALOG.md`, `.cursor/agents/s4r-*.md`, `.cursor/mcp.json`, `S4R-AGENTS.md`.
+**Slide 20 — Agents Artifacts defined:** `S4R-SPL-CATALOG.md`, `.cursor/agents/s4r-*.md`, `.cursor/mcp.json`, `S4R-AGENTS.md`.
 
-**Slide 15 — Two workshop data modes:** infrastructure vs NK threat; prefer **`SA-S4R_apply_nk_demo_state`** / **`SA-S4R_query_nk_demo_state`** in chat; `make s4r-attack-nk-*` as operator fallback.
+**Slide 21 — Two workshop data modes:** infrastructure vs NK threat; prefer **`SA-S4R_apply_nk_demo_state`** / **`SA-S4R_query_nk_demo_state`** in chat; `make s4r-attack-nk-*` as operator fallback.
 
-**Slide 16 — Demo 1 (infrastructure):**
+**Slide 22 — Demo 1 (infrastructure):**
 
 > *As Buttercup Power User: is the shop losing money? Delegate to all four teams.*
 
-**Slide 17 — Delegation flow** + expected answer (bad web tier, not mobile/geo).
+**Slide 23 — Delegation flow** + expected answer (bad web tier, not mobile/geo).
 
-**Slide 18 — Buttercup Insights** synthesis table (live MCP numbers).
+**Slide 24 — Buttercup Insights** synthesis table (live MCP numbers).
 
-**Slides 19–20 — Additional Business questions:** checkout, merchandising, mobile, international, fraud vs reliability (Step 2 or Step 3).
+**Slides 25–26 — Additional Business questions:** checkout, merchandising, mobile, international, fraud vs reliability (Step 2 or Step 3).
 
-**Slide 21 — Demo 2 (North Korea attack):** compact slide — enable threat via chat (`SA-S4R_apply_nk_demo_state`) or one-line `make` fallback; then Power User ask; **last 15 minutes**. Validate with **`SA-S4R_validate_nk_attack_traffic`**.
+**Slide 27 — Demo 2 (North Korea attack):** compact slide — enable threat via chat (`SA-S4R_apply_nk_demo_state`) or one-line `make` fallback; then Power User ask; **last 15 minutes**. Validate with **`SA-S4R_validate_nk_attack_traffic`**.
 
 *Speaker notes:* See original Demo 1/2 detail below; cleanup **`SA-S4R_apply_nk_demo_state`** (`infrastructure`) or `make s4r-attack-nk-disable && make restart`.
 
 ---
 
-## Slide 22 — Takeaways
+## Slide 28 — Takeaways
 
 1. **Step 1** — NL dashboard build from workshop spec + catalog.
-2. **Step 2** — Business questions via MCP; no SPL for the user.
-3. **Step 3** — Power User orchestrates four specialists → executive synthesis.
-4. **Same data and catalog** — infrastructure vs threat without rewriting prompts.
+2. **MCP architecture** — SA-S4R packages SPL and API tools in `tools.conf`; Splunk MCP Server exposes them ([Apps with MCP Tools](https://www.youtube.com/watch?v=fjGCf0QiBJc)).
+3. **Step 2** — Business questions via MCP; no SPL for the user.
+4. **Step 3** — Power User orchestrates four specialists → executive synthesis.
+5. **Same data and catalog** — infrastructure vs threat without rewriting prompts.
 
 **Repo:** `splunk-mcp` · `make up` · presenter guide: `demo-slides/S4R-DEMO.md` (this file)
 
 ---
 
-## Slide 23 — Thank You
+## Slide 29 — Thank You
 
 Closing slide (`lead-hero` styling). No additional script required.
 
 ---
 
-## Slides 24–26 — Appendix
+## Slides 30–32 — Appendix
 
 | Slide | Content |
 | ----- | ------- |
-| 24 | Before you start — `make demo-prep`, checks, warm-stack reminder |
-| 25 | Copy-paste prompts — Steps 1, 2, and 3 (Demo 1 / Demo 2) |
-| 26 | Troubleshooting table — MCP, events, NK mode, concurrency, token |
+| 30 | Before you start — `make demo-prep`, checks, warm-stack reminder |
+| 31 | Copy-paste prompts — Steps 1, 2, and 3 (Demo 1 / Demo 2) |
+| 32 | Troubleshooting table — MCP, events, NK mode, concurrency, token |
 
 Expanded presenter detail for appendix topics: [Before you start](#before-you-start-5-minutes-earlier), [Backup & troubleshooting](#backup--troubleshooting), [Copy-paste prompts](#copy-paste-prompts-chat), [Business use cases (copy-paste)](#business-use-cases-copy-paste).
 
 ---
 
-## Slide 19 — Additional Business questions (1 of 2)
+## Slide 25 — Additional Business questions (1 of 2)
 
 | Use case | Ask the Power User |
 | -------- | ------------------ |
@@ -195,7 +218,7 @@ Expanded presenter detail for appendix topics: [Before you start](#before-you-st
 
 ---
 
-## Slide 20 — Additional Business questions (2 of 2)
+## Slide 26 — Additional Business questions (2 of 2)
 
 | Use case | Ask the Power User |
 | -------- | ------------------ |
@@ -230,33 +253,43 @@ Timings are approximate. Adjust for audience questions.
 
 ---
 
-### 0:04 — Step 2: Business question (3 min)
+### 0:04 — Splunk MCP architecture (2 min)
 
-**Say:** *“Executives don’t write SPL. They ask: is my website losing money?”*
+**Say:** *“Developer Day — Apps with MCP Tools: native Splunk tools, Splunkbase app tools, and your private app. SA-S4R is that private column — saved searches and a REST handler, registered with tools.conf and signatures.”*
 
-**Show:** Slides 7–9 (MCP guardrails).
+**Show:** Slides 7–12. Point at the architecture diagram, then the five `SA-S4R_*` tools.
 
-**Do:** Cursor — [Step 2 prompt](#slides-7-10-step-2-business-questions-without-spl) (single assistant, no delegation).
-
-**Narrate:** *“Governed workshop tool — `SA-S4R_summarize_purchase_health` — or catalog SPL via `splunk_run_query`; plain-language answer.”*
-
-**Show:** Slide 10.
+**Skip** for workshop-only audiences who just want the live Q&A — go straight to Step 2.
 
 ---
 
-### 0:07 — Step 3: Agentic setup (2 min)
+### 0:06 — Step 2: Business question (3 min)
+
+**Say:** *“Executives don’t write SPL. They ask: is my website losing money?”*
+
+**Show:** Slides 13–15 (MCP guardrails).
+
+**Do:** Cursor — [Step 2 prompt](#slides-13-16-step-2-business-questions-without-spl) (single assistant, no delegation).
+
+**Narrate:** *“Governed workshop tool — `SA-S4R_summarize_purchase_health` — or catalog SPL via `splunk_run_query`; plain-language answer.”*
+
+**Show:** Slide 16.
+
+---
+
+### 0:09 — Step 3: Agentic setup (2 min)
 
 **Do:** Open `.cursor/agents/s4r-power-user.md` and one specialist file; `.cursor/mcp.json` (blur token).
 
 **Say:** *“Same MCP bridge — now the Power User routes to IT Ops, DevOps, Business Analytics, Security and Fraud, then synthesizes.”*
 
-**Show:** Slides 11–15 (challenge, architecture, artifacts, data modes).
+**Show:** Slides 17–21 (challenge, architecture, artifacts, data modes).
 
 Optional: `make verify-mcp-remote MCP_VERIFY_CLIENT=cursor` in terminal (fast).
 
 ---
 
-### 0:09 — Step 3 Demo 1 live (5 min)
+### 0:11 — Step 3 Demo 1 live (4 min)
 
 **Do:** Cursor chat — Step 3 Demo 1 prompt (delegate to all four teams).
 
@@ -268,7 +301,7 @@ Optional: `make verify-mcp-remote MCP_VERIFY_CLIENT=cursor` in terminal (fast).
 
 **If delegation is slow:** Call out one team only first: *“IT Ops only — success vs failure from catalog § IT Ops.”*
 
-**Show:** Slides 17–20 when synthesis appears (delegation flow, Buttercup Insights, optional business-question menu).
+**Show:** Slides 23–26 when synthesis appears (delegation flow, Buttercup Insights, optional business-question menu).
 
 **Fallback if MCP fails:** Run one search in Splunk Web from catalog § IT Ops; explain MCP would return the same JSON.
 
@@ -278,7 +311,7 @@ Optional: `make verify-mcp-remote MCP_VERIFY_CLIENT=cursor` in terminal (fast).
 
 **Say:** *“Same agents, same catalog. We flip synthetic data mode to simulate an active threat — no prompt rewrite.”*
 
-**Show:** Slide 15 again (or narrate from memory — enable NK mode). Slides 19–20 list alternate business questions if the audience asks.
+**Show:** Slide 21 again (or narrate from memory — enable NK mode). Slides 25–26 list alternate business questions if the audience asks.
 
 ---
 
@@ -290,7 +323,7 @@ Optional: `make verify-mcp-remote MCP_VERIFY_CLIENT=cursor` in terminal (fast).
 
 Wait ~2 min; optional **`SA-S4R_validate_nk_attack_traffic`**. Then Step 3 Demo 2 prompt (**last 15 minutes**).
 
-**Terminal fallback:** `make s4r-attack-nk-enable && make restart` (see Slide 21).
+**Terminal fallback:** `make s4r-attack-nk-enable && make restart` (see Slide 27).
 
 **Narrate:** *“Security should surface North Korea on failed purchases (`SA-S4R_geo_failed_purchases` / validate NK tool); DevOps should see scripted user agents; IT Ops still sees 503 from baseline traffic.”*
 
@@ -300,7 +333,7 @@ Wait ~2 min; optional **`SA-S4R_validate_nk_attack_traffic`**. Then Step 3 Demo 
 
 ### 0:19 — Close (1 min)
 
-**Show:** Slides 22–23 (takeaways, thank you).
+**Show:** Slides 28–29 (takeaways, thank you).
 
 **Say:** *“Build, ask, orchestrate — one catalog in git, live answers from Splunk MCP.”*
 
@@ -314,10 +347,10 @@ Wait ~2 min; optional **`SA-S4R_validate_nk_attack_traffic`**. Then Step 3 Demo 
 | ---- | ------ |
 | 0:00 | Slides 1–3 (three paths + scenario) |
 | 0:02 | Slides 4–6 (Step 1 dashboard) — brief or skip if audience did workshop |
-| 0:04 | Slide 10 — Step 2 business question live |
-| 0:07 | Slides 11–15 + Step 3 Demo 1 prompt |
-| 0:14 | Slide 15 + Step 3 Demo 2 **or** skip Demo 2 if low on time |
-| 0:19 | Slides 22–23 takeaways + thank you |
+| 0:04 | Slide 16 — Step 2 business question live (skip architecture 7–12) |
+| 0:07 | Slides 17–21 + Step 3 Demo 1 prompt |
+| 0:14 | Slide 21 + Step 3 Demo 2 **or** skip Demo 2 if low on time |
+| 0:19 | Slides 28–29 takeaways + thank you |
 
 Skip: `make verify-mcp-remote` live, Step 1 live build, second terminal restart.
 
@@ -325,7 +358,7 @@ Skip: `make verify-mcp-remote` live, Step 1 live build, second terminal restart.
 
 ## Backup & troubleshooting
 
-On-screen table: **deck slide 26**. Expanded detail below for presenters.
+On-screen table: **deck slide 32**. Expanded detail below for presenters.
 
 | Problem | Presenter action |
 | ------- | ---------------- |
@@ -365,7 +398,7 @@ Full catalog: [S4R-SPL-CATALOG.md](../docs/S4R-SPL-CATALOG.md)
 
 ## Copy-paste prompts (chat)
 
-Short on-slide versions: **deck slide 25**. Long-form prompts for live demos:
+Short on-slide versions: **deck slide 31**. Long-form prompts for live demos:
 
 **Demo 1:**
 

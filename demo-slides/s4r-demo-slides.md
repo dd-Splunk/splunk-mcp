@@ -123,7 +123,148 @@ The catalog is the runbook — the LLM reads layout from S4R-DASHBOARD.md and SP
 Workshop hub: `docs/s4r/README.md`
 
 <!--
-After the workshop, attendees have a pinned dashboard. Steps 2 and 3 show how the same questions move into chat — with and without multi-agent structure.
+After the workshop, attendees have a pinned dashboard. Next: how Splunk MCP exposes that same app as tools — then Steps 2 and 3 move the questions into chat.
+-->
+
+---
+
+<!-- _class: lead -->
+
+# Splunk MCP architecture<br>Apps as tools
+
+Developer Day 2026 · [Apps with MCP Tools](https://www.youtube.com/watch?v=fjGCf0QiBJc)
+
+---
+
+<!-- _class: compact -->
+
+# Apps as MCP tools
+
+Apps package Splunk insights for the customer. **MCP** shares those insights with LLMs for analysis and action.
+
+Bring **existing** Splunk apps (public Splunkbase or private) into your AI tool of choice — Cursor, Claude, Cisco AI Canvas — instead of reinventing searches.
+
+Create tools from **saved searches** or **custom REST endpoints**. Expose them with **`tools.conf`** (one stanza per tool) plus **`tool_input_payload_signatures.json`**.
+
+| Execution | Backing in the app |
+| --------- | ------------------ |
+| **Saved search** | `savedsearches.conf` |
+| **REST** | `restmap.conf` + handler |
+
+Platform: collision detection · rate limiting · one MCP endpoint
+
+<!--
+Szebenyi, Apps with MCP Tools, 13 May 2026. Playlist: https://www.youtube.com/playlist?list=PLxkFdMSHYh3T2mFyCdg8iz9ef068gLdfJ
+This PoC also POSTs s4r_mcp_tools.json after make up so tools are enabled on local Enterprise.
+-->
+
+---
+
+<!-- _class: diagram diagram-split -->
+
+# Splunk MCP architecture
+
+<div class="diagram-table-row">
+
+<pre class="mermaid">
+flowchart TB
+  AI["AI chat or Agent"]
+  MCP["Splunk MCP Server"]
+  NAT["Native tools splunk_run_query"]
+  BASE["Splunkbase app tools"]
+  PRIV["Private app SA-S4R_*"]
+  AI --> MCP
+  MCP --> NAT
+  MCP --> BASE
+  MCP --> PRIV
+</pre>
+
+<div class="diagram-table-col">
+
+| Layer | Examples |
+| ----- | -------- |
+| Native | `splunk_run_query`, `saia_*` |
+| Splunkbase | ES / ITSI app tools |
+| **This PoC** | Buttercup `SA-S4R_*` |
+
+</div>
+</div>
+
+<!--
+PDF slide 6: native + Splunkbase public + customer private. SA-S4R is the private-app column (their Minecraft demo analog). Collision detection and rate limiting are MCP Server features.
+-->
+
+---
+
+<!-- _class: diagram -->
+
+# How it works
+
+<pre class="mermaid">
+flowchart LR
+  subgraph APP["SA-S4R app"]
+    TC["tools.conf"]
+    SIG["signatures.json"]
+    SS["savedsearches.conf"]
+    RM["restmap.conf"]
+  end
+  REG["MCP Tool Registration"]
+  SPL["Saved search"]
+  REST["REST handler"]
+  TC --> REG
+  SIG --> REG
+  SS --> SPL
+  RM --> REST
+  SPL --> REG
+  REST --> REG
+</pre>
+
+App install (or this PoC’s `make register-s4r-mcp-tools`) registers tools. LLMs call them through **`/services/mcp`**.
+
+<!--
+PDF slide 9: App Manager / Self Service App Install → MCP Tool Registration API; savedsearches + restmap generate tool URL and parameters. Local Enterprise: host POST /services/mcp_tools from s4r_mcp_tools.json.
+-->
+
+---
+
+<!-- _class: compact -->
+
+# `tools.conf` and signatures
+
+Developer Day stanza types — one per tool, plus JSON so the LLM knows how to call it:
+
+| Stanza | Meaning | SA-S4R |
+| ------ | ------- | ------ |
+| `[savedsearches:<name>]` | SPL tool; `search=` saved-search name | Purchase health, geo, NK validate |
+| `[restmap:<name>]` | API tool; `endpoint_name`, `method` | NK query / apply (`s4r_workshop_mode`) |
+| `tool_input_payload_signatures.json` | Per-tool input schema for the LLM | All five tools |
+
+**Tool ID** after enable: `SA-S4R:SA-S4R_<name>` · distinct `query_*` vs `apply_*` for collision checks.
+
+Detail: `docs/S4R-MCP-TOOLS.md`
+
+<!--
+PDF slides 10–11: restmap:myhello and savedsearches:broken_block_search; signatures shared with LLMs. This PoC currently lists SPL tools in tools.conf with savedsearch= and registers all five via s4r_mcp_tools.json.
+-->
+
+---
+
+<!-- _class: compact -->
+
+# SA-S4R workshop tools
+
+| MCP tool | Type | When to use |
+| -------- | ---- | ----------- |
+| `SA-S4R_query_nk_demo_state` | API GET | Read infrastructure vs threat |
+| `SA-S4R_apply_nk_demo_state` | API POST | Start / stop NK storyline |
+| `SA-S4R_validate_nk_attack_traffic` | SPL | Confirm NK / `175.45.*` (**15m**) |
+| `SA-S4R_summarize_purchase_health` | SPL | Lost revenue, checkout KPIs (**24h**) |
+| `SA-S4R_geo_failed_purchases` | SPL | Failed-purchase geo hotspots (**24h**) |
+
+Prefer these over invented SPL. Fallback: catalog + `splunk_run_query`.
+
+<!--
+Write tool only on explicit user request. Makefile s4r-attack-nk-* is the operator fallback. After make up, tools should already appear in Cursor.
 -->
 
 ---
@@ -478,9 +619,10 @@ Verdict: mixed — infrastructure still broken, but Security has a lead. Cleanup
 # Takeaways
 
 1. **Step 1 — Workshop:** Natural language builds the **S4R dashboard** from `S4R-DASHBOARD.md` + SPL catalog.
-2. **Step 2 — Business user:** Ask **outcome questions**; Splunk MCP returns live answers via **`SA-S4R_*`** tools or catalog SPL — no SPL required from the user.
-3. **Step 3 — Agentic:** **Power User** orchestrates IT Ops, DevOps, Business Analytics, Security and Fraud → **executive synthesis**.
-4. **Same data, same catalog** — infrastructure vs threat modes without rewriting prompts.
+2. **MCP architecture:** SA-S4R packages **SPL and API tools** in `tools.conf`; Splunk MCP Server exposes them — [Apps with MCP Tools](https://www.youtube.com/watch?v=fjGCf0QiBJc).
+3. **Step 2 — Business user:** Ask **outcome questions**; live answers via **`SA-S4R_*`** tools or catalog SPL — no SPL required from the user.
+4. **Step 3 — Agentic:** **Power User** orchestrates IT Ops, DevOps, Business Analytics, Security and Fraud → **executive synthesis**.
+5. **Same data, same catalog** — infrastructure vs threat modes without rewriting prompts.
 
 **Repo:** `splunk-mcp` · `make up` · presenter guide: `demo-slides/S4R-DEMO.md`
 

@@ -11,7 +11,7 @@ Buttercup Enterprises PoC: **SA-S4R** sample app, Labs 3–7 SPL, dashboard buil
 | Workshop `local/` setup (props, nav, permissions) | [SA-S4R/local/README](../../SA-S4R/local/README) |
 | Understand Eventgen, NK toggle, data | [SA-S4R-APP.md](../SA-S4R-APP.md) |
 | Agent roles, delegation, demo beats | [S4R-AGENTS.md](../S4R-AGENTS.md) |
-| S4R-specific MCP tools (prep) | [S4R-MCP-TOOLS.md](../S4R-MCP-TOOLS.md) |
+| S4R MCP tools (architecture + registration) | [S4R-MCP-TOOLS.md](../S4R-MCP-TOOLS.md) |
 | Present the agentic demo (slides + script) | [demo-slides/](../../demo-slides/) — `s4r-demo-slides.md`, [S4R-DEMO.md](../../demo-slides/S4R-DEMO.md) |
 | Cursor agent prompts | [`.cursor/agents/`](../../.cursor/agents/) |
 

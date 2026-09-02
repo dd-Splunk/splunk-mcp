@@ -31,7 +31,9 @@ docker-compose.override.yml
 **/.windsurf/rules/
 
 # Editor directories
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 .idea/
 *.swp
 *.swo
