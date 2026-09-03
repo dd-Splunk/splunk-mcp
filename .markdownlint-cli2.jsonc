@@ -9,7 +9,6 @@
     "demo-slides/**/*.md"
   ],
   "ignores": [
-    "",
     "demo-slides/index.md"
   ],
   "configOverrides": [

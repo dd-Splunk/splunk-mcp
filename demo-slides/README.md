@@ -21,30 +21,6 @@ make marp-serve      # http://localhost:8080/ (directory mode)
 make marp-html       # write demo-slides/s4r-demo-slides.html
 ```
 
-##  (local only)
-
-
-| File | Role |
-| ---- | ---- |
-| **``** | 11-slide VP deck (source) |
-| **``** | Exported PDF — attach for VP meeting |
-| **``** | Browser export |
-| **``** | Single-page A4 memo (source) |
-| **``** | One-page PDF — email to VP |
-
-```bash
-make    # preview VP deck
-make        # demo-slides/
-make       # demo-slides/
-make       # demo-slides/
-```
-
-Replace **`[Your name]`**, **`[Manager name]`**, and KPI placeholders in the `.md` sources before re-exporting.
-
-Operational constraints:
-
-- Keep the `` prefix for local sources and exports so `.gitignore` continues to exclude them.
-
 **Cursor / VS Code (optional):** install the [Marp for VS Code](https://marketplace.visualstudio.com/items?itemName=marp-team.marp-vscode) extension. Workspace settings in **`.vscode/settings.json`** register `demo-slides/splunk.css` as theme `splunk` and set `markdown.marp.html` to **`all`** (needed for Mermaid `<script>`). Reload the window if you still see *The specified theme "splunk" is not recognized by Marp for VS Code* — the extension does **not** read `.marprc.yml` (that file is CLI-only).
 
 Open `demo-slides/s4r-demo-slides.md` and use the Marp preview pane. Press **`P`** for presenter view (speaker notes). CLI targets (`make marp-*`) use `.marprc.yml` in this folder.

@@ -18,9 +18,7 @@ export ENV_FILE ENV_OUT ENV_EXAMPLE OP DC
 	update-mcp-clients update-mcp-client verify-mcp-remote \
 	update-claude-config update-cursor-config update-goose-config \
 	s4r-attack-nk-enable s4r-attack-nk-disable s4r-attack-nk-status register-s4r-mcp-tools \
-	marp-preview marp-serve marp-html \
-	   \
-	
+	marp-preview marp-serve marp-html
 
 help: ## Show targets
 	@awk 'BEGIN {FS = ":.*##"; printf "Splunk MCP PoC\n\n"} \
@@ -134,8 +132,3 @@ marp-serve: ## Serve S4R slides over HTTP (open http://localhost:8080/)
 
 marp-html: ## Export S4R slides to demo-slides/s4r-demo-slides.html
 	@cd demo-slides && marp --no-stdin s4r-demo-slides.md -o s4r-demo-slides.html
-
-: ## Preview  slides (local sources)
-	@./scripts/ 
-	@cd demo-slides && marp --no-stdin -p 
-

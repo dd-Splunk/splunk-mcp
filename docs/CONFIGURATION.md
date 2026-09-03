@@ -136,7 +136,6 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 | `s4r-attack-nk-status` | Prints whether the NK attack Eventgen stanza is enabled |
 | `register-s4r-mcp-tools` | Host `POST /services/mcp_tools` for **SA-S4R** (also run by `make up`); re-run after editing `s4r_mcp_tools.json` |
 | `marp-preview` / `marp-serve` / `marp-html` | Preview, serve, or export the S4R presenter deck under `demo-slides/` |
-| `` / `` / `` | Preview or export gitignored  slides; fails early if local source is absent |
 
 Workshop behavior and validation SPL: **[SA-S4R-APP.md](SA-S4R-APP.md)** (Workshop modes). Marp deck mechanics: **[demo-slides/README.md](../demo-slides/README.md)**.
 
