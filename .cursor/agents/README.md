@@ -87,9 +87,9 @@ Wait for all four summaries; synthesize one executive answer (Power User templat
 
 ### Splunk search concurrency
 
-Four parallel specialists each call `splunk_run_query` as **`splunker`**. Default PoC role limits **historical search concurrency to 3** per user — a fourth simultaneous search may fail with:
+Four parallel specialists each call `splunk_run_query` as **`splunker`**. The PoC sets **`srchJobsQuota=5`** on role **`mcp_user`** (which **`splunker`** inherits). If a fourth search still fails, you may be hitting the built-in **`user`** role cap — error example:
 
-`role-based concurrency limit of historical searches for user "splunker" has been reached (usage=3, quota=3)`
+`role-based concurrency limit of historical searches for user "splunker" has been reached (usage=N, quota=N)`
 
 **Presenter mitigations:** wait a few seconds and retry; stagger one team; or run teams sequentially (`is_background: false` on specialists for visible one-at-a-time demos). Power User should **wait for all** teams and note any that failed dispatch — do not invent findings.
 

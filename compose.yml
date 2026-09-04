@@ -2,7 +2,7 @@ services:
   so1:
     hostname: so1
     container_name: so1
-    image: ${SPLUNK_IMAGE:-splunk/splunk:latest}
+    image: ${SPLUNK_IMAGE:-splunk/splunk:10.4.1}
     platform: linux/amd64
     environment:
       SPLUNK_GENERAL_TERMS: --accept-sgt-current-at-splunk-com
@@ -33,7 +33,7 @@ services:
     restart: always
 
   splunk-init:
-    image: alpine:latest
+    image: alpine:3.21
     container_name: splunk-init
     depends_on:
       so1:

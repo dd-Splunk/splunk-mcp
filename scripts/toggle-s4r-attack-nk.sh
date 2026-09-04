@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # Toggle SA-S4R North Korea attack Eventgen stanza (attack.nk.purchase.sample).
+# Writes to local/eventgen.conf (gitignored) so default/eventgen.conf stays pristine.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-EVENTGEN_CONF="${ROOT}/SA-S4R/default/eventgen.conf"
+EVENTGEN_DEFAULT="${ROOT}/SA-S4R/default/eventgen.conf"
+EVENTGEN_LOCAL="${ROOT}/SA-S4R/local/eventgen.conf"
 STANZA="[attack.nk.purchase.sample]"
 
 usage() {
@@ -14,36 +16,60 @@ Usage: $(basename "$0") <enable|disable|status>
   disable  Set disabled = true (default infrastructure-failure mode)
   status   Print whether the attack stanza is enabled
 
-After enable/disable, restart Eventgen or Splunk so the modinput reloads:
+Mode overrides are written to SA-S4R/local/eventgen.conf (not tracked in git).
+After enable/disable via this script, restart Eventgen or Splunk:
   docker compose restart so1
 EOF
 }
 
-set_disabled() {
-  local value="$1"
-  if [[ ! -f "${EVENTGEN_CONF}" ]]; then
-    echo "error: missing ${EVENTGEN_CONF}" >&2
-    exit 1
-  fi
-  if ! grep -qF "${STANZA}" "${EVENTGEN_CONF}"; then
-    echo "error: stanza ${STANZA} not found in eventgen.conf" >&2
-    exit 1
-  fi
-  awk -v stanza="${STANZA}" -v disabled="${value}" '
-    $0 == stanza { in_stanza=1 }
-    in_stanza && /^disabled = / { print "disabled = " disabled; next }
-    in_stanza && /^\[/ && $0 != stanza { in_stanza=0 }
-    { print }
-  ' "${EVENTGEN_CONF}" > "${EVENTGEN_CONF}.tmp"
-  mv "${EVENTGEN_CONF}.tmp" "${EVENTGEN_CONF}"
-}
-
-current_disabled() {
+read_disabled_from_file() {
+  local file="$1"
   awk -v stanza="${STANZA}" '
     $0 == stanza { in_stanza=1; next }
     in_stanza && /^disabled = / { print $3; exit }
     in_stanza && /^\[/ { exit }
-  ' "${EVENTGEN_CONF}"
+  ' "${file}"
+}
+
+current_disabled() {
+  local disabled=""
+  if [[ -f "${EVENTGEN_LOCAL}" ]]; then
+    disabled="$(read_disabled_from_file "${EVENTGEN_LOCAL}")"
+    [[ -n "${disabled}" ]] && { printf '%s' "${disabled}"; return 0; }
+  fi
+  if [[ -f "${EVENTGEN_DEFAULT}" ]]; then
+    disabled="$(read_disabled_from_file "${EVENTGEN_DEFAULT}")"
+    [[ -n "${disabled}" ]] && { printf '%s' "${disabled}"; return 0; }
+  fi
+  return 1
+}
+
+write_local_disabled() {
+  local value="$1"
+  if [[ ! -f "${EVENTGEN_DEFAULT}" ]]; then
+    echo "error: missing ${EVENTGEN_DEFAULT}" >&2
+    exit 1
+  fi
+  if ! grep -qF "${STANZA}" "${EVENTGEN_DEFAULT}"; then
+    echo "error: stanza ${STANZA} not found in default eventgen.conf" >&2
+    exit 1
+  fi
+  mkdir -p "$(dirname "${EVENTGEN_LOCAL}")"
+  if [[ -f "${EVENTGEN_LOCAL}" ]] && grep -qF "${STANZA}" "${EVENTGEN_LOCAL}"; then
+    awk -v stanza="${STANZA}" -v disabled="${value}" '
+      $0 == stanza { in_stanza=1 }
+      in_stanza && /^disabled = / { print "disabled = " disabled; next }
+      in_stanza && /^\[/ && $0 != stanza { in_stanza=0 }
+      { print }
+    ' "${EVENTGEN_LOCAL}" > "${EVENTGEN_LOCAL}.tmp"
+  else
+    cat > "${EVENTGEN_LOCAL}.tmp" <<EOF
+# Workshop NK mode override (gitignored). Managed by SA-S4R MCP tools and make s4r-attack-nk-*.
+${STANZA}
+disabled = ${value}
+EOF
+  fi
+  mv "${EVENTGEN_LOCAL}.tmp" "${EVENTGEN_LOCAL}"
 }
 
 is_enabled() {
@@ -55,21 +81,20 @@ is_enabled() {
 cmd="${1:-}"
 case "${cmd}" in
   enable)
-    set_disabled false
-    echo "NK attack stanza enabled (disabled = false)."
+    write_local_disabled false
+    echo "NK attack stanza enabled (local/eventgen.conf: disabled = false)."
     echo "Restart Splunk/Eventgen: docker compose restart so1"
     ;;
   disable)
-    set_disabled true
-    echo "NK attack stanza disabled (disabled = true)."
+    write_local_disabled true
+    echo "NK attack stanza disabled (local/eventgen.conf: disabled = true)."
     echo "Restart Splunk/Eventgen: docker compose restart so1"
     ;;
   status)
-    disabled="$(current_disabled)"
-    if [[ -z "${disabled}" ]]; then
+    disabled="$(current_disabled)" || {
       echo "NK attack stanza: not found"
       exit 1
-    fi
+    }
     if is_enabled; then
       echo "NK attack stanza: enabled"
     else

@@ -166,7 +166,7 @@ Two storylines share the same baseline traffic; the NK stanza is toggled without
 
 **Shell fallback:** `make s4r-attack-nk-disable` / `make s4r-attack-nk-enable` then **`make restart`** if MCP is unavailable or signal is slow.
 
-Check current mode: **`SA-S4R_query_nk_demo_state`** (MCP), **`make s4r-attack-nk-status`** (shell), or read `[attack.nk.purchase.sample]` in **`eventgen.conf`**. Script: **`scripts/toggle-s4r-attack-nk.sh`** (`enable` \| `disable` \| `status`). MCP tools register on **`make up`**; re-register with **`make register-s4r-mcp-tools`** — see [MCP-TOOLS.md](MCP-TOOLS.md).
+Check current mode: **`SA-S4R_query_nk_demo_state`** (MCP), **`make s4r-attack-nk-status`** (shell), or read **`local/eventgen.conf`** (override) then **`default/eventgen.conf`**. Toggles write **`SA-S4R/local/eventgen.conf`** only (gitignored) so **`default/`** stays pristine. Script: **`scripts/toggle-s4r-attack-nk.sh`** (`enable` \| `disable` \| `status`). MCP tools register on **`make up`**; re-register with **`make register-s4r-mcp-tools`** — see [MCP-TOOLS.md](MCP-TOOLS.md).
 
 Wait **1–2 minutes** after enabling threat mode before validating in Search (narrow time range to **last 15m** so old uniform traffic does not mask the attack).
 

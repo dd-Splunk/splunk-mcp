@@ -26,7 +26,7 @@ You need valid **Splunkbase** credentials via **`tpl.env`** or **`.env`** (Path 
 
 ## Client connections
 
-Per [Splunk MCP Server 1.3](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/1.3/connecting-to-the-mcp-server-and-settings), **Claude**, **Cursor**, and **Goose** in this PoC use **`npx mcp-remote`** (Goose via **`scripts/mcp-remote-splunk.sh`**) to **`https://localhost:8089/services/mcp`** with an **encrypted** bearer token (`make update-mcp-clients`). **Splunk Cloud** customers may alternatively use **OAuth 2.1** in Cursor—see [CONFIGURATION.md](CONFIGURATION.md#splunk-mcp-authentication-13) and [PRESALES.md](PRESALES.md#splunk-cloud-stacks-oauth-vs-this-poc).
+Per [Splunk MCP Server 1.3](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/1.3/connecting-to-the-mcp-server-and-settings), **Claude**, **Cursor**, and **Goose** in this PoC use **`npx mcp-remote`** (Goose via **`scripts/mcp-remote-splunk.sh`**) to **`https://localhost:8089/services/mcp`** with an **encrypted** bearer token (`make update-mcp-clients` or **`make up`** with **`MCP_UPDATE_ON_BOOT`**). **Splunk Cloud** customers may alternatively use **OAuth 2.1** in Cursor—see [CONFIGURATION.md](CONFIGURATION.md#splunk-mcp-authentication-13) and [PRESALES.md](PRESALES.md#splunk-cloud-stacks-oauth-vs-this-poc).
 
 ## Secrets flow
 
@@ -50,7 +50,7 @@ Check mode: **`SA-S4R_query_nk_demo_state`**. Agentic analysis: [AGENTS.md](../s
 
 ### 1. Splunk Enterprise Container (so1)
 
-- **Image**: `splunk/splunk:latest` (configurable via `SPLUNK_IMAGE` env var)
+- **Image**: `splunk/splunk:10.4.1` (default in `compose.yml`; override via `SPLUNK_IMAGE`)
 - **Platform**: `linux/amd64`
 - **Ports**:
   - `8000`: Splunk Web UI
@@ -154,7 +154,7 @@ The setup script assigns Splunk role **`mcp_user`** and ensures capability **`mc
 Supplied to Compose via **`.env`** (Path B) **or** **`op run --env-file=tpl.env`** (default `make up` when `.env` is absent; **`tpl.env`** is local, from **`cp tpl.env.example tpl.env`**). Example shape:
 
 ```bash
-SPLUNK_IMAGE=splunk/splunk:latest
+SPLUNK_IMAGE=splunk/splunk:10.4.1
 SPLUNK_PASSWORD=<secret>
 SPLUNKBASE_USER=<splunkbase user>
 SPLUNKBASE_PASS=<splunkbase password>
@@ -177,7 +177,7 @@ Claude Desktop
 
 ### Token Management
 
-- **Generation**: `splunk-init` runs `setup-splunk.sh`, which calls the Splunk MCP Server app’s **`mcp_token`** endpoint for **`SPLUNK_MCP_USER`** (default **`splunker`**).
+- **Generation**: After **`splunk-init`** exits, the host runs **`scripts/mint-mcp-token.sh`** (admin REST → Splunk MCP Server **`mcp_token`** for **`SPLUNK_MCP_USER`**, default **`splunker`**). **`setup-splunk.sh` does not mint tokens.**
 - **Storage**: Client config files only (not the repo).
 - **Expiry**: Depends on Splunk MCP app and token settings (docs may cite ~15 days as a rule of thumb—verify in your build).
 - **Renewal**: Re-run `make update-mcp-client` to mint a new token.
@@ -199,7 +199,7 @@ Claude Desktop
 - Enables SA-Eventgen default modinput when the app is installed
 - Dependencies: `curl`, `jq` (installed in `splunk-init`)
 
-Host **Claude** / **Cursor** / **Goose** configs are updated by **`scripts/mcp-client.sh`** via **`make update-mcp-clients`** (invoked by **`make up`**), not by this script. Goose uses **`envs`** for TLS overrides (see **`docs/poc/CONFIGURATION.md`**).
+Host **Claude** / **Cursor** / **Goose** configs are updated by **`scripts/mcp-client.sh`** via **`make update-mcp-clients`** or **`make up`** (`MCP_UPDATE_ON_BOOT`, default **`cursor`**), not by this script. Goose uses **`envs`** for TLS overrides (see **`docs/poc/CONFIGURATION.md`**).
 
 ### Makefile
 
@@ -220,11 +220,10 @@ Host **Claude** / **Cursor** / **Goose** configs are updated by **`scripts/mcp-c
 ### Initialization
 
 1. splunk-init waits for healthcheck to pass
-2. Runs setup-splunk.sh
-3. Creates role and user via REST API
-4. Client uses minted bearer token against `/services/mcp`
-5. Makefile runs `update-mcp-clients` on the host (tokens to client configs only, not the repo)
-6. splunk-init container exits (`restart: "no"`)
+2. Runs setup-splunk.sh (roles, MCP user, Eventgen — no token mint)
+3. splunk-init container exits (`restart: "no"`)
+4. Host runs `update-all` (`MCP_UPDATE_ON_BOOT`) → mints bearer token into client configs
+5. Host runs `register-s4r-mcp-tools`
 
 ### MCP Operation
 

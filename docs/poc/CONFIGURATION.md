@@ -15,7 +15,7 @@ Check current Splunkbase releases: `https://splunkbase.splunk.com/api/v1/app/<id
 
 | Setting | Meaning |
 | ------- | ------- |
-| `image` | `${SPLUNK_IMAGE:-splunk/splunk:latest}` |
+| `image` | `${SPLUNK_IMAGE:-splunk/splunk:10.4.1}` |
 | `platform: linux/amd64` | Run x86 image on ARM via emulation when needed |
 | `SPLUNK_GENERAL_TERMS` | Accepts Splunk general terms non-interactively |
 | `SPLUNK_START_ARGS` | License acceptance |
@@ -220,6 +220,8 @@ Splunk documents OAuth as **Splunk Cloud Platform**–focused. This repo’s loc
 | -------- | ------- | ------- |
 | `SPLUNK_MCP_ENDPOINT` | `mcp-client.sh` | Splunk MCP URL for `mcp-remote` (default `https://localhost:8089/services/mcp`) |
 | `SPLUNK_MCP_TLS_INSECURE` | `mcp-client.sh` | If `1` (default), add `NODE_TLS_REJECT_UNAUTHORIZED=0` to Claude/Cursor config and Goose `envs` / wrapper (dev/self-signed only) |
+| `MCP_REMOTE_PACKAGE` | `mcp-client.sh`, `mcp-remote-splunk.sh` | npm package for `npx` (default `mcp-remote@0.8.3`) |
+| `MCP_NPX_COMMAND` | `mcp-client.sh` | Absolute path to `npx` when GUI apps lack Node on `PATH` |
 | `SPLUNK_MCP_USER` | `setup-splunk.sh` | Splunk account to create/update (default `splunker`) |
 | `SPLUNK_MLTK_USER` | `setup-splunk.sh` | Which Splunk user gets `MLTK_ROLE` when set (default: same as `SPLUNK_MCP_USER`) |
 | `MLTK_ROLE` | `setup-splunk.sh` | MLTK Splunk role to assign; empty by default (Splunk AI Toolkit not in `SPLUNK_APPS_URL`) |

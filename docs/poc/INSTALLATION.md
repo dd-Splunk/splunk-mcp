@@ -79,7 +79,7 @@ cat tpl.env.example
 Example shape (paths must be yours in **`tpl.env`**):
 
 ```bash
-SPLUNK_IMAGE=splunk/splunk:latest
+SPLUNK_IMAGE=splunk/splunk:10.4.1
 SPLUNK_PASSWORD=op://YourVault/YourItem/password
 SPLUNKBASE_USER=op://YourVault/Splunkbase/username
 SPLUNKBASE_PASS=op://YourVault/Splunkbase/password
@@ -95,9 +95,9 @@ Expected layout includes `Makefile`, `compose.yml`, `tpl.env.example`, local `tp
 make up
 ```
 
-This runs **`docker compose up -d`** using **`.env`** if present, otherwise **`op run --env-file=tpl.env`**. It starts **`so1`**, runs **`splunk-init`** after Splunk is healthy, then runs **`make update-mcp-clients`**.
+This runs **`docker compose up -d`** using **`.env`** if present, otherwise **`op run --env-file=tpl.env`**. It starts **`so1`**, runs **`splunk-init`** after Splunk is healthy, then mints an MCP token and updates client configs (**`MCP_UPDATE_ON_BOOT`**, default **`cursor`**), then registers SA-S4R MCP tools.
 
-After **`splunk-init`** exits, **`make update-mcp-clients`** mints MCP tokens and writes client configs pointing at **`https://localhost:8089/services/mcp`**.
+After **`splunk-init`** exits, **`scripts/mcp-client.sh update-all`** writes client configs pointing at **`https://localhost:8089/services/mcp`**. For all three clients on boot: `make up MCP_UPDATE_ON_BOOT="cursor goose claude"`.
 
 For Path B (plain **`.env`** without 1Password at runtime), see [CONFIGURATION.md](CONFIGURATION.md#plain-env-path-b).
 
@@ -126,9 +126,9 @@ After `make up` completes:
 
 | Client | Action |
 | ------ | ------ |
-| **Claude Desktop** (macOS) | **`make up`** runs **`update-mcp-clients`**. Quit Claude fully (**Cmd+Q**), then reopen. Config: `~/Library/Application Support/Claude/claude_desktop_config.json`. |
-| **Cursor** | **`make up`** runs **`update-mcp-clients`** (writes **`.cursor/mcp.json`**). Restart Cursor or reload MCP servers. |
-| **Goose** | **`make up`** runs **`update-mcp-clients`**. Restart Goose. |
+| **Cursor** (default) | **`make up`** updates **`.cursor/mcp.json`** (`MCP_UPDATE_ON_BOOT=cursor`). Restart Cursor or reload MCP servers. |
+| **Claude Desktop** (macOS) | Run **`make update-mcp-client MCP_CLIENT=claude`** or **`make up MCP_UPDATE_ON_BOOT="cursor goose claude"`**. Quit Claude fully (**Cmd+Q**), then reopen. Config: `~/Library/Application Support/Claude/claude_desktop_config.json`. |
+| **Goose** | Run **`make update-mcp-client MCP_CLIENT=goose`** or include **`goose`** in **`MCP_UPDATE_ON_BOOT`**. Restart Goose. |
 
 Shell smoke test:
 

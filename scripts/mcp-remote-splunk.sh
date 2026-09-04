@@ -22,4 +22,4 @@ if [[ "$tls_insecure" == "1" || "$tls_insecure" == "true" || "$tls_insecure" == 
   export NODE_TLS_REJECT_UNAUTHORIZED=0
 fi
 
-exec "$npx_cmd" -y mcp-remote "$@"
+exec "$npx_cmd" -y "${MCP_REMOTE_PACKAGE:-mcp-remote@0.8.3}" "$@"
