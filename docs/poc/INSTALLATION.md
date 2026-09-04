@@ -105,7 +105,7 @@ Allow **several minutes** on first run (image pull, Splunk, Splunkbase downloads
 
 ```bash
 make logs
-make status    # splunk-init line + "Splunk is ready ✓"; exits non-zero if init failed or Splunk down
+make status    # splunk-init line + "Splunk is ready ✓"; exits non-zero if init failed or Splunk running but API not ready (exit 0 when stack stopped)
 ```
 
 ## Splunk Web

@@ -58,16 +58,36 @@ logs: ## Follow Splunk logs (docker logs so1)
 
 status: ## Container status and Splunk API probe
 	@echo "Containers:"
-	@docker ps -a --filter "name=so1" --format "table {{.Names}}\t{{.Status}}\t{{.Image}}" 2>/dev/null || true
-	@docker ps -a --filter "name=splunk-init" --format "table {{.Names}}\t{{.Status}}\t{{.Image}}" 2>/dev/null || true
+	@rows="$$(docker ps -a --format '{{.Names}}\t{{.Status}}\t{{.Image}}' 2>/dev/null \
+		| awk '$$1=="so1" || $$1=="splunk-init"')"; \
+	if [[ -n "$$rows" ]]; then \
+		printf "NAMES\tSTATUS\tIMAGE\n%s\n" "$$rows"; \
+	else \
+		echo "(none — run make up)"; \
+	fi
 	@echo ""
 	@init_rc=0; ./scripts/splunk-init-status.sh || init_rc=$$?; \
 	echo ""; \
+	if ! docker inspect so1 >/dev/null 2>&1; then \
+		echo "Stack is stopped (run make up)"; \
+		if [[ "$$init_rc" -ne 0 ]]; then exit "$$init_rc"; fi; \
+		exit 0; \
+	fi; \
+	so1_state="$$(docker inspect -f '{{.State.Status}}' so1 2>/dev/null)"; \
+	if [[ "$$so1_state" != "running" ]]; then \
+		echo "Stack is stopped (so1 is $$so1_state)"; \
+		if [[ "$$init_rc" -ne 0 ]]; then exit "$$init_rc"; fi; \
+		exit 0; \
+	fi; \
 	code="$$(docker exec so1 curl -k -s -o /dev/null -w '%{http_code}' \
 		https://localhost:8089/services/server/info 2>/dev/null)"; \
-	if [[ "$$code" = "200" || "$$code" = "401" ]]; then echo "Splunk is ready ✓"; \
-	else echo "Splunk is not ready yet..."; splunk_rc=1; fi; \
-	splunk_rc="$${splunk_rc:-0}"; \
+	if [[ "$$code" = "200" || "$$code" = "401" ]]; then \
+		echo "Splunk is ready ✓"; \
+		splunk_rc=0; \
+	else \
+		echo "Splunk is not ready yet..."; \
+		splunk_rc=1; \
+	fi; \
 	if [[ "$$init_rc" -ne 0 ]]; then exit "$$init_rc"; fi; \
 	exit "$$splunk_rc"
 
