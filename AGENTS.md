@@ -49,7 +49,7 @@ Splunk REST bootstrap (see **`docs/poc/CONFIGURATION.md` § Appendix: setup-splu
 
 | Question | Command / check |
 | -------- | ----------------- |
-| Stack healthy? | `make status` — **`splunk-init`** line + **Splunk is ready ✓**; exits non-zero if init failed or Splunk down |
+| Stack healthy? | `make status` — **`splunk-init`** line + **Splunk is ready ✓**; exits non-zero if init failed or Splunk is running but API not ready (exits **0** when stack is stopped) |
 | MCP client path OK? | `make verify-mcp-remote` (all clients) or `make verify-mcp-remote MCP_VERIFY_CLIENT=cursor` |
 | Pre-demo / both checks? | `make demo-prep` (status + verify + warm-stack reminder) or `make verify` (status then verify only) |
 | Init failed? | `docker logs splunk-init` (see **`docs/poc/TROUBLESHOOTING.md`**) |
