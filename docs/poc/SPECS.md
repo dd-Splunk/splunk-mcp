@@ -35,7 +35,7 @@ MCP user must **not** be `admin`. The **`ai`** SPL command is available to all u
 - Splunk MCP Server (7931)
 - SA-Eventgen (1924)
 - Config Explorer (4353)
-- Splunk AI Assistant for SPL (7245)
+- Splunk AI Assistant (7245)
 
 Splunk AI Toolkit (2890) and Python for Scientific Computing (2882) are **out of scope** unless installed manually.
 

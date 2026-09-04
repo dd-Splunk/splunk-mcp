@@ -15,10 +15,10 @@ services:
       #   app/1924  = Splunk Eventgen (sample data / Eventgen modinput)
       #   app/4353  = Config Explorer (optional UI utility)
       #   app/7931  = Splunk MCP Server (required for /services/mcp)
-      #   app/7245  = Splunk AI Assistant for SPL
+      #   app/7245  = Splunk AI Assistant (SPL / saia_* MCP tools)
       # If a download fails (404, etc.), replace the /release/VERSION/ segment with a current
       # release for that app from https://splunkbase.splunk.com/app/<id> .
-      SPLUNK_APPS_URL: https://splunkbase.splunk.com/app/1924/release/8.2.1/download/,https://splunkbase.splunk.com/app/4353/release/1.8.26/download/,https://splunkbase.splunk.com/app/7931/release/1.3.1/download/,https://splunkbase.splunk.com/app/7245/release/2.2.0/download/
+      SPLUNK_APPS_URL: https://splunkbase.splunk.com/app/1924/release/8.2.1/download/,https://splunkbase.splunk.com/app/4353/release/1.8.26/download/,https://splunkbase.splunk.com/app/7931/release/2.0.0/download/,https://splunkbase.splunk.com/app/7245/release/2.3.2/download/
       TZ: ${TZ:-Europe/Brussels}
     volumes:
       - so1-var:/opt/splunk/var
