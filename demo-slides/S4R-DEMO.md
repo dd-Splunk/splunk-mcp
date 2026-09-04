@@ -468,7 +468,7 @@ Synthesize with a go/no-go on international marketing spend.
 
 ```text
 As Buttercup Power User: is the revenue impact from an active attack, or from a broken checkout service?
-Check make s4r-attack-nk-status. Delegate to all four teams. Read docs/s4r/SPL-CATALOG.md including § Workshop modes. MCP only. Last 15 minutes.
+Check SA-S4R_query_nk_demo_state (fallback: make s4r-attack-nk-status). Delegate to all four teams. Read docs/s4r/SPL-CATALOG.md including § Workshop modes. MCP only. Last 15 minutes.
 Synthesize who to mobilize first — Security vs Engineering.
 ```
 

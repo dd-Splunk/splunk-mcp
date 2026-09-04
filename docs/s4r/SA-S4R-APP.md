@@ -159,14 +159,16 @@ The stanza **`[product_codes]`** in **`default/transforms.conf`** points at the 
 
 Two storylines share the same baseline traffic; the NK stanza is toggled without editing Eventgen by hand.
 
-| Mode | Enable / disable | After toggle |
-| ---- | ---------------- | ------------ |
-| **Infrastructure** (default) | `make s4r-attack-nk-disable` or MCP **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) | MCP reloads Eventgen modinput; `make restart` if signal is slow |
-| **Active threat** | `make s4r-attack-nk-enable` or MCP **`SA-S4R_apply_nk_demo_state`** (`mode=threat`) | Same |
+| Mode | Enable / disable (preferred) | After toggle |
+| ---- | -------------------------- | ------------ |
+| **Infrastructure** (default) | MCP **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) | Reloads Eventgen modinput — **no `make restart`** |
+| **Active threat** | MCP **`SA-S4R_apply_nk_demo_state`** (`mode=threat`) | Same; wait 1–2 min, then **`SA-S4R_validate_nk_attack_traffic`** |
 
-Check current mode: **`SA-S4R_query_nk_demo_state`** (MCP), **`make s4r-attack-nk-status`**, or read `[attack.nk.purchase.sample]` in **`eventgen.conf`**. Script: **`scripts/toggle-s4r-attack-nk.sh`** (`enable` \| `disable` \| `status`). MCP tools are registered on **`make up`**; re-register with **`make register-s4r-mcp-tools`** — see [MCP-TOOLS.md](MCP-TOOLS.md).
+**Shell fallback:** `make s4r-attack-nk-disable` / `make s4r-attack-nk-enable` then **`make restart`** if MCP is unavailable or signal is slow.
 
-Wait **1–2 minutes** after restart before validating in Search (narrow time range to **last 15m** so old uniform traffic does not mask the attack).
+Check current mode: **`SA-S4R_query_nk_demo_state`** (MCP), **`make s4r-attack-nk-status`** (shell), or read `[attack.nk.purchase.sample]` in **`eventgen.conf`**. Script: **`scripts/toggle-s4r-attack-nk.sh`** (`enable` \| `disable` \| `status`). MCP tools register on **`make up`**; re-register with **`make register-s4r-mcp-tools`** — see [MCP-TOOLS.md](MCP-TOOLS.md).
+
+Wait **1–2 minutes** after enabling threat mode before validating in Search (narrow time range to **last 15m** so old uniform traffic does not mask the attack).
 
 #### What each S4R agent should see
 
@@ -197,7 +199,8 @@ NK attack token sources: **`samples/nk_clientip.txt`**, **`nk_status.txt`**, **`
 
 | Symptom | Likely cause | Fix |
 | ------- | ------------ | --- |
-| `make s4r-attack-nk-enable` but no NK events | Splunk not restarted | `make restart`, wait ~2 min |
+| NK enabled via MCP but no events yet | Eventgen warming up | Wait 1–2 min; **`SA-S4R_validate_nk_attack_traffic`** |
+| `make s4r-attack-nk-enable` but no NK events | Splunk not restarted (shell path) | `make restart`, wait ~2 min |
 | Still no NK UAs / IPs | Missing sample template | Confirm **`samples/attack.nk.purchase.sample`** exists (basename must match stanza) |
 | NK mode “stuck” on after disable | Container still running old config | `make s4r-attack-nk-disable` then **`make restart`** |
 | Geo shows NK but agents say “infrastructure” | Time range too wide | Use **last 15m** after enable; baseline traffic dilutes the signal |

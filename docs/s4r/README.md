@@ -24,6 +24,7 @@ Stack install and MCP bootstrap: [../poc/PRESALES.md](../poc/PRESALES.md) · [..
 | Workshop `local/` setup (props, nav, permissions) | [SA-S4R/local/README](../../SA-S4R/local/README) |
 | Present the agentic demo (slides + script) | [demo-slides/](../../demo-slides/) — `s4r-demo-slides.md`, [S4R-DEMO.md](../../demo-slides/S4R-DEMO.md) |
 | Cursor agent prompts | [`.cursor/agents/`](../../.cursor/agents/) |
+| Repo cheat sheet / pre-demo | Cursor skills **`/usage`** and **`/demo-prep`** (see [AGENTS.md § Cursor skills](../../AGENTS.md#cursor-skills-project)) |
 
 ## Cursor subagents
 
@@ -38,10 +39,15 @@ Power User and specialists set **`model`** and **`is_background`** in YAML front
 
 ## Workshop data modes
 
-```bash
-make s4r-attack-nk-status    # disabled = infrastructure (default)
-make s4r-attack-nk-enable && make restart   # active threat storyline
-```
+**Preferred (Splunk MCP):** use **`SA-S4R_*`** tools registered on `make up` — see [MCP-TOOLS.md](MCP-TOOLS.md).
+
+| Ask / action | MCP tool |
+| ------------ | -------- |
+| What mode are we in? | **`SA-S4R_query_nk_demo_state`** → `infrastructure` or `threat` |
+| Start NK storyline (explicit user ask) | **`SA-S4R_apply_nk_demo_state`** (`mode: threat`); then **`SA-S4R_validate_nk_attack_traffic`** (~1–2 min) |
+| Return to infrastructure | **`SA-S4R_apply_nk_demo_state`** (`mode: infrastructure`) |
+
+MCP mode changes reload Eventgen — **no `make restart`**. Shell fallback (no MCP): `make s4r-attack-nk-status` · `make s4r-attack-nk-enable` / `disable` then **`make restart`**.
 
 Detail: [SA-S4R-APP.md](SA-S4R-APP.md) · discriminating SPL: [SPL-CATALOG.md § Workshop modes](SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat).
 

@@ -304,7 +304,7 @@ Requires Splunk **`iplocation`** (GeoLite or equivalent).
 
 ## § Workshop modes (infrastructure vs threat)
 
-Toggle commands and Eventgen detail: [SA-S4R-APP.md](SA-S4R-APP.md). Check mode: **`make s4r-attack-nk-status`**. After enable/disable: **`make restart`**, wait ~2 min, search **last 15m**.
+**Check mode:** **`SA-S4R_query_nk_demo_state`** (MCP) or `make s4r-attack-nk-status` (shell). **Toggle:** **`SA-S4R_apply_nk_demo_state`** (`mode`: `infrastructure` \| `threat`) — reloads Eventgen; no `make restart`. Shell fallback: `make s4r-attack-nk-enable` / `disable` then **`make restart`**, wait ~2 min, search **last 15m**. Eventgen detail: [SA-S4R-APP.md](SA-S4R-APP.md).
 
 | Mode | Headline |
 | ---- | -------- |
@@ -348,7 +348,7 @@ index=main sourcetype=access_combined action=purchase
 **Workflow:**
 
 1. Confirm data (`§ Data contract` quick check).
-2. Check workshop mode if ask is infrastructure vs threat (`make s4r-attack-nk-status`).
+2. Check workshop mode if ask is infrastructure vs threat (**`SA-S4R_query_nk_demo_state`** or `make s4r-attack-nk-status`).
 3. Delegate — run § IT Ops, § DevOps, § Business Analytics, § Security in parallel when needed.
 4. Synthesize (template in [AGENTS.md](AGENTS.md) and `s4r-power-user.md`).
 
@@ -380,4 +380,4 @@ index=main sourcetype=access_combined action=purchase
 - [Splunk4Rookies - Lab Guide - Apr 2026.pdf](Splunk4Rookies%20-%20Lab%20Guide%20-%20Apr%202026.pdf) — workshop cheat-sheet SPL (Exercises 3–7)
 - [AGENTS.md](AGENTS.md) — architecture, delegation, demo script
 - [SA-S4R-APP.md](SA-S4R-APP.md) — Eventgen, NK toggle, troubleshooting
-- [API_REFERENCE.md](API_REFERENCE.md) — Splunk MCP tools
+- [MCP-TOOLS.md](MCP-TOOLS.md) — SA-S4R MCP tools (`SA-S4R_*`)

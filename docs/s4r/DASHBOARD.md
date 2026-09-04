@@ -105,7 +105,7 @@ Tasks:
 - Workshop sample log uses **`clientip`** in SPL for geo; access_combined may expose **`clientip`** after parsing—confirm field name in Search (`clientip` vs `CLIENTIP` in raw events).
 - **`status>=400`** defines “unsuccessful” / failure for DevOps and lost-revenue panels.
 - Eventgen in this repo emits workshop-shaped traffic (~67% `/product.screen`, ~33% `/cart.do`) so panel ratios and errors should look plausible after a few minutes of ingestion.
-- **Workshop modes:** default data supports **infrastructure failure** (Lab 3–5). Optional **`make s4r-attack-nk-enable`** + **`make restart`** adds NK geo concentration for Lab 6 / “threat vs infrastructure” agent demos — see [SA-S4R-APP.md](SA-S4R-APP.md).
+- **Workshop modes:** default data supports **infrastructure failure** (Lab 3–5). For Lab 6 / “threat vs infrastructure” agent demos, enable threat via **`SA-S4R_apply_nk_demo_state`** (`mode: threat`) — no `make restart`. Shell fallback: **`make s4r-attack-nk-enable`** + **`make restart`**. See [SA-S4R-APP.md](SA-S4R-APP.md) and [MCP-TOOLS.md](MCP-TOOLS.md).
 - Build the Dashboard Studio view in Splunk Web and save under **`SA-S4R/local/data/ui/views/`** (gitignored). Snippets for nav, props, and permissions: **`SA-S4R/local/README`**. Keep the background reference as a dashboard asset path above.
 
 ## References

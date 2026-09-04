@@ -11,11 +11,12 @@ OP ?= op
 MCP_CLIENT ?= cursor
 MCP_VERIFY_CLIENT ?= all
 MCP_CLIENTS := cursor goose claude
+MCP_UPDATE_ON_BOOT ?= cursor
 
 export ENV_FILE ENV_OUT ENV_EXAMPLE OP DC
 
 .PHONY: help up down restart clean logs status demo-prep verify cloud-bootstrap \
-	update-mcp-clients update-mcp-client verify-mcp-remote \
+	park-mcp-clients update-mcp-clients update-mcp-client verify-mcp-remote \
 	update-claude-config update-cursor-config update-goose-config \
 	s4r-attack-nk-enable s4r-attack-nk-disable s4r-attack-nk-status register-s4r-mcp-tools \
 	marp-preview marp-serve marp-html
@@ -24,22 +25,26 @@ help: ## Show targets
 	@awk 'BEGIN {FS = ":.*##"; printf "Splunk MCP PoC\n\n"} \
 		/^[$$()% a-zA-Z_-]+:.*?##/ { printf "  make %-22s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
-up: ## Start stack, register S4R MCP tools, and update MCP client configs
+up: ## Start stack, mint MCP token, register S4R tools, update client configs
 	@echo "Starting Splunk with MCP Server app..."
 	@./scripts/compose-up.sh
+	@echo ""
+	@echo "Updating MCP client configs ($(MCP_UPDATE_ON_BOOT); one mint)..."
+	@./scripts/mcp-client.sh update-all $(MCP_UPDATE_ON_BOOT)
 	@echo ""
 	@echo "Registering SA-S4R workshop MCP tools..."
 	@$(MAKE) register-s4r-mcp-tools
 	@echo ""
 	@echo "Splunk Web UI:  https://localhost:8000"
 	@echo "Splunk MCP API: https://localhost:8089/services/mcp"
-	@echo ""
-	@echo "Updating Cursor, Goose, and Claude MCP configs (npx mcp-remote)..."
-	@$(MAKE) update-mcp-clients
 
-down: ## Stop containers (no secrets required)
+down: ## Park MCP clients and stop containers (no secrets required)
+	@./scripts/mcp-client.sh park all || true
 	@echo "Stopping stack..."
 	@$(DC) down
+
+park-mcp-clients: ## Remove splunk-mcp-server from client configs (no secrets)
+	@./scripts/mcp-client.sh park all
 
 restart: ## Restart Splunk container (no secrets required)
 	@$(DC) restart so1
@@ -47,7 +52,8 @@ restart: ## Restart Splunk container (no secrets required)
 clean: ## Remove volumes and .env (destructive)
 	@echo "WARNING: removes containers, volumes, and $(ENV_OUT)."
 	@read -p "Are you sure? [y/N] " -n 1 -r; echo; \
-	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		./scripts/mcp-client.sh park all || true; \
 		$(DC) down -v; \
 		rm -f "$(ENV_OUT)"; \
 		echo "Cleanup complete."; \
@@ -91,13 +97,8 @@ status: ## Container status and Splunk API probe
 	if [[ "$$init_rc" -ne 0 ]]; then exit "$$init_rc"; fi; \
 	exit "$$splunk_rc"
 
-update-mcp-clients: ## Update Claude, Cursor, and Goose (mcp-remote + token)
-	@for c in $(MCP_CLIENTS); do \
-		echo "Updating $$c (waits for splunk-init, then mints token)..."; \
-		./scripts/mcp-client.sh update "$$c" \
-			|| { echo "$$c config skipped — run: make update-mcp-client MCP_CLIENT=$$c"; }; \
-		echo ""; \
-	done
+update-mcp-clients: ## Update Claude, Cursor, and Goose (one mint, all clients)
+	@./scripts/mcp-client.sh update-all $(MCP_CLIENTS)
 
 update-mcp-client: ## Update one client (MCP_CLIENT=claude|cursor|goose)
 	@./scripts/mcp-client.sh update "$(MCP_CLIENT)"
