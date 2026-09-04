@@ -132,7 +132,8 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 | `demo-prep` | Runs `status`, then `verify-mcp-remote`, and prints the live-demo warm-stack reminder. Cursor: **`/demo-prep`** skill |
 | `cloud-bootstrap` | `scripts/cloud-bootstrap.sh` — Cursor Cloud VM prep before `make up` (`CLOUD_BOOTSTRAP_ARGS` for flags) |
 | `restart` / `logs` / `status` | Lifecycle only (no secrets / `op` required) |
-| `clean` | `scripts/mcp-client.sh park all`, then `docker compose down -v`, then remove `.env` (no `op` required) |
+| `clean` | `scripts/mcp-client.sh park all`, then `docker compose down -v`, then remove `.env` (no `op` required). Prompts unless **`make clean-y`** or **`CLEAN_YES=1`** |
+| `clean-y` | Non-interactive **`clean`** (for automation, e.g. `make clean-y && make up`) |
 | `s4r-attack-nk-enable` | **Shell fallback:** sets **`disabled = false`** on NK Eventgen stanza; run **`make restart`**. Prefer MCP **`SA-S4R_apply_nk_demo_state`** (`mode=threat`) — no restart |
 | `s4r-attack-nk-disable` | **Shell fallback:** sets **`disabled = true`**. Prefer MCP **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) |
 | `s4r-attack-nk-status` | **Shell fallback:** prints NK stanza enabled/disabled. Prefer MCP **`SA-S4R_query_nk_demo_state`** |

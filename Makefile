@@ -15,7 +15,7 @@ MCP_UPDATE_ON_BOOT ?= cursor
 
 export ENV_FILE ENV_OUT ENV_EXAMPLE OP DC
 
-.PHONY: help up down restart clean logs status demo-prep verify cloud-bootstrap \
+.PHONY: help up down restart clean clean-y logs status demo-prep verify cloud-bootstrap \
 	park-mcp-clients update-mcp-clients update-mcp-client verify-mcp-remote \
 	update-claude-config update-cursor-config update-goose-config \
 	s4r-attack-nk-enable s4r-attack-nk-disable s4r-attack-nk-status register-s4r-mcp-tools \
@@ -49,15 +49,21 @@ park-mcp-clients: ## Remove splunk-mcp-server from client configs (no secrets)
 restart: ## Restart Splunk container (no secrets required)
 	@$(DC) restart so1
 
-clean: ## Remove volumes and .env (destructive)
+clean: ## Remove volumes and .env (destructive; make clean-y or CLEAN_YES=1 skips prompt)
 	@echo "WARNING: removes containers, volumes, and $(ENV_OUT)."
-	@read -p "Are you sure? [y/N] " -n 1 -r; echo; \
-		if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+	@skip_confirm=0; \
+	if [[ -n "$(CLEAN_YES)" ]]; then skip_confirm=1; fi; \
+	if [[ $$skip_confirm -eq 1 ]]; then reply=Y; \
+	else read -p "Are you sure? [y/N] " -n 1 -r; echo; reply=$$REPLY; fi; \
+	if [[ $$reply =~ ^[Yy]$$ ]]; then \
 		./scripts/mcp-client.sh park all || true; \
 		$(DC) down -v; \
 		rm -f "$(ENV_OUT)"; \
 		echo "Cleanup complete."; \
 	else echo "Cancelled."; fi
+
+clean-y: CLEAN_YES=1
+clean-y: clean ## Same as clean without prompt (e.g. make clean-y && make up)
 
 logs: ## Follow Splunk logs (docker logs so1)
 	@docker logs -f so1 2>&1 || { echo "Hint: run make up"; exit 1; }

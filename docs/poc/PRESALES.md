@@ -193,7 +193,7 @@ Tokens remain **GA** in 1.3; OAuth is the preferred interactive path for support
 ## Greenfield vs clean slate
 
 - **Day to day:** `make down` / `make up`; volumes and token often persist.
-- **Important clean demo:** `make clean` (destructive; prompts)—expect a full **re-download and wait** next time. See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for volume reset.
+- **Important clean demo:** `make clean` (destructive; prompts)—use **`make clean-y`** for automation (e.g. `make clean-y && make up`). See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for volume reset.
 
 ## LLM client configuration
 
