@@ -130,12 +130,14 @@ Wait for all four summaries; synthesize one executive answer (Power User templat
 
 ## Synthetic data modes
 
-Before “infrastructure vs threat” questions: **`make s4r-attack-nk-status`**. Toggle and Eventgen detail: [SA-S4R-APP.md](SA-S4R-APP.md). Discriminating SPL: [SPL-CATALOG.md § Workshop modes](SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat).
+Before “infrastructure vs threat” questions: **`SA-S4R_query_nk_demo_state`** (Splunk MCP). Shell fallback: `make s4r-attack-nk-status`. Toggle and Eventgen detail: [SA-S4R-APP.md](SA-S4R-APP.md). Discriminating SPL: [SPL-CATALOG.md § Workshop modes](SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat).
 
-| Mode | How to set | Power User headline |
-| ---- | ---------- | ------------------- |
-| **Infrastructure** (default) | `make s4r-attack-nk-disable` (+ `make restart`) | 503/404 everywhere; flat ~40% geo/platform |
-| **Active threat** | `make s4r-attack-nk-enable` then `make restart` | NK / Pyongyang on failed purchases; scripted UAs |
+| Mode | How to set (preferred) | Power User headline |
+| ---- | -------------------- | ------------------- |
+| **Infrastructure** (default) | **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) | 503/404 everywhere; flat ~40% geo/platform |
+| **Active threat** | **`SA-S4R_apply_nk_demo_state`** (`mode=threat`); validate with **`SA-S4R_validate_nk_attack_traffic`** | NK / Pyongyang on failed purchases; scripted UAs |
+
+Shell fallback (requires **`make restart`** after toggle): `make s4r-attack-nk-disable` / `make s4r-attack-nk-enable`.
 
 Use **last 15m** after enabling threat mode.
 
@@ -150,7 +152,7 @@ Quick beats:
 | 1. Layers | `SPL-CATALOG.md`, one `s4r-*.md`, `s4r-power-user.md`, `.cursor/mcp.json` | Runbook, roles, orchestrator, MCP bridge |
 | 2. Live ask | *“Is Buttercup losing money?”* | Delegate; `splunk_run_query` in tool trace |
 | 3. Synthesis | Power User table | One executive answer |
-| 4. Flip mode | `make s4r-attack-nk-enable` + `make restart` | Data mode changes verdict |
+| 4. Flip mode | **`SA-S4R_apply_nk_demo_state`** (`mode: threat`) + **`SA-S4R_validate_nk_attack_traffic`** | Data mode changes verdict |
 | 5. Threat ask | *“Infrastructure or active threat?”* (last 15m) | Security § + Workshop modes |
 | 6. Dashboard | [DASHBOARD.md](DASHBOARD.md) | Panels = catalog sections |
 
@@ -179,7 +181,7 @@ Also: [PRESALES.md](PRESALES.md#optional-agentic-buttercup-demo-splunk4rookies).
 
 **User:** *“Is the money loss bad infrastructure or an active threat?”*
 
-1. **Power User** — `make s4r-attack-nk-status`; last 15m if threat mode.
+1. **Power User** — **`SA-S4R_query_nk_demo_state`**; last 15m if threat mode.
 2. **IT Ops** — purchase errors by status (catalog § Workshop modes).
 3. **DevOps** — failure rate by platform + scripted UAs.
 4. **Security** — failed purchases by Country/City/IP.

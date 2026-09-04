@@ -121,19 +121,21 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 
 | Target | Behavior |
 | ------ | -------- |
-| `up` | `scripts/compose-up.sh` (`.env` or `op run --env-file=tpl.env`), then `register-s4r-mcp-tools`, then `update-mcp-clients` |
-| `update-mcp-clients` | `scripts/mcp-client.sh update` for claude, cursor, goose |
+| `up` | `scripts/compose-up.sh` (`.env` or `op run --env-file=tpl.env`), then `update-all` (`MCP_UPDATE_ON_BOOT`, default `cursor`), then `register-s4r-mcp-tools` |
+| `down` | `scripts/mcp-client.sh park all` (no secrets), then `docker compose down` |
+| `park-mcp-clients` | `scripts/mcp-client.sh park all` — remove `splunk-mcp-server` from client configs |
+| `update-mcp-clients` | `scripts/mcp-client.sh update-all` for cursor, goose, claude (one mint) |
 | `update-mcp-client` | One client: `MCP_CLIENT=claude\|cursor\|goose` |
 | `update-claude-config` / `update-cursor-config` / `update-goose-config` | Aliases for `update-mcp-client` |
 | `verify-mcp-remote` | `scripts/mcp-client.sh verify` — client config + direct `tools/list` + **`npx mcp-remote` stdio** e2e (`MCP_VERIFY_CLIENT=all` by default) |
 | `verify` | Runs `status`, then `verify-mcp-remote` |
-| `demo-prep` | Runs `status`, then `verify-mcp-remote`, and prints the live-demo warm-stack reminder |
+| `demo-prep` | Runs `status`, then `verify-mcp-remote`, and prints the live-demo warm-stack reminder. Cursor: **`/demo-prep`** skill |
 | `cloud-bootstrap` | `scripts/cloud-bootstrap.sh` — Cursor Cloud VM prep before `make up` (`CLOUD_BOOTSTRAP_ARGS` for flags) |
-| `down` / `restart` / `logs` / `status` | Lifecycle only (no secrets / `op` required) |
-| `clean` | `docker compose down -v` then remove `.env` (no `op` required) |
-| `s4r-attack-nk-enable` | Sets **`disabled = false`** on **`[attack.nk.purchase.sample]`** in **`SA-S4R/default/eventgen.conf`** (active-threat workshop mode); run **`make restart`** afterward |
-| `s4r-attack-nk-disable` | Sets **`disabled = true`** (default infrastructure-failure storyline) |
-| `s4r-attack-nk-status` | Prints whether the NK attack Eventgen stanza is enabled |
+| `restart` / `logs` / `status` | Lifecycle only (no secrets / `op` required) |
+| `clean` | `scripts/mcp-client.sh park all`, then `docker compose down -v`, then remove `.env` (no `op` required) |
+| `s4r-attack-nk-enable` | **Shell fallback:** sets **`disabled = false`** on NK Eventgen stanza; run **`make restart`**. Prefer MCP **`SA-S4R_apply_nk_demo_state`** (`mode=threat`) — no restart |
+| `s4r-attack-nk-disable` | **Shell fallback:** sets **`disabled = true`**. Prefer MCP **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) |
+| `s4r-attack-nk-status` | **Shell fallback:** prints NK stanza enabled/disabled. Prefer MCP **`SA-S4R_query_nk_demo_state`** |
 | `register-s4r-mcp-tools` | Host `POST /services/mcp_tools` for **SA-S4R** (also run by `make up`); re-run after editing `s4r_mcp_tools.json` |
 | `marp-preview` / `marp-serve` / `marp-html` | Preview, serve, or export the S4R presenter deck under `demo-slides/` |
 

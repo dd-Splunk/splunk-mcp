@@ -3,6 +3,8 @@
 #
 # Usage:
 #   ./scripts/mcp-client.sh update <claude|cursor|goose>
+#   ./scripts/mcp-client.sh update-all [claude cursor goose ...]
+#   ./scripts/mcp-client.sh park <claude|cursor|goose|all>
 #   ./scripts/mcp-client.sh verify <claude|cursor|goose|all>
 #
 # Env: CURSOR_MCP_JSON, SPLUNK_MCP_ENDPOINT, SPLUNK_MCP_TLS_INSECURE
@@ -18,10 +20,15 @@ usage() {
   cat <<EOF
 Usage:
   $(basename "$0") update <claude|cursor|goose>
+  $(basename "$0") update-all [claude cursor goose ...]   # one mint, write all listed clients
+  $(basename "$0") park <claude|cursor|goose|all>         # remove splunk-mcp-server (no secrets)
   $(basename "$0") verify <claude|cursor|goose|all>
 
 All clients use npx mcp-remote to https://localhost:8089/services/mcp with a minted bearer token
 (stored only in client config files, not in this repo).
+
+park prevents auto-reconnect with stale tokens during stack boot (make down calls this).
+update-all mints once and updates every listed client (default: cursor goose claude).
 
 verify runs client config checks, then an end-to-end npx mcp-remote stdio tools/list handshake.
 EOF
@@ -93,12 +100,14 @@ mint_mcp_token() {
 }
 
 update_json_mcp_remote() {
-  local file="$1" label="$2"
+  local file="$1" label="$2" token="${3:-}"
   command -v jq >/dev/null 2>&1 || die "jq required for $label (brew install jq)"
-  local endpoint token block current npx_cmd
+  local endpoint block current npx_cmd
   endpoint=$(splunk_mcp_endpoint)
   npx_cmd="$(npx_command)"
-  token="$(mint_mcp_token)" || die "could not mint MCP token (is Splunk up? secrets in .env or tpl.env?)"
+  if [[ -z "$token" ]]; then
+    token="$(mint_mcp_token)" || die "could not mint MCP token (is Splunk up? secrets in .env or tpl.env?)"
+  fi
   mkdir -p "$(dirname "$file")"
   block=$(mcp_servers_block_mcp_remote_jq "$endpoint" "$token" "$npx_cmd")
   if [[ -f "$file" ]] && current=$(cat "$file") && echo "$current" | jq empty 2>/dev/null; then
@@ -130,12 +139,12 @@ update_cursor() {
   echo "Restart Cursor or reload MCP servers."
 }
 
-update_goose() {
+apply_goose_splunk_mcp() {
+  local token="$1"
   command -v jq >/dev/null 2>&1 || die "jq required for Goose (brew install jq)"
-  local endpoint token header tls_insecure dir file npx_cmd wrapper
+  local endpoint header tls_insecure dir file npx_cmd wrapper
   endpoint=$(splunk_mcp_endpoint)
   npx_cmd="$(npx_command)"
-  token="$(mint_mcp_token)" || die "could not mint MCP token"
   header="Authorization: Bearer ${token}"
   tls_insecure="${SPLUNK_MCP_TLS_INSECURE:-1}"
   wrapper="${ROOT}/scripts/mcp-remote-splunk.sh"
@@ -195,8 +204,121 @@ with open(config_file, "w", encoding="utf-8") as f:
     f.write(content)
 PY
   echo "Updated Goose: $file ($wrapper → $endpoint)"
+}
+
+update_goose() {
+  local token="${1:-}"
+  if [[ -z "$token" ]]; then
+    token="$(mint_mcp_token)" || die "could not mint MCP token"
+  fi
+  apply_goose_splunk_mcp "$token"
   echo "Bearer token stored in Goose config only (not in this repo)."
   echo "Restart Goose for changes to take effect."
+}
+
+remove_goose_splunk_mcp() {
+  local file="${HOME}/.config/goose/config.yaml"
+  [[ -f "$file" ]] || return 0
+  grep -q 'splunk-mcp-server:' "$file" || return 0
+  python3 - "$file" <<'PY'
+import re
+import sys
+
+config_file = sys.argv[1]
+with open(config_file, encoding="utf-8") as f:
+    content = f.read()
+pattern = r'^\s{2}splunk-mcp-server:.*?(?=\n\s{2}[a-zA-Z_]|\n[a-zA-Z_]|\Z)'
+new_content = re.sub(pattern, "", content, flags=re.MULTILINE | re.DOTALL)
+if new_content != content:
+    with open(config_file, "w", encoding="utf-8") as f:
+        f.write(new_content)
+PY
+  echo "Parked Goose: removed splunk-mcp-server from $file"
+}
+
+park_json_mcp_remote() {
+  local file="$1" label="$2"
+  [[ -f "$file" ]] || return 0
+  command -v jq >/dev/null 2>&1 || return 0
+  jq empty "$file" 2>/dev/null || return 0
+  if jq -e '.mcpServers["splunk-mcp-server"]' "$file" >/dev/null 2>&1; then
+    jq 'del(.mcpServers["splunk-mcp-server"])' "$file" >"${file}.tmp"
+    mv "${file}.tmp" "$file"
+    echo "Parked $label: removed splunk-mcp-server from $file"
+  fi
+}
+
+park_client() {
+  local client="$1"
+  case "$client" in
+    claude) park_json_mcp_remote "$(client_config_path claude)" "Claude Desktop" ;;
+    cursor) park_json_mcp_remote "$(client_config_path cursor)" "Cursor" ;;
+    goose) remove_goose_splunk_mcp ;;
+  esac
+}
+
+cmd_park() {
+  local target="${1:-all}"
+  case "$target" in
+    all)
+      for c in $VALID_CLIENTS; do
+        park_client "$c"
+      done
+      ;;
+    claude | cursor | goose)
+      valid_client "$target" || die "unknown client '$target' (use: $VALID_CLIENTS or all)"
+      park_client "$target"
+      ;;
+    *)
+      die "unknown park target '$target' (use: $VALID_CLIENTS or all)"
+      ;;
+  esac
+}
+
+cmd_update_all() {
+  local clients=()
+  local client token endpoint npx_cmd
+
+  if [[ $# -eq 0 ]]; then
+    clients=(cursor goose claude)
+  else
+    clients=("$@")
+  fi
+
+  command -v jq >/dev/null 2>&1 || die "jq required (brew install jq)"
+  for client in "${clients[@]}"; do
+    valid_client "$client" || die "unknown client '$client' (use: $VALID_CLIENTS)"
+  done
+
+  endpoint=$(splunk_mcp_endpoint)
+  npx_cmd="$(npx_command)"
+  token="$(mint_mcp_token)" || die "could not mint MCP token (is Splunk up? secrets in .env or tpl.env?)"
+
+  for client in "${clients[@]}"; do
+    case "$client" in
+      claude)
+        update_json_mcp_remote "$(client_config_path claude)" "Claude Desktop" "$token"
+        ;;
+      cursor)
+        update_json_mcp_remote "$(client_config_path cursor)" "Cursor" "$token"
+        ;;
+      goose)
+        apply_goose_splunk_mcp "$token"
+        ;;
+    esac
+  done
+
+  echo "Minted one token; updated: ${clients[*]} ($npx_cmd mcp-remote → $endpoint)"
+  echo "Bearer token stored in client configs only (not in this repo)."
+  if [[ " ${clients[*]} " == *" cursor "* ]]; then
+    echo "Reload MCP servers in Cursor (or restart Cursor)."
+  fi
+  if [[ " ${clients[*]} " == *" claude "* ]]; then
+    echo "Restart Claude Desktop (Cmd+Q) for changes to take effect."
+  fi
+  if [[ " ${clients[*]} " == *" goose "* ]]; then
+    echo "Restart Goose for changes to take effect."
+  fi
 }
 
 client_config_path() {
@@ -431,12 +553,19 @@ main() {
       [[ $# -ge 1 ]] || usage 1
       cmd_update "$@"
       ;;
+    update-all)
+      cmd_update_all "$@"
+      ;;
+    park)
+      [[ $# -ge 1 ]] || usage 1
+      cmd_park "$@"
+      ;;
     verify)
       [[ $# -ge 1 ]] || usage 1
       cmd_verify "$@"
       ;;
     -h | --help | help) usage 0 ;;
-    *) die "unknown action '$action' (use: update|verify)" ;;
+    *) die "unknown action '$action' (use: update|update-all|park|verify)" ;;
   esac
 }
 

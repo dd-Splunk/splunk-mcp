@@ -39,12 +39,12 @@ Per [Splunk MCP Server 1.3](https://help.splunk.com/en/splunk-cloud-platform/mcp
 
 The **SA-S4R** app ships **Eventgen** configuration for synthetic **`access_combined`** events in **`main`**. See [SA-S4R-APP.md](../s4r/SA-S4R-APP.md) and workshop hub [s4r/README.md](../s4r/README.md).
 
-| Mode | Makefile | Narrative |
-| ---- | -------- | --------- |
-| Infrastructure (default) | `make s4r-attack-nk-disable` | Uniform ~40% errors (503/404); IT Ops leads |
-| Active threat (optional) | `make s4r-attack-nk-enable` then `make restart` | NK geo on failed purchases; Security leads |
+| Mode | Preferred (MCP) | Shell fallback | Narrative |
+| ---- | ----------------- | -------------- | --------- |
+| Infrastructure (default) | **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) | `make s4r-attack-nk-disable` + `make restart` | Uniform ~40% errors (503/404); IT Ops leads |
+| Active threat (optional) | **`SA-S4R_apply_nk_demo_state`** (`mode=threat`) | `make s4r-attack-nk-enable` + `make restart` | NK geo on failed purchases; Security leads |
 
-Agentic analysis: [S4R-AGENTS.md](../s4r/AGENTS.md).
+Check mode: **`SA-S4R_query_nk_demo_state`**. Agentic analysis: [AGENTS.md](../s4r/AGENTS.md).
 
 ## System components
 
@@ -123,9 +123,11 @@ make up
   │        ├─ Create/update role: mcp_user (capability mcp_tool_execute)
   │        └─ Create user: splunker
   └─ host (after splunk-init exits 0)
-     ├─ register-s4r-mcp-tools (POST /services/mcp_tools for SA-S4R)
-     └─ update-mcp-clients (token minted into client configs only)
+     ├─ update-all (MCP_UPDATE_ON_BOOT; mint token into client configs)
+     └─ register-s4r-mcp-tools (POST /services/mcp_tools for SA-S4R)
 ```
+
+**Shutdown:** `make down` runs **`mcp-client.sh park all`** first (removes `splunk-mcp-server` from client configs) so clients do not reconnect with stale tokens during the next boot.
 
 ## Security Architecture
 

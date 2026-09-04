@@ -21,9 +21,10 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`. H
 
 ## How the stack boots
 
-- **`make up`**: runs **`scripts/compose-up.sh`** → **`docker compose up -d`** with secrets from **either** a gitignored **`.env`** on disk **or** **`op run --env-file=tpl.env`** when `.env` is absent (requires signed-in `op`). After **`splunk-init`** exits **0**, **`make register-s4r-mcp-tools`** then **`make update-mcp-clients`**. See **`Makefile`** for exact behavior.
+- **`make up`**: runs **`scripts/compose-up.sh`** → **`docker compose up -d`** with secrets from **either** a gitignored **`.env`** on disk **or** **`op run --env-file=tpl.env`** when `.env` is absent (requires signed-in `op`). After **`splunk-init`** exits **0**, **`make update-mcp-clients`** (via **`update-all`**, default **`MCP_UPDATE_ON_BOOT=cursor`**) mints one token into client configs, then **`make register-s4r-mcp-tools`**. See **`Makefile`** for exact behavior.
 - **`compose-up.sh`** requires non-empty **`SPLUNK_PASSWORD`**, **`SPLUNKBASE_USER`**, **`SPLUNKBASE_PASS`**, and **`SPLUNK_MCP_PASSWORD`** (both Path A and Path B), then **`scripts/wait-splunk-init.sh`** blocks until **`splunk-init`** exits **0**.
-- **`make down`**, **`make logs`**, **`make restart`**, **`make status`**, **`make clean`**: plain **`docker`** / **`docker compose`** only—no `op` or project secrets required.
+- **`make down`**, **`make clean`**: **`scripts/mcp-client.sh park all`** first (removes **`splunk-mcp-server`** from client configs so Cursor does not reconnect with stale tokens during boot); then **`docker compose down`**. No `op` or project secrets required for park/down.
+- **`make logs`**, **`make restart`**, **`make status`**: plain **`docker`** / **`docker compose`** only—no `op` or project secrets required.
 - Bearer tokens from **`make update-mcp-clients`** are written only to client configs, not the repo.
 - **Secrets paths:** **Path A** — `tpl.env` + `op run` (no plaintext `.env`); **Path B** — hand-written **`.env`** from **`.env.example`** (plain values; Compose auto-loads it). If **`.env` is absent**, **`make up`** uses `op run --env-file=tpl.env`.
 - **`splunk-init`** runs **`scripts/setup-splunk.sh`** after **`so1`** is healthy.
@@ -41,9 +42,22 @@ Splunk REST bootstrap (see **`docs/poc/CONFIGURATION.md` § Appendix: setup-splu
 
 ## Client configuration scripts
 
-- **`scripts/mcp-client.sh update <claude\|cursor\|goose>`** — Claude → `~/Library/Application Support/Claude/claude_desktop_config.json`; Cursor → **`.cursor/mcp.json`**; Goose → **`~/.config/goose/config.yaml`**
+- **`scripts/mcp-client.sh update <claude\|cursor\|goose>`** — single client (mints one token)
+- **`scripts/mcp-client.sh update-all [clients…]`** — one mint, write all listed clients (default: cursor goose claude); used by **`make update-mcp-clients`** and **`make up`** (**`MCP_UPDATE_ON_BOOT`**, default **`cursor`**)
+- **`scripts/mcp-client.sh park <client\|all>`** — remove **`splunk-mcp-server`** from client configs (no secrets); **`make down`** calls this automatically
 - **`scripts/mcp-client.sh verify <client\|all>`** — config check + Splunk MCP `tools/list` (`make verify-mcp-remote` defaults to **`all`**)
 - **Client configs** store the **absolute path** to **`npx`** (GUI apps often lack Homebrew on `PATH`). Override at update time: **`MCP_NPX_COMMAND=/full/path/to/npx`**.
+
+## Cursor skills (project)
+
+Slash-invoked workflows in **`.cursor/skills/`** (see [create-skill](https://cursor.com/docs/context/skills)):
+
+| Skill | Invoke | Purpose |
+| ----- | ------ | ------- |
+| **`usage`** | `/usage` | Repo cheat sheet (`make`, `SA-S4R_*` tools, MCP park/boot) |
+| **`demo-prep`** | `/demo-prep` | Pre-demo go/no-go: status, MCP verify, S4R mode, auth-failure SPL |
+
+Workshop agent **roles** remain in **`.cursor/agents/`** (not skills).
 
 ## Quick verification
 
@@ -54,7 +68,7 @@ Splunk REST bootstrap (see **`docs/poc/CONFIGURATION.md` § Appendix: setup-splu
 | Pre-demo / both checks? | `make demo-prep` (status + verify + warm-stack reminder) or `make verify` (status then verify only) |
 | Init failed? | `docker logs splunk-init` (see **`docs/poc/TROUBLESHOOTING.md`**) |
 | Eventgen modinput? | `curl -k -u admin:<password> "https://localhost:8089/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default?output_mode=json"` |
-| S4R workshop mode? | `make s4r-attack-nk-status` — infrastructure (default) vs NK threat; see **`docs/s4r/SA-S4R-APP.md`** |
+| S4R workshop mode? | **`SA-S4R_query_nk_demo_state`** (MCP) or `make s4r-attack-nk-status` (shell) — infrastructure (default) vs NK threat; see **`docs/s4r/SA-S4R-APP.md`** · **`docs/s4r/MCP-TOOLS.md`** |
 | S4R agentic demo? | **`demo-slides/s4r-demo-slides.md`** (Marp — `make marp-preview`); script **`demo-slides/S4R-DEMO.md`**; build notes **`demo-slides/README.md`** |
 
 ## Makefile knobs
@@ -63,9 +77,10 @@ Splunk REST bootstrap (see **`docs/poc/CONFIGURATION.md` § Appendix: setup-splu
 - **`ENV_EXAMPLE`**: tracked template (default **`tpl.env.example`**)
 - **`ENV_OUT`**: optional plain env file for Path B (default **`.env`**)
 - **`OP`**, **`DC`**: 1Password CLI and docker compose command
-- **`MCP_CLIENT`**, **`MCP_VERIFY_CLIENT`**: single-client update/verify (default **`cursor`** / **`all`**)
+- **`MCP_CLIENT`**, **`MCP_VERIFY_CLIENT`**, **`MCP_UPDATE_ON_BOOT`**: single-client update/verify (default **`cursor`** / **`all`**); boot-time client list for **`make up`** (default **`cursor`**; set to **`cursor goose claude`** for all)
 - **`SPLUNK_MCP_ENDPOINT`**, **`SPLUNK_MCP_TLS_INSECURE`**, **`MCP_NPX_COMMAND`**: see **`docs/poc/CONFIGURATION.md`**
-- **`s4r-attack-nk-enable`** / **`s4r-attack-nk-disable`** / **`s4r-attack-nk-status`**: toggle optional NK purchase-attack Eventgen stanza; **`make restart`** after enable/disable — **`docs/s4r/SA-S4R-APP.md`**
+- **`SA-S4R_*` MCP tools** (preferred for workshop mode): **`SA-S4R_query_nk_demo_state`**, **`SA-S4R_apply_nk_demo_state`**, etc. — **`docs/s4r/MCP-TOOLS.md`**
+- **`s4r-attack-nk-enable`** / **`s4r-attack-nk-disable`** / **`s4r-attack-nk-status`**: shell fallback; **`make restart`** after enable/disable — **`docs/s4r/SA-S4R-APP.md`**
 - **`register-s4r-mcp-tools`**: re-register SA-S4R workshop MCP tools after editing **`s4r_mcp_tools.json`** (`make up` already runs this)
 
 ## Common failure modes

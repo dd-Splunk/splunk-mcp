@@ -23,9 +23,12 @@ See [SA-S4R-APP.md § `default/` vs `local/`](SA-S4R-APP.md#default-vs-local-spl
 
 ## NK attack workshop mode not visible in Search
 
-**Symptoms**: `make s4r-attack-nk-enable` ran but no `175.45.*` IPs, `python-requests`, or North Korea in `iplocation` results.
+**Symptoms**: Threat mode enabled (via **`SA-S4R_apply_nk_demo_state`** or `make s4r-attack-nk-enable`) but no `175.45.*` IPs, `python-requests`, or North Korea in `iplocation` results.
 
 **Solution**:
+
+1. **MCP path:** **`SA-S4R_query_nk_demo_state`** — expect `enabled: true` for threat mode. **`SA-S4R_validate_nk_attack_traffic`** (last 15m) after 1–2 min.
+2. **Shell path:**
 
 ```bash
 make s4r-attack-nk-status          # should print "enabled"
@@ -35,7 +38,7 @@ docker exec so1 grep -A1 'attack.nk.purchase' \
 
 ls SA-S4R/samples/attack.nk.purchase.sample   # must exist (basename = stanza name)
 
-make restart
+make restart                       # required for shell toggle only
 # wait ~2 minutes; search last 15m only
 ```
 

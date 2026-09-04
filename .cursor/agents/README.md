@@ -83,7 +83,7 @@ Wait for all four summaries; synthesize one executive answer (Power User templat
 
 **Expected synthesis (infrastructure mode, last 24h):** Yes — non-zero lost revenue; ~40% failure **server-wide** (DevOps); 403/401/402 on **`/cart.do`** (IT Ops); geo mostly baseline unless NK stanza was recently enabled.
 
-**Expected synthesis (mixed / residual NK in 24h):** Infrastructure still broken **and** Pyongyang / **175.45.\*** may dominate failed-purchase geo (Security) even when `make s4r-attack-nk-status` shows **disabled** — use **last 15m** after toggling modes, or narrow time range.
+**Expected synthesis (mixed / residual NK in 24h):** Infrastructure still broken **and** Pyongyang / **175.45.\*** may dominate failed-purchase geo (Security) even when **`SA-S4R_query_nk_demo_state`** shows **disabled** — use **last 15m** after toggling modes, or narrow time range.
 
 ### Splunk search concurrency
 
@@ -103,10 +103,10 @@ Detail: [s4r/TROUBLESHOOTING.md § Parallel agent searches](../../docs/s4r/TROUB
 
 ## Workshop data modes
 
-| Mode | Command |
-| ---- | ------- |
-| Infrastructure (default) | `make s4r-attack-nk-disable` then `make restart` |
-| Active threat (NK geo) | `make s4r-attack-nk-enable` then `make restart` |
-| Check current mode | `make s4r-attack-nk-status` |
+| Mode | Preferred (Splunk MCP) | Shell fallback |
+| ---- | ---------------------- | -------------- |
+| Infrastructure (default) | **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) | `make s4r-attack-nk-disable` then `make restart` |
+| Active threat (NK geo) | **`SA-S4R_apply_nk_demo_state`** (`mode=threat`); validate with **`SA-S4R_validate_nk_attack_traffic`** | `make s4r-attack-nk-enable` then `make restart` |
+| Check current mode | **`SA-S4R_query_nk_demo_state`** | `make s4r-attack-nk-status` |
 
-Discriminating SPL: [S4R-SPL-CATALOG.md § Workshop modes](../../docs/s4r/SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat). Eventgen detail: [SA-S4R-APP.md](../../docs/s4r/SA-S4R-APP.md).
+Discriminating SPL: [SPL-CATALOG.md § Workshop modes](../../docs/s4r/SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat). Eventgen detail: [SA-S4R-APP.md](../../docs/s4r/SA-S4R-APP.md). Cursor cheat sheet: **`/usage`**.

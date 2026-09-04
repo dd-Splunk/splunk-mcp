@@ -105,16 +105,17 @@ If nothing returns, check **Manage apps**, Eventgen, and [SA-S4R-APP.md](../s4r/
 
 ### Optional: “active threat” storyline (Splunk4Rookies)
 
-Default data reads as **infrastructure failure** (~40% 503/404 everywhere). For a **Security & Fraud** geo demo (North Korea concentration on failed purchases):
+Default data reads as **infrastructure failure** (~40% 503/404 everywhere). For a **Security & Fraud** geo demo (North Korea concentration on failed purchases), prefer Splunk MCP (explicit user ask for writes):
 
-```bash
-make s4r-attack-nk-enable
-make restart
-# wait ~2 minutes; search last 15m
-make s4r-attack-nk-status   # confirm enabled
-```
+| Step | MCP tool / prompt |
+| ---- | ----------------- |
+| Check mode | **`SA-S4R_query_nk_demo_state`** |
+| Enable threat | **`SA-S4R_apply_nk_demo_state`** with `mode: threat` |
+| Confirm traffic (~1–2 min) | **`SA-S4R_validate_nk_attack_traffic`** (last 15m) |
 
-Return to default: `make s4r-attack-nk-disable` then `make restart`. Validation SPL: [S4R-SPL-CATALOG.md § Workshop modes](../s4r/SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat).
+Return to default: **`SA-S4R_apply_nk_demo_state`** with `mode: infrastructure`. No `make restart` required for MCP toggles.
+
+**Shell fallback** (no MCP): `make s4r-attack-nk-enable` → `make restart` → wait ~2 min → `make s4r-attack-nk-status`. Return: `make s4r-attack-nk-disable` then `make restart`. Validation SPL: [SPL-CATALOG.md § Workshop modes](../s4r/SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat).
 
 ## Optional: agentic Buttercup demo (Splunk4Rookies)
 
@@ -129,10 +130,10 @@ Show **Splunk MCP + multi-agent** — not a single mega-prompt. Open these files
 
 **Live prompts (Cursor):**
 
-1. *“Is Buttercup losing money?”* — Power User delegates four teams; point at `splunk_run_query` in the tool trace.
-2. *“Infrastructure or active threat?”* — after `make s4r-attack-nk-enable` + `make restart`, repeat with **last 15m** time range.
+1. *“Is Buttercup losing money?”* — Power User delegates four teams; prefer **`SA-S4R_summarize_purchase_health`** or catalog SPL via `splunk_run_query`.
+2. *“Infrastructure or active threat?”* — **`SA-S4R_query_nk_demo_state`**, then enable threat with **`SA-S4R_apply_nk_demo_state`** if needed; repeat analysis with **last 15m**.
 
-**Presenter deck:** [`demo-slides/s4r-demo-slides.md`](../../demo-slides/s4r-demo-slides.md) (Marp — `make marp-preview` / `make marp-serve`). Script + timings: [S4R-DEMO.md](../../demo-slides/S4R-DEMO.md). MCP architecture: [S4R-MCP-TOOLS.md](../s4r/MCP-TOOLS.md). Workshop hub: [s4r/README.md](../s4r/README.md). Summary: [S4R-AGENTS.md § Demo script](../s4r/AGENTS.md#demo-script-agentic-buttercup--splunk-mcp).
+**Presenter deck:** [`demo-slides/s4r-demo-slides.md`](../../demo-slides/s4r-demo-slides.md) (Marp — `make marp-preview` / `make marp-serve`). Script + timings: [S4R-DEMO.md](../../demo-slides/S4R-DEMO.md). MCP architecture: [MCP-TOOLS.md](../s4r/MCP-TOOLS.md). Workshop hub: [s4r/README.md](../s4r/README.md). Summary: [AGENTS.md § Demo script](../s4r/AGENTS.md#demo-script-agentic-buttercup--splunk-mcp). Pre-demo: Cursor **`/demo-prep`** or `make demo-prep`.
 
 ## What this demo proves (and does not)
 
