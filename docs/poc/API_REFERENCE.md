@@ -201,7 +201,7 @@ Splunk MCP Server **1.3** lets an app register tools without a standalone MCP se
 - **Executes** tools as **`splunker`** on `POST /services/mcp` (JSON-RPC `tools/call`)
 - **Registers** them as **admin** on `POST /services/mcp_tools` (batch replace from `SA-S4R/default/s4r_mcp_tools.json`)
 
-Do not put admin passwords or bearer tokens in the JSON payload or in git. Implementation, definitions, and file map: [S4R-MCP-TOOLS.md](S4R-MCP-TOOLS.md).
+Do not put admin passwords or bearer tokens in the JSON payload or in git. Implementation, definitions, and file map: [S4R-MCP-TOOLS.md](../s4r/MCP-TOOLS.md).
 
 ### Troubleshooting Connection
 
@@ -250,7 +250,7 @@ log stream --predicate 'process == "Claude"' --level debug
 ### User Permissions
 
 - **`mcp_tool_execute`** capability (granted via Splunk role **`mcp_user`** in this repo): MCP tooling (see Splunk MCP Server app docs)
-- Workshop write path is limited to **`SA-S4R_apply_nk_demo_state`** (allowlisted Eventgen mode only) — [S4R-MCP-TOOLS.md](S4R-MCP-TOOLS.md)
+- Workshop write path is limited to **`SA-S4R_apply_nk_demo_state`** (allowlisted Eventgen mode only) — [S4R-MCP-TOOLS.md](../s4r/MCP-TOOLS.md)
 - Cannot access other users' data
 - Cannot create/delete other users
 

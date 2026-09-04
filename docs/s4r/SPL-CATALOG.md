@@ -1,6 +1,6 @@
 # S4R SPL catalog — Buttercup Enterprises runbook
 
-**Single source of truth** for workshop SPL (Labs 3–7). Aligned with the **Splunk4Rookies Lab Guide (Apr 2026)** cheat-sheet searches; agents run these via **Splunk MCP** (`splunk_run_query`) **only** — not Splunk REST or shell `curl`. Dashboards use the same queries — see [S4R-DASHBOARD.md](S4R-DASHBOARD.md) for layout and visualization only. Workshop hub: [s4r/README.md](s4r/README.md).
+**Single source of truth** for workshop SPL (Labs 3–7). Aligned with the **Splunk4Rookies Lab Guide (Apr 2026)** cheat-sheet searches; agents run these via **Splunk MCP** (`splunk_run_query`) **only** — not Splunk REST or shell `curl`. Dashboards use the same queries — see [DASHBOARD.md](DASHBOARD.md) for layout and visualization only. Workshop hub: [README.md](README.md).
 
 **Lab guide:** [Splunk4Rookies - Lab Guide - Apr 2026.pdf](Splunk4Rookies%20-%20Lab%20Guide%20-%20Apr%202026.pdf)
 
@@ -9,9 +9,9 @@
 | Layer | File |
 | ----- | ---- |
 | Data / Eventgen | [SA-S4R-APP.md](SA-S4R-APP.md) |
-| **SPL (this doc)** | `docs/S4R-SPL-CATALOG.md` |
+| **SPL (this doc)** | `docs/s4r/SPL-CATALOG.md` |
 | Agent roles | [`.cursor/agents/`](../.cursor/agents/) |
-| Orchestration | [S4R-AGENTS.md](S4R-AGENTS.md) · `s4r-power-user.md` |
+| Orchestration | [AGENTS.md](AGENTS.md) · `s4r-power-user.md` |
 
 ---
 
@@ -350,7 +350,7 @@ index=main sourcetype=access_combined action=purchase
 1. Confirm data (`§ Data contract` quick check).
 2. Check workshop mode if ask is infrastructure vs threat (`make s4r-attack-nk-status`).
 3. Delegate — run § IT Ops, § DevOps, § Business Analytics, § Security in parallel when needed.
-4. Synthesize (template in [S4R-AGENTS.md](S4R-AGENTS.md) and `s4r-power-user.md`).
+4. Synthesize (template in [AGENTS.md](AGENTS.md) and `s4r-power-user.md`).
 
 **Panel SPL one-liners:**
 
@@ -378,6 +378,6 @@ index=main sourcetype=access_combined action=purchase
 ## See also
 
 - [Splunk4Rookies - Lab Guide - Apr 2026.pdf](Splunk4Rookies%20-%20Lab%20Guide%20-%20Apr%202026.pdf) — workshop cheat-sheet SPL (Exercises 3–7)
-- [S4R-AGENTS.md](S4R-AGENTS.md) — architecture, delegation, demo script
+- [AGENTS.md](AGENTS.md) — architecture, delegation, demo script
 - [SA-S4R-APP.md](SA-S4R-APP.md) — Eventgen, NK toggle, troubleshooting
 - [API_REFERENCE.md](API_REFERENCE.md) — Splunk MCP tools

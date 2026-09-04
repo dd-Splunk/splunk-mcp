@@ -6,7 +6,7 @@ Presenter guide for **Splunk4Rookies** workshop follow-on or **SE presales**: sh
 
 **Duration:** 20 minutes (full) · 10 minutes (short — see [Short track](#short-track-10-minutes)).
 
-**Related:** [S4R-SPL-CATALOG.md](../docs/S4R-SPL-CATALOG.md) · [S4R-MCP-TOOLS.md](../docs/S4R-MCP-TOOLS.md) · [S4R-AGENTS.md](../docs/S4R-AGENTS.md) · [PRESALES.md](../docs/PRESALES.md) · [SA-S4R-APP.md](../docs/SA-S4R-APP.md) · [demo-slides/README.md](README.md) (Marp)
+**Related:** [S4R-SPL-CATALOG.md](../docs/s4r/SPL-CATALOG.md) · [S4R-MCP-TOOLS.md](../docs/s4r/MCP-TOOLS.md) · [S4R-AGENTS.md](../docs/s4r/AGENTS.md) · [PRESALES.md](../docs/poc/PRESALES.md) · [SA-S4R-APP.md](../docs/s4r/SA-S4R-APP.md) · [demo-slides/README.md](README.md) (Marp)
 
 ---
 
@@ -24,7 +24,7 @@ make s4r-attack-nk-status         # expect: disabled (infrastructure mode)
 | Splunk Web | `https://localhost:8000` (admin — password from vault) |
 | MCP in Cursor | Restart Cursor; Splunk MCP tools visible |
 | Data flowing | Search: `index=main sourcetype=access_combined \| head 5` |
-| Tabs pre-open | `docs/S4R-SPL-CATALOG.md`, `.cursor/agents/s4r-power-user.md`, `.cursor/agents/s4r-it-ops.md`, `.cursor/mcp.json` |
+| Tabs pre-open | `docs/s4r/SPL-CATALOG.md`, `.cursor/agents/s4r-power-user.md`, `.cursor/agents/s4r-it-ops.md`, `.cursor/mcp.json` |
 
 **Warm stack:** Cold `make up` can take many minutes — start Splunk before the session.
 
@@ -94,7 +94,7 @@ The sections below mirror slide content and **speaker script**; if the deck and 
 
 **Slide 4:** Section divider — build dashboards with natural language.
 
-**Slide 5:** Labs 3–7 table; example prompt referencing `docs/S4R-DASHBOARD.md`.
+**Slide 5:** Labs 3–7 table; example prompt referencing `docs/s4r/DASHBOARD.md`.
 
 **Slide 6:** Artifacts — `S4R-DASHBOARD.md`, `S4R-SPL-CATALOG.md`, `SA-S4R` app.
 
@@ -106,7 +106,7 @@ The sections below mirror slide content and **speaker script**; if the deck and 
 
 ## Slides 7–12 — Splunk MCP architecture and S4R tools
 
-Developer Day 2026: apps expose tools through **Splunk MCP Server** — recordings in the [Developer Day 2026 playlist](https://www.youtube.com/playlist?list=PLxkFdMSHYh3T2mFyCdg8iz9ef068gLdfJ). Primary session: **[Apps with MCP Tools](https://www.youtube.com/watch?v=fjGCf0QiBJc)**. Implementation: [S4R-MCP-TOOLS.md](../docs/S4R-MCP-TOOLS.md).
+Developer Day 2026: apps expose tools through **Splunk MCP Server** — recordings in the [Developer Day 2026 playlist](https://www.youtube.com/playlist?list=PLxkFdMSHYh3T2mFyCdg8iz9ef068gLdfJ). Primary session: **[Apps with MCP Tools](https://www.youtube.com/watch?v=fjGCf0QiBJc)**. Implementation: [S4R-MCP-TOOLS.md](../docs/s4r/MCP-TOOLS.md).
 
 **Slide 7:** Section divider — apps as tools.
 
@@ -245,7 +245,7 @@ Timings are approximate. Adjust for audience questions.
 
 ### 0:02 — Step 1: Dashboard build (2 min)
 
-**Do:** Open `docs/S4R-DASHBOARD.md` and `docs/S4R-SPL-CATALOG.md` — scroll Labs 3–7 sections.
+**Do:** Open `docs/s4r/DASHBOARD.md` and `docs/s4r/SPL-CATALOG.md` — scroll Labs 3–7 sections.
 
 **Say:** *“Workshop attendees describe the dashboard; the LLM reads the layout spec and catalog SPL — same runbook the agents use later.”*
 
@@ -368,7 +368,7 @@ On-screen table: **deck slide 32**. Expanded detail below for presenters.
 | Concurrency limit | Wait; run one team at a time |
 | Token / 401 | `make up` or `make update-mcp-client MCP_CLIENT=cursor` |
 
-Details: [TROUBLESHOOTING.md](../docs/TROUBLESHOOTING.md) · [SA-S4R-APP.md](../docs/SA-S4R-APP.md) (NK troubleshooting table)
+Details: [TROUBLESHOOTING.md](../docs/poc/TROUBLESHOOTING.md) · [SA-S4R-APP.md](../docs/s4r/SA-S4R-APP.md) (NK troubleshooting table)
 
 ---
 
@@ -392,7 +392,7 @@ index=main sourcetype=access_combined action=purchase status>=400 earliest=-15m
 | head 5
 ```
 
-Full catalog: [S4R-SPL-CATALOG.md](../docs/S4R-SPL-CATALOG.md)
+Full catalog: [S4R-SPL-CATALOG.md](../docs/s4r/SPL-CATALOG.md)
 
 ---
 
@@ -405,7 +405,7 @@ Short on-slide versions: **deck slide 31**. Long-form prompts for live demos:
 ```text
 As Buttercup Power User for Splunk4Rookies: is the shop losing money?
 Delegate to IT Ops, DevOps, Business Analytics, and Security & Fraud.
-Read docs/S4R-SPL-CATALOG.md for SPL. Splunk MCP only — splunk_run_query and SA-S4R_* workshop tools; never Splunk REST or curl for searches.
+Read docs/s4r/SPL-CATALOG.md for SPL. Splunk MCP only — splunk_run_query and SA-S4R_* workshop tools; never Splunk REST or curl for searches.
 Synthesize one executive answer with the Power User template.
 ```
 
@@ -414,7 +414,7 @@ Synthesize one executive answer with the Power User template.
 ```text
 As Buttercup Power User: is the money loss bad infrastructure or an active threat?
 Check SA-S4R_query_nk_demo_state (fallback: make s4r-attack-nk-status). Delegate to all four teams.
-Use docs/S4R-SPL-CATALOG.md including § Workshop modes. Splunk MCP only — SA-S4R_* tools and splunk_run_query; no REST/curl for searches. Time range: last 15 minutes.
+Use docs/s4r/SPL-CATALOG.md including § Workshop modes. Splunk MCP only — SA-S4R_* tools and splunk_run_query; no REST/curl for searches. Time range: last 15 minutes.
 Synthesize with clear verdict and recommended actions.
 ```
 
@@ -422,7 +422,7 @@ Synthesize with clear verdict and recommended actions.
 
 ```text
 You are the S4R [IT Ops|DevOps|Business Analytics|Security & Fraud] agent.
-Read .cursor/agents/s4r-[team].md and docs/S4R-SPL-CATALOG.md § [section].
+Read .cursor/agents/s4r-[team].md and docs/s4r/SPL-CATALOG.md § [section].
 Run searches via splunk_run_query or SA-S4R_* workshop tools (MCP only — no REST/curl). Return only that team's summary.
 ```
 
@@ -436,7 +436,7 @@ Same delegation pattern as Demo 1 unless noted. Infrastructure mode, **last 24 h
 
 ```text
 As Buttercup Power User: are we losing sales because checkout is failing, or because customers never get to purchase?
-Delegate to all four teams. Read docs/S4R-SPL-CATALOG.md per team. Splunk MCP only — SA-S4R_* tools and splunk_run_query; never REST or curl.
+Delegate to all four teams. Read docs/s4r/SPL-CATALOG.md per team. Splunk MCP only — SA-S4R_* tools and splunk_run_query; never REST or curl.
 Synthesize one executive answer with the Power User template.
 ```
 
@@ -444,7 +444,7 @@ Synthesize one executive answer with the Power User template.
 
 ```text
 As Buttercup Power User: which products and categories are costing us the most in failed checkout revenue?
-Delegate to all four teams. Read docs/S4R-SPL-CATALOG.md (Business Analytics § + supporting teams). MCP only. Last 24 hours.
+Delegate to all four teams. Read docs/s4r/SPL-CATALOG.md (Business Analytics § + supporting teams). MCP only. Last 24 hours.
 Synthesize with recommended merchandising and engineering priorities.
 ```
 
@@ -452,7 +452,7 @@ Synthesize with recommended merchandising and engineering priorities.
 
 ```text
 As Buttercup Power User: should we invest in mobile app fixes, or is checkout failing every platform equally?
-Delegate to all four teams. Read docs/S4R-SPL-CATALOG.md (DevOps § platform prefix + IT Ops + Business). MCP only. Last 24 hours.
+Delegate to all four teams. Read docs/s4r/SPL-CATALOG.md (DevOps § platform prefix + IT Ops + Business). MCP only. Last 24 hours.
 Synthesize with a clear build-vs-fix recommendation.
 ```
 
@@ -460,7 +460,7 @@ Synthesize with a clear build-vs-fix recommendation.
 
 ```text
 As Buttercup Power User: is checkout failing more for international customers than for US shoppers?
-Delegate to all four teams. Read docs/S4R-SPL-CATALOG.md (Security § iplocation + Business + IT Ops). MCP only. Last 24 hours.
+Delegate to all four teams. Read docs/s4r/SPL-CATALOG.md (Security § iplocation + Business + IT Ops). MCP only. Last 24 hours.
 Synthesize with a go/no-go on international marketing spend.
 ```
 
@@ -468,7 +468,7 @@ Synthesize with a go/no-go on international marketing spend.
 
 ```text
 As Buttercup Power User: is the revenue impact from an active attack, or from a broken checkout service?
-Check make s4r-attack-nk-status. Delegate to all four teams. Read docs/S4R-SPL-CATALOG.md including § Workshop modes. MCP only. Last 15 minutes.
+Check make s4r-attack-nk-status. Delegate to all four teams. Read docs/s4r/SPL-CATALOG.md including § Workshop modes. MCP only. Last 15 minutes.
 Synthesize who to mobilize first — Security vs Engineering.
 ```
 
@@ -476,6 +476,6 @@ Synthesize who to mobilize first — Security vs Engineering.
 
 ## See also
 
-- [S4R-AGENTS.md](../docs/S4R-AGENTS.md) — agent architecture
-- [PRESALES.md](../docs/PRESALES.md) — stack bootstrap
+- [S4R-AGENTS.md](../docs/s4r/AGENTS.md) — agent architecture
+- [PRESALES.md](../docs/poc/PRESALES.md) — stack bootstrap
 - [`.cursor/agents/README.md`](../.cursor/agents/README.md) — Task subagent examples

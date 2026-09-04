@@ -8,4 +8,4 @@ This repository is a **local Splunk MCP development PoC**. It is not hardened fo
 2. Use **GitHub private security advisories**: repository **Security** tab → **Report a vulnerability**.
 3. Include steps to reproduce, affected paths or commands, and impact.
 
-**Full guidance** (secrets, TLS, MCP exposure, checklist): [docs/SECURITY.md](docs/SECURITY.md).
+**Full guidance** (secrets, TLS, MCP exposure, checklist): [docs/poc/SECURITY.md](docs/poc/SECURITY.md).

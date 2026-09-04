@@ -87,7 +87,7 @@ SPLUNK_MCP_PASSWORD=op://YourVault/Splunk-MCP/splunker-password
 TZ=Europe/Brussels
 ```
 
-Expected layout includes `Makefile`, `compose.yml`, `tpl.env.example`, local `tpl.env` (after copy), `scripts/` (including `setup-splunk.sh`, `compose-up.sh`, `mcp-client.sh`), and `SA-S4R/`. See root [README.md](../README.md) for the full picture.
+Expected layout includes `Makefile`, `compose.yml`, `tpl.env.example`, local `tpl.env` (after copy), `scripts/` (including `setup-splunk.sh`, `compose-up.sh`, `mcp-client.sh`), and `SA-S4R/`. See root [README.md](../../README.md) for the full picture.
 
 ## Start the stack
 
@@ -161,7 +161,7 @@ This setup targets **trusted localhost** use: self-signed TLS, dev-oriented MCP 
 - [PRESALES.md](PRESALES.md) — SE demo runbook and checklist  
 - [CONFIGURATION.md](CONFIGURATION.md) — ports, env vars, clients  
 - [ARCHITECTURE.md](ARCHITECTURE.md) — architecture  
-- [SA-S4R-APP.md](SA-S4R-APP.md) — bundled sample app  
+- [SA-S4R-APP.md](../s4r/SA-S4R-APP.md) — bundled sample app  
 
 ```bash
 make help

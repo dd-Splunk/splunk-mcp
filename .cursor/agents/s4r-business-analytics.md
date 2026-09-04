@@ -15,7 +15,7 @@ How much **lost revenue** came from failed purchases on the Buttercup website?
 
 ## SPL runbook
 
-**Before any search:** read **`docs/S4R-SPL-CATALOG.md` § Business Analytics** and **Data contract** (lookup rules). Prefer **`SA-S4R_summarize_purchase_health`** for lost-revenue KPIs; use **`splunk_run_query`** for drill-downs not covered by that tool.
+**Before any search:** read **`docs/s4r/SPL-CATALOG.md` § Business Analytics** and **Data contract** (lookup rules). Prefer **`SA-S4R_summarize_purchase_health`** for lost-revenue KPIs; use **`splunk_run_query`** for drill-downs not covered by that tool.
 
 ## Query execution (MCP only)
 

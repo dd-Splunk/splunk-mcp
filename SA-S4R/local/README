@@ -10,9 +10,9 @@ land under local/ automatically). Never customize default/ for workshop assets.
 
 After editing files under local/, run: make restart
 
-Layout spec (panels, SPL, acceptance): docs/S4R-DASHBOARD.md
-Canonical SPL: docs/S4R-SPL-CATALOG.md
-Full app notes: docs/SA-S4R-APP.md
+Layout spec (panels, SPL, acceptance): docs/s4r/DASHBOARD.md
+Canonical SPL: docs/s4r/SPL-CATALOG.md
+Full app notes: docs/s4r/SA-S4R-APP.md
 
 Expected local/ layout (workshop)
 ---------------------------------
@@ -33,7 +33,7 @@ Add to local/props.conf (not default/props.conf):
   EXTRACT-platform = \((?<platform>Linux; Android [0-9.]+|Macintosh; Intel Mac OS X [0-9_]+|Windows|iPhone; CPU iPhone OS [0-9_]+)
 
 Saved dashboard panels can use platform after this. Splunk MCP / agents must
-still use the inline rex in docs/S4R-SPL-CATALOG.md (§ Platform prefix).
+still use the inline rex in docs/s4r/SPL-CATALOG.md (§ Platform prefix).
 
 Workshop nav tab (local/data/ui/nav/local.xml)
 ----------------------------------------------
@@ -56,7 +56,7 @@ Build the Buttercup Enterprises dashboard in Splunk Web (Dashboard Studio,
 Absolute layout). Save under local/data/ui/views/ — do not save to default/.
 
 Panel order, visualizations, background image, and checklist:
-  docs/S4R-DASHBOARD.md
+  docs/s4r/DASHBOARD.md
 
 Background asset (already in default/ static):
   /static/app/SA-S4R/Buttercup_Background.jpg

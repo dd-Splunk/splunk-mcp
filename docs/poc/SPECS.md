@@ -1,6 +1,6 @@
 # Requirements and acceptance criteria
 
-Design requirements for the **splunk-mcp** PoC. When this document disagrees with the running stack, **code wins**—see [README.md](README.md#source-of-truth-code-wins).
+Design requirements for the **splunk-mcp** PoC. When this document disagrees with the running stack, **code wins**—see [docs/README.md](../README.md#source-of-truth-code-wins).
 
 ## Purpose
 

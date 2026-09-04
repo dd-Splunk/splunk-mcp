@@ -2,7 +2,7 @@
 
 Agent roles for the **Splunk4Rookies** attendee workshop (Apr 2026 deck) and this repo’s **`SA-S4R`** dataset. One **Splunk Power User** orchestrator delegates to four specialist agents; each maps to a dashboard panel in Labs 3–7.
 
-**Related docs:** [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md) (**SPL runbook**), [S4R-DASHBOARD.md](S4R-DASHBOARD.md) (dashboard layout), [SA-S4R-APP.md](SA-S4R-APP.md) (Eventgen data; **`default/` vs `local/`**), [s4r/README.md](s4r/README.md) (workshop hub), [`.cursor/agents/`](../.cursor/agents/) (role prompts for Cursor).
+**Related docs:** [SPL-CATALOG.md](SPL-CATALOG.md) (**SPL runbook**), [DASHBOARD.md](DASHBOARD.md) (dashboard layout), [SA-S4R-APP.md](SA-S4R-APP.md) (Eventgen data; **`default/` vs `local/`**), [README.md](README.md) (workshop hub), [`.cursor/agents/`](../.cursor/agents/) (role prompts for Cursor).
 
 **Splunk app rule:** workshop dashboards, nav, and field extractions live in **`SA-S4R/local/`** (see **`local/README`**). **Never** save them to **`default/`** in Splunk Web or git.
 
@@ -29,7 +29,7 @@ Stakeholder question
     └───────┴───────┴───────────┘
                     │
                     ▼
-         docs/S4R-SPL-CATALOG.md  ← canonical SPL (Labs 3–7)
+         docs/s4r/SPL-CATALOG.md  ← canonical SPL (Labs 3–7)
                     │
                     ▼
          Splunk MCP (splunk_run_query, saia_*)
@@ -41,14 +41,14 @@ Stakeholder question
 | Layer | Teaches | File |
 | ----- | ------- | ---- |
 | Data | Synthetic workshop traffic | [SA-S4R-APP.md](SA-S4R-APP.md) |
-| Runbook | SPL, fields, lookups | **[S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md)** |
+| Runbook | SPL, fields, lookups | **[SPL-CATALOG.md](SPL-CATALOG.md)** |
 | Roles | How each team thinks and reports | [`.cursor/agents/`](../.cursor/agents/) |
 | Tools | LLM calls Splunk, not chat memory | Splunk MCP · [API_REFERENCE.md](API_REFERENCE.md) |
 | Orchestration | One answer from many teams | `s4r-power-user.md` · this doc |
 
 ## Scenario
 
-**Buttercup Enterprises** is a US online retailer (books, clothing, gifts). Base search and field conventions: **[S4R-SPL-CATALOG.md § Data contract](S4R-SPL-CATALOG.md#data-contract)**.
+**Buttercup Enterprises** is a US online retailer (books, clothing, gifts). Base search and field conventions: **[SPL-CATALOG.md § Data contract](SPL-CATALOG.md#data-contract)**.
 
 Eventgen in **`SA-S4R`** emits workshop-shaped Apache access logs. Lookup **`product_codes`** (file **`lookups/product_codes.csv`**) maps `product_id` → `product_price`. **Dashboard panels** may use a Lab 4 **`platform`** field extraction; **agents always use inline `rex`** from the catalog (MCP does not rely on saved extractions).
 
@@ -60,12 +60,12 @@ Eventgen in **`SA-S4R`** emits workshop-shaped Apache access logs. Lookup **`pro
 
 | Topic | Delegate to | Catalog § |
 | ----- | ----------- | --------- |
-| HTTP errors, success vs failure | IT Ops | [§ IT Ops](S4R-SPL-CATALOG.md#-it-ops-lab-3) |
-| OS, browsers, client vs server | DevOps | [§ DevOps](S4R-SPL-CATALOG.md#-devops-lab-4) |
-| Revenue, purchases, lost sales | Business Analytics | [§ Business Analytics](S4R-SPL-CATALOG.md#-business-analytics-lab-5) |
-| Geography, fraud indicators | Security & Fraud | [§ Security & Fraud](S4R-SPL-CATALOG.md#-security--fraud-lab-6) |
-| Infrastructure vs threat | All four | [§ Workshop modes](S4R-SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat) |
-| Full dashboard / Labs 3–7 | All four | [§ Power User](S4R-SPL-CATALOG.md#-power-user-lab-7) |
+| HTTP errors, success vs failure | IT Ops | [§ IT Ops](SPL-CATALOG.md#-it-ops-lab-3) |
+| OS, browsers, client vs server | DevOps | [§ DevOps](SPL-CATALOG.md#-devops-lab-4) |
+| Revenue, purchases, lost sales | Business Analytics | [§ Business Analytics](SPL-CATALOG.md#-business-analytics-lab-5) |
+| Geography, fraud indicators | Security & Fraud | [§ Security & Fraud](SPL-CATALOG.md#-security--fraud-lab-6) |
+| Infrastructure vs threat | All four | [§ Workshop modes](SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat) |
+| Full dashboard / Labs 3–7 | All four | [§ Power User](SPL-CATALOG.md#-power-user-lab-7) |
 
 **Synthesis template:** see `s4r-power-user.md`.
 
@@ -77,11 +77,11 @@ Eventgen in **`SA-S4R`** emits workshop-shaped Apache access logs. Lookup **`pro
 
 | Agent | Lab | Ask | Prompt | Catalog § |
 | ----- | --- | --- | ------ | --------- |
-| IT Ops | 3 | Success vs failure over time | [s4r-it-ops.md](../.cursor/agents/s4r-it-ops.md) | [§ IT Ops](S4R-SPL-CATALOG.md#-it-ops-lab-3) |
-| DevOps | 4 | OS mix, failing browsers, client vs server | [s4r-devops.md](../.cursor/agents/s4r-devops.md) | [§ DevOps](S4R-SPL-CATALOG.md#-devops-lab-4) |
-| Business Analytics | 5 | Lost revenue from failed purchases | [s4r-business-analytics.md](../.cursor/agents/s4r-business-analytics.md) | [§ Business Analytics](S4R-SPL-CATALOG.md#-business-analytics-lab-5) |
-| Security & Fraud | 6 | Activity by geography | [s4r-security-fraud.md](../.cursor/agents/s4r-security-fraud.md) | [§ Security & Fraud](S4R-SPL-CATALOG.md#-security--fraud-lab-6) |
-| Power User | 7 | Unified insight + dashboard | [s4r-power-user.md](../.cursor/agents/s4r-power-user.md) | [§ Power User](S4R-SPL-CATALOG.md#-power-user-lab-7) |
+| IT Ops | 3 | Success vs failure over time | [s4r-it-ops.md](../.cursor/agents/s4r-it-ops.md) | [§ IT Ops](SPL-CATALOG.md#-it-ops-lab-3) |
+| DevOps | 4 | OS mix, failing browsers, client vs server | [s4r-devops.md](../.cursor/agents/s4r-devops.md) | [§ DevOps](SPL-CATALOG.md#-devops-lab-4) |
+| Business Analytics | 5 | Lost revenue from failed purchases | [s4r-business-analytics.md](../.cursor/agents/s4r-business-analytics.md) | [§ Business Analytics](SPL-CATALOG.md#-business-analytics-lab-5) |
+| Security & Fraud | 6 | Activity by geography | [s4r-security-fraud.md](../.cursor/agents/s4r-security-fraud.md) | [§ Security & Fraud](SPL-CATALOG.md#-security--fraud-lab-6) |
+| Power User | 7 | Unified insight + dashboard | [s4r-power-user.md](../.cursor/agents/s4r-power-user.md) | [§ Power User](SPL-CATALOG.md#-power-user-lab-7) |
 
 Escalation rules live in each agent file (not duplicated here).
 
@@ -97,13 +97,13 @@ Escalation rules live in each agent file (not duplicated here).
 | 6 | Security & Fraud | `iplocation clientip` + `geostats count by City` |
 | 7 | Power User | All panels + synthesis |
 
-Full SPL: [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md).
+Full SPL: [SPL-CATALOG.md](SPL-CATALOG.md).
 
 ## Using agents in Cursor
 
 1. Enable **splunk-mcp-server** in `.cursor/mcp.json` (`make up` / `make update-cursor-config`).
 2. Buttercup / S4R questions: act as **Power User** ([`.cursor/rules/s4r-buttercup-agents.mdc`](../.cursor/rules/s4r-buttercup-agents.mdc)).
-3. **Read `docs/S4R-SPL-CATALOG.md`** for SPL; agents for roles and output format.
+3. **Read `docs/s4r/SPL-CATALOG.md`** for SPL; agents for roles and output format.
 4. Heavy parallel work: **Task** subagents — prompt must include *“Read catalog § [team] before `splunk_run_query`; MCP only — no REST/curl.”* See [`.cursor/agents/README.md`](../.cursor/agents/README.md).
 5. Confirm data: `make status`, then catalog **Quick data check**.
 6. Presales: `make demo-prep`.
@@ -124,13 +124,13 @@ When all four specialists run at once, each calls `splunk_run_query` as **`splun
 
 ```text
 As Buttercup Power User: is the shop losing money? Delegate to all four teams.
-Read docs/S4R-SPL-CATALOG.md per team. Splunk MCP only — splunk_run_query; never Splunk REST or curl for searches. Last 24 hours.
+Read docs/s4r/SPL-CATALOG.md per team. Splunk MCP only — splunk_run_query; never Splunk REST or curl for searches. Last 24 hours.
 Wait for all four summaries; synthesize one executive answer (Power User template).
 ```
 
 ## Synthetic data modes
 
-Before “infrastructure vs threat” questions: **`make s4r-attack-nk-status`**. Toggle and Eventgen detail: [SA-S4R-APP.md](SA-S4R-APP.md). Discriminating SPL: [S4R-SPL-CATALOG.md § Workshop modes](S4R-SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat).
+Before “infrastructure vs threat” questions: **`make s4r-attack-nk-status`**. Toggle and Eventgen detail: [SA-S4R-APP.md](SA-S4R-APP.md). Discriminating SPL: [SPL-CATALOG.md § Workshop modes](SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat).
 
 | Mode | How to set | Power User headline |
 | ---- | ---------- | ------------------- |
@@ -147,12 +147,12 @@ Quick beats:
 
 | Beat | Show | Say |
 | ---- | ---- | --- |
-| 1. Layers | `S4R-SPL-CATALOG.md`, one `s4r-*.md`, `s4r-power-user.md`, `.cursor/mcp.json` | Runbook, roles, orchestrator, MCP bridge |
+| 1. Layers | `SPL-CATALOG.md`, one `s4r-*.md`, `s4r-power-user.md`, `.cursor/mcp.json` | Runbook, roles, orchestrator, MCP bridge |
 | 2. Live ask | *“Is Buttercup losing money?”* | Delegate; `splunk_run_query` in tool trace |
 | 3. Synthesis | Power User table | One executive answer |
 | 4. Flip mode | `make s4r-attack-nk-enable` + `make restart` | Data mode changes verdict |
 | 5. Threat ask | *“Infrastructure or active threat?”* (last 15m) | Security § + Workshop modes |
-| 6. Dashboard | [S4R-DASHBOARD.md](S4R-DASHBOARD.md) | Panels = catalog sections |
+| 6. Dashboard | [DASHBOARD.md](DASHBOARD.md) | Panels = catalog sections |
 
 Also: [PRESALES.md](PRESALES.md#optional-agentic-buttercup-demo-splunk4rookies).
 
@@ -188,7 +188,7 @@ Also: [PRESALES.md](PRESALES.md#optional-agentic-buttercup-demo-splunk4rookies).
 
 ## References
 
-- [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md) — **canonical SPL**
+- [SPL-CATALOG.md](SPL-CATALOG.md) — **canonical SPL**
 - Splunk4Rookies attendee deck (Apr 2026) — Labs 3–7
 - [SA-S4R-APP.md](SA-S4R-APP.md)
 - [API_REFERENCE.md](API_REFERENCE.md)

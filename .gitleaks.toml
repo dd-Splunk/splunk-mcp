@@ -7,9 +7,9 @@ paths = [
   '''(?i)\.cursor/mcp\.json\.example$''',
   '''(?i)tpl\.env\.example$''',
   '''(?i)\.env\.example$''',
-  '''(?i)docs/API_REFERENCE\.md$''',
-  '''(?i)docs/TROUBLESHOOTING\.md$''',
-  '''(?i)docs/INSTALLATION\.md$''',
+  '''(?i)docs/poc/API_REFERENCE\.md$''',
+  '''(?i)docs/poc/TROUBLESHOOTING\.md$''',
+  '''(?i)docs/poc/INSTALLATION\.md$''',
 ]
 
 regexes = [

@@ -15,7 +15,7 @@ Show the most common customer operating systems and which browsers experience th
 
 ## SPL runbook
 
-**Before any search:** read **`docs/S4R-SPL-CATALOG.md` § DevOps** and **Shared snippets (platform prefix)**. Run those queries via Splunk MCP (`splunk_run_query`).
+**Before any search:** read **`docs/s4r/SPL-CATALOG.md` § DevOps** and **Shared snippets (platform prefix)**. Run those queries via Splunk MCP (`splunk_run_query`).
 
 ## Query execution (MCP only)
 

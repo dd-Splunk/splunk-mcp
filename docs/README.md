@@ -2,13 +2,20 @@
 
 Local PoC: **Splunk Enterprise** + **Splunk MCP Server** in Docker, optional **Splunk4Rookies** workshop (**SA-S4R**).
 
+## Two clusters
+
+| Cluster | Hub | For |
+| ------- | --- | --- |
+| **PoC (stack)** | [poc/README.md](poc/README.md) | Install, run, configure, and debug the platform |
+| **Workshop (S4R)** | [s4r/README.md](s4r/README.md) | Buttercup Labs 3–7, SPL, dashboard, agents, demo |
+
 ## Start here
 
 | I want to… | Read |
 | ---------- | ---- |
-| Run or demo the stack (SE / presales) | [PRESALES.md](PRESALES.md) |
-| Install from scratch (long form) | [INSTALLATION.md](INSTALLATION.md) |
-| Splunk4Rookies workshop (SPL, dashboard, agents) | [s4r/README.md](s4r/README.md) |
+| Run or demo the stack (SE / presales) | [poc/PRESALES.md](poc/PRESALES.md) |
+| Install from scratch (long form) | [poc/INSTALLATION.md](poc/INSTALLATION.md) |
+| Splunk4Rookies workshop | [s4r/README.md](s4r/README.md) |
 | Change the repo or use AI agents | [AGENTS.md](../AGENTS.md) |
 | Present the agentic demo (Marp) | [demo-slides/README.md](../demo-slides/README.md) |
 
@@ -16,37 +23,12 @@ Local PoC: **Splunk Enterprise** + **Splunk MCP Server** in Docker, optional **S
 
 1. [`Makefile`](../Makefile)
 2. [`compose.yml`](../compose.yml)
-3. [`scripts/setup-splunk.sh`](../scripts/setup-splunk.sh) — narrative in [CONFIGURATION.md § Appendix](CONFIGURATION.md#appendix-setup-splunksh)
+3. [`scripts/setup-splunk.sh`](../scripts/setup-splunk.sh) — narrative in [poc/CONFIGURATION.md § Appendix](poc/CONFIGURATION.md#appendix-setup-splunksh)
 4. [AGENTS.md](../AGENTS.md)
-
-## Stack and operations
-
-| Document | Purpose |
-| -------- | ------- |
-| [PRESALES.md](PRESALES.md) | Demo runbook, secrets paths, checklist |
-| [INSTALLATION.md](INSTALLATION.md) | Hardware, 1Password, verification |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Components, boot flow, MCP clients |
-| [CONFIGURATION.md](CONFIGURATION.md) | Compose, env, MCP auth (token vs OAuth), client configs, setup script |
-| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Ports, init, Splunkbase, MCP errors |
-| [SECURITY.md](SECURITY.md) | Secrets, TLS, vulnerability reporting |
-| [API_REFERENCE.md](API_REFERENCE.md) | Splunk REST and MCP endpoints |
-| [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) | What to edit when, test loop, lint |
-| [CI_CD.md](CI_CD.md) | GitHub Actions, SA-S4R package release |
-| [SPECS.md](SPECS.md) | Requirements and acceptance criteria |
-
-## Splunk4Rookies (S4R)
-
-| Document | Purpose |
-| -------- | ------- |
-| [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md) | **Canonical SPL** (Labs 3–7; agents) |
-| [S4R-DASHBOARD.md](S4R-DASHBOARD.md) | Dashboard Studio build spec (workshop **`local/`**) |
-| [SA-S4R-APP.md](SA-S4R-APP.md) | Eventgen, NK toggle, **`default/` vs `local/`** |
-| [S4R-AGENTS.md](S4R-AGENTS.md) | Multi-agent demo architecture |
-| [S4R-MCP-TOOLS.md](S4R-MCP-TOOLS.md) | How SA-S4R augments Splunk MCP (definitions, files, registration) |
 
 ## Suggested order
 
-1. [PRESALES.md](PRESALES.md) (demos) **or** [INSTALLATION.md](INSTALLATION.md) (full setup)
-2. [CONFIGURATION.md](CONFIGURATION.md) before changing env or clients
-3. [SECURITY.md](SECURITY.md) before any non-local use
-4. [TROUBLESHOOTING.md](TROUBLESHOOTING.md) when stuck
+1. [poc/PRESALES.md](poc/PRESALES.md) (demos) **or** [poc/INSTALLATION.md](poc/INSTALLATION.md) (full setup)
+2. [poc/CONFIGURATION.md](poc/CONFIGURATION.md) before changing env or clients
+3. [poc/SECURITY.md](poc/SECURITY.md) before any non-local use
+4. [poc/TROUBLESHOOTING.md](poc/TROUBLESHOOTING.md) or [s4r/TROUBLESHOOTING.md](s4r/TROUBLESHOOTING.md) when stuck

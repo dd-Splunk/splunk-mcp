@@ -92,7 +92,7 @@ Use an LLM in Cursor (or Claude Desktop) to create the **Splunk4Rookies** dashbo
 
 **Example prompt:**
 
-> *Build the Buttercup Enterprises dashboard per `docs/S4R-DASHBOARD.md` — four team panels on one Absolute-layout canvas with the marketing background.*
+> *Build the Buttercup Enterprises dashboard per `docs/s4r/DASHBOARD.md` — four team panels on one Absolute-layout canvas with the marketing background.*
 
 | Lab | Panel | Catalog section |
 | --- | ----- | ----------------- |
@@ -102,7 +102,7 @@ Use an LLM in Cursor (or Claude Desktop) to create the **Splunk4Rookies** dashbo
 | 6 | Geo map | Security and Fraud |
 | 7 | One canvas + background | Power User |
 
-Build spec: `docs/S4R-DASHBOARD.md` · canonical SPL: `docs/S4R-SPL-CATALOG.md`
+Build spec: `docs/s4r/DASHBOARD.md` · canonical SPL: `docs/s4r/SPL-CATALOG.md`
 
 <!--
 The catalog is the runbook — the LLM reads layout from S4R-DASHBOARD.md and SPL from the catalog, not from memory. Same panels the agentic demo narrates later.
@@ -116,8 +116,8 @@ The catalog is the runbook — the LLM reads layout from S4R-DASHBOARD.md and SP
 
 | Artifact | Role |
 | -------- | ---- |
-| `docs/S4R-DASHBOARD.md` | Layout, viz types, acceptance criteria |
-| `docs/S4R-SPL-CATALOG.md` | Versioned SPL — single source of truth |
+| `docs/s4r/DASHBOARD.md` | Layout, viz types, acceptance criteria |
+| `docs/s4r/SPL-CATALOG.md` | Versioned SPL — single source of truth |
 | `SA-S4R` app | Eventgen data, lookups, static assets |
 
 Workshop hub: `docs/s4r/README.md`
@@ -241,7 +241,7 @@ Developer Day stanza types — one per tool, plus JSON so the LLM knows how to c
 
 **Tool ID** after enable: `SA-S4R:SA-S4R_<name>` · distinct `query_*` vs `apply_*` for collision checks.
 
-Detail: `docs/S4R-MCP-TOOLS.md`
+Detail: `docs/s4r/MCP-TOOLS.md`
 
 <!--
 PDF slides 10–11: restmap:myhello and savedsearches:broken_block_search; signatures shared with LLMs. This PoC currently lists SPL tools in tools.conf with savedsearch= and registers all five via s4r_mcp_tools.json.
@@ -287,7 +287,7 @@ Stakeholders ask **outcome questions** — the assistant runs governed searches 
 > *Are we losing sales because checkout is failing, or because customers never reach purchase?*
 > *Which product categories cost us the most in failed checkout revenue?*
 
-No SPL in the prompt. The assistant uses governed **`SA-S4R_*`** workshop tools when they fit, or reads `docs/S4R-SPL-CATALOG.md` and calls **`splunk_run_query`** via Splunk MCP.
+No SPL in the prompt. The assistant uses governed **`SA-S4R_*`** workshop tools when they fit, or reads `docs/s4r/SPL-CATALOG.md` and calls **`splunk_run_query`** via Splunk MCP.
 
 <!--
 Step 2 can be a single assistant — no delegation required. Good for executives and workshop attendees who finished the dashboard and want answers, not panels.
@@ -450,11 +450,11 @@ Point at each box in the repo — nothing is hidden inside one mega-prompt. Powe
 
 | Layer | File | Teaches |
 | ----- | ---- | ------- |
-| Runbook | `docs/S4R-SPL-CATALOG.md` | Canonical SPL — versioned like a playbook |
+| Runbook | `docs/s4r/SPL-CATALOG.md` | Canonical SPL — versioned like a playbook |
 | Roles | `.cursor/agents/s4r-*.md` | Persona, output format, escalation |
 | Bridge | `.cursor/mcp.json` | `npx mcp-remote` to Splunk MCP endpoint |
 
-Orchestration design: `docs/S4R-AGENTS.md`
+Orchestration design: `docs/s4r/AGENTS.md`
 
 <!--
 SPL is not duplicated in every agent file — agents reference the catalog. Same catalog Steps 1 and 2 already used.
@@ -659,7 +659,7 @@ make s4r-attack-nk-status    # expect: disabled (or SA-S4R_query_nk_demo_state �
 
 **Step 1 — Dashboard build:**
 
-> *Build the Buttercup Enterprises dashboard per `docs/S4R-DASHBOARD.md` — four team panels on one Absolute-layout canvas.*
+> *Build the Buttercup Enterprises dashboard per `docs/s4r/DASHBOARD.md` — four team panels on one Absolute-layout canvas.*
 
 **Step 2 — Business question:**
 
@@ -698,4 +698,4 @@ make s4r-attack-nk-status    # expect: disabled (or SA-S4R_query_nk_demo_state �
 | Concurrency limit | Wait; run one team at a time |
 | Token / 401 | `make up` or `make update-mcp-client MCP_CLIENT=cursor` |
 
-Details: `docs/TROUBLESHOOTING.md` · `docs/SA-S4R-APP.md`
+Details: `docs/poc/TROUBLESHOOTING.md` · `docs/s4r/SA-S4R-APP.md`
