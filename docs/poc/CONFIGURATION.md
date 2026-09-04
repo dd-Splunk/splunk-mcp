@@ -98,7 +98,7 @@ If **`.env` is missing**, `make up` runs:
 
 1Password **resolves** the `op://` references and passes the values in the process environment. **Nothing in this path writes a `.env` file**—resolved secrets are not left on disk by the Makefile (aside from what Splunk/Compose do inside containers per `compose.yml`).
 
-For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env.example`](../.env.example) to **`.env`**, fill values, and run **`make up`**. Compose auto-loads **`.env`**. Use for CI or contributors without `op`.
+For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env.example`](../../.env.example) to **`.env`**, fill values, and run **`make up`**. Compose auto-loads **`.env`**. Use for CI or contributors without `op`.
 
 | Situation | Use |
 | --------- | --- |
@@ -137,7 +137,7 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 | `register-s4r-mcp-tools` | Host `POST /services/mcp_tools` for **SA-S4R** (also run by `make up`); re-run after editing `s4r_mcp_tools.json` |
 | `marp-preview` / `marp-serve` / `marp-html` | Preview, serve, or export the S4R presenter deck under `demo-slides/` |
 
-Workshop behavior and validation SPL: **[SA-S4R-APP.md](SA-S4R-APP.md)** (Workshop modes). Marp deck mechanics: **[demo-slides/README.md](../demo-slides/README.md)**.
+Workshop behavior and validation SPL: **[SA-S4R-APP.md](../s4r/SA-S4R-APP.md)** (Workshop modes). Marp deck mechanics: **[demo-slides/README.md](../../demo-slides/README.md)**.
 
 ## scripts/setup-splunk.sh
 
@@ -245,7 +245,7 @@ make verify
 | `OP_SERVICE_ACCOUNT_TOKEN` | Headless **`op`** on Cursor Cloud (no desktop sign-in) |
 | `CLOUD_SPLUNKDB_MOUNT` | Default `/mnt/splunkdb` (bind-mounted as `so1-var`) |
 
-Writes gitignored **`docker-compose.override.yml`** (ext4 bind + fake cgroup for 10.4.x). Full notes: [AGENTS.md](../AGENTS.md) § Cursor Cloud.
+Writes gitignored **`docker-compose.override.yml`** (ext4 bind + fake cgroup for 10.4.x). Full notes: [AGENTS.md](../../AGENTS.md) § Cursor Cloud.
 
 ## See also
 
@@ -257,7 +257,7 @@ Writes gitignored **`docker-compose.override.yml`** (ext4 bind + fake cgroup for
 
 ## Appendix: setup-splunk.sh
 
-Reference for **[`scripts/setup-splunk.sh`](../scripts/setup-splunk.sh)**: configuration, idempotent behavior, environment variables, and REST flow.
+Reference for **[`scripts/setup-splunk.sh`](../../scripts/setup-splunk.sh)**: configuration, idempotent behavior, environment variables, and REST flow.
 
 ### Purpose
 
@@ -274,7 +274,7 @@ The script is **`/bin/sh`**, uses **`set -eu`**, and talks to Splunk only throug
 
 ### Where it runs
 
-Compose starts **`splunk-init`** **after** `so1` is healthy. That container installs `curl` and `jq`, then executes this script. See [`compose.yml`](../compose.yml).
+Compose starts **`splunk-init`** **after** `so1` is healthy. That container installs `curl` and `jq`, then executes this script. See [`compose.yml`](../../compose.yml).
 
 ```mermaid
 flowchart LR
@@ -357,7 +357,7 @@ Designed so **`make up` / `splunk-init` repeating** does not break: MCP `ssl_ver
 ### Security notes (dev PoC)
 
 - **`curl -k`** and **`ssl_verify=false`** are **dev-only**; see [SECURITY.md](SECURITY.md).
-- Never commit `.env` / `tpl.env` or client configs with secrets. See [AGENTS.md](../AGENTS.md).
+- Never commit `.env` / `tpl.env` or client configs with secrets. See [AGENTS.md](../../AGENTS.md).
 
 ### Troubleshooting pointers
 

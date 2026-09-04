@@ -1,5 +1,7 @@
 # S4R Marp slide deck
 
+> **`index.md`** is a symlink to **`s4r-demo-slides.md`** — not separate documentation. It exists only so `make marp-serve` can open the deck at `http://localhost:8080/`. Edit **`s4r-demo-slides.md`**; ignore `index.md` in the editor.
+
 Presenter slides for the **Splunk4Rookies agentic Buttercup demo**, built with [Marp](https://marp.app/).
 
 | File | Role |
@@ -161,7 +163,7 @@ Deck follows **three steps** plus a **MCP architecture** primer (Developer Day 2
 ## Related docs
 
 - [S4R-DEMO.md](S4R-DEMO.md) — presenter script and demo flow
-- [S4R-MCP-TOOLS.md](../docs/S4R-MCP-TOOLS.md) — MCP architecture, definitions, app config files; [Developer Day 2026 recordings](https://www.youtube.com/playlist?list=PLxkFdMSHYh3T2mFyCdg8iz9ef068gLdfJ)
+- [S4R-MCP-TOOLS.md](../docs/s4r/MCP-TOOLS.md) — MCP architecture, definitions, app config files; [Developer Day 2026 recordings](https://www.youtube.com/playlist?list=PLxkFdMSHYh3T2mFyCdg8iz9ef068gLdfJ)
 - [s4r/README.md](../docs/s4r/README.md) — Splunk4Rookies workshop hub
-- [PRESALES.md](../docs/PRESALES.md) — SE checklist
-- [S4R-AGENTS.md](../docs/S4R-AGENTS.md) — agent architecture
+- [PRESALES.md](../docs/poc/PRESALES.md) — SE checklist
+- [S4R-AGENTS.md](../docs/s4r/AGENTS.md) — agent architecture

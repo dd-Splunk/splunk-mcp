@@ -6,8 +6,8 @@ Automation in this repo is intentionally small: it supports a **local PoC** stac
 
 | Workflow file | Purpose |
 | ------------- | ------- |
-| [.github/workflows/ci.yml](../.github/workflows/ci.yml) | Secret scanning plus shell and Markdown lint |
-| [.github/workflows/package-s4r.yml](../.github/workflows/package-s4r.yml) | Build **SA-S4R** as `SA-S4R.spl`, upload a CI artifact, publish a **moving `latest` GitHub Release** |
+| [.github/workflows/ci.yml](../../.github/workflows/ci.yml) | Secret scanning plus shell and Markdown lint |
+| [.github/workflows/package-s4r.yml](../../.github/workflows/package-s4r.yml) | Build **SA-S4R** as `SA-S4R.spl`, upload a CI artifact, publish a **moving `latest` GitHub Release** |
 
 ---
 
@@ -71,5 +71,5 @@ The package excludes **`local/`** and **`metadata/local.meta`**. Workshop dashbo
 
 ## Related
 
-- Contributor rules and local verification: [**`AGENTS.md`**](../AGENTS.md)
-- Bundled app behavior: [**`docs/SA-S4R-APP.md`**](SA-S4R-APP.md)
+- Contributor rules and local verification: [**`AGENTS.md`**](../../AGENTS.md)
+- Bundled app behavior: [**`docs/s4r/SA-S4R-APP.md`**](../s4r/SA-S4R-APP.md)

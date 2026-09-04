@@ -51,7 +51,7 @@ make demo-prep   # status + MCP verify
 
 Path B and env details: [CONFIGURATION.md](CONFIGURATION.md#tplenv-and-env). Long-form install: [INSTALLATION.md](INSTALLATION.md).
 
-**Do not commit:** `tpl.env`, `.env`, `.secrets/`, or client configs with live tokens ([AGENTS.md](../AGENTS.md)).
+**Do not commit:** `tpl.env`, `.env`, `.secrets/`, or client configs with live tokens ([AGENTS.md](../../AGENTS.md)).
 
 ## Secrets: Path A (1Password) vs Path B (plain `.env`)
 
@@ -101,7 +101,7 @@ index=main sourcetype=access_combined
 | head 20
 ```
 
-If nothing returns, check **Manage apps**, Eventgen, and [SA-S4R-APP.md](SA-S4R-APP.md).
+If nothing returns, check **Manage apps**, Eventgen, and [SA-S4R-APP.md](../s4r/SA-S4R-APP.md).
 
 ### Optional: “active threat” storyline (Splunk4Rookies)
 
@@ -114,7 +114,7 @@ make restart
 make s4r-attack-nk-status   # confirm enabled
 ```
 
-Return to default: `make s4r-attack-nk-disable` then `make restart`. Validation SPL: [S4R-SPL-CATALOG.md § Workshop modes](S4R-SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat).
+Return to default: `make s4r-attack-nk-disable` then `make restart`. Validation SPL: [S4R-SPL-CATALOG.md § Workshop modes](../s4r/SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat).
 
 ## Optional: agentic Buttercup demo (Splunk4Rookies)
 
@@ -122,7 +122,7 @@ Show **Splunk MCP + multi-agent** — not a single mega-prompt. Open these files
 
 | File | Teaches |
 | ---- | ------- |
-| `docs/S4R-SPL-CATALOG.md` | SPL runbook (Labs 3–7) |
+| `docs/s4r/SPL-CATALOG.md` | SPL runbook (Labs 3–7) |
 | `.cursor/agents/s4r-power-user.md` | Orchestrator |
 | `.cursor/agents/s4r-it-ops.md` (etc.) | Stakeholder roles |
 | `.cursor/mcp.json` | MCP bridge to Splunk |
@@ -132,7 +132,7 @@ Show **Splunk MCP + multi-agent** — not a single mega-prompt. Open these files
 1. *“Is Buttercup losing money?”* — Power User delegates four teams; point at `splunk_run_query` in the tool trace.
 2. *“Infrastructure or active threat?”* — after `make s4r-attack-nk-enable` + `make restart`, repeat with **last 15m** time range.
 
-**Presenter deck:** [`demo-slides/s4r-demo-slides.md`](../demo-slides/s4r-demo-slides.md) (Marp — `make marp-preview` / `make marp-serve`). Script + timings: [S4R-DEMO.md](../demo-slides/S4R-DEMO.md). MCP architecture: [S4R-MCP-TOOLS.md](S4R-MCP-TOOLS.md). Workshop hub: [s4r/README.md](s4r/README.md). Summary: [S4R-AGENTS.md § Demo script](S4R-AGENTS.md#demo-script-agentic-buttercup--splunk-mcp).
+**Presenter deck:** [`demo-slides/s4r-demo-slides.md`](../../demo-slides/s4r-demo-slides.md) (Marp — `make marp-preview` / `make marp-serve`). Script + timings: [S4R-DEMO.md](../../demo-slides/S4R-DEMO.md). MCP architecture: [S4R-MCP-TOOLS.md](../s4r/MCP-TOOLS.md). Workshop hub: [s4r/README.md](../s4r/README.md). Summary: [S4R-AGENTS.md § Demo script](../s4r/AGENTS.md#demo-script-agentic-buttercup--splunk-mcp).
 
 ## What this demo proves (and does not)
 
@@ -213,5 +213,5 @@ Shell smoke test: **`make verify-mcp-remote`** (all clients) or **`MCP_VERIFY_CL
 ## Publishing / compliance
 
 - Keep **`tpl.env.example`** and **`.env.example`** placeholder-only; real paths live in gitignored files.
-- Confirm [AGENTS.md](../AGENTS.md) and `.gitignore` for what must never be committed.
-- License: [LICENSE](../LICENSE) (MIT). Optional GitHub topics: [.github/TOPICS.md](../.github/TOPICS.md).
+- Confirm [AGENTS.md](../../AGENTS.md) and `.gitignore` for what must never be committed.
+- License: [LICENSE](../../LICENSE) (MIT). Optional GitHub topics: [.github/TOPICS.md](../../.github/TOPICS.md).

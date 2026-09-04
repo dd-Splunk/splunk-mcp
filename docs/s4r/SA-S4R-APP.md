@@ -66,14 +66,14 @@ Splunk apps split **shipped baseline** (`default/`) from **instance-specific ove
 **Rules (Splunk and this repo):**
 
 1. **Splunk Web, Settings → Knowledge, nav editor, field extractor, Dashboard Studio saves** — must land under **`SA-S4R/local/`** only. **Never** save customizations into **`default/`** (Splunk will overwrite shipped objects on upgrade/reinstall).
-2. **Agents and contributors** — do not add workshop dashboards, nav tabs, or Lab 4 field extractions under **`SA-S4R/default/`** in git. **Exception:** MCP packaging (`savedsearches.conf` for tool backing, `tools.conf`, `s4r_mcp_tools.json`, REST handler) is maintainer-owned in **`default/`** — [S4R-MCP-TOOLS.md](S4R-MCP-TOOLS.md). Document workshop UI setup in **`local/README`**.
+2. **Agents and contributors** — do not add workshop dashboards, nav tabs, or Lab 4 field extractions under **`SA-S4R/default/`** in git. **Exception:** MCP packaging (`savedsearches.conf` for tool backing, `tools.conf`, `s4r_mcp_tools.json`, REST handler) is maintainer-owned in **`default/`** — [MCP-TOOLS.md](MCP-TOOLS.md). Document workshop UI setup in **`local/README`**.
 3. **Packaging** — **`package-s4r.yml`** excludes **`local/`** (entire directory) so instance-specific content is not published in **`SA-S4R.spl`**. In git, **`SA-S4R/local/**`** is ignored except **`local/README`** (see **`.gitignore`**).
 
 If you already saved something to **`default/`** inside a running container, move it to **`local/`** (or re-export from Splunk into **`local/`**), then remove the duplicate from **`default/`**.
 
 ### Dashboard background (hint)
 
-**`Buttercup_Background.jpg`** is for the **Buttercup Enterprises** workshop dashboard—not Splunk Web app chrome. Do not use **`application.css`** for this; create the dashboard under **`SA-S4R/local/`** per **`SA-S4R/local/README`** and [S4R-DASHBOARD.md](S4R-DASHBOARD.md), then reference the file from the dashboard’s own HTML or CSS.
+**`Buttercup_Background.jpg`** is for the **Buttercup Enterprises** workshop dashboard—not Splunk Web app chrome. Do not use **`application.css`** for this; create the dashboard under **`SA-S4R/local/`** per **`SA-S4R/local/README`** and [DASHBOARD.md](DASHBOARD.md), then reference the file from the dashboard’s own HTML or CSS.
 
 - **Repo path:** `SA-S4R/appserver/static/Buttercup_Background.jpg`
 - **Splunk Web URL:** `/static/app/SA-S4R/Buttercup_Background.jpg`
@@ -122,13 +122,13 @@ All use workshop-style `HTTP 1.1`, Buttercup referers, and a trailing response-t
 
 **`default/data/ui/nav/default.xml`** follows Splunk’s **barebones** app template (`share/splunk/app_templates/barebones/`): **Search** (default), **Analytics**, **Datasets**, **Reports**, **Alerts**, **Dashboards**, and **Modules**.
 
-The **Buttercup Enterprises** workshop tab and Dashboard Studio view live under **`local/`** only (gitignored except **`local/README`**). Create them per **`local/README`** and [S4R-DASHBOARD.md](S4R-DASHBOARD.md), then **`make restart`** if Splunk is already running.
+The **Buttercup Enterprises** workshop tab and Dashboard Studio view live under **`local/`** only (gitignored except **`local/README`**). Create them per **`local/README`** and [DASHBOARD.md](DASHBOARD.md), then **`make restart`** if Splunk is already running.
 
 ## Field extractions and lookup
 
 **`default/props.conf`** extracts `action`, `product_id`, `uid`, and `JSESSIONID` from the request line so workshop SPL such as `action=purchase` works without manual field extraction.
 
-**`platform`** (Lab 4) belongs in **`local/props.conf`** — see **`SA-S4R/local/README`**. Agents/MCP still use inline `rex` per [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md).
+**`platform`** (Lab 4) belongs in **`local/props.conf`** — see **`SA-S4R/local/README`**. Agents/MCP still use inline `rex` per [SPL-CATALOG.md](SPL-CATALOG.md).
 
 **`default/transforms.conf`** registers lookup **`product_codes`** (backed by **`lookups/product_codes.csv`**) for Lab 5:
 
@@ -164,7 +164,7 @@ Two storylines share the same baseline traffic; the NK stanza is toggled without
 | **Infrastructure** (default) | `make s4r-attack-nk-disable` or MCP **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) | MCP reloads Eventgen modinput; `make restart` if signal is slow |
 | **Active threat** | `make s4r-attack-nk-enable` or MCP **`SA-S4R_apply_nk_demo_state`** (`mode=threat`) | Same |
 
-Check current mode: **`SA-S4R_query_nk_demo_state`** (MCP), **`make s4r-attack-nk-status`**, or read `[attack.nk.purchase.sample]` in **`eventgen.conf`**. Script: **`scripts/toggle-s4r-attack-nk.sh`** (`enable` \| `disable` \| `status`). MCP tools are registered on **`make up`**; re-register with **`make register-s4r-mcp-tools`** — see [S4R-MCP-TOOLS.md](S4R-MCP-TOOLS.md).
+Check current mode: **`SA-S4R_query_nk_demo_state`** (MCP), **`make s4r-attack-nk-status`**, or read `[attack.nk.purchase.sample]` in **`eventgen.conf`**. Script: **`scripts/toggle-s4r-attack-nk.sh`** (`enable` \| `disable` \| `status`). MCP tools are registered on **`make up`**; re-register with **`make register-s4r-mcp-tools`** — see [MCP-TOOLS.md](MCP-TOOLS.md).
 
 Wait **1–2 minutes** after restart before validating in Search (narrow time range to **last 15m** so old uniform traffic does not mask the attack).
 
@@ -181,7 +181,7 @@ Power User synthesis: **infrastructure** → “fix the web tier”; **active th
 
 #### Validation SPL
 
-Canonical queries for both workshop modes: **[S4R-SPL-CATALOG.md § Workshop modes](S4R-SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat)** (and per-team § in the same file). Agents and dashboards should use that catalog — not duplicate SPL here.
+Canonical queries for both workshop modes: **[SPL-CATALOG.md § Workshop modes](SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat)** (and per-team § in the same file). Agents and dashboards should use that catalog — not duplicate SPL here.
 
 **Saved searches (Splunk4Rookies app):**
 
@@ -202,14 +202,14 @@ NK attack token sources: **`samples/nk_clientip.txt`**, **`nk_status.txt`**, **`
 | NK mode “stuck” on after disable | Container still running old config | `make s4r-attack-nk-disable` then **`make restart`** |
 | Geo shows NK but agents say “infrastructure” | Time range too wide | Use **last 15m** after enable; baseline traffic dilutes the signal |
 
-See [S4R-AGENTS.md](S4R-AGENTS.md) for Power User delegation and [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md) for all workshop SPL.
+See [AGENTS.md](AGENTS.md) for Power User delegation and [SPL-CATALOG.md](SPL-CATALOG.md) for all workshop SPL.
 
 ## App metadata (compliance)
 
 | File | Purpose |
 | ---- | ------- |
 | `default/app.conf` | **`[package] id`**, **`[launcher] version`**, UI label/description |
-| `default/tools.conf` | App-packaged MCP SPL tool stanzas (see [S4R-MCP-TOOLS.md](S4R-MCP-TOOLS.md)) |
+| `default/tools.conf` | App-packaged MCP SPL tool stanzas (see [MCP-TOOLS.md](MCP-TOOLS.md)) |
 | `default/s4r_mcp_tools.json` | Batch-replace payload for Splunk MCP Server |
 | `metadata/default.meta` | Export/ACL for shipped objects (`props`, `transforms`, lookup CSV, `eventgen.conf`) |
 | `metadata/meta.conf` | Default ACL for new objects created in-app |
@@ -220,7 +220,7 @@ See [S4R-AGENTS.md](S4R-AGENTS.md) for Power User delegation and [S4R-SPL-CATALO
 
 ## See also
 
-- [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md) — canonical SPL for Labs 3–7 (agents + dashboards)
-- [S4R-MCP-TOOLS.md](S4R-MCP-TOOLS.md) — MCP architecture, definitions, config files
-- [S4R-DASHBOARD.md](S4R-DASHBOARD.md) — dashboard layout (Labs 3–7)
-- [ARCHITECTURE.md](ARCHITECTURE.md) — where SA-S4R fits in the stack
+- [SPL-CATALOG.md](SPL-CATALOG.md) — canonical SPL for Labs 3–7 (agents + dashboards)
+- [MCP-TOOLS.md](MCP-TOOLS.md) — MCP architecture, definitions, config files
+- [DASHBOARD.md](DASHBOARD.md) — dashboard layout (Labs 3–7)
+- [ARCHITECTURE.md](../poc/ARCHITECTURE.md) — where SA-S4R fits in the stack

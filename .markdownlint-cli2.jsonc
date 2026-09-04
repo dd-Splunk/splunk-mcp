@@ -13,7 +13,7 @@
   ],
   "configOverrides": [
     {
-      "globs": ["demo-slides/s4r-demo-slides.md"],
+      "globs": ["demo-slides/s4r-demo-slides.md", "docs/s4r/SPL-CATALOG.md"],
       "config": {
         "MD025": false
       }

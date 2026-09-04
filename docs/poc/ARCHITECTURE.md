@@ -37,14 +37,14 @@ Per [Splunk MCP Server 1.3](https://help.splunk.com/en/splunk-cloud-platform/mcp
 
 ## Sample data (SA-S4R)
 
-The **SA-S4R** app ships **Eventgen** configuration for synthetic **`access_combined`** events in **`main`**. See [SA-S4R-APP.md](SA-S4R-APP.md) and workshop hub [s4r/README.md](s4r/README.md).
+The **SA-S4R** app ships **Eventgen** configuration for synthetic **`access_combined`** events in **`main`**. See [SA-S4R-APP.md](../s4r/SA-S4R-APP.md) and workshop hub [s4r/README.md](../s4r/README.md).
 
 | Mode | Makefile | Narrative |
 | ---- | -------- | --------- |
 | Infrastructure (default) | `make s4r-attack-nk-disable` | Uniform ~40% errors (503/404); IT Ops leads |
 | Active threat (optional) | `make s4r-attack-nk-enable` then `make restart` | NK geo on failed purchases; Security leads |
 
-Agentic analysis: [S4R-AGENTS.md](S4R-AGENTS.md).
+Agentic analysis: [S4R-AGENTS.md](../s4r/AGENTS.md).
 
 ## System components
 
@@ -197,7 +197,7 @@ Claude Desktop
 - Enables SA-Eventgen default modinput when the app is installed
 - Dependencies: `curl`, `jq` (installed in `splunk-init`)
 
-Host **Claude** / **Cursor** / **Goose** configs are updated by **`scripts/mcp-client.sh`** via **`make update-mcp-clients`** (invoked by **`make up`**), not by this script. Goose uses **`envs`** for TLS overrides (see **`docs/CONFIGURATION.md`**).
+Host **Claude** / **Cursor** / **Goose** configs are updated by **`scripts/mcp-client.sh`** via **`make update-mcp-clients`** (invoked by **`make up`**), not by this script. Goose uses **`envs`** for TLS overrides (see **`docs/poc/CONFIGURATION.md`**).
 
 ### Makefile
 
@@ -235,7 +235,7 @@ Host **Claude** / **Cursor** / **Goose** configs are updated by **`scripts/mcp-c
 
 Splunk Developer Day 2026 ([Apps with MCP Tools](https://www.youtube.com/watch?v=fjGCf0QiBJc) · [playlist](https://www.youtube.com/playlist?list=PLxkFdMSHYh3T2mFyCdg8iz9ef068gLdfJ)) / MCP Server 1.3: apps expose **SPL** (saved search) or **API** (REST) tools through Splunk MCP Server — no standalone MCP process. **SA-S4R** ships `tools.conf` plus a workshop-mode REST handler; `make up` batch-replaces and enables them via `POST /services/mcp_tools`.
 
-Definitions, file map, and tool catalog: [S4R-MCP-TOOLS.md](S4R-MCP-TOOLS.md). Workshop data: [SA-S4R-APP.md](SA-S4R-APP.md).
+Definitions, file map, and tool catalog: [S4R-MCP-TOOLS.md](../s4r/MCP-TOOLS.md). Workshop data: [SA-S4R-APP.md](../s4r/SA-S4R-APP.md).
 
 ## Scalability Considerations
 
@@ -314,5 +314,5 @@ docker run --rm -v so1-etc:/data -v ~/backups:/backup \
 - [SPECS.md](SPECS.md) — requirements and acceptance criteria
 - [SECURITY.md](SECURITY.md) — threat model and limitations
 - [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — failures and recovery
-- [s4r/README.md](s4r/README.md) — Splunk4Rookies workshop docs
-- [S4R-MCP-TOOLS.md](S4R-MCP-TOOLS.md) — how SA-S4R registers MCP tools
+- [s4r/README.md](../s4r/README.md) — Splunk4Rookies workshop docs
+- [S4R-MCP-TOOLS.md](../s4r/MCP-TOOLS.md) — how SA-S4R registers MCP tools

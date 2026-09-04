@@ -2,17 +2,17 @@
 
 Copy-paste **role prompts** for **Cursor Task** subagents (or main chat) on **Splunk4Rookies / Buttercup Enterprises** (`SA-S4R`).
 
-**SPL runbook (canonical searches):** [docs/S4R-SPL-CATALOG.md](../../docs/S4R-SPL-CATALOG.md) — agents reference this; they do not duplicate full query blocks.
+**SPL runbook (canonical searches):** [docs/s4r/SPL-CATALOG.md](../../docs/s4r/SPL-CATALOG.md) — agents reference this; they do not duplicate full query blocks.
 
 ## Three layers
 
 | Layer | File | Purpose |
 | ----- | ---- | ------- |
-| Runbook | `docs/S4R-SPL-CATALOG.md` | Labs 3–7 SPL + workshop-mode queries |
+| Runbook | `docs/s4r/SPL-CATALOG.md` | Labs 3–7 SPL + workshop-mode queries |
 | Roles | `s4r-*.md` (this folder) | Persona, output format, escalation |
 | Orchestrator | `s4r-power-user.md` | Delegate, synthesize, MCP workflow |
 
-Design: [docs/S4R-AGENTS.md](../../docs/S4R-AGENTS.md). **Marp deck:** [demo-slides/s4r-demo-slides.md](../../demo-slides/s4r-demo-slides.md) (`make marp-preview`). **Presenter script:** [demo-slides/S4R-DEMO.md](../../demo-slides/S4R-DEMO.md).
+Design: [docs/s4r/AGENTS.md](../../docs/s4r/AGENTS.md). **Marp deck:** [demo-slides/s4r-demo-slides.md](../../demo-slides/s4r-demo-slides.md) (`make marp-preview`). **Presenter script:** [demo-slides/S4R-DEMO.md](../../demo-slides/S4R-DEMO.md).
 
 | File | Role |
 | ---- | ---- |
@@ -63,7 +63,7 @@ description: IT Operations analyst for Buttercup web tier — HTTP success vs fa
 
 ```text
 You are the S4R IT Ops agent. Read .cursor/agents/s4r-it-ops.md for your role.
-Before splunk_run_query: read docs/S4R-SPL-CATALOG.md § IT Ops and run every query there.
+Before splunk_run_query: read docs/s4r/SPL-CATALOG.md § IT Ops and run every query there.
 Splunk MCP only — use splunk_run_query; do not use Splunk REST, curl, or basic auth for searches.
 Time range: last 24 hours.
 Return IT Ops summary only; do not synthesize other teams.
@@ -77,7 +77,7 @@ Launch with Splunk MCP enabled (`subagent_type: generalPurpose` or `s4r-power-us
 
 ```text
 As Buttercup Power User: is the shop losing money? Delegate to all four teams.
-Read docs/S4R-SPL-CATALOG.md per team. Splunk MCP only — splunk_run_query; never Splunk REST or curl for searches. Last 24 hours.
+Read docs/s4r/SPL-CATALOG.md per team. Splunk MCP only — splunk_run_query; never Splunk REST or curl for searches. Last 24 hours.
 Wait for all four summaries; synthesize one executive answer (Power User template).
 ```
 
@@ -93,7 +93,7 @@ Four parallel specialists each call `splunk_run_query` as **`splunker`**. Defaul
 
 **Presenter mitigations:** wait a few seconds and retry; stagger one team; or run teams sequentially (`is_background: false` on specialists for visible one-at-a-time demos). Power User should **wait for all** teams and note any that failed dispatch — do not invent findings.
 
-Detail: [TROUBLESHOOTING.md § Parallel agent searches](../../docs/TROUBLESHOOTING.md#issue-parallel-agent-searches-hit-splunker-concurrency-limit).
+Detail: [s4r/TROUBLESHOOTING.md § Parallel agent searches](../../docs/s4r/TROUBLESHOOTING.md#parallel-agent-searches-hit-splunker-concurrency-limit).
 
 ## Prerequisites
 
@@ -109,4 +109,4 @@ Detail: [TROUBLESHOOTING.md § Parallel agent searches](../../docs/TROUBLESHOOTI
 | Active threat (NK geo) | `make s4r-attack-nk-enable` then `make restart` |
 | Check current mode | `make s4r-attack-nk-status` |
 
-Discriminating SPL: [S4R-SPL-CATALOG.md § Workshop modes](../../docs/S4R-SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat). Eventgen detail: [SA-S4R-APP.md](../../docs/SA-S4R-APP.md).
+Discriminating SPL: [S4R-SPL-CATALOG.md § Workshop modes](../../docs/s4r/SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat). Eventgen detail: [SA-S4R-APP.md](../../docs/s4r/SA-S4R-APP.md).

@@ -1,6 +1,6 @@
 # Splunk4Rookies dashboard prompt
 
-Use this document as the **dashboard layout spec** (visualization, layout, acceptance) for the Buttercup Enterprises workshop in **Splunk4Rookies** (`SA-S4R`). **Canonical SPL** lives in [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md). Data and Eventgen: [SA-S4R-APP.md](SA-S4R-APP.md). Agentic setup: [S4R-AGENTS.md](S4R-AGENTS.md) and [`.cursor/agents/`](../.cursor/agents/). Workshop hub: [s4r/README.md](s4r/README.md).
+Use this document as the **dashboard layout spec** (visualization, layout, acceptance) for the Buttercup Enterprises workshop in **Splunk4Rookies** (`SA-S4R`). **Canonical SPL** lives in [SPL-CATALOG.md](SPL-CATALOG.md). Data and Eventgen: [SA-S4R-APP.md](SA-S4R-APP.md). Agentic setup: [AGENTS.md](AGENTS.md) and [`.cursor/agents/`](../.cursor/agents/). Workshop hub: [README.md](README.md).
 
 ## Scenario
 
@@ -15,11 +15,11 @@ You are a Splunk power user for **Buttercup Enterprises**, a US online retailer 
 | Index / sourcetype | `index=main sourcetype=access_combined` |
 | Event shape | Apache-style access logs: `/product.screen?uid=…&product_id=…` and `/cart.do?action=…&product_id=…` |
 | Fields in repo | `action`, `product_id`, `uid`, `JSESSIONID` (`SA-S4R/default/props.conf`) |
-| Field to add (Lab 4) | **`platform`** — add to **`local/props.conf`** per **`SA-S4R/local/README`** for saved dashboard panels; **agents/MCP** use inline `rex` in [S4R-SPL-CATALOG.md § Platform prefix](S4R-SPL-CATALOG.md#platform-prefix-lab-4--required-for-agents--mcp) |
+| Field to add (Lab 4) | **`platform`** — add to **`local/props.conf`** per **`SA-S4R/local/README`** for saved dashboard panels; **agents/MCP** use inline `rex` in [SPL-CATALOG.md § Platform prefix](SPL-CATALOG.md#platform-prefix-lab-4--required-for-agents--mcp) |
 | Lookup | **`product_codes`** → `product_id`, `product_name`, `product_price` (file: `SA-S4R/lookups/product_codes.csv`) |
 | Background asset | `/static/app/SA-S4R/Buttercup_Background.jpg` (repo: `SA-S4R/appserver/static/Buttercup_Background.jpg`) |
 
-Base search and field conventions: [S4R-SPL-CATALOG.md § Data contract](S4R-SPL-CATALOG.md#data-contract).
+Base search and field conventions: [SPL-CATALOG.md § Data contract](SPL-CATALOG.md#data-contract).
 
 ## Dashboard platform
 
@@ -38,7 +38,7 @@ Base search and field conventions: [S4R-SPL-CATALOG.md § Data contract](S4R-SPL
 | | |
 | --- | --- |
 | Visualization | Stacked column chart |
-| SPL | [S4R-SPL-CATALOG.md § IT Ops — Panel](S4R-SPL-CATALOG.md#-it-ops-lab-3) |
+| SPL | [SPL-CATALOG.md § IT Ops — Panel](SPL-CATALOG.md#-it-ops-lab-3) |
 
 Add this panel to a **new** dashboard; choose Dashboard Studio and Absolute layout.
 
@@ -46,12 +46,12 @@ Add this panel to a **new** dashboard; choose Dashboard Studio and Absolute layo
 
 **Ask:** Show the most common customer operating systems and which web browsers experience the most failures.
 
-**Prerequisite (dashboard):** Add **`platform`** to **`local/props.conf`** per **`SA-S4R/local/README`** for saved panels (Lab 4). **Agent/ad-hoc SPL:** always use [platform prefix](S4R-SPL-CATALOG.md#platform-prefix-lab-4--required-for-agents--mcp) — do not assume the saved extraction applies to MCP searches.
+**Prerequisite (dashboard):** Add **`platform`** to **`local/props.conf`** per **`SA-S4R/local/README`** for saved panels (Lab 4). **Agent/ad-hoc SPL:** always use [platform prefix](SPL-CATALOG.md#platform-prefix-lab-4--required-for-agents--mcp) — do not assume the saved extraction applies to MCP searches.
 
 | Panel | Visualization | SPL |
 | ----- | ------------- | --- |
-| Top operating systems | Bar chart | [§ DevOps — top OS](S4R-SPL-CATALOG.md#-devops-lab-4) |
-| Top 5 failing browsers over time | Area chart | [§ DevOps — failing browsers](S4R-SPL-CATALOG.md#-devops-lab-4) |
+| Top operating systems | Bar chart | [§ DevOps — top OS](SPL-CATALOG.md#-devops-lab-4) |
+| Top 5 failing browsers over time | Area chart | [§ DevOps — failing browsers](SPL-CATALOG.md#-devops-lab-4) |
 
 Add both charts to the **same** dashboard as panel 1.
 
@@ -64,7 +64,7 @@ Failed purchases have `action=purchase` and HTTP error status. Enrich with looku
 | | |
 | --- | --- |
 | Visualization | Single value (or time series — workshop uses timechart) |
-| SPL | [§ Business Analytics — lost revenue over time](S4R-SPL-CATALOG.md#-business-analytics-lab-5) |
+| SPL | [§ Business Analytics — lost revenue over time](SPL-CATALOG.md#-business-analytics-lab-5) |
 
 Lookup: **`product_codes`** (`SA-S4R/lookups/product_codes.csv`) — see catalog **Data contract**.
 
@@ -75,7 +75,7 @@ Lookup: **`product_codes`** (`SA-S4R/lookups/product_codes.csv`) — see catalog
 | | |
 | --- | --- |
 | Visualization | World map (city-level activity) |
-| SPL | [§ Security & Fraud — activity by city](S4R-SPL-CATALOG.md#-security--fraud-lab-6) |
+| SPL | [§ Security & Fraud — activity by city](SPL-CATALOG.md#-security--fraud-lab-6) |
 
 Requires Splunk **`iplocation`** (GeoLite etc.).
 
@@ -110,8 +110,8 @@ Tasks:
 
 ## References
 
-- [s4r/README.md](s4r/README.md) — Splunk4Rookies doc hub
-- [S4R-SPL-CATALOG.md](S4R-SPL-CATALOG.md) — canonical SPL for all panels
+- [README.md](README.md) — Splunk4Rookies doc hub
+- [SPL-CATALOG.md](SPL-CATALOG.md) — canonical SPL for all panels
 - [SA-S4R-APP.md](SA-S4R-APP.md) — Eventgen, extractions, lookup, background hint
-- [S4R-AGENTS.md](S4R-AGENTS.md) — agentic demo script
+- [AGENTS.md](AGENTS.md) — agentic demo script
 - Splunk docs: [Dashboard Studio tutorial](https://splk.it/SplunkDashStudioTutorial)

@@ -15,7 +15,7 @@ Investigate **successful versus unsuccessful** web server requests over time. Wh
 
 ## SPL runbook
 
-**Before any search:** read **`docs/S4R-SPL-CATALOG.md` § IT Ops** and run those queries via Splunk MCP (`splunk_run_query`). Use the **Data contract** section for base search and conventions (`status>=400` = failure).
+**Before any search:** read **`docs/s4r/SPL-CATALOG.md` § IT Ops** and run those queries via Splunk MCP (`splunk_run_query`). Use the **Data contract** section for base search and conventions (`status>=400` = failure).
 
 ## Query execution (MCP only)
 

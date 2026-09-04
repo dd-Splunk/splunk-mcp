@@ -25,11 +25,11 @@ This document applies to the workspace **development PoC** context: single host,
 - **`tpl.env.example`** (tracked): Placeholder `op://` paths only—safe to publish.
 - **`tpl.env`** (gitignored): Your local file from **`cp tpl.env.example tpl.env`**; may contain real `op://` paths—**never commit**.
 - **`.env`**: Optional; hand-written from **`.env.example`** (Path B) and **git-ignored** when present. With **`tpl.env`** only, **`make up`** passes secrets via **`op run`** without creating `.env`.
-- **Do not** commit `.env`, token files, or private keys. See [AGENTS.md](../AGENTS.md).
+- **Do not** commit `.env`, token files, or private keys. See [AGENTS.md](../../AGENTS.md).
 
 ### Secret scanning
 
-Local pre-commit and CI both run **gitleaks** using [`.gitleaks.toml`](../.gitleaks.toml). GitHub Actions also runs a full-history gitleaks scan before the pre-commit job. Run the same checks locally before pushing:
+Local pre-commit and CI both run **gitleaks** using [`.gitleaks.toml`](../../.gitleaks.toml). GitHub Actions also runs a full-history gitleaks scan before the pre-commit job. Run the same checks locally before pushing:
 
 ```bash
 pre-commit run --all-files

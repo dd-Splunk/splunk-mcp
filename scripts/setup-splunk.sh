@@ -28,8 +28,8 @@
 # Deprecated env (still honored if new names unset): SPLUNK_USER, SPLUNKER_USERNAME,
 # MLTK_ROLES_USER.
 #
-# Out of scope: claude_logs index or file monitors — see docs/CONFIGURATION.md.
-# Full variable table and flows: docs/CONFIGURATION.md#appendix-setup-splunksh
+# Out of scope: claude_logs index or file monitors — see docs/poc/CONFIGURATION.md.
+# Full variable table and flows: docs/poc/CONFIGURATION.md#appendix-setup-splunksh
 
 set -eu
 
