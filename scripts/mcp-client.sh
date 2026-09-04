@@ -7,7 +7,7 @@
 #   ./scripts/mcp-client.sh park <claude|cursor|goose|all>
 #   ./scripts/mcp-client.sh verify <claude|cursor|goose|all>
 #
-# Env: CURSOR_MCP_JSON, SPLUNK_MCP_ENDPOINT, SPLUNK_MCP_TLS_INSECURE
+# Env: CURSOR_MCP_JSON, SPLUNK_MCP_ENDPOINT, SPLUNK_MCP_TLS_INSECURE, MCP_REMOTE_PACKAGE
 
 set -euo pipefail
 
@@ -63,6 +63,10 @@ npx_command() {
   printf '%s' "$npx_cmd"
 }
 
+mcp_remote_spec() {
+  printf '%s' "${MCP_REMOTE_PACKAGE:-mcp-remote@0.8.3}"
+}
+
 merge_json_mcp_server() {
   local out_path="$1"
   local block="$2"
@@ -81,13 +85,16 @@ merge_json_mcp_server() {
 mcp_servers_block_mcp_remote_jq() {
   local endpoint="$1" token="$2" npx_cmd="$3"
   local tls_insecure="${SPLUNK_MCP_TLS_INSECURE:-1}"
+  local mcp_remote
+  mcp_remote="$(mcp_remote_spec)"
   jq -n \
     --arg endpoint "$endpoint" \
     --arg token "$token" \
     --arg npx_cmd "$npx_cmd" \
+    --arg mcp_remote "$mcp_remote" \
     --arg tls_insecure "$tls_insecure" \
     '{
-      args: ["-y", "mcp-remote", $endpoint, "--header", ("Authorization: Bearer " + $token)],
+      args: ["-y", $mcp_remote, $endpoint, "--header", ("Authorization: Bearer " + $token)],
       command: $npx_cmd
     }
     | if ($tls_insecure == "1" or $tls_insecure == "true" or $tls_insecure == "yes") then
@@ -395,9 +402,9 @@ PY
 }
 
 verify_splunk_mcp() {
-  local endpoint token tmp
+  local token="${1:?}"
+  local endpoint tmp
   endpoint=$(splunk_mcp_endpoint)
-  token="$(mint_mcp_token)" || die "could not mint MCP token for Splunk MCP verify"
   tmp=$(mktemp)
   # shellcheck disable=SC2329
   cleanup() { rm -f "${tmp:-}"; }
@@ -418,12 +425,14 @@ verify_splunk_mcp() {
 
 # Same path clients use: stdio → npx mcp-remote → HTTPS /services/mcp
 verify_mcp_remote_stdio() {
-  local endpoint token npx_cmd tls_insecure
+  local token="${1:?}"
+  local endpoint npx_cmd tls_insecure mcp_remote
   endpoint=$(splunk_mcp_endpoint)
   npx_cmd="$(npx_command)"
-  token="$(mint_mcp_token)" || die "could not mint MCP token for mcp-remote verify"
+  mcp_remote="$(mcp_remote_spec)"
   tls_insecure="${SPLUNK_MCP_TLS_INSECURE:-1}"
   MCP_NPX_COMMAND="$npx_cmd" SPLUNK_MCP_ENDPOINT="$endpoint" SPLUNK_MCP_TLS_INSECURE="$tls_insecure" \
+    MCP_REMOTE_PACKAGE="$mcp_remote" \
     python3 - "$token" <<'PY' || die "mcp-remote stdio tools/list failed (see errors above)"
 import json
 import os
@@ -435,6 +444,7 @@ import time
 token = sys.argv[1]
 npx_cmd = os.environ["MCP_NPX_COMMAND"]
 endpoint = os.environ["SPLUNK_MCP_ENDPOINT"]
+mcp_remote = os.environ.get("MCP_REMOTE_PACKAGE", "mcp-remote@0.8.3")
 tls_insecure = os.environ.get("SPLUNK_MCP_TLS_INSECURE", "1")
 header = f"Authorization: Bearer {token}"
 
@@ -445,7 +455,7 @@ else:
     env.pop("NODE_TLS_REJECT_UNAUTHORIZED", None)
 
 proc = subprocess.Popen(
-    [npx_cmd, "-y", "mcp-remote", endpoint, "--header", header],
+    [npx_cmd, "-y", mcp_remote, endpoint, "--header", header],
     stdin=subprocess.PIPE,
     stdout=subprocess.PIPE,
     stderr=subprocess.PIPE,
@@ -526,7 +536,7 @@ cmd_update() {
 }
 
 cmd_verify() {
-  local client="${1:?}"
+  local client="${1:?}" token
   case "$client" in
     all)
       for c in $VALID_CLIENTS; do
@@ -540,8 +550,9 @@ cmd_verify() {
       die "unknown client '$client' (use: $VALID_CLIENTS or all)"
       ;;
   esac
-  verify_splunk_mcp
-  verify_mcp_remote_stdio
+  token="$(mint_mcp_token)" || die "could not mint MCP token for verify"
+  verify_splunk_mcp "$token"
+  verify_mcp_remote_stdio "$token"
 }
 
 main() {

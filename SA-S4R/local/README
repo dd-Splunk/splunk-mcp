@@ -19,6 +19,7 @@ Expected local/ layout (workshop)
 
   local/
   ├── README                 (this file — tracked in git)
+  ├── eventgen.conf          (optional — NK workshop mode override; auto-created by MCP/shell toggles)
   ├── props.conf             (Lab 4 — platform extraction)
   ├── data/ui/nav/local.xml  (Buttercup nav tab)
   ├── data/ui/views/         (Dashboard Studio export — build in Labs 3–7)

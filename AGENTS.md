@@ -78,7 +78,7 @@ Workshop agent **roles** remain in **`.cursor/agents/`** (not skills).
 - **`ENV_OUT`**: optional plain env file for Path B (default **`.env`**)
 - **`OP`**, **`DC`**: 1Password CLI and docker compose command
 - **`MCP_CLIENT`**, **`MCP_VERIFY_CLIENT`**, **`MCP_UPDATE_ON_BOOT`**: single-client update/verify (default **`cursor`** / **`all`**); boot-time client list for **`make up`** (default **`cursor`**; set to **`cursor goose claude`** for all)
-- **`SPLUNK_MCP_ENDPOINT`**, **`SPLUNK_MCP_TLS_INSECURE`**, **`MCP_NPX_COMMAND`**: see **`docs/poc/CONFIGURATION.md`**
+- **`SPLUNK_MCP_ENDPOINT`**, **`SPLUNK_MCP_TLS_INSECURE`**, **`MCP_NPX_COMMAND`**, **`MCP_REMOTE_PACKAGE`** (default `mcp-remote@0.8.3`): see **`docs/poc/CONFIGURATION.md`**
 - **`SA-S4R_*` MCP tools** (preferred for workshop mode): **`SA-S4R_query_nk_demo_state`**, **`SA-S4R_apply_nk_demo_state`**, etc. — **`docs/s4r/MCP-TOOLS.md`**
 - **`s4r-attack-nk-enable`** / **`s4r-attack-nk-disable`** / **`s4r-attack-nk-status`**: shell fallback; **`make restart`** after enable/disable — **`docs/s4r/SA-S4R-APP.md`**
 - **`register-s4r-mcp-tools`**: re-register SA-S4R workshop MCP tools after editing **`s4r_mcp_tools.json`** (`make up` already runs this)

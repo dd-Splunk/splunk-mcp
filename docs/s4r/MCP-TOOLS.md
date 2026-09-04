@@ -103,9 +103,10 @@ All paths are under **`SA-S4R/`** unless noted. MCP/tool packaging lives in **`d
 | **`default/tool_input_payload_signatures.json`** | LLM call schema | Per-tool JSON so the model knows arguments (session: “shared with LLMs so it knows how to call the tool”). Mirrors `inputSchema` in `s4r_mcp_tools.json`. |
 | **`default/savedsearches.conf`** | SPL tools | Governed searches: **`S4R Summarize Purchase Health`**, **`S4R Geo Failed Purchase Hotspots`**, **`S4R Validate NK Attack Traffic`**. SPL should match [SPL-CATALOG.md](SPL-CATALOG.md). |
 | **`default/restmap.conf`** | API tools | Exposes **`/servicesNS/nobody/SA-S4R/s4r_workshop_mode`**. Script: `s4r_workshop_mode.py`. Requires authentication; `capability = mcp_tool_execute`. |
-| **`bin/s4r_workshop_mode.py`** | API tools | REST handler: reads/writes `disabled` on `[attack.nk.purchase.sample]` in `eventgen.conf`; allowlists `mode` to `infrastructure` \| `threat`; reloads the Eventgen modinput. |
+| **`bin/s4r_workshop_mode.py`** | API tools | REST handler: reads/writes `disabled` on `[attack.nk.purchase.sample]` in **`local/eventgen.conf`** (override); allowlists `mode` to `infrastructure` \| `threat`; reloads the Eventgen modinput. |
 | **`default/authorize.conf`** | Workshop write path | Declares capability **`[capability::s4r_workshop_control]`** (two colons). `scripts/setup-splunk.sh` grants it to role **`mcp_user`** after the app loads (best-effort; the REST map still gates on `mcp_tool_execute`). |
-| **`default/eventgen.conf`** | Data mode | Stanza the handler toggles. Same file as `make s4r-attack-nk-*`. |
+| **`default/eventgen.conf`** | Baseline Eventgen | Ships NK stanza with **`disabled = true`** (infrastructure default). |
+| **`local/eventgen.conf`** | Workshop mode | Gitignored override; MCP + shell toggles write `disabled` here. |
 | **`scripts/register-s4r-mcp-tools.sh`** | Host bootstrap | `POST /services/mcp_tools` batch replace, enable each tool, reload `conf-savedsearches`. Needs **`jq`** and admin credentials from `.env` or `op run --env-file=tpl.env`. |
 
 Two complementary packaging paths:
@@ -147,7 +148,7 @@ SA-S4R mapping: saved-search tools → `S4R Summarize Purchase Health`, `S4R Geo
 | `SA-S4R_summarize_purchase_health` | SPL | READ-ONLY: lost revenue, checkout outcomes, top products (**last 24h**) | saved search **`S4R Summarize Purchase Health`** |
 | `SA-S4R_geo_failed_purchases` | SPL | READ-ONLY: failed-purchase geo hotspots + top cities (**last 24h**) | saved search **`S4R Geo Failed Purchase Hotspots`** |
 
-`make` targets (`s4r-attack-nk-enable` / `disable` / `status`) remain operator fallbacks; they edit the same Eventgen stanza.
+`make` targets (`s4r-attack-nk-enable` / `disable` / `status`) remain shell fallbacks; they write the same **`local/eventgen.conf`** override as MCP.
 
 ## Bootstrap
 

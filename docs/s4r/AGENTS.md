@@ -118,7 +118,7 @@ Specialists run as **background** subagents (`is_background: true`); **Power Use
 
 ### Parallel delegation and search concurrency
 
-When all four specialists run at once, each calls `splunk_run_query` as **`splunker`**. The default PoC user is limited to **3 concurrent historical searches** — expect occasional dispatch failures on the fourth query. Mitigations: retry after a few seconds, stagger teams, or run sequentially for live demos. See [`.cursor/agents/README.md` § Parallel delegation](../.cursor/agents/README.md#parallel-delegation-four-teams) and [TROUBLESHOOTING.md § Parallel agent searches](TROUBLESHOOTING.md#issue-parallel-agent-searches-hit-splunker-concurrency-limit).
+When all four specialists run at once, each calls `splunk_run_query` as **`splunker`**. The PoC grants **`mcp_user`** with **`srchJobsQuota=5`** — four parallel historical searches should usually succeed; if not, retry after a few seconds, stagger teams, or run sequentially for live demos. See [`.cursor/agents/README.md` § Parallel delegation](../.cursor/agents/README.md#parallel-delegation-four-teams) and [TROUBLESHOOTING.md § Parallel agent searches](TROUBLESHOOTING.md#issue-parallel-agent-searches-hit-splunker-concurrency-limit).
 
 **Copy-paste prompt (Demo 1):**
 

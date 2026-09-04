@@ -255,7 +255,7 @@ Edit **`tpl.env`** with your `op://` paths. **`tpl.env`** is gitignored—do not
 
    ```bash
    cat > .env << 'EOF'
-   SPLUNK_IMAGE=splunk/splunk:latest
+   SPLUNK_IMAGE=splunk/splunk:10.4.1
    SPLUNK_PASSWORD=your_password_here
    SPLUNKBASE_USER=your_username
    SPLUNKBASE_PASS=your_password

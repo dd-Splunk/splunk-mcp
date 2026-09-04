@@ -12,7 +12,7 @@ Provide a self-contained local Splunk environment that demonstrates:
 ## Target platform
 
 - Splunk Enterprise as a **linux/amd64** container (Apple Silicon via emulation)
-- Image via **`SPLUNK_IMAGE`** in **`compose.yml`** (default **`splunk/splunk:latest`**); pin a tag in **`tpl.env`** / **`.env`** for reproducible demos. Cursor Cloud bootstrap defaults to **`splunk/splunk:10.4.1`** — see [CONFIGURATION.md](CONFIGURATION.md#cursor-cloud-bootstrap).
+- Image via **`SPLUNK_IMAGE`** in **`compose.yml`** (default **`splunk/splunk:10.4.1`**); override in **`tpl.env`** / **`.env`** if needed. Cursor Cloud bootstrap uses the same default — see [CONFIGURATION.md](CONFIGURATION.md#cursor-cloud-bootstrap).
 - Other services must not hardcode **`platform:`** unless required
 
 ## Identity and authorization

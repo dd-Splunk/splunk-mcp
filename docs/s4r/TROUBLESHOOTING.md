@@ -33,8 +33,10 @@ See [SA-S4R-APP.md § `default/` vs `local/`](SA-S4R-APP.md#default-vs-local-spl
 ```bash
 make s4r-attack-nk-status          # should print "enabled"
 docker exec so1 grep -A1 'attack.nk.purchase' \
+  /opt/splunk/etc/apps/SA-S4R/local/eventgen.conf 2>/dev/null \
+  || docker exec so1 grep -A1 'attack.nk.purchase' \
   /opt/splunk/etc/apps/SA-S4R/default/eventgen.conf
-# expect: disabled = false
+# expect: disabled = false (threat) or true (infrastructure)
 
 ls SA-S4R/samples/attack.nk.purchase.sample   # must exist (basename = stanza name)
 
@@ -59,13 +61,13 @@ Search not executed: ... role-based concurrency limit of historical searches for
 has been reached (usage=3, quota=3)
 ```
 
-**Cause**: All specialists run SPL as **`splunker`**. Default Splunk role limits allow **3 concurrent historical searches** per user; four parallel background workers often exceed that.
+**Cause**: All specialists run SPL as **`splunker`**. The PoC sets **`srchJobsQuota=5`** on **`mcp_user`**, but the built-in **`user`** role may still cap concurrent historical searches lower on some builds — four parallel background workers can exceed the effective quota.
 
 **Solution**:
 
 1. Wait 5–10 seconds — in-flight searches finish; retry failed teams.
 2. **Stagger** delegation (IT Ops + Business first, then DevOps + Security) or run one team at a time for screen-share clarity.
 3. Power User: **wait for all** teams; report which summaries are missing — do not invent numbers.
-4. Optional (advanced): raise `srchJobsQuota` / concurrency for `splunker` in `authorize.conf` — not required for PoC demos.
+4. Optional (advanced): confirm **`mcp_user`** has **`srchJobsQuota=5`** in Splunk (**Settings → Roles**).
 
 See [AGENTS.md § Parallel delegation](AGENTS.md#parallel-delegation-and-search-concurrency) · [`.cursor/agents/README.md` § Parallel delegation](../../.cursor/agents/README.md#parallel-delegation-four-teams) · [S4R-DEMO.md § Backup & troubleshooting](../../demo-slides/S4R-DEMO.md#backup--troubleshooting).

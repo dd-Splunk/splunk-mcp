@@ -15,9 +15,9 @@ This repo is a **local proof-of-concept**: **Splunk Enterprise** in Docker, **Sp
 3. **Network:** The host must reach **splunkbase.splunk.com** (HTTPS) and your container registry (e.g. Docker Hub). VPN/firewall/proxy often blocks corporate demos—test ahead.
 4. **Start:** `make up` from the repo root. First cold start is often **several minutes** (image pull, Splunk, Splunkbase app downloads, **`splunk-init`**). For a live meeting, warm the stack **before** the call or the day before.
 5. **Wait for green:** `make status` until it prints **Splunk is ready ✓** (or run **`make demo-prep`** — status + MCP verify + warm-stack reminder).
-6. **Cursor (recommended):** **`make up`** already wrote **`.cursor/mcp.json`**; restart Cursor or reload MCP servers. Confirm Splunk/MCP tools in the tool list and run a **read-only** tool (e.g. a small search).
-7. **Sanity check from the shell:** `make verify-mcp-remote` or **`make demo-prep`** (checks all client configs + Splunk MCP `tools/list`).
-8. **Claude / Goose (if used):** **`make up`** runs **`update-mcp-clients`**; **quit Claude fully (Cmd+Q)** and reopen, and restart Goose.
+6. **Cursor (recommended):** **`make up`** writes **`.cursor/mcp.json`** (default client); restart Cursor or reload MCP servers. Confirm Splunk/MCP tools in the tool list and run a **read-only** tool (e.g. a small search).
+7. **Sanity check from the shell:** `make verify-mcp-remote` or **`make demo-prep`** (checks client configs + Splunk MCP `tools/list`).
+8. **Claude / Goose (if used):** run **`make update-mcp-clients`** or **`make up MCP_UPDATE_ON_BOOT="cursor goose claude"`**; **quit Claude fully (Cmd+Q)** and reopen, and restart Goose.
 
 If anything fails, go straight to [TROUBLESHOOTING.md](TROUBLESHOOTING.md) (Splunkbase auth, ports, token timeout, MCP 401).
 
@@ -42,7 +42,7 @@ node --version   # for npx mcp-remote
 # Path A: cp tpl.env.example tpl.env  (edit op:// paths)
 # Path B: cp .env.example .env       (plain values; never commit)
 
-make up          # several minutes on cold start; runs update-mcp-clients
+make up          # several minutes on cold start; mints MCP token (default: cursor) + registers S4R tools
 
 make demo-prep   # status + MCP verify
 # Splunk Web: https://localhost:8000
@@ -199,9 +199,9 @@ Tokens remain **GA** in 1.3; OAuth is the preferred interactive path for support
 
 | Client | What to do |
 | ------ | ---------- |
-| **Cursor** | **`make up`** runs **`update-mcp-clients`** (includes Cursor); restart Cursor or reload MCP. **Use this for most SE demos.** |
-| **Claude Desktop (macOS)** | Same **`update-mcp-clients`**; user must **quit Claude fully** and reopen. |
-| **Goose** | Same **`update-mcp-clients`**; restart Goose. |
+| **Cursor** | **`make up`** updates Cursor by default (`MCP_UPDATE_ON_BOOT=cursor`); restart Cursor or reload MCP. **Use this for most SE demos.** |
+| **Claude Desktop (macOS)** | **`make update-mcp-client MCP_CLIENT=claude`** or **`make up MCP_UPDATE_ON_BOOT="cursor goose claude"`**; user must **quit Claude fully** and reopen. |
+| **Goose** | **`make update-mcp-client MCP_CLIENT=goose`** or include in **`MCP_UPDATE_ON_BOOT`**; restart Goose. |
 
 Shell smoke test: **`make verify-mcp-remote`** (all clients) or **`MCP_VERIFY_CLIENT=cursor`** for one.
 
