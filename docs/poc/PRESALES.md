@@ -154,7 +154,7 @@ Use this section when the audience has **Splunk Cloud** with the **Splunk MCP Se
 
 ### Cloud presales checklist
 
-1. **Confirm versions:** Splunk **10.3.2512.11+** (ideally **10.5.2506.3+**), MCP app **1.2.1+** (this repo pins **1.3.1** locally).
+1. **Confirm versions:** Splunk **10.3.2512.11+** (ideally **10.5.2506.3+**), MCP app **1.2.1+** (this repo pins **2.0.0** locally).
 2. **MCP app installed** on the customer search head; roles have **`mcp_tool_execute`** (admins: **`mcp_tool_admin`**).
 3. **OAuth client (Cursor):** Splunk Web → Settings → Authentication methods → **Splunk OAuth Clients** → New client named e.g. `cursor`, redirect URI exactly **`cursor://anysphere.cursor-mcp/oauth/callback`**.
 4. **Share securely:** Client ID, client secret (once), MCP endpoint URL from the MCP app.

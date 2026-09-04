@@ -6,8 +6,8 @@
 | ------ | --- | -------------- |
 | 1924 | SA-Eventgen (sample data / Eventgen modinput) | 8.2.1 |
 | 4353 | Config Explorer (optional UI utility) | 1.8.26 |
-| 7931 | Splunk MCP Server (required for `/services/mcp`) | 1.3.1 |
-| 7245 | Splunk AI Assistant for SPL | 2.2.0 |
+| 7931 | Splunk MCP Server (required for `/services/mcp`) | 2.0.0 |
+| 7245 | Splunk AI Assistant | 2.3.2 |
 
 Check current Splunkbase releases: `https://splunkbase.splunk.com/api/v1/app/<id>/release/` (first entry is latest). Update the `/release/VERSION/` segment in **`compose.yml`** when bumping.
 
