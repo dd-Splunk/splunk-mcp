@@ -214,10 +214,8 @@ PY
 }
 
 update_goose() {
-  local token="${1:-}"
-  if [[ -z "$token" ]]; then
-    token="$(mint_mcp_token)" || die "could not mint MCP token"
-  fi
+  local token
+  token="$(mint_mcp_token)" || die "could not mint MCP token"
   apply_goose_splunk_mcp "$token"
   echo "Bearer token stored in Goose config only (not in this repo)."
   echo "Restart Goose for changes to take effect."
