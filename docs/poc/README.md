@@ -18,6 +18,7 @@ Workshop (Buttercup / SA-S4R): **[../s4r/README.md](../s4r/README.md)**.
 | [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) | What to edit when, test loop, lint |
 | [CI_CD.md](CI_CD.md) | GitHub Actions, SA-S4R package release |
 | [SPECS.md](SPECS.md) | Requirements and acceptance criteria |
+| [GRADUATION.md](GRADUATION.md) | PoC → unattended boot: impact study and checklist |
 
 ## Suggested order
 
