@@ -11,6 +11,25 @@
 
 Check current Splunkbase releases: `https://splunkbase.splunk.com/api/v1/app/<id>/release/` (first entry is latest). Update the `/release/VERSION/` segment in **`compose.yml`** when bumping.
 
+### Version bump workflow
+
+Use this when changing the Splunk Enterprise image, Splunkbase app pins, or the `mcp-remote` bridge package.
+
+1. **Splunk image**
+   - Update the default image in **`compose.yml`** (`${SPLUNK_IMAGE:-...}`).
+   - Update the same tag in **`tpl.env.example`**, **`.env.example`**, and the Cursor Cloud notes in this document.
+   - For Cursor Cloud or any persistent Docker volume created by another major version, run **`./scripts/cloud-bootstrap.sh --wipe`** or **`make clean-y`** before the first boot to avoid stale KVStore data.
+2. **Splunkbase apps**
+   - Check `https://splunkbase.splunk.com/api/v1/app/<id>/release/` for each app ID.
+   - Replace only the `/release/VERSION/` segment in **`SPLUNK_APPS_URL`** unless the app ID changes.
+   - Keep the comments beside **`SPLUNK_APPS_URL`** current so troubleshooting can map a failed URL back to an app.
+3. **`mcp-remote`**
+   - Change **`MCP_REMOTE_PACKAGE`** only when a client-side bridge update is needed; the Makefile default is the repo-wide default.
+   - Re-run **`make update-mcp-client MCP_CLIENT=<client>`** after changing the package so client configs pick up the new spec.
+4. **Verification**
+   - Start from a clean or compatible volume set, then run **`make up`** and **`make verify`**.
+   - If a Splunkbase URL returns 404, confirm credentials first, then refresh the affected release segment from Splunkbase.
+
 ### Service `so1` (Splunk)
 
 | Setting | Meaning |
