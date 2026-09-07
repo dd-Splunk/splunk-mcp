@@ -55,9 +55,9 @@ Use this as a scorecard. **Internal graduation** can be declared when every **re
 | # | Criterion | Today | Gap / action |
 | - | --------- | ----- | ------------ |
 | A1 | Single canonical path in docs (no “ask maintainer for `tpl.env`”) | Path A + B documented | Publish org-standard: e.g. “Path B for first clone” in [INSTALLATION.md](INSTALLATION.md) |
-| A2 | Prerequisites with pass/fail commands (Docker RAM, Splunkbase reachability, Node/`npx`) | Partial in [PRESALES.md](PRESALES.md) | Add a **preflight** section or script (`docker info`, `curl` Splunkbase, `npx --version`) |
-| A3 | First-run duration documented | Mentioned in presales | Put **cold vs warm** times in INSTALLATION + PRESALES |
-| A4 | Acceptance command documented | `make verify` / `make demo-prep` | State explicitly: **`make verify` exit 0 = graduated acceptance** (align with [SPECS.md](SPECS.md)) |
+| A2 | Prerequisites with pass/fail commands (Docker RAM, Splunkbase reachability, Node/`npx`) | [INSTALLATION.md](INSTALLATION.md#preflight-before-first-make-up) lists local checks; [PRESALES.md](PRESALES.md#technical-quick-reference) has the short demo path | Optional: convert preflight to a script if handoffs still miss prerequisites |
+| A3 | First-run duration documented | [INSTALLATION.md](INSTALLATION.md#preflight-before-first-make-up) and [PRESALES.md](PRESALES.md#demo-success-path-do-this-in-order) call out cold-start timing | None for doc-only graduation |
+| A4 | Acceptance command documented | [INSTALLATION.md](INSTALLATION.md#mcp-clients) distinguishes default Cursor verification from all-client **`make verify`**; [SPECS.md](SPECS.md#acceptance-criteria-minimum) keeps data-level criteria | None for doc-only graduation |
 
 ### B. Secrets and credentials (required)
 
@@ -72,17 +72,17 @@ Use this as a scorecard. **Internal graduation** can be declared when every **re
 
 | # | Criterion | Today | Gap / action |
 | - | --------- | ----- | ------------ |
-| C1 | OS list (e.g. macOS + Docker Desktop = supported) | Implicit | Write **Supported / best effort / unsupported** table |
+| C1 | OS list (e.g. macOS + Docker Desktop = supported) | [INSTALLATION.md](INSTALLATION.md#supported-platforms) lists supported, best-effort, and unsupported environments | None for doc-only graduation |
 | C2 | MCP client matrix | Cursor primary; others manual | Either expand `MCP_UPDATE_ON_BOOT` default or document “Cursor-only supported” |
-| C3 | Cloud / Cursor Cloud | [cloud-bootstrap.sh](../../scripts/cloud-bootstrap.sh) | Link from INSTALLATION; state VM ephemeral disk behavior |
+| C3 | Cloud / Cursor Cloud | [INSTALLATION.md](INSTALLATION.md#cursor-cloud), [CONFIGURATION.md](CONFIGURATION.md#cursor-cloud-bootstrap), and [TROUBLESHOOTING.md](TROUBLESHOOTING.md#cursor-cloud-docker-in-docker) cover bootstrap and VM-local runtime files | None for doc-only graduation |
 
 ### D. Reliability and versions (required)
 
 | # | Criterion | Today | Gap / action |
 | - | --------- | ----- | ------------ |
-| D1 | Pinned Splunk image | `splunk/splunk:10.4.1` default | Document bump process in CONFIGURATION |
-| D2 | Pinned Splunkbase app URLs | `compose.yml` | Document bump + Splunk major migration (`make clean-y`) |
-| D3 | Pinned `mcp-remote` | `MCP_REMOTE_PACKAGE` default `mcp-remote@0.8.3` | Document override |
+| D1 | Pinned Splunk image | `splunk/splunk:10.4.1` default; bump workflow in [CONFIGURATION.md](CONFIGURATION.md#version-bump-workflow) | None for doc-only graduation |
+| D2 | Pinned Splunkbase app URLs | `compose.yml` pins app release URLs; bump + clean-volume guidance in [CONFIGURATION.md](CONFIGURATION.md#version-bump-workflow) | None for doc-only graduation |
+| D3 | Pinned `mcp-remote` | `MCP_REMOTE_PACKAGE` default `mcp-remote@0.8.3`; override documented in [CONFIGURATION.md](CONFIGURATION.md#version-bump-workflow) | None for doc-only graduation |
 | D4 | Top failures runbook | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Ensure init / MCP 401 / Splunkbase / no data are one-hop fixes |
 
 ### E. Workshop consumability (required for S4R graduation)
