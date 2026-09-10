@@ -54,6 +54,6 @@ Requires **shellcheck** and **Node/npx** (markdownlint); pre-commit also runs **
 ## Resources
 
 - Splunk REST: <https://docs.splunk.com/Documentation/Splunk/latest/RESTREF>
-- Splunk MCP 1.3 clients: [API_REFERENCE.md](API_REFERENCE.md) · auth: [CONFIGURATION.md](CONFIGURATION.md#splunk-mcp-authentication-13)
+- Splunk MCP 2.0 clients: [API_REFERENCE.md](API_REFERENCE.md) · auth: [CONFIGURATION.md](CONFIGURATION.md#splunk-mcp-authentication-20)
 - Custom / app MCP tools: [S4R-MCP-TOOLS.md](../s4r/MCP-TOOLS.md)
 - MCP: <https://modelcontextprotocol.io/>
