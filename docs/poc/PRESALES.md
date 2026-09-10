@@ -143,19 +143,19 @@ Show **Splunk MCP + multi-agent** — not a single mega-prompt. Open these files
 
 ## Splunk Cloud stacks (OAuth vs this PoC)
 
-Use this section when the audience has **Splunk Cloud** with the **Splunk MCP Server** app (Splunkbase **7931**, **1.2.1+**)—not when you are running this repo’s local Docker demo.
+Use this section when the audience has **Splunk Cloud** with the **Splunk MCP Server** app (Splunkbase **7931**, **2.0+**)—not when you are running this repo’s local Docker demo.
 
 | Topic | Local PoC (this repo) | Customer Splunk Cloud |
 | ----- | --------------------- | --------------------- |
 | **Stack** | Docker Enterprise on laptop | Splunk Cloud (AWS region; OAuth not on Azure/GCP per Splunk docs) |
 | **Auth default** | Encrypted bearer token via **`make update-mcp-clients`** | **OAuth 2.1** recommended for Cursor / Claude Code (no static secret in config) |
-| **Client config** | `npx mcp-remote` + `Authorization: Bearer` | Cursor: **`url`** + **`auth`** (see Splunk [Connect Cursor](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/1.3/connect-cursor-to-splunk-mcp-server)) |
+| **Client config** | `npx mcp-remote` + `Authorization: Bearer` | Cursor: **`url`** + **`auth`** (see Splunk [Connect Cursor](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/connect-cursor-to-splunk-mcp-server)) |
 | **Automation** | `make up` mints token and writes client configs | Manual: admin creates OAuth client; user completes browser sign-in |
 | **TLS** | Self-signed localhost; `NODE_TLS_REJECT_UNAUTHORIZED=0` dev only | Trust customer cert or add Splunk cert to OS trust store |
 
 ### Cloud presales checklist
 
-1. **Confirm versions:** Splunk **10.3.2512.11+** (ideally **10.5.2506.3+**), MCP app **1.2.1+** (this repo pins **2.0.0** locally).
+1. **Confirm versions:** Splunk **10.3.2512.11+** (ideally **10.5.2506.3+**), MCP app **2.0+** (this repo pins **2.0.0** locally).
 2. **MCP app installed** on the customer search head; roles have **`mcp_tool_execute`** (admins: **`mcp_tool_admin`**).
 3. **OAuth client (Cursor):** Splunk Web → Settings → Authentication methods → **Splunk OAuth Clients** → New client named e.g. `cursor`, redirect URI exactly **`cursor://anysphere.cursor-mcp/oauth/callback`**.
 4. **Share securely:** Client ID, client secret (once), MCP endpoint URL from the MCP app.
@@ -168,7 +168,7 @@ Use this section when the audience has **Splunk Cloud** with the **Splunk MCP Se
 - Scripted automation where interactive browser login is impractical
 - Parity with this workshop’s token flow
 
-Tokens remain **GA** in 1.3; OAuth is the preferred interactive path for supported Cloud clients. Full detail: [CONFIGURATION.md](CONFIGURATION.md#splunk-mcp-authentication-13).
+Tokens remain **GA** in 2.0; OAuth is the preferred interactive path for supported Cloud clients. Full detail: [CONFIGURATION.md](CONFIGURATION.md#splunk-mcp-authentication-20).
 
 ## Before the customer call (checklist)
 
