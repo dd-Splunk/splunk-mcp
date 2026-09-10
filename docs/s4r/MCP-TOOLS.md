@@ -2,7 +2,7 @@
 
 How **SA-S4R** (Splunk4Rookies) registers governed tools with **Splunk MCP Server**, without a standalone MCP server.
 
-**Related:** [ARCHITECTURE.md](../poc/ARCHITECTURE.md) · [SA-S4R-APP.md](SA-S4R-APP.md) · [AGENTS.md](AGENTS.md) · [SPL-CATALOG.md](SPL-CATALOG.md) · [CONFIGURATION.md](../poc/CONFIGURATION.md) · [Managing custom tools (MCP 1.3)](https://help.splunk.com/en/splunk-enterprise/mcp-server-for-splunk-platform/1.3/managing-custom-tools-in-splunk-mcp-server)
+**Related:** [ARCHITECTURE.md](../poc/ARCHITECTURE.md) · [SA-S4R-APP.md](SA-S4R-APP.md) · [AGENTS.md](AGENTS.md) · [SPL-CATALOG.md](SPL-CATALOG.md) · [CONFIGURATION.md](../poc/CONFIGURATION.md) · [Managing custom tools (MCP 2.0)](https://help.splunk.com/en/splunk-enterprise/mcp-server-for-splunk-platform/2.0/managing-custom-tools-in-splunk-mcp-server)
 
 **Recordings:** [Developer Day 2026 playlist](https://www.youtube.com/playlist?list=PLxkFdMSHYh3T2mFyCdg8iz9ef068gLdfJ) · session **[Apps with MCP Tools](https://www.youtube.com/watch?v=fjGCf0QiBJc)** · recap [community announcement](https://community.splunk.com/t5/Product-News-Announcements/Splunk-Developer-Day-announcements-AI-agents-MCP-tools/ba-p/761316)
 
@@ -22,7 +22,7 @@ This PoC follows that model for Buttercup workshop tools (`SA-S4R_*`). Built-in 
 
 ## Definitions
 
-Terms match [Splunk MCP Server 1.3 custom tools](https://help.splunk.com/en/splunk-enterprise/mcp-server-for-splunk-platform/1.3/managing-custom-tools-in-splunk-mcp-server).
+Terms match [Splunk MCP Server 2.0 custom tools](https://help.splunk.com/en/splunk-enterprise/mcp-server-for-splunk-platform/2.0/managing-custom-tools-in-splunk-mcp-server).
 
 | Term | Meaning in this repo |
 | ---- | -------------------- |
