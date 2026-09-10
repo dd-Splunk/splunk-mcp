@@ -11,15 +11,25 @@
 | Minimum | 2 | 4 GB | ~10 GB |
 | Recommended | 4 | 8 GB | ~20 GB |
 
+### Supported platforms
+
+| Platform | Status | Notes |
+| -------- | ------ | ----- |
+| macOS + Docker Desktop | Supported for local demos | Primary laptop path; Claude Desktop config helper uses the macOS config path. Apple Silicon runs Splunk as `linux/amd64` via emulation. |
+| Linux + Docker Engine / Compose | Supported for developer use | Works with the same `make` targets when Docker can run Linux containers and ports `8000` / `8089` are free. |
+| Cursor Cloud | Supported with bootstrap | Run `make cloud-bootstrap` once per VM boot before `make up`; runtime `.env` and `docker-compose.override.yml` are gitignored and VM-local. |
+| Windows + WSL2 + Docker | Best effort | Use a Linux shell in WSL2 for `make` and paths. Client config paths may need manual adjustment, especially Claude Desktop. |
+| Native Windows shell without WSL2 | Unsupported | The scripts assume Bash, Unix paths, and Docker Compose behavior matching macOS/Linux. |
+
 ### Software
 
 | Tool | Purpose | Verify |
 | ---- | ------- | ------ |
-| Docker + Compose | Splunk containers | `docker --version` |
+| Docker + Compose | Splunk containers | `docker --version`, `docker compose version`, `docker info` |
 | 1Password CLI (`op`) | Secrets from local `tpl.env` | `op --version` (sign in: `op account add` or desktop integration) |
 | `make`, `bash` | `Makefile` workflows | `make --version` |
 | `curl`, `jq` | Scripts / REST | `curl --version`, `jq --version` |
-| Node/npm | `npx mcp-remote` for MCP clients | `node --version` |
+| Node/npm | `npx mcp-remote` for MCP clients | `node --version`, `npx --version` |
 
 Optional: **Git** to clone; an editor (e.g. VS Code) to edit `tpl.env` (from **`tpl.env.example`**) and `compose.yml`.
 
@@ -89,6 +99,39 @@ TZ=Europe/Brussels
 
 Expected layout includes `Makefile`, `compose.yml`, `tpl.env.example`, local `tpl.env` (after copy), `scripts/` (including `setup-splunk.sh`, `compose-up.sh`, `mcp-client.sh`), and `SA-S4R/`. See root [README.md](../../README.md) for the full picture.
 
+## Preflight before first `make up`
+
+Run these from the repo root before a fresh install or handoff. They do not print secrets.
+
+```bash
+docker info >/dev/null
+docker info --format 'CPUs={{.NCPU}} MemBytes={{.MemTotal}}'
+docker compose version
+make --version
+jq --version
+curl --version
+node --version
+npx --version
+curl -fsS https://splunkbase.splunk.com/ >/dev/null
+```
+
+Then validate the chosen secrets path:
+
+```bash
+# Path A: confirm op is signed in and each tpl.env reference resolves.
+op account list
+op read "op://YourVault/Splunkbase/username"
+
+# Path B: confirm .env exists and has all required keys populated.
+test -s .env
+```
+
+Network and ports:
+
+- The host must reach **splunkbase.splunk.com** and the container registry that serves `SPLUNK_IMAGE`.
+- Ports **8000** and **8089** must be free, or remapped in a gitignored `docker-compose.override.yml`; if 8089 changes, set `SPLUNK_MCP_ENDPOINT` before updating client configs.
+- The first cold boot can take **20–45 minutes** when images and Splunkbase apps are not cached. Warm restarts are usually much shorter, but still wait for `splunk-init` and MCP token minting to finish.
+
 ## Start the stack
 
 ```bash
@@ -101,7 +144,7 @@ After **`splunk-init`** exits, **`scripts/mcp-client.sh update-all`** writes cli
 
 For Path B (plain **`.env`** without 1Password at runtime), see [CONFIGURATION.md](CONFIGURATION.md#plain-env-path-b).
 
-Allow **several minutes** on first run (image pull, Splunk, Splunkbase downloads). Watch progress:
+Watch progress:
 
 ```bash
 make logs
@@ -130,11 +173,20 @@ After `make up` completes:
 | **Claude Desktop** (macOS) | Run **`make update-mcp-client MCP_CLIENT=claude`** or **`make up MCP_UPDATE_ON_BOOT="cursor goose claude"`**. Quit Claude fully (**Cmd+Q**), then reopen. Config: `~/Library/Application Support/Claude/claude_desktop_config.json`. |
 | **Goose** | Run **`make update-mcp-client MCP_CLIENT=goose`** or include **`goose`** in **`MCP_UPDATE_ON_BOOT`**. Restart Goose. |
 
-Shell smoke test:
+Shell smoke test for the default Cursor path:
 
 ```bash
-make verify-mcp-remote
+make verify-mcp-remote MCP_VERIFY_CLIENT=cursor
 ```
+
+All-client acceptance is:
+
+```bash
+make update-mcp-clients
+make verify
+```
+
+Exit code **0** means the stack status check passed, selected client config checks passed, Splunk MCP answered `tools/list`, and the `npx mcp-remote` stdio handshake worked. Data-level acceptance for SA-S4R is listed in [SPECS.md](SPECS.md#acceptance-criteria-minimum).
 
 ## Optional: Claude logs in Splunk
 
