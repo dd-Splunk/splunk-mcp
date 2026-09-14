@@ -12,7 +12,7 @@ Workshop (Buttercup / SA-S4R): **[../s4r/README.md](../s4r/README.md)**.
 | Bearer token mint via **`scripts/mint-mcp-token.sh`** / **`make update-mcp-clients`** | Cloud MCP client wiring, OAuth clients, or Cloud bearer tokens in **`.env`** |
 | Local SE / workshop demos ([PRESALES.md](PRESALES.md)) | Testing or documenting Splunk MCP against Cloud in this repo |
 
-For Cloud MCP, use Splunk’s official docs (e.g. [About MCP Server](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/1.3/about-mcp-server-for-splunk-platform)). Keep Cloud credentials and MCP config **outside** this repo’s **`.env`** / **`make up`** workflow.
+For Cloud MCP, use Splunk’s official docs (e.g. [About MCP Server](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/about-mcp-server-for-splunk-platform)). Keep Cloud credentials and MCP config **outside** this repo’s **`.env`** / **`make up`** workflow.
 
 ## Docs in this cluster
 
