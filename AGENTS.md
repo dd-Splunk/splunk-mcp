@@ -15,7 +15,7 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`. H
 | -------- | ------------ |
 | **Splunk Enterprise** in Docker on the laptop (`localhost:8089`) | **Splunk Cloud** MCP (`*.splunkcloud.com`, OAuth, staging/prod Cloud stacks) |
 | Encrypted bearer token via **`make update-mcp-clients`** → **`https://localhost:8089/services/mcp`** | Cloud MCP client config, Cloud OAuth setup, or mixing Cloud tokens into **`.env`** / this repo’s **`make up`** flow |
-| **SA-S4R** workshop, local presales demo | Customer Cloud presales runbooks (use [Splunk product docs](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/1.3/about-mcp-server-for-splunk-platform) instead) |
+| **SA-S4R** workshop, local presales demo | Customer Cloud presales runbooks (use [Splunk product docs](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/about-mcp-server-for-splunk-platform) instead) |
 
 Do not add Cloud MCP testing, endpoints, or secrets-handling paths to this repo unless scope explicitly changes.
 
