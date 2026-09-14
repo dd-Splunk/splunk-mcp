@@ -2,6 +2,8 @@
 
 Local PoC: **Splunk Enterprise** + **Splunk MCP Server** in Docker, optional **Splunk4Rookies** workshop (**SA-S4R**).
 
+**Scope:** this documentation cluster covers **local on-prem Enterprise** only. **Splunk Cloud** MCP is **out of scope** for this repo (see [poc/README.md § Scope](poc/README.md#scope)).
+
 ## Two clusters
 
 | Cluster | Hub | For |

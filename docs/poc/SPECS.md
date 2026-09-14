@@ -39,6 +39,8 @@ MCP user must **not** be `admin`. The **`ai`** SPL command is available to all u
 
 Splunk AI Toolkit (2890) and Python for Scientific Computing (2882) are **out of scope** unless installed manually.
 
+**Splunk Cloud MCP** (remote `*.splunkcloud.com` endpoints, OAuth, staging/production Cloud stacks) is **out of scope**. This PoC targets **local Enterprise** at **`https://localhost:8089/services/mcp`** only.
+
 ## SA-S4R
 
 - Eventgen **`access_combined`** traffic into **`main`**

@@ -6,6 +6,8 @@ This document does **not** change product behavior. It lists gaps, costs, and de
 
 **Related:** [SPECS.md](SPECS.md) (requirements today) · [PRESALES.md](PRESALES.md) (demo runbook) · [INSTALLATION.md](INSTALLATION.md) · [CI_CD.md](CI_CD.md) · [SECURITY.md](SECURITY.md)
 
+**Scope:** graduation applies to **local Splunk Enterprise** in this repo. **Splunk Cloud** MCP is out of scope — see [README.md](README.md#scope).
+
 ---
 
 ## Definitions
