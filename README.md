@@ -1,6 +1,8 @@
 # splunk-mcp
 
-Local **proof-of-concept**: **Splunk Enterprise** in Docker, **Splunk MCP Server**, and optional **Splunk4Rookies** sample data (**`SA-S4R`**). Clients (**Cursor**, **Claude Desktop**, **Goose**) connect via **`npx mcp-remote`**.
+Local **proof-of-concept**: **Splunk Enterprise** in Docker, **Splunk MCP Server**, and optional **Splunk4Rookies** sample data (**`SA-S4R`**). Clients (**Cursor**, **Claude Desktop**, **Goose**) connect via **`npx mcp-remote`** to **`https://localhost:8089/services/mcp`**.
+
+**Scope:** on-prem **local Enterprise only**. **Splunk Cloud** MCP (OAuth, `*.splunkcloud.com`, staging stacks) is **out of scope** — not tested or supported in this repo. See [docs/poc/README.md](docs/poc/README.md#scope).
 
 ```bash
 cp tpl.env.example tpl.env   # or .env.example → .env

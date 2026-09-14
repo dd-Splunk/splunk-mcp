@@ -9,6 +9,16 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`. H
 - **Sample app**: **`SA-S4R`** (UI label **Splunk4Rookies**) — bind-mounted Eventgen traffic, lookups, workshop assets in **`local/`**. Workshop hub: **`docs/s4r/README.md`**. SPL runbook: **`docs/s4r/SPL-CATALOG.md`**. Data: **`docs/s4r/SA-S4R-APP.md`**. Dashboard build spec: **`docs/s4r/DASHBOARD.md`**. Agents: **`docs/s4r/AGENTS.md`** + **`.cursor/agents/`**.
 - **Session memory (Vellem)**: when the **vellem** MCP server is enabled in Cursor, start with **`search_notes_semantic`** on folder **`splunk-mcp`** (boot, verify, troubleshooting) before deep doc reads. Use **`list_expiring_contexts`** to avoid stale notes. After demos or non-obvious fixes, capture outcomes in Vellem (**`add_decision_note`** / **`append_to_daily`**) — not in git. Splunk MCP handles live data; Vellem holds repo-specific memory (no secrets).
 
+## Scope (in / out)
+
+| In scope | Out of scope |
+| -------- | ------------ |
+| **Splunk Enterprise** in Docker on the laptop (`localhost:8089`) | **Splunk Cloud** MCP (`*.splunkcloud.com`, OAuth, staging/prod Cloud stacks) |
+| Encrypted bearer token via **`make update-mcp-clients`** → **`https://localhost:8089/services/mcp`** | Cloud MCP client config, Cloud OAuth setup, or mixing Cloud tokens into **`.env`** / this repo’s **`make up`** flow |
+| **SA-S4R** workshop, local presales demo | Customer Cloud presales runbooks (use [Splunk product docs](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/1.3/about-mcp-server-for-splunk-platform) instead) |
+
+Do not add Cloud MCP testing, endpoints, or secrets-handling paths to this repo unless scope explicitly changes.
+
 ## Golden rules (don’t break these)
 
 - **Never commit secrets**:

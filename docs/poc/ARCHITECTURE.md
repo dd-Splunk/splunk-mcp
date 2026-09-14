@@ -26,7 +26,7 @@ You need valid **Splunkbase** credentials via **`tpl.env`** or **`.env`** (Path 
 
 ## Client connections
 
-Per [Splunk MCP Server 2.0](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/connecting-to-the-mcp-server-and-settings), **Claude**, **Cursor**, and **Goose** in this PoC use **`npx mcp-remote`** (Goose via **`scripts/mcp-remote-splunk.sh`**) to **`https://localhost:8089/services/mcp`** with an **encrypted** bearer token (`make update-mcp-clients` or **`make up`** with **`MCP_UPDATE_ON_BOOT`**). **Splunk Cloud** customers may alternatively use **OAuth 2.1** in Cursor—see [CONFIGURATION.md](CONFIGURATION.md#splunk-mcp-authentication-20) and [PRESALES.md](PRESALES.md#splunk-cloud-stacks-oauth-vs-this-poc).
+Per [Splunk MCP Server 2.0](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/connecting-to-the-mcp-server-and-settings) (product docs; this repo implements **local Enterprise** only), **Claude**, **Cursor**, and **Goose** use **`npx mcp-remote`** (Goose via **`scripts/mcp-remote-splunk.sh`**) to **`https://localhost:8089/services/mcp`** with an **encrypted** bearer token (`make update-mcp-clients` or **`make up`** with **`MCP_UPDATE_ON_BOOT`**). **Splunk Cloud** MCP is **out of scope** — see [README.md](README.md#scope).
 
 ## Secrets flow
 

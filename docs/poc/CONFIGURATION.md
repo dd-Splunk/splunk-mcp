@@ -176,16 +176,14 @@ Summary of what runs **inside** `splunk-init` with `SPLUNK_HOST=so1`:
 
 ## Splunk MCP authentication (2.0)
 
-Splunk MCP Server **2.0** supports two client authentication patterns. This PoC automates **encrypted bearer tokens** only; OAuth is documented for **Splunk Cloud** presales (manual client setup).
+This PoC automates **encrypted bearer tokens** for **local Splunk Enterprise** at **`https://localhost:8089/services/mcp`** only. **Splunk Cloud** MCP (OAuth, remote endpoints) is **out of scope** for this repo — use Splunk product docs if you need Cloud.
 
-Official references:
+Official references (product documentation; URLs say “cloud-platform” but apply to MCP Server **2.0** generally):
 
 - [About MCP Server (2.0)](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/about-mcp-server-for-splunk-platform)
 - [Connecting and settings (2.0)](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/connecting-to-the-mcp-server-and-settings)
-- [OAuth for MCP Server (2.0)](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/oauth-for-mcp-server)
-- [Connect Cursor via OAuth (2.0)](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/connect-cursor-to-splunk-mcp-server)
 
-### Encrypted bearer token (default for this repo)
+### Encrypted bearer token (this repo)
 
 | Aspect | Detail |
 | ------ | ------ |
@@ -197,17 +195,7 @@ Official references:
 
 Client shape matches Splunk’s 2.0 sample: **`npx mcp-remote`**, streamable HTTP endpoint, bearer header. For self-signed localhost certs, server **`ssl_verify=false`** (setup script) plus client **`NODE_TLS_REJECT_UNAUTHORIZED=0`** when **`SPLUNK_MCP_TLS_INSECURE=1`**.
 
-### OAuth 2.1 (Splunk Cloud — manual)
-
-| Aspect | Detail |
-| ------ | ------ |
-| **When** | Customer **Splunk Cloud** stack with OAuth Clients enabled (MCP app **2.0+**; Splunk **10.3.2512.11+**, ideally **10.5.2506.3+**) |
-| **How** | Admin creates OAuth client in Splunk Web; user signs in via browser (Authorization Code + PKCE); client holds short-lived access tokens—**no long-lived bearer in config** |
-| **Cursor** | Native MCP config: **`url`** + **`auth`** (`CLIENT_ID`, `CLIENT_SECRET`, scopes **`openid`**, **`offline_access`**); redirect **`cursor://anysphere.cursor-mcp/oauth/callback`** |
-| **Not automated here** | **`make update-mcp-client`** does not configure OAuth; see [PRESALES.md](PRESALES.md#splunk-cloud-stacks-oauth-vs-this-poc) |
-| **Prerequisite** | Token-based MCP auth must still be enabled on the stack; OAuth is an alternative **client** path |
-
-Splunk documents OAuth as **Splunk Cloud Platform**–focused. This repo’s local Docker Enterprise stack should keep **encrypted token** auth.
+Do not store Cloud MCP bearer tokens in **`.env`** — that file is for **stack boot** secrets only (`SPLUNK_PASSWORD`, Splunkbase, `SPLUNK_MCP_PASSWORD`). MCP runtime tokens belong in client config (**.cursor/mcp.json**), minted by **`make update-mcp-clients`**.
 
 ## Claude Desktop configuration
 
@@ -220,7 +208,7 @@ Splunk documents OAuth as **Splunk Cloud Platform**–focused. This repo’s loc
 ## Cursor configuration
 
 - Default output: **`.cursor/mcp.json`** (override with `CURSOR_MCP_JSON`; gitignored if it contains a live token).
-- Same **2.0** `npx mcp-remote` entry as Claude (**`make update-cursor-config`**). For **Splunk Cloud OAuth** instead of bearer tokens, see [Splunk MCP authentication (2.0)](#splunk-mcp-authentication-20) and [PRESALES.md](PRESALES.md#splunk-cloud-stacks-oauth-vs-this-poc).
+- Same **2.0** `npx mcp-remote` entry as Claude (**`make update-cursor-config`**); endpoint **`https://localhost:8089/services/mcp`** only.
 - Example shape: **`.cursor/mcp.json.example`** (see Splunk doc link in Claude section above).
 
 ## Goose configuration
