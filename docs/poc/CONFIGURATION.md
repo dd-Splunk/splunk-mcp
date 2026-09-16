@@ -4,7 +4,7 @@
 
 | App ID | App | Pinned release |
 | ------ | --- | -------------- |
-| 1924 | SA-Eventgen (sample data / Eventgen modinput) | 8.2.1 |
+| 1924 | SA-Eventgen (sample data / Eventgen modinput) | 8.2.2 |
 | 4353 | Config Explorer (optional UI utility) | 1.8.26 |
 | 7931 | Splunk MCP Server (required for `/services/mcp`) | 2.0.0 |
 | 7245 | Splunk AI Assistant | 2.3.2 |
