@@ -82,7 +82,7 @@ Use this as a scorecard. **Internal graduation** can be declared when every **re
 
 | # | Criterion | Today | Gap / action |
 | - | --------- | ----- | ------------ |
-| D1 | Pinned Splunk image | `splunk/splunk:10.4.1` default; bump workflow in [CONFIGURATION.md](CONFIGURATION.md#version-bump-workflow) | None for doc-only graduation |
+| D1 | Pinned Splunk image | `splunk/splunk:10.4` default; bump workflow in [CONFIGURATION.md](CONFIGURATION.md#version-bump-workflow) | None for doc-only graduation |
 | D2 | Pinned Splunkbase app URLs | `compose.yml` pins app release URLs; bump + clean-volume guidance in [CONFIGURATION.md](CONFIGURATION.md#version-bump-workflow) | None for doc-only graduation |
 | D3 | Pinned `mcp-remote` | `MCP_REMOTE_PACKAGE` default `mcp-remote@0.8.3`; override documented in [CONFIGURATION.md](CONFIGURATION.md#version-bump-workflow) | None for doc-only graduation |
 | D4 | Top failures runbook | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Ensure init / MCP 401 / Splunkbase / no data are one-hop fixes |
@@ -125,7 +125,7 @@ Use this as a scorecard. **Internal graduation** can be declared when every **re
 
 These reduce the gap versus a greenfield PoC:
 
-- **Pinned** Splunk **10.4.1**, Splunkbase app URLs, **`mcp-remote@0.8.3`**
+- **Pinned** Splunk **10.4**, Splunkbase app URLs, **`mcp-remote@0.8.3`**
 - **Park on down** / early MCP mint on up (fewer stale-token failures)
 - **`make clean-y && make up`** for full reset
 - **`make verify`** / **`/demo-prep`** acceptance path

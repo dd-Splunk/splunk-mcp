@@ -2,7 +2,7 @@ services:
   so1:
     hostname: so1
     container_name: so1
-    image: ${SPLUNK_IMAGE:-splunk/splunk:10.4.1}
+    image: ${SPLUNK_IMAGE:-splunk/splunk:10.4}
     platform: linux/amd64
     environment:
       SPLUNK_GENERAL_TERMS: --accept-sgt-current-at-splunk-com

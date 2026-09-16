@@ -89,7 +89,7 @@ cat tpl.env.example
 Example shape (paths must be yours in **`tpl.env`**):
 
 ```bash
-SPLUNK_IMAGE=splunk/splunk:10.4.1
+SPLUNK_IMAGE=splunk/splunk:10.4
 SPLUNK_PASSWORD=op://YourVault/YourItem/password
 SPLUNKBASE_USER=op://YourVault/Splunkbase/username
 SPLUNKBASE_PASS=op://YourVault/Splunkbase/password

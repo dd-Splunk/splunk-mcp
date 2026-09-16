@@ -34,7 +34,7 @@ Use this when changing the Splunk Enterprise image, Splunkbase app pins, or the 
 
 | Setting | Meaning |
 | ------- | ------- |
-| `image` | `${SPLUNK_IMAGE:-splunk/splunk:10.4.1}` |
+| `image` | `${SPLUNK_IMAGE:-splunk/splunk:10.4}` |
 | `platform: linux/amd64` | Run x86 image on ARM via emulation when needed |
 | `SPLUNK_GENERAL_TERMS` | Accepts Splunk general terms non-interactively |
 | `SPLUNK_START_ARGS` | License acceptance |
@@ -251,7 +251,7 @@ make verify
 | Flag / env | Purpose |
 | ---------- | ------- |
 | `--wipe` | Reformat ext4 Splunk data + `docker compose down -v` (use when changing Splunk major versions) |
-| `--image IMAGE` / `SPLUNK_IMAGE` | Default `splunk/splunk:10.4.1` |
+| `--image IMAGE` / `SPLUNK_IMAGE` | Default `splunk/splunk:10.4` |
 | `--force-env` | Recreate gitignored `.env` |
 | `ENV_FILE` | 1Password template (default **`tpl.env`**) |
 | `OP_SERVICE_ACCOUNT_TOKEN` | Headless **`op`** on Cursor Cloud (no desktop sign-in) |
