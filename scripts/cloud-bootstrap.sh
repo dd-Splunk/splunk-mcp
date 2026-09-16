@@ -8,7 +8,7 @@
 #   ./scripts/cloud-bootstrap.sh [--wipe] [--force-env] [--image IMAGE]
 #
 # Env (optional):
-#   SPLUNK_IMAGE              default splunk/splunk:10.4.1
+#   SPLUNK_IMAGE              default splunk/splunk:10.4
 #   CLOUD_SPLUNKDB_IMG        default /splunkdb.img
 #   CLOUD_SPLUNKDB_MOUNT      default /mnt/splunkdb
 #   CLOUD_SPLUNKDB_SIZE       default 25G
@@ -30,7 +30,7 @@ ENV_FILE="${ENV_FILE:-tpl.env}"
 ENV_EXAMPLE="${ENV_EXAMPLE:-tpl.env.example}"
 OP="${OP:-op}"
 OVERRIDE_FILE="${OVERRIDE_FILE:-docker-compose.override.yml}"
-SPLUNK_IMAGE="${SPLUNK_IMAGE:-splunk/splunk:10.4.1}"
+SPLUNK_IMAGE="${SPLUNK_IMAGE:-splunk/splunk:10.4}"
 CLOUD_SPLUNKDB_IMG="${CLOUD_SPLUNKDB_IMG:-/splunkdb.img}"
 CLOUD_SPLUNKDB_MOUNT="${CLOUD_SPLUNKDB_MOUNT:-/mnt/splunkdb}"
 CLOUD_SPLUNKDB_SIZE="${CLOUD_SPLUNKDB_SIZE:-25G}"

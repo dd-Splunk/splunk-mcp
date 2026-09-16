@@ -50,7 +50,7 @@ Check mode: **`SA-S4R_query_nk_demo_state`**. Agentic analysis: [AGENTS.md](../s
 
 ### 1. Splunk Enterprise Container (so1)
 
-- **Image**: `splunk/splunk:10.4.1` (default in `compose.yml`; override via `SPLUNK_IMAGE`)
+- **Image**: `splunk/splunk:10.4` (default in `compose.yml`; override via `SPLUNK_IMAGE`)
 - **Platform**: `linux/amd64`
 - **Ports**:
   - `8000`: Splunk Web UI
@@ -154,7 +154,7 @@ The setup script assigns Splunk role **`mcp_user`** and ensures capability **`mc
 Supplied to Compose via **`.env`** (Path B) **or** **`op run --env-file=tpl.env`** (default `make up` when `.env` is absent; **`tpl.env`** is local, from **`cp tpl.env.example tpl.env`**). Example shape:
 
 ```bash
-SPLUNK_IMAGE=splunk/splunk:10.4.1
+SPLUNK_IMAGE=splunk/splunk:10.4
 SPLUNK_PASSWORD=<secret>
 SPLUNKBASE_USER=<splunkbase user>
 SPLUNKBASE_PASS=<splunkbase password>
