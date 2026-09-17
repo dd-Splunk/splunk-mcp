@@ -19,7 +19,7 @@ Local PoC: **Splunk Enterprise** + **Splunk MCP Server** in Docker, optional **S
 | Install from scratch (long form) | [poc/INSTALLATION.md](poc/INSTALLATION.md) |
 | PoC graduation / wider rollout impact | [poc/GRADUATION.md](poc/GRADUATION.md) |
 | Splunk4Rookies workshop | [s4r/README.md](s4r/README.md) |
-| Change the repo or use AI agents | [AGENTS.md](../AGENTS.md) — includes Cursor skills **`/usage`** and **`/demo-prep`** |
+| Change the repo or use AI agents | [AGENTS.md](../AGENTS.md) — Cursor **`/usage`** (`SA-S4R_*` routing) · **`/demo-prep`** (S4R MCP smoke + stack checks) |
 | Present the agentic demo (Marp) | [demo-slides/README.md](../demo-slides/README.md) |
 
 ## Source of truth (code wins)

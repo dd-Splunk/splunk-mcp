@@ -148,7 +148,8 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 | `update-claude-config` / `update-cursor-config` / `update-goose-config` | Aliases for `update-mcp-client` |
 | `verify-mcp-remote` | `scripts/mcp-client.sh verify` — client config + direct `tools/list` + **`npx mcp-remote` stdio** e2e (`MCP_VERIFY_CLIENT=all` by default) |
 | `verify` | Runs `status`, then `verify-mcp-remote` |
-| `demo-prep` | Runs `status`, then `verify-mcp-remote`, and prints the live-demo warm-stack reminder. Cursor: **`/demo-prep`** skill |
+| `demo-prep` | Runs `status`, then `verify-mcp-remote`, and prints the live-demo warm-stack reminder. Cursor **`/demo-prep`** also runs S4R mode + **`mcp-auth-failures`** |
+| `mcp-auth-failures` | Admin `_internal` MCP auth/tool stats (last 30m). Needs `.env` or `tpl.env`. **`DETAIL=1`** prints raw failures. Not visible to `splunker` MCP |
 | `cloud-bootstrap` | `scripts/cloud-bootstrap.sh` — Cursor Cloud VM prep before `make up` (`CLOUD_BOOTSTRAP_ARGS` for flags) |
 | `restart` / `logs` / `status` | Lifecycle only (no secrets / `op` required) |
 | `clean` | `scripts/mcp-client.sh park all`, then `docker compose down -v`, then remove `.env` (no `op` required). Prompts unless **`make clean-y`** or **`CLEAN_YES=1`** |
