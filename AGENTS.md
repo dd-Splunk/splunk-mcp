@@ -60,14 +60,14 @@ Splunk REST bootstrap (see **`docs/poc/CONFIGURATION.md` § Appendix: setup-splu
 
 ## Cursor skills (project)
 
-Slash-invoked workflows in **`.cursor/skills/`** (see [create-skill](https://cursor.com/docs/context/skills)):
+Slash-only (`disable-model-invocation: true`) so skill bodies are **not** loaded into every chat. Invoke explicitly.
 
-| Skill | Invoke | Purpose |
-| ----- | ------ | ------- |
-| **`usage`** | `/usage` | Repo cheat sheet (`make`, `SA-S4R_*` tools, MCP park/boot) |
-| **`demo-prep`** | `/demo-prep` | Pre-demo go/no-go: status, MCP verify, S4R mode, auth-failure SPL |
+| Skill | Invoke | Execution |
+| ----- | ------ | --------- |
+| **`usage`** | `/usage` | Static **SA-S4R_*** routing + short make list. No live checks unless asked. |
+| **`demo-prep`** | `/demo-prep` | `make demo-prep` → **`SA-S4R_query_nk_demo_state`** (+ **`SA-S4R_validate_nk_attack_traffic`** if threat) → **`make mcp-auth-failures`** |
 
-Workshop agent **roles** remain in **`.cursor/agents/`** (not skills).
+Workshop agent **roles** remain in **`.cursor/agents/`** (not skills). Do not duplicate Makefile/`AGENTS.md` into skill bodies.
 
 ## Quick verification
 

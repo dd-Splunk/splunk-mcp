@@ -24,7 +24,7 @@ Stack install and MCP bootstrap: [../poc/PRESALES.md](../poc/PRESALES.md) · [..
 | Workshop `local/` setup (props, nav, permissions) | [SA-S4R/local/README](../../SA-S4R/local/README) |
 | Present the agentic demo (slides + script) | [demo-slides/](../../demo-slides/) — `s4r-demo-slides.md`, [S4R-DEMO.md](../../demo-slides/S4R-DEMO.md) |
 | Cursor agent prompts | [`.cursor/agents/`](../../.cursor/agents/) |
-| Repo cheat sheet / pre-demo | Cursor skills **`/usage`** and **`/demo-prep`** (see [AGENTS.md § Cursor skills](../../AGENTS.md#cursor-skills-project)) |
+| Repo cheat sheet / pre-demo | Cursor **`/usage`** (`SA-S4R_*` routing) · **`/demo-prep`** (mode + NK data smoke). See [AGENTS.md § Cursor skills](../../AGENTS.md#cursor-skills-project) |
 
 ## Cursor subagents
 

@@ -16,7 +16,7 @@ MCP_UPDATE_ON_BOOT ?= cursor
 export ENV_FILE ENV_OUT ENV_EXAMPLE OP DC
 
 .PHONY: help up down restart clean clean-y logs status demo-prep verify cloud-bootstrap \
-	park-mcp-clients update-mcp-clients update-mcp-client verify-mcp-remote \
+	park-mcp-clients update-mcp-clients update-mcp-client verify-mcp-remote mcp-auth-failures \
 	update-claude-config update-cursor-config update-goose-config \
 	s4r-attack-nk-enable s4r-attack-nk-disable s4r-attack-nk-status register-s4r-mcp-tools \
 	marp-preview marp-serve marp-html
@@ -131,6 +131,10 @@ demo-prep: ## Pre-demo check: status + MCP verify + warm-stack reminder
 	@echo ""
 	@echo "Demo prep complete. Restart Cursor/Claude if you refreshed MCP configs."
 	@echo "Splunk Web: https://localhost:8000 | MCP: https://localhost:8089/services/mcp"
+	@echo "Cursor /demo-prep also checks S4R mode + make mcp-auth-failures."
+
+mcp-auth-failures: ## Admin _internal MCP auth stats, last 30m (DETAIL=1 for raw rows)
+	@./scripts/mcp-auth-failures.sh $(if $(filter 1,$(DETAIL)),--detail,)
 
 verify: ## Stack status then Splunk MCP client verify
 	@$(MAKE) status
