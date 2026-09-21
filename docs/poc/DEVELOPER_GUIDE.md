@@ -15,6 +15,7 @@ Contributing and changing this PoC. Stack design: [ARCHITECTURE.md](ARCHITECTURE
 | `SA-S4R` packaging / `.github/workflows/package-s4r.yml` | [CI_CD.md](CI_CD.md), [SA-S4R-APP.md](../s4r/SA-S4R-APP.md), and `SA-S4R/local/README` if package exclusions change |
 | Workshop SPL | [S4R-SPL-CATALOG.md](../s4r/SPL-CATALOG.md) only (agents reference this path) |
 | Agent prompts | `.cursor/agents/s4r-*.md`, [S4R-AGENTS.md](../s4r/AGENTS.md) |
+| Cursor project skills (`/usage`, `/demo-prep`) | `.cursor/skills/*/SKILL.md`, root [AGENTS.md](../../AGENTS.md#cursor-skills-project), and [CONFIGURATION.md § Makefile targets](CONFIGURATION.md#makefile-targets) if command behavior changes |
 | Marp slides, theme, or `make marp-*` targets | [demo-slides/README.md](../../demo-slides/README.md), [demo-slides/S4R-DEMO.md](../../demo-slides/S4R-DEMO.md), and [CONFIGURATION.md § Makefile targets](CONFIGURATION.md#makefile-targets) |
 | Secret scanning or pre-commit hooks (`.gitleaks.toml`, `.pre-commit-config.yaml`, CI lint) | [CI_CD.md](CI_CD.md), [SECURITY.md](SECURITY.md), and root [SECURITY.md](../../SECURITY.md) |
 
@@ -44,6 +45,17 @@ Requires **shellcheck** and **Node/npx** (markdownlint); pre-commit also runs **
 - **Optional log ingest:** uncomment Claude bind mount in `compose.yml`; create index + monitor in Splunk ([CONFIGURATION.md](CONFIGURATION.md) — not automated in `setup-splunk.sh`).
 - **Additional Splunk users:** extend `scripts/setup-splunk.sh` via REST ([CONFIGURATION.md § Appendix](CONFIGURATION.md#appendix-setup-splunksh)).
 - **Custom ports:** `docker-compose.override.yml` (gitignored); set `SPLUNK_MCP_ENDPOINT` and re-run `make update-mcp-clients`.
+
+## Project Cursor skills
+
+Tracked skills live under **`.cursor/skills/`** and are intentionally small, slash-invoked helpers:
+
+| Skill | Intent | Boundary |
+| ----- | ------ | -------- |
+| `/usage` | Static repo cheat sheet for S4R MCP routing, make targets, and MCP park/boot flow | No live health checks unless the user asks. Keep it concise; point to docs instead of duplicating runbooks. |
+| `/demo-prep` | Live-demo go/no-go: `make demo-prep`, S4R MCP smoke, and MCP auth stats | Do not start, clean, or change NK mode unless the user asked. Do not paste secrets. |
+
+Both skill files set **`disable-model-invocation: true`** so their bodies are loaded only when invoked. Keep workshop role behavior in **`.cursor/agents/`** and the SPL in **`docs/s4r/SPL-CATALOG.md`**; skills should route users to those sources rather than becoming another runbook.
 
 ## Contributing
 
