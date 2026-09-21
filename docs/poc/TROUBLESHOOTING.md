@@ -19,9 +19,27 @@ make up
 Requires secrets when creating **`.env`** (first boot or after **`--force-env`**):
 
 - **Path A:** **`tpl.env`** + signed-in **`op`** (or **`OP_SERVICE_ACCOUNT_TOKEN`**) — resolves Splunkbase and all other secrets from 1Password, same as local **`make up`**.
-- **Path B:** Cursor Cloud secrets **`SPLUNKBASE_USER`** / **`SPLUNKBASE_PASS`** only.
+- **Path B:** Cursor Cloud secrets **`SPLUNKBASE_USER`** / **`SPLUNKBASE_PASS`** only; bootstrap generates admin/MCP passwords into the gitignored local **`.env`**.
 
 See [CONFIGURATION.md](CONFIGURATION.md#cursor-cloud-bootstrap) and [AGENTS.md](../../AGENTS.md).
+
+### Cannot log in after Path B bootstrap
+
+**Symptom:** `make up` succeeded in Cursor Cloud Path B, but you do not know the Splunk Web admin password.
+
+**Cause:** With Path B, **`scripts/cloud-bootstrap.sh`** creates random **`SPLUNK_PASSWORD`** and **`SPLUNK_MCP_PASSWORD`** values in the gitignored local **`.env`**. They are intentionally not printed in logs.
+
+**Use locally without printing secrets:**
+
+```bash
+set -a
+. ./.env
+set +a
+curl -sk -u "admin:${SPLUNK_PASSWORD}" \
+  "https://localhost:8089/services/server/info?output_mode=json" >/dev/null
+```
+
+For Splunk Web, log in as **admin** with **`SPLUNK_PASSWORD`** from `.env`. To rotate generated Path B passwords, run **`./scripts/cloud-bootstrap.sh --force-env --wipe`** before **`make up`**; do not commit or paste `.env`.
 
 ### KVStore status `failed` / MCP token mint fails
 
