@@ -393,7 +393,7 @@ make up
 make register-s4r-mcp-tools
 ```
 
-Requires **`jq`** on the host ([INSTALLATION.md](INSTALLATION.md)). See [S4R-MCP-TOOLS.md](../s4r/MCP-TOOLS.md).
+Requires **`jq`** on the host ([INSTALLATION.md](INSTALLATION.md)). See [MCP-TOOLS.md](../s4r/MCP-TOOLS.md).
 
 ---
 

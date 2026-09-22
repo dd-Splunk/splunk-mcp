@@ -69,7 +69,7 @@ POST /services/authentication/users
 Content-Type: application/x-www-form-urlencoded
 
 name=splunker
-password=changeme
+password=${SPLUNK_MCP_PASSWORD}
 roles=user
 roles=mcp_user
 tz=Europe/Brussels
@@ -91,7 +91,7 @@ GET /services/authentication/users/splunker
 
 ```bash
 POST /services/authentication/users/splunker
-password=newpassword
+password=${NEW_SPLUNK_MCP_PASSWORD}
 ```
 
 #### 3. Token Management (notes)
@@ -124,18 +124,21 @@ The Splunk MCP endpoint is a **JSON-RPC `POST`** handler at `/services/mcp` (not
 
 ```bash
 #!/bin/bash
+set -euo pipefail
+
 HOST="localhost:8089"
 ADMIN_USER="admin"
-ADMIN_PASS="password"
+: "${SPLUNK_PASSWORD:?Set SPLUNK_PASSWORD first}"
+: "${SPLUNK_MCP_PASSWORD:?Set SPLUNK_MCP_PASSWORD first}"
 
 # Create role (matches setup-splunk.sh)
 curl -k -X POST https://$HOST/services/authorization/roles \
-  -u "$ADMIN_USER:$ADMIN_PASS" -d "name=mcp_user" -d "capabilities=mcp_tool_execute"
+  -u "$ADMIN_USER:$SPLUNK_PASSWORD" -d "name=mcp_user" -d "capabilities=mcp_tool_execute"
 
 # Create user
 curl -k -X POST https://$HOST/services/authentication/users \
-  -u "$ADMIN_USER:$ADMIN_PASS" \
-  -d "name=splunker" -d "password=changeme" -d "roles=user" -d "roles=mcp_user"
+  -u "$ADMIN_USER:$SPLUNK_PASSWORD" \
+  -d "name=splunker" -d "password=$SPLUNK_MCP_PASSWORD" -d "roles=user" -d "roles=mcp_user"
 ```
 
 ### Example 2: List MCP tools (Splunk MCP Server)
@@ -201,7 +204,7 @@ Splunk MCP Server **2.0** lets an app register tools without a standalone MCP se
 - **Executes** tools as **`splunker`** on `POST /services/mcp` (JSON-RPC `tools/call`)
 - **Registers** them as **admin** on `POST /services/mcp_tools` (batch replace from `SA-S4R/default/s4r_mcp_tools.json`)
 
-Do not put admin passwords or bearer tokens in the JSON payload or in git. Implementation, definitions, and file map: [S4R-MCP-TOOLS.md](../s4r/MCP-TOOLS.md).
+Do not put admin passwords or bearer tokens in the JSON payload or in git. Implementation, definitions, and file map: [MCP-TOOLS.md](../s4r/MCP-TOOLS.md).
 
 ### Troubleshooting Connection
 
@@ -250,7 +253,7 @@ log stream --predicate 'process == "Claude"' --level debug
 ### User Permissions
 
 - **`mcp_tool_execute`** capability (granted via Splunk role **`mcp_user`** in this repo): MCP tooling (see Splunk MCP Server app docs)
-- Workshop write path is limited to **`SA-S4R_apply_nk_demo_state`** (allowlisted Eventgen mode only) — [S4R-MCP-TOOLS.md](../s4r/MCP-TOOLS.md)
+- Workshop write path is limited to **`SA-S4R_apply_nk_demo_state`** (allowlisted Eventgen mode only) — [MCP-TOOLS.md](../s4r/MCP-TOOLS.md)
 - Cannot access other users' data
 - Cannot create/delete other users
 
@@ -267,7 +270,7 @@ log stream --predicate 'process == "Claude"' --level debug
     <id>https://localhost:8089/services/authorization/tokens/token_name</id>
     <content type="text/xml">
       <s:dict>
-        <s:key name="token"><![CDATA[eyJraWQ...]]></s:key>
+        <s:key name="token"><![CDATA[<encrypted-token-redacted>]]></s:key>
       </s:dict>
     </content>
   </entry>
@@ -377,6 +380,13 @@ Create and manage alerts that can be triggered by MCP commands.
 
 Add these to `.bashrc` or `.zshrc`:
 
+Avoid aliases that embed passwords or tokens. Prefer functions that read secrets from your shell environment:
+
 ```bash
-Avoid aliases that embed passwords or tokens. Prefer environment variables set in your shell session and do not paste secrets into logs/issues.
+splunk_info() {
+  curl -k -u "admin:${SPLUNK_PASSWORD:?Set SPLUNK_PASSWORD first}" \
+    "https://localhost:8089/services/server/info?output_mode=json"
+}
 ```
+
+Do not paste the variable values into logs, issues, or PR descriptions.
