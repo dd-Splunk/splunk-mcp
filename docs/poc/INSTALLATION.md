@@ -47,7 +47,7 @@ make up
 make verify
 ```
 
-This writes gitignored local runtime files (`.env` and `docker-compose.override.yml`). Flags such as `--wipe`, `--image`, and `--force-env` are documented in [CONFIGURATION.md § Cursor Cloud bootstrap](CONFIGURATION.md#cursor-cloud-bootstrap); common VM-specific failures are in [TROUBLESHOOTING.md § Cursor Cloud](TROUBLESHOOTING.md#cursor-cloud-docker-in-docker).
+This writes gitignored local runtime files (`.env` and `docker-compose.override.yml`). With **Path B** (only Splunkbase secrets in the Cursor Cloud environment), bootstrap generates **`SPLUNK_PASSWORD`** and **`SPLUNK_MCP_PASSWORD`** into the local `.env`; use those values for admin login and MCP user resets, but do not paste or commit them. Flags such as `--wipe`, `--image`, and `--force-env` are documented in [CONFIGURATION.md § Cursor Cloud bootstrap](CONFIGURATION.md#cursor-cloud-bootstrap); common VM-specific failures are in [TROUBLESHOOTING.md § Cursor Cloud](TROUBLESHOOTING.md#cursor-cloud-docker-in-docker).
 
 ## 1Password
 
@@ -154,7 +154,7 @@ make status    # splunk-init line + "Splunk is ready ✓"; exits non-zero if ini
 ## Splunk Web
 
 1. Open `https://localhost:8000`.
-2. Log in as **admin** with the password from your secret store (not committed in git).
+2. Log in as **admin** with **`SPLUNK_PASSWORD`** from your secret source: your vault / hand-written `.env`, or the generated gitignored `.env` on Cursor Cloud Path B.
 3. Accept the self-signed certificate warning (local dev only).
 
 REST smoke test (replace `<password>`):
