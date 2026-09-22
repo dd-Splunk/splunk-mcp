@@ -6,7 +6,7 @@ Presenter guide for **Splunk4Rookies** workshop follow-on or **SE presales**: sh
 
 **Duration:** 20 minutes (full) · 10 minutes (short — see [Short track](#short-track-10-minutes)).
 
-**Related:** [S4R-SPL-CATALOG.md](../docs/s4r/SPL-CATALOG.md) · [S4R-MCP-TOOLS.md](../docs/s4r/MCP-TOOLS.md) · [S4R-AGENTS.md](../docs/s4r/AGENTS.md) · [PRESALES.md](../docs/poc/PRESALES.md) · [SA-S4R-APP.md](../docs/s4r/SA-S4R-APP.md) · [demo-slides/README.md](README.md) (Marp)
+**Related:** [S4R-SPL-CATALOG.md](../docs/s4r/SPL-CATALOG.md) · [MCP-TOOLS.md](../docs/s4r/MCP-TOOLS.md) · [S4R-AGENTS.md](../docs/s4r/AGENTS.md) · [PRESALES.md](../docs/poc/PRESALES.md) · [SA-S4R-APP.md](../docs/s4r/SA-S4R-APP.md) · [demo-slides/README.md](README.md) (Marp)
 
 ---
 
@@ -106,7 +106,7 @@ The sections below mirror slide content and **speaker script**; if the deck and 
 
 ## Slides 7–12 — Splunk MCP architecture and S4R tools
 
-Developer Day 2026: apps expose tools through **Splunk MCP Server** — recordings in the [Developer Day 2026 playlist](https://www.youtube.com/playlist?list=PLxkFdMSHYh3T2mFyCdg8iz9ef068gLdfJ). Primary session: **[Apps with MCP Tools](https://www.youtube.com/watch?v=fjGCf0QiBJc)**. Implementation: [S4R-MCP-TOOLS.md](../docs/s4r/MCP-TOOLS.md).
+Developer Day 2026: apps expose tools through **Splunk MCP Server** — recordings in the [Developer Day 2026 playlist](https://www.youtube.com/playlist?list=PLxkFdMSHYh3T2mFyCdg8iz9ef068gLdfJ). Primary session: **[Apps with MCP Tools](https://www.youtube.com/watch?v=fjGCf0QiBJc)**. Implementation: [MCP-TOOLS.md](../docs/s4r/MCP-TOOLS.md).
 
 **Slide 7:** Section divider — apps as tools.
 
