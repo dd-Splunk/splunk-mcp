@@ -249,6 +249,15 @@ make verify
 
 **Prerequisites (`.env` creation):** prefer **Path A** — **`tpl.env`** with your `op://` paths + **`op`** signed in (or **`OP_SERVICE_ACCOUNT_TOKEN`** in Cursor Cloud secrets). Fallback **Path B:** set **`SPLUNKBASE_USER`** / **`SPLUNKBASE_PASS`** only in Cursor Cloud secrets (admin/MCP passwords are generated).
 
+### What bootstrap writes
+
+| File | Source | Notes |
+| ---- | ------ | ----- |
+| `.env` | Path A: values resolved from **`tpl.env`** via `op run`; Path B: Splunkbase values from environment plus generated `SPLUNK_PASSWORD` / `SPLUNK_MCP_PASSWORD` | Gitignored. Existing file is preserved unless **`--force-env`** is used. Use it locally for Splunk Web admin login; never paste or commit it. |
+| `docker-compose.override.yml` | Generated every run | Gitignored. Binds the ext4 mount as `so1-var`; for Splunk 10.4.x, also binds the fake cgroup tree. |
+
+`--wipe` resets Splunk data and Compose volumes but does not recreate `.env` unless paired with **`--force-env`**. Use **`--force-env`** intentionally when rotating generated Path B passwords or switching between Path A and Path B.
+
 | Flag / env | Purpose |
 | ---------- | ------- |
 | `--wipe` | Reformat ext4 Splunk data + `docker compose down -v` (use when changing Splunk major versions) |
