@@ -102,7 +102,7 @@ Full SPL: [SPL-CATALOG.md](SPL-CATALOG.md).
 ## Using agents in Cursor
 
 1. Enable **splunk-mcp-server** in `.cursor/mcp.json` (`make up` / `make update-mcp-client MCP_CLIENT=cursor`).
-2. Buttercup / S4R questions: act as **Power User** ([`.cursor/rules/s4r-buttercup-agents.mdc`](../.cursor/rules/s4r-buttercup-agents.mdc)).
+2. Buttercup / S4R questions: act as **Power User** ([`.cursor/agents/s4r-power-user.md`](../.cursor/agents/s4r-power-user.md)). A local `.cursor/rules/s4r-buttercup-agents.mdc` is gitignored.
 3. **Read `docs/s4r/SPL-CATALOG.md`** for SPL; agents for roles and output format.
 4. Heavy parallel work: **Task** subagents — prompt must include *“Prefer SA-S4R_* when it matches; else catalog SPL via splunk_run_query. Never REST/curl.”* See [`.cursor/agents/README.md`](../.cursor/agents/README.md).
 5. Confirm data: `make status`, then catalog **Quick data check**.

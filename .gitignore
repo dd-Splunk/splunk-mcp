@@ -21,10 +21,9 @@ scripts/local/
 # Docker volumes (data stored in named volumes)
 docker-compose.override.yml
 
-# Cursor — mcp.json may contain secrets; agent prompts, skills, and S4R rule are tracked
+# Cursor — mcp.json may contain secrets; rules are local. Agent prompts and skills are tracked.
 .cursor/mcp.json
 **/.cursor/rules/*
-!**/.cursor/rules/s4r-buttercup-agents.mdc
 !**/.cursor/agents/**
 
 # Node dependencies for local build contexts
