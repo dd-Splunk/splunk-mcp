@@ -144,6 +144,7 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 | Target | Behavior |
 | ------ | -------- |
 | `up` | `scripts/compose-up.sh` (`.env` or `op run --env-file=tpl.env`), then `update-all` (`MCP_UPDATE_ON_BOOT`, default `cursor`), then `register-s4r-mcp-tools` |
+| `config` | Print `docker compose config` after the same secret and `config.env` load as `up`. `SPLUNK_PASSWORD`, Splunkbase user/password, and `SPLUNK_MCP_PASSWORD` are shown as `<set>` |
 | `down` | `scripts/mcp-client.sh park all` (no secrets), then `docker compose down` |
 | `park-mcp-clients` | `scripts/mcp-client.sh park all` — remove `splunk-mcp-server` from client configs |
 | `update-mcp-clients` | `scripts/mcp-client.sh update-all` for cursor, goose, claude (one mint) |

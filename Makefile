@@ -15,7 +15,7 @@ MCP_UPDATE_ON_BOOT ?= cursor
 
 export ENV_FILE ENV_OUT ENV_EXAMPLE OP DC
 
-.PHONY: help up down restart clean clean-y logs status demo-prep verify cloud-bootstrap \
+.PHONY: help up down restart clean clean-y logs status config demo-prep verify cloud-bootstrap \
 	park-mcp-clients update-mcp-clients update-mcp-client verify-mcp-remote mcp-auth-failures \
 	s4r-attack-nk-enable s4r-attack-nk-disable s4r-attack-nk-status register-s4r-mcp-tools \
 	check-splunkbase-pins marp-preview marp-serve marp-html test
@@ -66,6 +66,9 @@ clean-y: clean ## Same as clean without prompt (e.g. make clean-y && make up)
 
 logs: ## Follow Splunk logs (docker logs so1)
 	@docker logs -f so1 2>&1 || { echo "Hint: run make up"; exit 1; }
+
+config: ## Print resolved compose.yml (password and Splunkbase values as <set>)
+	@./scripts/compose-config.sh
 
 status: ## Container status and Splunk API probe
 	@echo "Containers:"
