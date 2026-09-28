@@ -140,6 +140,28 @@ make down && make clean && make up
 
 ---
 
+#### Issue: `so1` unhealthy after read-only SA-S4R bind mounts
+
+**Error**: `chown failed … Errno 30 Read-only file system` on `/opt/splunk/etc/apps/SA-S4R`; healthcheck `Permission denied` on `/opt/splunk/var/log/splunk`; Compose `dependency failed to start: container so1 is unhealthy`
+
+**Cause**: The official Splunk image **chowns** `/opt/splunk/etc/apps/SA-S4R` recursively at start. A **read-only** bind of the app root **or** of shipped subdirs (`default/`, `bin/`, …) fails that step. A half-finished chown can leave `/opt/splunk` unwritable for the healthcheck.
+
+**Solution**: Keep **`./SA-S4R:/opt/splunk/etc/apps/SA-S4R:rw`** in `compose.yml`. Recover with **`./scripts/compose-up.sh`** (or **`make up`**). Do **not** run bare **`docker compose up`** without secrets.
+
+**Lesson**: Nested `:ro` binds of `default/`, `bin/`, lookups, or samples fail the **same** recursive chown. Installing [GitHub `latest` `SA-S4R.spl`](https://github.com/dd-Splunk/splunk-mcp/releases/download/latest/SA-S4R.spl) via `SPLUNK_APPS_URL` avoids the bind (app lands in `so1-etc`) but is **not** the default for this repo — see [SA-S4R-APP.md](../s4r/SA-S4R-APP.md) § bind mount vs `.spl`.
+
+---
+
+#### Issue: `wait-splunk-init` sits on `created` after `so1` is unhealthy
+
+**Error**: Compose prints `dependency failed to start: container so1 is unhealthy`, then `Waiting for splunk-init to finish… still running (6/180)…`
+
+**Cause**: `splunk-init` never starts until `so1` is **healthy**. The wait script treats a **`created`** container as “still running” and can wait up to **15 minutes**.
+
+**Solution**: Stop the wait, fix the mount or secrets, then **`./scripts/compose-up.sh`**. Do not leave a 180-attempt wait running against a container that `depends_on` blocked.
+
+---
+
 #### Issue: Splunk container stuck in starting state
 
 **Error**: Takes more than 5 minutes to start

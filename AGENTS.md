@@ -24,8 +24,8 @@ Do not add Cloud MCP testing, endpoints, or secrets-handling paths to this repo 
 - **Never commit secrets**:
   - `.env` (admin password, Splunkbase creds, MCP user password)
   - **`tpl.env`** (local `op://` paths to **your** vault—gitignored; start from tracked **`tpl.env.example`**)
-  - `.cursor/mcp.json` if it contains a live bearer token (expected after `make update-cursor-config`)
-  - `~/.config/goose/config.yaml` if it contains a live bearer token (expected after `make update-goose-config`)
+  - `.cursor/mcp.json` if it contains a live bearer token (expected after `make update-cursor-config`; **`chmod 600`**, still OneDrive-synced if the clone lives under a cloud folder)
+  - `~/.config/goose/config.yaml` if it contains a live bearer token (expected after `make update-goose-config`; **`chmod 600`**)
 - **Do not paste tokens/passwords** into issues, PRs, or logs.
 - **Keep changes idempotent**: `make up` / `splunk-init` should be safe to run repeatedly.
 
@@ -97,6 +97,8 @@ Workshop agent **roles** remain in **`.cursor/agents/`** (not skills). Do not du
 
 - **“User lacks required mcp_tool_execute capability”** — Role **`mcp_user`** missing the capability. Re-run setup or POST **`capabilities=mcp_tool_execute`** to **`/services/authorization/roles/mcp_user`** (see **`scripts/setup-splunk.sh`**).
 - **`splunk-init` exited non-zero** — **`make status`** prints **`FAILED (exit N)`**; Splunk may still be up but roles/token/MCP setup incomplete. **`docker logs splunk-init`**, then **`make down && make up`** or fix env and re-run init.
+- **`so1` unhealthy / `Errno 30` on SA-S4R** — Do not bind the app **`:ro`**, including nested `default/` / `bin/` mounts. Splunk **chowns** that path. Recover with **`./scripts/compose-up.sh`** (or **`make up`**). Bare **`docker compose up`** without **`.env`** / **`op run`** blanks Splunkbase creds. Details: **`docs/poc/TROUBLESHOOTING.md`**.
+- **`wait-splunk-init` looping on `created`** — `splunk-init` never starts until `so1` is healthy. Kill the wait; do not let it run 180 attempts.
 - **No data in `claude_logs`** — This repo does not create that index or inputs. Confirm bind mount, index, and monitor in Splunk (**`docs/poc/CONFIGURATION.md`**).
 - **MCP client cannot find `npx`** (Claude Desktop / GUI) — Re-run **`make update-mcp-client`** from a shell with Node on PATH, or set **`MCP_NPX_COMMAND`**.
 
@@ -110,7 +112,7 @@ Workshop agent **roles** remain in **`.cursor/agents/`** (not skills). Do not du
 
 ## CI
 
-GitHub Actions: **`ci.yml`** (**gitleaks** full history + **pre-commit**: **gitleaks**, **shellcheck** + **markdownlint**) on pushes/PRs to **`main`** / **`master`**; **`package-s4r.yml`** builds **`SA-S4R.spl`** and publishes a PoC **`latest`** release when **`SA-S4R/`** or that workflow changes (or on **`workflow_dispatch`**). See **`docs/poc/CI_CD.md`** for triggers, permissions, and PoC limitations.
+GitHub Actions: **`ci.yml`** (**gitleaks** full history + **pre-commit**: **gitleaks**, **shellcheck** + **markdownlint**) on pushes/PRs to **`main`** / **`master`**; **`package-s4r.yml`** builds **`SA-S4R.spl`** on SA-S4R path changes (push or PR) and publishes the PoC **`latest`** release **only from `main`/`master`**. See **`docs/poc/CI_CD.md`** for triggers, permissions, and PoC limitations.
 
 ## Cursor Cloud specific instructions
 

@@ -32,6 +32,8 @@ make verify         # status + MCP client verify
 
 Logs: `make logs` · shell in Splunk: `docker exec -it so1 bash`
 
+Never recover a broken `so1` with bare **`docker compose up -d`** unless a populated **`.env`** exists. That recreates the container with empty Splunkbase env (ansible “No inventory was parsed”). Use **`./scripts/compose-up.sh`** or **`make up`**. Do not bind **`SA-S4R` `:ro`** to “harden” the tree — [TROUBLESHOOTING.md](TROUBLESHOOTING.md) · [SA-S4R-APP.md](../s4r/SA-S4R-APP.md) § bind mount vs `.spl`.
+
 ## Lint before push
 
 ```bash

@@ -109,7 +109,7 @@ Use this as a scorecard. **Internal graduation** can be declared when every **re
 | - | --------- | ----- | ------------ |
 | G1 | Named owner / channel | Community PoC | Slack, wiki, or GitHub Discussions |
 | G2 | Issue template with `make status`, init logs | Optional | Add `.github/ISSUE_TEMPLATE` |
-| G3 | Release or tag for workshops | `package-s4r.yml` → `latest` PoC release | Tag e.g. `workshop-2026-04` for reproducible classes |
+| G3 | Release or tag for workshops | `package-s4r.yml` → `latest` PoC release **from `main`/`master` only** | Tag e.g. `workshop-2026-04` for reproducible classes |
 
 ### H. CI smoke (optional — deferred)
 

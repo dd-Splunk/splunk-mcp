@@ -91,7 +91,7 @@ Check mode: **`SA-S4R_query_nk_demo_state`**. Agentic analysis: [AGENTS.md](../s
 - **compose.yml**: Docker Compose configuration
 - **tpl.env.example**: Tracked template; copy to **tpl.env** (gitignored) for real `op://` paths
 - **.env**: Optional runtime file (git-ignored), hand-written from **`.env.example`** (Path B)
-- **SA-S4R/**: Bundled sample Splunk app (bind-mounted into `$SPLUNK_HOME/etc/apps`)
+- **SA-S4R/**: Bundled sample Splunk app (bind-mounted **read-write** into `$SPLUNK_HOME/etc/apps`; Splunk chowns this path, so `:ro` is not viable with the official image)
 
 ### 4. Claude Logs Index
 
