@@ -10,35 +10,13 @@ cd "$ROOT"
 
 ENV_FILE="${ENV_FILE:-tpl.env}"
 ENV_OUT="${ENV_OUT:-.env}"
-CONFIG_ENV="${CONFIG_ENV:-config.env}"
 OP="${OP:-op}"
 DC="${DC:-docker compose}"
 
-load_config_env() {
-  local line key val
-  [[ -f "$CONFIG_ENV" ]] || {
-    echo "Error: missing $CONFIG_ENV (SPLUNK_IMAGE and TZ)." >&2
-    exit 1
-  }
-  SPLUNK_IMAGE=""
-  TZ=""
-  while IFS= read -r line || [[ -n "$line" ]]; do
-    line="${line#"${line%%[![:space:]]*}"}"
-    [[ -z "$line" || "$line" == \#* ]] && continue
-    key="${line%%=*}"
-    val="${line#*=}"
-    case "$key" in
-      SPLUNK_IMAGE) SPLUNK_IMAGE="$val" ;;
-      TZ) TZ="$val" ;;
-    esac
-  done <"$CONFIG_ENV"
-  export SPLUNK_IMAGE TZ
-  : "${SPLUNK_IMAGE:?SPLUNK_IMAGE must be set in $CONFIG_ENV}"
-  : "${TZ:?TZ must be set in $CONFIG_ENV}"
-}
-
 # shellcheck source=scripts/with-splunk-env.sh
 source "${ROOT}/scripts/with-splunk-env.sh"
+# shellcheck source=scripts/load-config-env.sh
+source "${ROOT}/scripts/load-config-env.sh"
 with_splunk_env "$@"
 load_config_env
 

@@ -75,6 +75,7 @@ Workshop agent **roles** remain in **`.cursor/agents/`** (not skills). Do not du
 | Question | Command / check |
 | -------- | ----------------- |
 | Stack healthy? | `make status` — **`splunk-init`** line + **Splunk is ready ✓**; exits non-zero if init failed or Splunk is running but API not ready (exits **0** when stack is stopped) |
+| Image, timezone, and secrets loaded? | `make config` — resolved `compose.yml`; password and Splunkbase values print as `<set>` |
 | MCP client path OK? | `make verify-mcp-remote` (all clients) or `make verify-mcp-remote MCP_VERIFY_CLIENT=cursor` |
 | Docker-free tests? | `make test` — MCP config shape + SA-S4R mode/payload parse (no Splunk) |
 | Pre-demo / both checks? | `make demo-prep` (Splunkbase pins + status + verify + warm-stack reminder) or `make verify` (status then verify only) |

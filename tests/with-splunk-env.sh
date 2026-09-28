@@ -10,7 +10,7 @@ die() { echo "FAIL: $*" >&2; exit 1; }
 [[ -f "$HELPER" ]] || die "missing $HELPER"
 
 for script in mint-mcp-token.sh register-s4r-mcp-tools.sh mcp-auth-failures.sh \
-  toggle-s4r-attack-nk.sh compose-up.sh; do
+  toggle-s4r-attack-nk.sh compose-up.sh compose-config.sh; do
   grep -q 'with_splunk_env "$@"' "${ROOT}/scripts/${script}" \
     || die "${script} does not call with_splunk_env"
 done
@@ -97,6 +97,51 @@ done
 grep -E '^SPLUNK_IMAGE=' "${ROOT}/config.env" >/dev/null || die "config.env missing SPLUNK_IMAGE"
 grep -E '^TZ=' "${ROOT}/config.env" >/dev/null || die "config.env missing TZ"
 grep -q 'load_config_env' "${ROOT}/scripts/compose-up.sh" || die "compose-up does not load config.env"
+grep -q 'load_config_env' "${ROOT}/scripts/compose-config.sh" || die "compose-config does not load config.env"
+grep -q 'redact_compose_secrets' "${ROOT}/scripts/compose-config.sh" || die "compose-config does not redact secrets"
+
+# shellcheck source=scripts/compose-config.sh
+source "${ROOT}/scripts/compose-config.sh"
+redacted="$(printf '%s\n' \
+  '    image: splunk/splunk:10.4' \
+  '    SPLUNK_PASSWORD: your_password_here' \
+  '    SPLUNKBASE_USERNAME: "your_password_here"' \
+  '    SPLUNKBASE_PASSWORD: '"'"'your_password_here'"'" \
+  '    SPLUNK_MCP_PASSWORD: ""' \
+  '    TZ: Europe/Brussels' | redact_compose_secrets)"
+printf '%s\n' "$redacted" | grep -qx '    image: splunk/splunk:10.4' || die "image line changed"
+printf '%s\n' "$redacted" | grep -qx '    TZ: Europe/Brussels' || die "timezone line changed"
+printf '%s\n' "$redacted" | grep -qx '    SPLUNK_PASSWORD: <set>' || die "password not redacted"
+printf '%s\n' "$redacted" | grep -qx '    SPLUNKBASE_USERNAME: <set>' || die "splunkbase user not redacted"
+printf '%s\n' "$redacted" | grep -qx '    SPLUNKBASE_PASSWORD: <set>' || die "splunkbase password not redacted"
+printf '%s\n' "$redacted" | grep -qx '    SPLUNK_MCP_PASSWORD: ""' || die "empty mcp password should stay empty"
+if printf '%s\n' "$redacted" | grep -q 'your_password_here'; then
+  die "redaction left a secret value"
+fi
+
+cat >"${TMP}/dotenv" <<'EOF'
+SPLUNK_PASSWORD=your_password_here
+SPLUNKBASE_USER=your_password_here
+SPLUNKBASE_PASS=your_password_here
+SPLUNK_MCP_PASSWORD=your_password_here
+EOF
+cat >"${TMP}/fake-dc" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' \
+  "image: ${SPLUNK_IMAGE}" \
+  "SPLUNK_PASSWORD: ${SPLUNK_PASSWORD}" \
+  "TZ: ${TZ}"
+EOF
+chmod +x "${TMP}/fake-dc"
+rendered="$(ENV_OUT="${TMP}/dotenv" ENV_FILE="${TMP}/missing-tpl.env" OP="${TMP}/should-not-run" \
+  CONFIG_ENV="${ROOT}/config.env" DC="${TMP}/fake-dc" \
+  "${ROOT}/scripts/compose-config.sh")"
+printf '%s\n' "$rendered" | grep -qx "image: $(sed -n 's/^SPLUNK_IMAGE=//p' "${ROOT}/config.env")" \
+  || die "compose-config did not apply SPLUNK_IMAGE"
+printf '%s\n' "$rendered" | grep -qx 'SPLUNK_PASSWORD: <set>' || die "compose-config printed a password"
+if printf '%s\n' "$rendered" | grep -q 'your_password_here'; then
+  die "compose-config output contained a secret"
+fi
 if grep -E 'SPLUNK_(REST|MCP|MLTK)_USER:-|MLTK_ROLE|SPLUNK_MLTK_USER' \
   "${ROOT}/scripts/"*.sh "${ROOT}/compose.yml" >/dev/null; then
   die "scripts still read identity overrides from the environment"
