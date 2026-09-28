@@ -15,17 +15,14 @@ OP="${OP:-op}"
 
 # shellcheck source=scripts/wait-splunk-init.sh
 source "${ROOT}/scripts/wait-splunk-init.sh"
-
-# Host-side Splunk API (not Docker service name so1).
-apply_splunk_api_defaults() {
-  export SPLUNK_MCP_HOST="${SPLUNK_MCP_HOST:-localhost}"
-  export SPLUNK_PORT="${SPLUNK_PORT:-8089}"
-}
+# shellcheck source=scripts/splunk-api-env.sh
+source "${ROOT}/scripts/splunk-api-env.sh"
 
 wait_for_splunk() {
   local code host port
-  host="${SPLUNK_MCP_HOST:-localhost}"
-  port="${SPLUNK_PORT:-8089}"
+  splunk_api_env
+  host="${SPLUNK_HOST}"
+  port="${SPLUNK_PORT}"
   for _ in {1..60}; do
     code="$(curl -k -s -o /dev/null -w '%{http_code}' \
       "https://${host}:${port}/services/server/info" 2>/dev/null || true)"
@@ -68,11 +65,11 @@ wait_for_mcp_token() {
   local interval="${MCP_TOKEN_WAIT_INTERVAL:-5}"
   local n=1
 
-  apply_splunk_api_defaults
-  host="${SPLUNK_MCP_HOST}"
+  splunk_api_env
+  host="${SPLUNK_HOST}"
   port="${SPLUNK_PORT}"
-  rest_user="admin"
-  mcp_user="splunker"
+  rest_user="${SPLUNK_REST_USER}"
+  mcp_user="${SPLUNK_MCP_USER}"
   : "${SPLUNK_PASSWORD:?SPLUNK_PASSWORD must be set}"
 
   command -v jq >/dev/null 2>&1 || {
@@ -116,7 +113,6 @@ mint_token() {
 }
 
 run_mint() {
-  apply_splunk_api_defaults
   mint_token
 }
 

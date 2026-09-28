@@ -8,28 +8,29 @@
 #   4. User splunker: roles user + mcp_user
 #
 # SA-S4R MCP tool registration is host-side after this script exits
-# (`make up` → `make register-s4r-mcp-tools`). splunk-init only mounts this file.
+# (`make up` → `make register-s4r-mcp-tools`). splunk-init mounts this file and
+# splunk-api-env.sh only.
 #
 # Required env: SPLUNK_PASSWORD.
-# REST login is admin. The MCP execution user is splunker (not configurable).
-#
-# Other env (defaults in parentheses):
-#   SPLUNK_HOST (localhost), SPLUNK_PORT (8089)
-#   SPLUNK_MCP_PASSWORD (required on first creation; used when FORCE_SPLUNK_MCP_PASSWORD=1)
-#   FORCE_SPLUNK_MCP_PASSWORD (1|true|yes forces password reset)
+# SPLUNK_MCP_PASSWORD is required on first user creation and when FORCE_SPLUNK_MCP_PASSWORD=1.
+# REST host, port, and account names: scripts/splunk-api-env.sh.
+# compose.yml sets SPLUNK_HOST=so1. localhost inside splunk-init is that container.
+# FORCE_SPLUNK_MCP_PASSWORD (0; 1|true|yes forces password reset).
 #
 # Out of scope: claude_logs index or file monitors — see docs/poc/CONFIGURATION.md.
 # Full variable table and flows: docs/poc/CONFIGURATION.md#appendix-setup-splunksh
 
 set -eu
 
-SPLUNK_HOST="${SPLUNK_HOST:-localhost}"
-SPLUNK_PORT="${SPLUNK_PORT:-8089}"
-SPLUNK_REST_USER="admin"
+_here=$(dirname "$0")
+_here=$(cd "${_here}" && pwd)
+# shellcheck source=scripts/splunk-api-env.sh
+. "${_here}/splunk-api-env.sh"
+splunk_api_env
+
 : "${SPLUNK_PASSWORD:?SPLUNK_PASSWORD must be set}"
 SPLUNK_URL="https://${SPLUNK_HOST}:${SPLUNK_PORT}"
 
-SPLUNK_MCP_USER="splunker"
 : "${SPLUNK_MCP_PASSWORD:=}"
 FORCE_SPLUNK_MCP_PASSWORD="${FORCE_SPLUNK_MCP_PASSWORD:-0}"
 
@@ -117,7 +118,11 @@ wait_for_disabled_value() {
   while [ "$i" -lt 30 ]; do
     current=""
     if command -v jq >/dev/null 2>&1; then
-      current=$(splunk_get_json "${url}" | jq -r '.entry[0].content.disabled // empty' 2>/dev/null || true)
+      # `//` treats JSON false as missing, so a disabled=false input looks unset.
+      current=$(splunk_get_json "${url}" | jq -r '
+        .entry[0].content.disabled
+        | if . == null then empty else tostring end
+      ' 2>/dev/null || true)
       current="$(normalize_disabled "${current}")"
     fi
     if [ -n "${current}" ] && [ "${current}" = "${expected}" ]; then

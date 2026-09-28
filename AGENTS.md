@@ -45,7 +45,7 @@ Splunk REST bootstrap (see **`docs/poc/CONFIGURATION.md` § Appendix: setup-splu
 
 - MCP dev: **`ssl_verify=false`** on the Splunk MCP Server app (local dev only).
 - **SA-Eventgen**: enables the default modular input (**required**). **`splunk-init` fails** if the app is missing or the modinput stays disabled.
-- **Identity**: Splunk role **`mcp_user`** with capabilities **`mcp_tool_execute`** and **`s4r_workshop_control`**; user **`splunker`** with roles **`user`** + **`mcp_user`**. REST calls use **`admin`**. Neither account name is configurable.
+- **Identity**: Splunk role **`mcp_user`** with capabilities **`mcp_tool_execute`** and **`s4r_workshop_control`**; user **`splunker`** with roles **`user`** + **`mcp_user`**. REST calls use **`admin`**. Host, port, and those account names are the defaults in **`scripts/splunk-api-env.sh`**. **`compose.yml`** sets **`SPLUNK_HOST=so1`** on **`splunk-init`** only.
 - **Password**: MCP user password is provided via **`SPLUNK_MCP_PASSWORD`** (env).
 
 **Not** in this script: MCP token minting (**`scripts/mint-mcp-token.sh`**, after init), SA-S4R MCP tool registration (**`scripts/register-s4r-mcp-tools.sh`**, host after init), or **`claude_logs`** index/file monitors. Optional ingestion: enable the bind mount in **`compose.yml`**, create the index and monitor in Splunk—**`docs/poc/CONFIGURATION.md`**.

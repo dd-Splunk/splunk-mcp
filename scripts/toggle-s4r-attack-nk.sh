@@ -11,6 +11,9 @@ ENV_FILE="${ENV_FILE:-tpl.env}"
 ENV_OUT="${ENV_OUT:-.env}"
 OP="${OP:-op}"
 STANZA_NAME="attack.nk.purchase.sample"
+
+# shellcheck source=scripts/splunk-api-env.sh
+source "${ROOT}/scripts/splunk-api-env.sh"
 CURL_HTTP_CODE=""
 CURL_BODY=""
 
@@ -37,9 +40,7 @@ require_jq() {
 }
 
 require_splunk_env() {
-  SPLUNK_HOST="${SPLUNK_HOST:-localhost}"
-  SPLUNK_PORT="${SPLUNK_PORT:-8089}"
-  SPLUNK_REST_USER="admin"
+  splunk_api_env
   : "${SPLUNK_PASSWORD:?SPLUNK_PASSWORD must be set}"
   SPLUNK_URL="https://${SPLUNK_HOST}:${SPLUNK_PORT}"
   CONFIG_URL="${SPLUNK_URL}/servicesNS/nobody/SA-S4R/configs/conf-eventgen/${STANZA_NAME}"
