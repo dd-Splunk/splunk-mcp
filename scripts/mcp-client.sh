@@ -345,7 +345,9 @@ verify_client_config() {
         || die "$client config has no mcpServers.splunk-mcp-server in $path"
       jq -e '.mcpServers["splunk-mcp-server"].command | test("npx$")' "$path" >/dev/null \
         || die "$client splunk-mcp-server should use npx (run: make update-mcp-client MCP_CLIENT=$client)"
-      jq -e '.mcpServers["splunk-mcp-server"].args | index("mcp-remote")' "$path" >/dev/null \
+      # Writer pins MCP_REMOTE_PACKAGE (mcp-remote@x.y.z). jq index() is exact, so
+      # accept mcp-remote or mcp-remote@* — not mcp-remote-splunk.sh.
+      jq -e '.mcpServers["splunk-mcp-server"].args | map(tostring) | any(test("^mcp-remote(@|$)"))' "$path" >/dev/null \
         || die "$client splunk-mcp-server should use mcp-remote (run: make update-mcp-client MCP_CLIENT=$client)"
       ;;
     goose)

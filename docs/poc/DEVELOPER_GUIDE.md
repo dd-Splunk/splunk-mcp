@@ -53,7 +53,7 @@ Tracked skills live under **`.cursor/skills/`** and are intentionally small, sla
 | Skill | Intent | Boundary |
 | ----- | ------ | -------- |
 | `/usage` | Static repo cheat sheet for S4R MCP routing, make targets, and MCP park/boot flow | No live health checks unless the user asks. Keep it concise; point to docs instead of duplicating runbooks. |
-| `/demo-prep` | Live-demo go/no-go: `make demo-prep`, S4R MCP smoke, and MCP auth stats | Do not start, clean, or change NK mode unless the user asked. Do not paste secrets. |
+| `/demo-prep` | Live-demo go/no-go: `make demo-prep` (Splunkbase pins + status + verify), S4R MCP smoke, and MCP auth stats | Do not start, clean, or change NK mode unless the user asked. Do not paste secrets. |
 
 Both skill files set **`disable-model-invocation: true`** so their bodies are loaded only when invoked. Keep workshop role behavior in **`.cursor/agents/`** and the SPL in **`docs/s4r/SPL-CATALOG.md`**; skills should route users to those sources rather than becoming another runbook.
 

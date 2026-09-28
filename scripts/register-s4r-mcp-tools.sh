@@ -77,6 +77,7 @@ register_s4r_mcp_tools() {
       ;;
   esac
 
+  enable_failed=0
   while IFS= read -r tool_name; do
     [[ -n "${tool_name}" ]] || continue
     mcp_name="SA-S4R_${tool_name}"
@@ -92,8 +93,13 @@ register_s4r_mcp_tools() {
     else
       echo "⚠️  Failed to enable ${tool_id} (HTTP ${enable_code})" >&2
       [[ -f /tmp/s4r-mcp-enable.json ]] && cat /tmp/s4r-mcp-enable.json >&2
+      enable_failed=$((enable_failed + 1))
     fi
   done < <(jq -r '.tools[].name' "${TOOLS_JSON}")
+  if [[ "${enable_failed}" -gt 0 ]]; then
+    echo "error: failed to enable ${enable_failed} SA-S4R MCP tool(s); clients will not see SA-S4R_* until this succeeds" >&2
+    exit 1
+  fi
 
   # Pick up new/updated savedsearches.conf stanzas without a full restart.
   reload_code="$(curl -sk -u "${SPLUNK_REST_USER}:${SPLUNK_PASSWORD}" \

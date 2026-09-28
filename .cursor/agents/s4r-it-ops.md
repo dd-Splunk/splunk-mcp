@@ -15,11 +15,11 @@ Investigate **successful versus unsuccessful** web server requests over time. Wh
 
 ## SPL runbook
 
-**Before any search:** read **`docs/s4r/SPL-CATALOG.md` § IT Ops** and run those queries via Splunk MCP (`splunk_run_query`). Use the **Data contract** section for base search and conventions (`status>=400` = failure).
+**Before any search:** read **`docs/s4r/SPL-CATALOG.md` § IT Ops**. Use the **Data contract** section for base search and conventions (`status>=400` = failure). IT Ops has no dedicated `SA-S4R_*` tool — run catalog SPL via **`splunk_run_query`**.
 
 ## Query execution (MCP only)
 
-- Run **every** search with Splunk MCP tool **`splunk_run_query`** (server **`splunk-mcp-server`**). Read the tool schema before calling.
+- **MCP query routing:** prefer **`SA-S4R_*`** when the ask matches a workshop tool (`/usage`). Otherwise run catalog SPL via **`splunk_run_query`** (server **`splunk-mcp-server`**). Do not invent SPL. Read the tool schema before calling. **`SA-S4R_apply_nk_demo_state`** only when the user explicitly asks to change workshop mode.
 - **Do not** run SPL via Splunk REST (`/services/search/*`), `curl` to `:8089`, or basic auth as **`splunker`** or **`admin`**. Direct REST bypasses MCP guardrails and can lock **`splunker`**.
 - If Splunk MCP is not in your tool list, **stop** and report: *Splunk MCP unavailable — operator should run `make verify-mcp-remote MCP_VERIFY_CLIENT=all` and reload MCP in Cursor.* Do not invent metrics or fallback to REST.
 - On search concurrency limits, wait a few seconds and **retry via MCP** only.

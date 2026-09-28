@@ -15,7 +15,7 @@ Presenter guide for **Splunk4Rookies** workshop follow-on or **SE presales**: sh
 On-screen checklist: **deck slide 30** (Appendix — before you start).
 
 ```bash
-make demo-prep                    # status + MCP verify
+make demo-prep                    # Splunkbase pins + status + MCP verify
 make s4r-attack-nk-status         # expect: disabled (infrastructure mode)
 ```
 
@@ -405,7 +405,7 @@ Short on-slide versions: **deck slide 31**. Long-form prompts for live demos:
 ```text
 As Buttercup Power User for Splunk4Rookies: is the shop losing money?
 Delegate to IT Ops, DevOps, Business Analytics, and Security & Fraud.
-Read docs/s4r/SPL-CATALOG.md for SPL. Splunk MCP only — splunk_run_query and SA-S4R_* workshop tools; never Splunk REST or curl for searches.
+Read docs/s4r/SPL-CATALOG.md for SPL. Prefer SA-S4R_* when it matches; else catalog SPL via splunk_run_query. Never REST or curl.
 Synthesize one executive answer with the Power User template.
 ```
 
@@ -414,7 +414,7 @@ Synthesize one executive answer with the Power User template.
 ```text
 As Buttercup Power User: is the money loss bad infrastructure or an active threat?
 Check SA-S4R_query_nk_demo_state (fallback: make s4r-attack-nk-status). Delegate to all four teams.
-Use docs/s4r/SPL-CATALOG.md including § Workshop modes. Splunk MCP only — SA-S4R_* tools and splunk_run_query; no REST/curl for searches. Time range: last 15 minutes.
+Use docs/s4r/SPL-CATALOG.md including § Workshop modes. Prefer SA-S4R_* when it matches; else catalog SPL via splunk_run_query. Never REST or curl. Time range: last 15 minutes.
 Synthesize with clear verdict and recommended actions.
 ```
 
@@ -423,7 +423,7 @@ Synthesize with clear verdict and recommended actions.
 ```text
 You are the S4R [IT Ops|DevOps|Business Analytics|Security & Fraud] agent.
 Read .cursor/agents/s4r-[team].md and docs/s4r/SPL-CATALOG.md § [section].
-Run searches via splunk_run_query or SA-S4R_* workshop tools (MCP only — no REST/curl). Return only that team's summary.
+Prefer SA-S4R_* when it matches; else catalog SPL via splunk_run_query. Never REST or curl. Return only that team's summary.
 ```
 
 ---
@@ -436,7 +436,7 @@ Same delegation pattern as Demo 1 unless noted. Infrastructure mode, **last 24 h
 
 ```text
 As Buttercup Power User: are we losing sales because checkout is failing, or because customers never get to purchase?
-Delegate to all four teams. Read docs/s4r/SPL-CATALOG.md per team. Splunk MCP only — SA-S4R_* tools and splunk_run_query; never REST or curl.
+Delegate to all four teams. Read docs/s4r/SPL-CATALOG.md per team. Prefer SA-S4R_* when it matches; else catalog SPL via splunk_run_query. Never REST or curl.
 Synthesize one executive answer with the Power User template.
 ```
 

@@ -34,7 +34,7 @@ Else: `splunk_run_query` + [docs/s4r/SPL-CATALOG.md](docs/s4r/SPL-CATALOG.md). S
 | `make up` | Boot → mint (default cursor) → register S4R tools |
 | `make down` | Park `splunk-mcp-server`, then stop |
 | `make status` / `make verify` | Health; MCP `tools/list` |
-| `make demo-prep` | Shell status+verify. Go/no-go: **/demo-prep** |
+| `make demo-prep` | Pins + status + verify. Go/no-go: **/demo-prep** |
 | `make clean-y` | Destructive reset |
 
 After `make up`: reload **splunk-mcp-server** in Cursor Settings → MCP.

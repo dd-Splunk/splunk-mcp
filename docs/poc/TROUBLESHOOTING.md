@@ -368,6 +368,7 @@ cat compose.yml | grep SPLUNK_APPS_URL
 
 # Expected Splunkbase apps (IDs and names) are listed in CONFIGURATION.md under compose.yml.
 # If a 404 on download, update the /release/VERSION/ segment in SPLUNK_APPS_URL for that app.
+make check-splunkbase-pins   # compose.yml pin vs Splunkbase default (no secrets)
 
 # Verify Splunkbase credentials:
 op read "op://YourVault/Splunkbase/username"
@@ -635,7 +636,7 @@ Dashboard, NK threat mode, and parallel agent issues: **[s4r/TROUBLESHOOTING.md]
 **Cause**: Splunk locks local accounts after repeated failed login attempts. Common PoC triggers:
 
 1. **`SPLUNK_MCP_PASSWORD` drift** — password in `.env` / `tpl.env` no longer matches Splunk (setup only sets password on **create** or when **`FORCE_SPLUNK_MCP_PASSWORD=1`**).
-2. **Parallel subagents using REST fallback** — several workers attempted `-u splunker:…` via Splunk REST when MCP was unavailable; wrong or stale password locks the account quickly. **Agents must use MCP `splunk_run_query` only** (see `.cursor/agents/s4r-*.md`).
+2. **Parallel subagents using REST fallback** — several workers attempted `-u splunker:…` via Splunk REST when MCP was unavailable; wrong or stale password locks the account quickly. **Agents must use Splunk MCP only** — prefer **`SA-S4R_*`** when it matches, else **`splunk_run_query`** (see `.cursor/agents/s4r-*.md`).
 3. **Manual REST probes** with an incorrect password.
 
 **Fix (immediate — unlock)**:
@@ -671,7 +672,7 @@ curl -sk -u "splunker:${SPLUNK_MCP_PASSWORD}" \
   "https://localhost:8089/services/authentication/current-context?output_mode=json"
 ```
 
-**Prevention**: Workshop agents and subagents must use **MCP `splunk_run_query` only** — never REST basic auth as `splunker`. Prefer **`make verify-mcp-remote MCP_VERIFY_CLIENT=all`** before delegating four teams. Keep **`SPLUNK_MCP_PASSWORD`** aligned with vault; use **`FORCE_SPLUNK_MCP_PASSWORD=1`** after rotating the password. Parallel agent limits: [s4r/TROUBLESHOOTING.md](../s4r/TROUBLESHOOTING.md).
+**Prevention**: Workshop agents and subagents must use **Splunk MCP only** (prefer **`SA-S4R_*`**, else **`splunk_run_query`**) — never REST basic auth as `splunker`. Prefer **`make verify-mcp-remote MCP_VERIFY_CLIENT=all`** before delegating four teams. Keep **`SPLUNK_MCP_PASSWORD`** aligned with vault; use **`FORCE_SPLUNK_MCP_PASSWORD=1`** after rotating the password. Parallel agent limits: [s4r/TROUBLESHOOTING.md](../s4r/TROUBLESHOOTING.md).
 
 ---
 

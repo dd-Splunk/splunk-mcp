@@ -10,7 +10,7 @@ make up
 make verify-mcp-remote
 ```
 
-`make up` registers workshop tools **`SA-S4R_*`** on the MCP endpoint (prefer those over ad-hoc SPL). In Cursor: **`/usage`** (tool routing) · **`/demo-prep`** (go/no-go, including S4R smoke). Details: [AGENTS.md](AGENTS.md) · [docs/s4r/MCP-TOOLS.md](docs/s4r/MCP-TOOLS.md).
+`make up` registers workshop tools **`SA-S4R_*`** on the MCP endpoint (prefer those over ad-hoc SPL). In Cursor: **`/usage`** (tool routing) · **`/demo-prep`** (go/no-go: Splunkbase pins, S4R smoke). Details: [AGENTS.md](AGENTS.md) · [docs/s4r/MCP-TOOLS.md](docs/s4r/MCP-TOOLS.md).
 
 | URL | Use |
 | --- | --- |

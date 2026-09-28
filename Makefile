@@ -19,7 +19,7 @@ export ENV_FILE ENV_OUT ENV_EXAMPLE OP DC
 	park-mcp-clients update-mcp-clients update-mcp-client verify-mcp-remote mcp-auth-failures \
 	update-claude-config update-cursor-config update-goose-config \
 	s4r-attack-nk-enable s4r-attack-nk-disable s4r-attack-nk-status register-s4r-mcp-tools \
-	marp-preview marp-serve marp-html
+	check-splunkbase-pins marp-preview marp-serve marp-html
 
 help: ## Show targets
 	@awk 'BEGIN {FS = ":.*##"; printf "Splunk MCP PoC\n\n"} \
@@ -121,9 +121,14 @@ update-goose-config: ## Goose: npx mcp-remote + bearer token
 verify-mcp-remote: ## Verify client configs + Splunk MCP (MCP_VERIFY_CLIENT=all|…)
 	@./scripts/mcp-client.sh verify "$(MCP_VERIFY_CLIENT)"
 
-demo-prep: ## Pre-demo check: status + MCP verify + warm-stack reminder
+check-splunkbase-pins: ## Compare compose.yml Splunkbase pins to current defaults
+	@./scripts/check-splunkbase-pins.sh
+
+demo-prep: ## Pre-demo check: Splunkbase pins + status + MCP verify + warm-stack reminder
 	@echo "=== Splunk MCP demo prep ==="
 	@echo "Tip: warm the stack before a live meeting — cold 'make up' can take many minutes."
+	@echo ""
+	@$(MAKE) check-splunkbase-pins
 	@echo ""
 	@$(MAKE) status
 	@echo ""
