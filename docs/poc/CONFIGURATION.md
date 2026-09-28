@@ -149,6 +149,7 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 | `update-claude-config` / `update-cursor-config` / `update-goose-config` | Aliases for `update-mcp-client` |
 | `verify-mcp-remote` | `scripts/mcp-client.sh verify` — client config + direct `tools/list` + **`npx mcp-remote` stdio** e2e (`MCP_VERIFY_CLIENT=all` by default) |
 | `verify` | Runs `status`, then `verify-mcp-remote` |
+| `test` | Docker-free: MCP client JSON/YAML shape (`write-shape` / `verify-config` / `park`) plus SA-S4R mode/payload unit tests |
 | `check-splunkbase-pins` | Compare `compose.yml` `SPLUNK_APPS_URL` pins to Splunkbase `api/v1/app/<id>/release/` (no secrets). **MISSING** = next `make up` can 404. **`STRICT=1`** exits 1 on MISSING |
 | `demo-prep` | Runs **`check-splunkbase-pins`**, then `status`, then `verify-mcp-remote`, and prints the live-demo warm-stack reminder. Cursor **`/demo-prep`** also runs S4R mode + **`mcp-auth-failures`** |
 | `mcp-auth-failures` | Admin `_internal` MCP auth/tool stats (last 30m). Needs `.env` or `tpl.env`. **`DETAIL=1`** prints raw failures. Not visible to `splunker` MCP |
@@ -237,6 +238,9 @@ Do not store Cloud MCP bearer tokens in **`.env`** — that file is for **stack 
 | `SPLUNK_MLTK_USER` | `setup-splunk.sh` | Which Splunk user gets `MLTK_ROLE` when set (default: same as `SPLUNK_MCP_USER`) |
 | `MLTK_ROLE` | `setup-splunk.sh` | MLTK Splunk role to assign; empty by default (Splunk AI Toolkit not in `SPLUNK_APPS_URL`) |
 | `CURSOR_MCP_JSON` | `mcp-client.sh` (cursor) | Output path |
+| `CLAUDE_MCP_JSON` | `mcp-client.sh` (claude) | Output path (default macOS Claude Desktop config) |
+| `GOOSE_MCP_YAML` | `mcp-client.sh` (goose) | Output path (default `~/.config/goose/config.yaml`) |
+| `MCP_SHAPE_TOKEN` | `mcp-client.sh write-shape` | Fixture token for Docker-free shape tests (not a live Splunk token) |
 | `MCP_CLIENT` | `update-mcp-client` | `claude`, `cursor`, or `goose` |
 | `MCP_VERIFY_CLIENT` | `verify-mcp-remote` | `all` (default), or one client |
 

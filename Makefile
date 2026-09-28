@@ -19,7 +19,7 @@ export ENV_FILE ENV_OUT ENV_EXAMPLE OP DC
 	park-mcp-clients update-mcp-clients update-mcp-client verify-mcp-remote mcp-auth-failures \
 	update-claude-config update-cursor-config update-goose-config \
 	s4r-attack-nk-enable s4r-attack-nk-disable s4r-attack-nk-status register-s4r-mcp-tools \
-	check-splunkbase-pins marp-preview marp-serve marp-html
+	check-splunkbase-pins marp-preview marp-serve marp-html test
 
 help: ## Show targets
 	@awk 'BEGIN {FS = ":.*##"; printf "Splunk MCP PoC\n\n"} \
@@ -159,6 +159,10 @@ s4r-attack-nk-status: ## Show whether NK attack Eventgen stanza is enabled
 
 register-s4r-mcp-tools: ## Register SA-S4R workshop MCP tools (also run by make up)
 	@./scripts/register-s4r-mcp-tools.sh
+
+test: ## Docker-free tests: MCP config shape + SA-S4R mode parse
+	@./tests/mcp-client-shape.sh
+	@python3 -m unittest discover -s tests -p 'test_*.py' -v
 
 marp-preview: ## Open S4R slide deck in Marp preview (single file)
 	@cd demo-slides && marp --no-stdin -p s4r-demo-slides.md

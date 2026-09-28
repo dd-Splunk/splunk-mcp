@@ -76,6 +76,7 @@ Workshop agent **roles** remain in **`.cursor/agents/`** (not skills). Do not du
 | -------- | ----------------- |
 | Stack healthy? | `make status` — **`splunk-init`** line + **Splunk is ready ✓**; exits non-zero if init failed or Splunk is running but API not ready (exits **0** when stack is stopped) |
 | MCP client path OK? | `make verify-mcp-remote` (all clients) or `make verify-mcp-remote MCP_VERIFY_CLIENT=cursor` |
+| Docker-free tests? | `make test` — MCP config shape + SA-S4R mode/payload parse (no Splunk) |
 | Pre-demo / both checks? | `make demo-prep` (Splunkbase pins + status + verify + warm-stack reminder) or `make verify` (status then verify only) |
 | Init failed? | `docker logs splunk-init` (see **`docs/poc/TROUBLESHOOTING.md`**) |
 | Eventgen modinput? | `curl -k -u admin:<password> "https://localhost:8089/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default?output_mode=json"` |
@@ -106,15 +107,15 @@ Workshop agent **roles** remain in **`.cursor/agents/`** (not skills). Do not du
 
 ## Change discipline
 
-- Prefer small commits; keep **`make up`**, **`make status`**, **`make verify-mcp-remote`** working.
+- Prefer small commits; keep **`make up`**, **`make status`**, **`make verify-mcp-remote`**, **`make test`** working.
 - When changing **`Makefile`**, **`compose.yml`**, or **`scripts/setup-splunk.sh`**, update **`docs/poc/CONFIGURATION.md`**, **`docs/poc/ARCHITECTURE.md`**, and/or **`docs/poc/TROUBLESHOOTING.md`** as needed; refresh or expire Vellem **`splunk-mcp`** folder notes when behavior changes. For wider rollout decisions, see **`docs/poc/GRADUATION.md`**.
-- Lint before push: **`pre-commit run --all-files`** (**gitleaks**, **shellcheck** on **`scripts/*.sh`**, **markdownlint-cli2** on Markdown). Requires **shellcheck** on PATH (`brew install shellcheck`) and **Node/npx**. Auto-fix Markdown: `npx --yes markdownlint-cli2 --fix`.
+- Lint before push: **`pre-commit run --all-files`** (**gitleaks**, **shellcheck** on **`scripts/*.sh`** and **`tests/*.sh`**, **markdownlint-cli2** on Markdown) then **`make test`**. Requires **shellcheck** on PATH (`brew install shellcheck`) and **Node/npx**. Auto-fix Markdown: `npx --yes markdownlint-cli2 --fix`.
 - **SA-S4R Splunk app:** direct Splunk UI customizations (nav, views, field extractions, saved searches) belong in **`SA-S4R/local/`** only — **never** in **`default/`** (Splunk best practice). Workshop instructions: **`SA-S4R/local/README`** (only tracked file under **`local/`**; see **`.gitignore`**). See **`docs/s4r/SA-S4R-APP.md`** § **`default/` vs `local/`**.
 - **License:** contributions are under **[LICENSE](LICENSE)** (MIT).
 
 ## CI
 
-GitHub Actions: **`ci.yml`** (**gitleaks** full history + **pre-commit**: **gitleaks**, **shellcheck** + **markdownlint**) on pushes/PRs to **`main`** / **`master`**; **`package-s4r.yml`** builds **`SA-S4R.spl`** on SA-S4R path changes (push or PR) and publishes the PoC **`latest`** release **only from `main`/`master`**. See **`docs/poc/CI_CD.md`** for triggers, permissions, and PoC limitations.
+GitHub Actions: **`ci.yml`** (**gitleaks** full history + **pre-commit**: **gitleaks**, **shellcheck** + **markdownlint**, then **`make test`**) on pushes/PRs to **`main`** / **`master`**; **`package-s4r.yml`** builds **`SA-S4R.spl`** on SA-S4R path changes (push or PR) and publishes the PoC **`latest`** release **only from `main`/`master`**. See **`docs/poc/CI_CD.md`** for triggers, permissions, and PoC limitations.
 
 ## Cursor Cloud specific instructions
 

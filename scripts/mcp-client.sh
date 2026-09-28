@@ -6,8 +6,11 @@
 #   ./scripts/mcp-client.sh update-all [claude cursor goose ...]
 #   ./scripts/mcp-client.sh park <claude|cursor|goose|all>
 #   ./scripts/mcp-client.sh verify <claude|cursor|goose|all>
+#   ./scripts/mcp-client.sh write-shape [claude cursor goose ...]  # fixture token, no Splunk
+#   ./scripts/mcp-client.sh verify-config <claude|cursor|goose|all>
 #
-# Env: CURSOR_MCP_JSON, SPLUNK_MCP_ENDPOINT, SPLUNK_MCP_TLS_INSECURE, MCP_REMOTE_PACKAGE
+# Env: CURSOR_MCP_JSON, CLAUDE_MCP_JSON, GOOSE_MCP_YAML, SPLUNK_MCP_ENDPOINT,
+#      SPLUNK_MCP_TLS_INSECURE, MCP_REMOTE_PACKAGE, MCP_SHAPE_TOKEN
 
 set -euo pipefail
 
@@ -23,6 +26,8 @@ Usage:
   $(basename "$0") update-all [claude cursor goose ...]   # one mint, write all listed clients
   $(basename "$0") park <claude|cursor|goose|all>         # remove splunk-mcp-server (no secrets)
   $(basename "$0") verify <claude|cursor|goose|all>
+  $(basename "$0") write-shape [claude cursor goose ...]  # fixture token; no mint / Docker
+  $(basename "$0") verify-config <claude|cursor|goose|all>
 
 All clients use npx mcp-remote to https://localhost:8089/services/mcp with a minted bearer token
 (stored only in client config files, not in this repo).
@@ -31,6 +36,7 @@ park prevents auto-reconnect with stale tokens during stack boot (make down call
 update-all mints once and updates every listed client (default: cursor goose claude).
 
 verify runs client config checks, then an end-to-end npx mcp-remote stdio tools/list handshake.
+write-shape / verify-config check JSON/YAML shape only (MCP_SHAPE_TOKEN fixture; no Splunk).
 EOF
   exit "${1:-0}"
 }
@@ -142,30 +148,29 @@ update_json_mcp_remote() {
 
 update_claude() {
   update_json_mcp_remote \
-    "${HOME}/Library/Application Support/Claude/claude_desktop_config.json" \
+    "$(client_config_path claude)" \
     "Claude Desktop"
   echo "Restart Claude Desktop (Cmd+Q) for changes to take effect."
 }
 
 update_cursor() {
   update_json_mcp_remote \
-    "${CURSOR_MCP_JSON:-$ROOT/.cursor/mcp.json}" \
+    "$(client_config_path cursor)" \
     "Cursor"
   echo "Restart Cursor or reload MCP servers."
 }
 
 apply_goose_splunk_mcp() {
   local token="$1"
-  local endpoint header tls_insecure dir file npx_cmd wrapper
+  local endpoint header tls_insecure file npx_cmd wrapper
   endpoint=$(splunk_mcp_endpoint)
   npx_cmd="$(npx_command)"
   header="Authorization: Bearer ${token}"
   tls_insecure="${SPLUNK_MCP_TLS_INSECURE:-1}"
   wrapper="${ROOT}/scripts/mcp-remote-splunk.sh"
   [[ -x "$wrapper" ]] || die "missing executable wrapper: $wrapper"
-  dir="${HOME}/.config/goose"
-  file="${dir}/config.yaml"
-  mkdir -p "$dir"
+  file="$(client_config_path goose)"
+  mkdir -p "$(dirname "$file")"
   python3 "$ROOT/scripts/goose-mcp-yaml.py" upsert \
     "$file" "$endpoint" "$header" "$tls_insecure" "$wrapper" "$npx_cmd" \
     || die "could not write Goose YAML (pip3 install pyyaml; Homebrew: python3 -m pip install --user --break-system-packages pyyaml)"
@@ -182,7 +187,8 @@ update_goose() {
 }
 
 remove_goose_splunk_mcp() {
-  local file="${HOME}/.config/goose/config.yaml"
+  local file
+  file="$(client_config_path goose)"
   [[ -f "$file" ]] || return 0
   python3 "$ROOT/scripts/goose-mcp-yaml.py" remove "$file" \
     || die "could not park Goose YAML (pip3 install pyyaml; Homebrew: python3 -m pip install --user --break-system-packages pyyaml)"
@@ -278,9 +284,9 @@ cmd_update_all() {
 
 client_config_path() {
   case "$1" in
-    claude) printf '%s' "${HOME}/Library/Application Support/Claude/claude_desktop_config.json" ;;
+    claude) printf '%s' "${CLAUDE_MCP_JSON:-${HOME}/Library/Application Support/Claude/claude_desktop_config.json}" ;;
     cursor) printf '%s' "${CURSOR_MCP_JSON:-$ROOT/.cursor/mcp.json}" ;;
-    goose) printf '%s' "${HOME}/.config/goose/config.yaml" ;;
+    goose) printf '%s' "${GOOSE_MCP_YAML:-${HOME}/.config/goose/config.yaml}" ;;
   esac
 }
 
@@ -445,6 +451,49 @@ cmd_update() {
 
 cmd_verify() {
   local client="${1:?}" token
+  cmd_verify_config "$client"
+  token="$(mint_mcp_token)" || die "could not mint MCP token for verify"
+  verify_splunk_mcp "$token"
+  verify_mcp_remote_stdio "$token"
+}
+
+shape_token() {
+  # Fixture only — never a live Splunk token. Override with MCP_SHAPE_TOKEN in tests.
+  printf '%s' "${MCP_SHAPE_TOKEN:-shape-test-placeholder}"
+}
+
+write_client_shape() {
+  local client="$1" token="$2"
+  case "$client" in
+    claude) update_json_mcp_remote "$(client_config_path claude)" "Claude Desktop" "$token" ;;
+    cursor) update_json_mcp_remote "$(client_config_path cursor)" "Cursor" "$token" ;;
+    goose) apply_goose_splunk_mcp "$token" ;;
+    *) die "unknown client '$client' (use: $VALID_CLIENTS)" ;;
+  esac
+}
+
+cmd_write_shape() {
+  local clients=() client token
+  if [[ $# -eq 0 ]]; then
+    clients=(cursor goose claude)
+  else
+    clients=("$@")
+  fi
+  command -v jq >/dev/null 2>&1 || die "jq required (brew install jq)"
+  for client in "${clients[@]}"; do
+    valid_client "$client" || die "unknown client '$client' (use: $VALID_CLIENTS)"
+  done
+  token="$(shape_token)"
+  for client in "${clients[@]}"; do
+    write_client_shape "$client" "$token"
+  done
+  for client in "${clients[@]}"; do
+    verify_client_config "$client"
+  done
+}
+
+cmd_verify_config() {
+  local client="${1:?}"
   case "$client" in
     all)
       for c in $VALID_CLIENTS; do
@@ -458,9 +507,6 @@ cmd_verify() {
       die "unknown client '$client' (use: $VALID_CLIENTS or all)"
       ;;
   esac
-  token="$(mint_mcp_token)" || die "could not mint MCP token for verify"
-  verify_splunk_mcp "$token"
-  verify_mcp_remote_stdio "$token"
 }
 
 main() {
@@ -483,8 +529,15 @@ main() {
       [[ $# -ge 1 ]] || usage 1
       cmd_verify "$@"
       ;;
+    write-shape)
+      cmd_write_shape "$@"
+      ;;
+    verify-config)
+      [[ $# -ge 1 ]] || usage 1
+      cmd_verify_config "$@"
+      ;;
     -h | --help | help) usage 0 ;;
-    *) die "unknown action '$action' (use: update|update-all|park|verify)" ;;
+    *) die "unknown action '$action' (use: update|update-all|park|verify|write-shape|verify-config)" ;;
   esac
 }
 
