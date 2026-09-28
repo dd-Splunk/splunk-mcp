@@ -160,8 +160,15 @@ if grep -E 'SPLUNK_MCP_HOST|SPLUNK_REST_USER="admin"|mcp_user="splunker"' \
   "${ROOT}/scripts/mcp-auth-failures.sh" >/dev/null; then
   die "a REST client still hardcodes host or account names"
 fi
-grep -q 'splunk-api-env.sh:/splunk-api-env.sh:ro' "${ROOT}/compose.yml" \
-  || die "compose.yml does not mount splunk-api-env.sh"
+for mount in \
+  'scripts/splunk-api-env.sh:/opt/splunk-init/scripts/splunk-api-env.sh:ro' \
+  'scripts/register-s4r-mcp-tools.sh:/opt/splunk-init/scripts/register-s4r-mcp-tools.sh:ro' \
+  'SA-S4R/default/s4r_mcp_tools.json:/opt/splunk-init/SA-S4R/default/s4r_mcp_tools.json:ro'; do
+  grep -q "${mount}" "${ROOT}/compose.yml" \
+    || die "compose.yml does not mount ${mount}"
+done
+grep -q 'register-s4r-mcp-tools.sh' "${ROOT}/scripts/setup-splunk.sh" \
+  || die "setup-splunk.sh does not register SA-S4R MCP tools"
 grep -q 'SPLUNK_HOST: so1' "${ROOT}/compose.yml" || die "compose.yml must set SPLUNK_HOST=so1"
 
 # shellcheck source=scripts/splunk-api-env.sh
