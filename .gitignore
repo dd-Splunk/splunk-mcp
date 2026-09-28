@@ -8,6 +8,9 @@ tpl.env
 mcp_token.txt
 *.token
 
+# Maintainer-only machine hooks (Git credential helpers, etc.). Not part of the PoC.
+scripts/local/
+
 # Claude configuration
 .claude/
 
