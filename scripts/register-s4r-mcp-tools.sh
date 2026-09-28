@@ -77,6 +77,10 @@ register_s4r_mcp_tools() {
       ;;
   esac
 
+  enable_body="$(mktemp "${TMPDIR:-/tmp}/s4r-mcp-enable.XXXXXX")"
+  rm_enable_body() { rm -f "${enable_body:-}"; }
+  trap rm_enable_body EXIT
+
   enable_failed=0
   while IFS= read -r tool_name; do
     [[ -n "${tool_name}" ]] || continue
@@ -86,13 +90,13 @@ register_s4r_mcp_tools() {
       -X POST "${SPLUNK_URL}/services/mcp_tools" \
       -H "Content-Type: application/json" \
       -d "{\"tool_id\": \"${tool_id}\", \"tool_name\": \"${mcp_name}\", \"enabled\": true, \"override\": true}" \
-      -w "\n%{http_code}" -o /tmp/s4r-mcp-enable.json)"
+      -w "\n%{http_code}" -o "${enable_body}")"
     enable_code="${enable_response##*$'\n'}"
     if [[ "${enable_code}" =~ ^2 ]]; then
       echo "✅ Enabled ${tool_id}"
     else
       echo "⚠️  Failed to enable ${tool_id} (HTTP ${enable_code})" >&2
-      [[ -f /tmp/s4r-mcp-enable.json ]] && cat /tmp/s4r-mcp-enable.json >&2
+      [[ -s "${enable_body}" ]] && cat "${enable_body}" >&2
       enable_failed=$((enable_failed + 1))
     fi
   done < <(jq -r '.tools[].name' "${TOOLS_JSON}")
@@ -109,7 +113,8 @@ register_s4r_mcp_tools() {
   if [[ "${reload_code}" =~ ^2 ]]; then
     echo "✅ Reloaded SA-S4R saved searches (HTTP ${reload_code})"
   else
-    echo "⚠️  Saved-search reload returned HTTP ${reload_code} (run make restart if MCP saved-search tools 404)" >&2
+    echo "error: saved-search reload returned HTTP ${reload_code}; MCP saved-search tools may 404 until this succeeds (make restart)" >&2
+    exit 1
   fi
 }
 

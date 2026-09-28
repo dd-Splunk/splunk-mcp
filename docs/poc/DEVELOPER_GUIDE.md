@@ -23,6 +23,14 @@ Source of truth when docs disagree with code: [docs/README.md](../README.md#sour
 
 ## Local test loop
 
+Docker-free (MCP config shape + SA-S4R mode parse):
+
+```bash
+make test
+```
+
+Needs **jq**, **npx**, **Python 3**, and **PyYAML**. Full stack:
+
 ```bash
 make down
 make clean          # destructive — removes volumes
@@ -38,6 +46,7 @@ Never recover a broken `so1` with bare **`docker compose up -d`** unless a popul
 
 ```bash
 pre-commit run --all-files
+make test
 ```
 
 Requires **shellcheck** and **Node/npx** (markdownlint); pre-commit also runs **gitleaks**. See [CI_CD.md](CI_CD.md).

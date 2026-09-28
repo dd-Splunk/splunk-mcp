@@ -16,7 +16,7 @@ repos:
         language: system
         types: [shell]
         args: [-x]
-        files: ^scripts/.*\.sh$
+        files: ^(scripts/.*|tests/.*)\.sh$
 
       - id: markdownlint-cli2
         name: markdownlint-cli2

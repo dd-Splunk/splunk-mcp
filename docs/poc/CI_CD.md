@@ -6,7 +6,7 @@ Automation in this repo is intentionally small: it supports a **local PoC** stac
 
 | Workflow file | Purpose |
 | ------------- | ------- |
-| [.github/workflows/ci.yml](../../.github/workflows/ci.yml) | Secret scanning plus shell and Markdown lint |
+| [.github/workflows/ci.yml](../../.github/workflows/ci.yml) | Secret scanning, shell/Markdown lint, Docker-free `make test` |
 | [.github/workflows/package-s4r.yml](../../.github/workflows/package-s4r.yml) | Build **SA-S4R** as `SA-S4R.spl`, upload a CI artifact, publish a **moving `latest` GitHub Release** |
 
 ---
@@ -21,7 +21,8 @@ Automation in this repo is intentionally small: it supports a **local PoC** stac
 **What it runs**
 
 - **gitleaks** on the full git history (**.gitleaks.toml** allowlists PoC placeholders)
-- **pre-commit** (**.pre-commit-config.yaml**): **gitleaks** on tracked files, **shellcheck** on **`scripts/*.sh`**, **markdownlint-cli2** on project Markdown (via **`.markdownlint-cli2.jsonc`**)
+- **pre-commit** (**.pre-commit-config.yaml**): **gitleaks** on tracked files, **shellcheck** on **`scripts/*.sh`** and **`tests/*.sh`**, **markdownlint-cli2** on project Markdown (via **`.markdownlint-cli2.jsonc`**)
+- **`make test`**: MCP client JSON/YAML shape (no Splunk) and SA-S4R mode/payload unit tests (**PyYAML** + **jq** + **npx**)
 
 **Permissions**
 
@@ -30,8 +31,9 @@ Automation in this repo is intentionally small: it supports a **local PoC** stac
 **PoC limitations**
 
 - Does **not** build Docker images, start Splunk, run integration tests, or validate MCP connectivity.
+- **Does** run Docker-free unit tests (`make test`).
 - Does **not** package Splunk apps or publish releases.
-- Match CI locally: `pip install pre-commit && pre-commit install`, then **`pre-commit run --all-files`** before pushing (requires **shellcheck** on PATH and **Node/npx** for markdownlint). CI installs **shellcheck** via **apt**; on macOS use **`brew install shellcheck`**. Optional full-history scan: **`brew install gitleaks && gitleaks detect --source . --config .gitleaks.toml`**.
+- Match CI locally: `pip install pre-commit && pre-commit install`, then **`pre-commit run --all-files`** and **`make test`** before pushing (requires **shellcheck** on PATH, **Node/npx**, **jq**, and **PyYAML**). CI installs **shellcheck** and **jq** via **apt**; on macOS use **`brew install shellcheck`**. Optional full-history scan: **`brew install gitleaks && gitleaks detect --source . --config .gitleaks.toml`**.
 
 ---
 
