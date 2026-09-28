@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Toggle SA-S4R North Korea attack Eventgen stanza (attack.nk.purchase.sample).
 # Writes through Splunk config REST so local/eventgen.conf stays a Splunk-managed override.
-# Secrets: .env (Path B) or op run --env-file=tpl.env (Path A) — same as register-s4r-mcp-tools.sh.
+# Secrets: scripts/with-splunk-env.sh (.env or op run --env-file=tpl.env).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -39,7 +39,7 @@ require_jq() {
 require_splunk_env() {
   SPLUNK_HOST="${SPLUNK_HOST:-localhost}"
   SPLUNK_PORT="${SPLUNK_PORT:-8089}"
-  SPLUNK_REST_USER="${SPLUNK_REST_USER:-admin}"
+  SPLUNK_REST_USER="admin"
   : "${SPLUNK_PASSWORD:?SPLUNK_PASSWORD must be set}"
   SPLUNK_URL="https://${SPLUNK_HOST}:${SPLUNK_PORT}"
   CONFIG_URL="${SPLUNK_URL}/servicesNS/nobody/SA-S4R/configs/conf-eventgen/${STANZA_NAME}"
@@ -212,29 +212,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       exit 1
       ;;
   esac
-  if [[ "${TOGGLE_S4R_ATTACK_NK_INTERNAL:-}" == "1" ]]; then
-    run_toggle "${cmd}"
-    exit 0
-  fi
-  if [[ -f "$ENV_OUT" ]]; then
-    set -a
-    # shellcheck disable=SC1090
-    . "$ENV_OUT" || {
-      echo "Error: could not read $ENV_OUT" >&2
-      exit 1
-    }
-    set +a
-    run_toggle "${cmd}"
-  elif [[ -f "$ENV_FILE" ]]; then
-    command -v "$OP" >/dev/null 2>&1 || {
-      echo "Error: 1Password CLI (op) not available; create $ENV_OUT from .env.example" >&2
-      exit 1
-    }
-    exec "$OP" run --env-file="$ENV_FILE" -- env TOGGLE_S4R_ATTACK_NK_INTERNAL=1 "$0" "${cmd}"
-  else
-    echo "Error: need $ENV_OUT or $ENV_FILE for SPLUNK_PASSWORD." >&2
-    echo "  Path B: cp .env.example .env and set SPLUNK_PASSWORD" >&2
-    echo "  Path A: cp tpl.env.example tpl.env and run: op signin" >&2
-    exit 1
-  fi
+  # shellcheck source=scripts/with-splunk-env.sh
+  source "${ROOT}/scripts/with-splunk-env.sh"
+  with_splunk_env "$@"
+  run_toggle "${cmd}"
 fi

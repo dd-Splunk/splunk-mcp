@@ -30,7 +30,7 @@ Per [Splunk MCP Server 2.0](https://help.splunk.com/en/splunk-cloud-platform/mcp
 
 ## Secrets flow
 
-1. **`tpl.env.example`** → copy to **`tpl.env`** (gitignored): `op://` references and non-secret defaults.
+1. **`tpl.env.example`** → copy to **`tpl.env`** (gitignored): `op://` references only. Non-secret settings are in tracked **`config.env`**.
 2. **`make up` without `.env`**: `op run --env-file=tpl.env -- docker compose …` (nothing written to disk).
 3. **Path B**: hand-written **`.env`** from **`.env.example`**; Compose auto-loads it.
 4. **Clients:** tokens minted by **`scripts/mint-mcp-token.sh`** after **`splunk-init`**; stored only in client configs.
@@ -50,7 +50,7 @@ Check mode: **`SA-S4R_query_nk_demo_state`**. Agentic analysis: [AGENTS.md](../s
 
 ### 1. Splunk Enterprise Container (so1)
 
-- **Image**: `splunk/splunk:10.4` (default in `compose.yml`; override via `SPLUNK_IMAGE`)
+- **Image**: `SPLUNK_IMAGE` in tracked **`config.env`** (Compose requires it)
 - **Platform**: `linux/amd64`
 - **Ports**:
   - `8000`: Splunk Web UI
@@ -154,12 +154,13 @@ The setup script assigns Splunk role **`mcp_user`** and ensures capability **`mc
 Supplied to Compose via **`.env`** (Path B) **or** **`op run --env-file=tpl.env`** (default `make up` when `.env` is absent; **`tpl.env`** is local, from **`cp tpl.env.example tpl.env`**). Example shape:
 
 ```bash
-SPLUNK_IMAGE=splunk/splunk:10.4
 SPLUNK_PASSWORD=<secret>
 SPLUNKBASE_USER=<splunkbase user>
 SPLUNKBASE_PASS=<splunkbase password>
-TZ=Europe/Brussels
+SPLUNK_MCP_PASSWORD=<secret>
 ```
+
+`SPLUNK_IMAGE` and `TZ` are in tracked **`config.env`**.
 
 **Splunk Enterprise build** is determined by the Docker image tag (default `latest` resolves to whatever you last pulled—verify with Splunk Web **Settings → Server settings** or `services/server/info`). **Splunk MCP Server** app builds are pinned by **`SPLUNK_APPS_URL`** in `compose.yml` (Splunkbase download URLs).
 
@@ -177,7 +178,7 @@ Claude Desktop
 
 ### Token Management
 
-- **Generation**: After **`splunk-init`** exits, the host runs **`scripts/mint-mcp-token.sh`** (admin REST → Splunk MCP Server **`mcp_token`** for **`SPLUNK_MCP_USER`**, default **`splunker`**). **`setup-splunk.sh` does not mint tokens.**
+- **Generation**: After **`splunk-init`** exits, the host runs **`scripts/mint-mcp-token.sh`** (admin REST → Splunk MCP Server **`mcp_token`** for **`splunker`**). **`setup-splunk.sh` does not mint tokens.**
 - **Storage**: Client config files only (not the repo).
 - **Expiry**: Depends on Splunk MCP app and token settings (docs may cite ~15 days as a rule of thumb—verify in your build).
 - **Renewal**: Re-run `make update-mcp-client` to mint a new token.
@@ -194,7 +195,7 @@ Claude Desktop
 ### setup-splunk.sh
 
 - Creates or updates Splunk role **`mcp_user`** with capability **`mcp_tool_execute`**
-- Creates **`splunker`** user (`SPLUNK_MCP_USER`) with roles **`user`** + **`mcp_user`**
+- Creates **`splunker`** with roles **`user`** + **`mcp_user`**
 - Uses `SPLUNK_MCP_PASSWORD` (env) for the MCP user (no password written to disk)
 - Enables SA-Eventgen default modinput (**required**; init fails if missing or still disabled)
 - Dependencies: `curl`, `jq` (installed in `splunk-init`)

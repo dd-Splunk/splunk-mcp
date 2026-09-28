@@ -2,7 +2,7 @@ services:
   so1:
     hostname: so1
     container_name: so1
-    image: ${SPLUNK_IMAGE:-splunk/splunk:10.4}
+    image: ${SPLUNK_IMAGE:?set SPLUNK_IMAGE in config.env}
     platform: linux/amd64
     environment:
       SPLUNK_GENERAL_TERMS: --accept-sgt-current-at-splunk-com
@@ -19,7 +19,7 @@ services:
       # If a download fails (404, etc.), replace the /release/VERSION/ segment with a current
       # release for that app from https://splunkbase.splunk.com/app/<id> .
       SPLUNK_APPS_URL: https://splunkbase.splunk.com/app/1924/release/8.2.2/download/,https://splunkbase.splunk.com/app/4353/release/1.8.26/download/,https://splunkbase.splunk.com/app/7931/release/2.0.0/download/,https://splunkbase.splunk.com/app/7245/release/2.3.3/download/
-      TZ: ${TZ:-Europe/Brussels}
+      TZ: ${TZ:?set TZ in config.env}
     volumes:
       - so1-var:/opt/splunk/var
       - so1-etc:/opt/splunk/etc
@@ -44,9 +44,8 @@ services:
       - ./scripts/setup-splunk.sh:/setup-splunk.sh:ro
     environment:
       SPLUNK_PASSWORD: ${SPLUNK_PASSWORD:-}
-      # Legacy .env: SPLUNK_USER, SPLUNKER_USERNAME (see setup-splunk.sh)
-      SPLUNK_REST_USER: ${SPLUNK_REST_USER:-${SPLUNK_USER:-admin}}
-      SPLUNK_MCP_USER: ${SPLUNK_MCP_USER:-${SPLUNKER_USERNAME:-splunker}}
+      SPLUNK_REST_USER: admin
+      SPLUNK_MCP_USER: splunker
       # Required: password for the MCP execution user (splunker by default).
       SPLUNK_MCP_PASSWORD: ${SPLUNK_MCP_PASSWORD:-}
       SPLUNK_HOST: so1

@@ -3,9 +3,8 @@
 # Local copy of tpl.env.example — edit op:// paths here (never commit)
 tpl.env
 
-# Entire host secrets directory (legacy: tokens, generated passwords, etc.)
+# Leftover local files from older checkouts. The stack does not read or write these.
 .secrets/
-mcp_token.txt
 *.token
 
 # Maintainer-only machine hooks (Git credential helpers, etc.). Not part of the PoC.

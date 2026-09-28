@@ -295,12 +295,10 @@ Edit **`tpl.env`** with your `op://` paths. **`tpl.env`** is gitignored—do not
 
    ```bash
    cat > .env << 'EOF'
-   SPLUNK_IMAGE=splunk/splunk:10.4
    SPLUNK_PASSWORD=your_password_here
    SPLUNKBASE_USER=your_username
    SPLUNKBASE_PASS=your_password
    SPLUNK_MCP_PASSWORD=your_splunker_password
-   TZ=Europe/Brussels
    EOF
 
    make up
@@ -422,7 +420,7 @@ Requires **`jq`** on the host ([INSTALLATION.md](INSTALLATION.md)). See [MCP-TOO
 
 #### Issue: Splunk AI Toolkit / Connection Management (out of scope)
 
-**Splunk AI Toolkit** (2890) and **Python for Scientific Computing** (2882) are **not** installed by this stack. If you add them manually from Splunkbase, install **2882** before **2890** and set **`MLTK_ROLE`** (e.g. `mltk_dsdl_admin`) in **`.env`** so **`setup-splunk.sh`** can assign the role on the next **`make up`**.
+**Splunk AI Toolkit** (2890) and **Python for Scientific Computing** (2882) are **not** installed by this stack. If you add them manually from Splunkbase, install **2882** before **2890** and assign any toolkit role in Splunk Web. `setup-splunk.sh` does not read a role name from the environment.
 
 **Symptoms** (manual MLTK only): Connection Management shows `Failed to fetch config metadata: Empty response.` — often because app **2882** is missing; `splunkd.log` may reference `Splunk_SA_Scientific_Python_linux_x86_64`.
 

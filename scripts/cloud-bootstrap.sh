@@ -8,7 +8,7 @@
 #   ./scripts/cloud-bootstrap.sh [--wipe] [--force-env] [--image IMAGE]
 #
 # Env (optional):
-#   SPLUNK_IMAGE              default splunk/splunk:10.4
+#   SPLUNK_IMAGE              default from config.env; override with --image
 #   CLOUD_SPLUNKDB_IMG        default /splunkdb.img
 #   CLOUD_SPLUNKDB_MOUNT      default /mnt/splunkdb
 #   CLOUD_SPLUNKDB_SIZE       default 25G
@@ -30,6 +30,10 @@ ENV_FILE="${ENV_FILE:-tpl.env}"
 ENV_EXAMPLE="${ENV_EXAMPLE:-tpl.env.example}"
 OP="${OP:-op}"
 OVERRIDE_FILE="${OVERRIDE_FILE:-docker-compose.override.yml}"
+CONFIG_ENV="${CONFIG_ENV:-config.env}"
+if [[ -z "${SPLUNK_IMAGE:-}" && -f "$CONFIG_ENV" ]]; then
+  SPLUNK_IMAGE="$(sed -n 's/^SPLUNK_IMAGE=//p' "$CONFIG_ENV" | head -n 1)"
+fi
 SPLUNK_IMAGE="${SPLUNK_IMAGE:-splunk/splunk:10.4}"
 CLOUD_SPLUNKDB_IMG="${CLOUD_SPLUNKDB_IMG:-/splunkdb.img}"
 CLOUD_SPLUNKDB_MOUNT="${CLOUD_SPLUNKDB_MOUNT:-/mnt/splunkdb}"
@@ -106,15 +110,12 @@ write_env_from_op() {
       echo \"Check op:// paths in ${ENV_FILE} (test: op read \\\"op://...\\\").\" >&2
       exit 1
     fi
-    img=\"\${SPLUNK_IMAGE:-${SPLUNK_IMAGE}}\"
     umask 077
     cat > \"${ENV_OUT}\" <<ENVEOF
-SPLUNK_IMAGE=\${img}
 SPLUNK_PASSWORD=\${SPLUNK_PASSWORD}
 SPLUNKBASE_USER=\${SPLUNKBASE_USER}
 SPLUNKBASE_PASS=\${SPLUNKBASE_PASS}
 SPLUNK_MCP_PASSWORD=\${SPLUNK_MCP_PASSWORD}
-TZ=\${TZ:-${TZ:-Europe/Brussels}}
 ENVEOF
   "; then
     return 1
@@ -254,12 +255,10 @@ write_env_file() {
   admin_pw="$(random_password)"
   mcp_pw="$(random_password)"
   cat >"$ENV_OUT" <<EOF
-SPLUNK_IMAGE=${SPLUNK_IMAGE}
 SPLUNK_PASSWORD=${admin_pw}
 SPLUNKBASE_USER=${SPLUNKBASE_USER}
 SPLUNKBASE_PASS=${SPLUNKBASE_PASS}
 SPLUNK_MCP_PASSWORD=${mcp_pw}
-TZ=${TZ:-Europe/Brussels}
 EOF
   chmod 600 "$ENV_OUT"
   echo "✓ Created $ENV_OUT (chmod 600; Splunkbase from environment; other passwords generated)"

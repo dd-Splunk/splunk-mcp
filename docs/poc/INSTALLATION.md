@@ -36,7 +36,7 @@ Optional: **Git** to clone; an editor (e.g. VS Code) to edit `tpl.env` (from **`
 
 **Windows:** Prefer **WSL2** with Docker so `make` and paths behave like the docs (macOS/Linux).
 
-**Without 1Password:** you can still run the stack with a git-ignored **`.env`** file containing plain values for `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, and optional `SPLUNK_IMAGE` / `TZ`. See **[PRESALES.md](PRESALES.md)** (Path B).
+**Without 1Password:** you can still run the stack with a git-ignored **`.env`** file containing plain values for `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, and `SPLUNK_MCP_PASSWORD`. Image and timezone are in tracked **`config.env`**. See **[PRESALES.md](PRESALES.md)** (Path B).
 
 ### Cursor Cloud
 
@@ -90,13 +90,13 @@ cat tpl.env.example
 Example shape (paths must be yours in **`tpl.env`**):
 
 ```bash
-SPLUNK_IMAGE=splunk/splunk:10.4
 SPLUNK_PASSWORD=op://YourVault/YourItem/password
 SPLUNKBASE_USER=op://YourVault/Splunkbase/username
 SPLUNKBASE_PASS=op://YourVault/Splunkbase/password
 SPLUNK_MCP_PASSWORD=op://YourVault/Splunk-MCP/splunker-password
-TZ=Europe/Brussels
 ```
+
+Image and timezone are in tracked **`config.env`**, not in **`tpl.env`**.
 
 Expected layout includes `Makefile`, `compose.yml`, `tpl.env.example`, local `tpl.env` (after copy), `scripts/` (including `setup-splunk.sh`, `compose-up.sh`, `mcp-client.sh`), and `SA-S4R/`. See root [README.md](../../README.md) for the full picture.
 
@@ -209,7 +209,7 @@ Use **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** for Docker, ports, `op` auth, S
 
 ## Security (local PoC)
 
-This setup targets **trusted localhost** use: self-signed TLS, dev-oriented MCP settings. Do not treat it as production-ready. See [SECURITY.md](SECURITY.md). Do not commit **`.env`**, **`tpl.env`**, or client files containing live MCP bearer tokens. (Legacy **`.secrets/`** is gitignored and only used when **`ALLOW_LEGACY_SECRETS=1`** — tokens are not written there.)
+This setup targets **trusted localhost** use: self-signed TLS, dev-oriented MCP settings. Do not treat it as production-ready. See [SECURITY.md](SECURITY.md). Do not commit **`.env`**, **`tpl.env`**, or client files containing live MCP bearer tokens. Passwords come from 1Password or that `.env` file.
 
 ## Next steps
 

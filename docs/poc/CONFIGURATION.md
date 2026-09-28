@@ -16,8 +16,7 @@ Check current Splunkbase releases: `https://splunkbase.splunk.com/api/v1/app/<id
 Use this when changing the Splunk Enterprise image, Splunkbase app pins, or the `mcp-remote` bridge package.
 
 1. **Splunk image**
-   - Update the default image in **`compose.yml`** (`${SPLUNK_IMAGE:-...}`).
-   - Update the same tag in **`tpl.env.example`**, **`.env.example`**, and the Cursor Cloud notes in this document.
+   - Update **`SPLUNK_IMAGE`** in **`config.env`**. Compose requires that value (`${SPLUNK_IMAGE:?…}`).
    - For Cursor Cloud or any persistent Docker volume created by another major version, run **`./scripts/cloud-bootstrap.sh --wipe`** or **`make clean-y`** before the first boot to avoid stale KVStore data.
 2. **Splunkbase apps**
    - Run **`make check-splunkbase-pins`** (or open `https://splunkbase.splunk.com/api/v1/app/<id>/release/` — first `name` is latest).
@@ -35,14 +34,14 @@ Use this when changing the Splunk Enterprise image, Splunkbase app pins, or the 
 
 | Setting | Meaning |
 | ------- | ------- |
-| `image` | `${SPLUNK_IMAGE:-splunk/splunk:10.4}` |
+| `image` | `${SPLUNK_IMAGE}` from **`config.env`** |
 | `platform: linux/amd64` | Run x86 image on ARM via emulation when needed |
 | `SPLUNK_GENERAL_TERMS` | Accepts Splunk general terms non-interactively |
 | `SPLUNK_START_ARGS` | License acceptance |
 | `SPLUNK_PASSWORD` | Admin password (from `.env` and/or `op run` / shell env) |
 | `SPLUNKBASE_USERNAME` / `SPLUNKBASE_PASSWORD` | Splunkbase downloads |
 | `SPLUNK_APPS_URL` | Comma-separated Splunkbase package URLs |
-| `TZ` | Container timezone (default `Europe/Brussels` in template) |
+| `TZ` | Container timezone from **`config.env`** |
 
 **Ports**
 
@@ -87,7 +86,7 @@ Use only the blocks you need. If you remap **8089**, set **`SPLUNK_MCP_ENDPOINT`
 Runs after `so1` is **healthy**. Uses Alpine, installs `curl` and `jq`, then runs `setup-splunk.sh`. Mounts:
 
 - `scripts/setup-splunk.sh` → `/setup-splunk.sh` (**read-only**; script is executable in git)
-- No host secrets mount (this repo does not write tokens/passwords to disk). See `compose.yml` for `SPLUNK_REST_USER`, `SPLUNK_MCP_USER`, `SPLUNK_MCP_PASSWORD`.
+- No host secrets mount (this repo does not write tokens/passwords to disk). `compose.yml` passes REST user **`admin`**, MCP user **`splunker`**, and `SPLUNK_MCP_PASSWORD`.
 
 ### MCP token minting and S4R tools (host)
 
@@ -101,7 +100,9 @@ Runs after `so1` is **healthy**. Uses Alpine, installs `curl` and `jq`, then run
 - Bridge network **`splunk`** for `so1` ↔ `splunk-init`.
 - Named volumes **`so1-var`** and **`so1-etc`** (explicit names in Compose).
 
-## tpl.env and .env
+## config.env, tpl.env, and .env
+
+**`config.env`** is tracked and holds non-secret settings (`SPLUNK_IMAGE`, `TZ`). **`make up`** loads it after secrets, so a copy of those keys in a secret file does not win. Passwords are not stored there.
 
 ### `tpl.env.example` and `tpl.env`
 
@@ -128,12 +129,13 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 
 ### Typical variables
 
-| Variable | Purpose |
-| -------- | ------- |
-| `SPLUNK_IMAGE` | Splunk Docker image tag |
-| `SPLUNK_PASSWORD` | Admin password |
-| `SPLUNKBASE_USER` / `SPLUNKBASE_PASS` | Splunkbase (names in `compose.yml` map these) |
-| `TZ` | Timezone |
+| Variable | Purpose | Where |
+| -------- | ------- | ----- |
+| `SPLUNK_IMAGE` | Splunk Docker image tag | `config.env` |
+| `TZ` | Container timezone | `config.env` |
+| `SPLUNK_PASSWORD` | Admin password | `tpl.env` or `.env` |
+| `SPLUNKBASE_USER` / `SPLUNKBASE_PASS` | Splunkbase (names in `compose.yml` map these) | `tpl.env` or `.env` |
+| `SPLUNK_MCP_PASSWORD` | MCP user password | `tpl.env` or `.env` |
 
 **Note:** `compose.yml` expects `SPLUNKBASE_USER` and `SPLUNKBASE_PASS` in the environment. Define them in **`tpl.env`** or **`.env`**. Variable **names** must match what Compose references.
 
@@ -171,9 +173,8 @@ Summary of what runs **inside** `splunk-init` with `SPLUNK_HOST=so1`:
 1. Enables the **SA-Eventgen** default modular input (**required**; init **exits 1** if the app is missing or the input stays disabled).
 2. Sets MCP server `ssl_verify=false` via REST (dev convenience).
 3. Ensures Splunk role **`mcp_user`** exists with capability **`mcp_tool_execute`** and **`srchJobsQuota=5`** (parallel S4R agent headroom).
-4. Creates or updates user **`splunker`** (override with **`SPLUNK_MCP_USER`**) with roles **`user`** + **`mcp_user`**, and clears **`locked-out`** (idempotent unlock on every init).
-5. Optionally adds **`MLTK_ROLE`** to **`SPLUNK_MLTK_USER`** when **`MLTK_ROLE`** is set (skipped by default; Splunk AI Toolkit is not installed by this stack).
-6. Uses `SPLUNK_MCP_PASSWORD` from env; this repo does not write passwords to disk.
+4. Creates or updates user **`splunker`** with roles **`user`** + **`mcp_user`**, and clears **`locked-out`** (idempotent unlock on every init).
+5. Uses `SPLUNK_MCP_PASSWORD` from env; this repo does not write passwords to disk.
 
 **Full reference** (REST tables, diagrams, idempotency): [Appendix: setup-splunk.sh](#appendix-setup-splunksh).
 
@@ -233,9 +234,6 @@ Do not store Cloud MCP bearer tokens in **`.env`** — that file is for **stack 
 | `SPLUNK_MCP_TLS_INSECURE` | `mcp-client.sh` | If `1` (default), add `NODE_TLS_REJECT_UNAUTHORIZED=0` to Claude/Cursor config and Goose `envs` / wrapper (dev/self-signed only) |
 | `MCP_REMOTE_PACKAGE` | `mcp-client.sh`, `mcp-remote-splunk.sh` | npm package for `npx` (default `mcp-remote@0.8.3`) |
 | `MCP_NPX_COMMAND` | `mcp-client.sh` | Absolute path to `npx` when GUI apps lack Node on `PATH` |
-| `SPLUNK_MCP_USER` | `setup-splunk.sh` | Splunk account to create/update (default `splunker`) |
-| `SPLUNK_MLTK_USER` | `setup-splunk.sh` | Which Splunk user gets `MLTK_ROLE` when set (default: same as `SPLUNK_MCP_USER`) |
-| `MLTK_ROLE` | `setup-splunk.sh` | MLTK Splunk role to assign; empty by default (Splunk AI Toolkit not in `SPLUNK_APPS_URL`) |
 | `CURSOR_MCP_JSON` | `mcp-client.sh` (cursor) | Output path |
 | `CLAUDE_MCP_JSON` | `mcp-client.sh` (claude) | Output path (default macOS Claude Desktop config) |
 | `GOOSE_MCP_YAML` | `mcp-client.sh` (goose) | Output path (default `~/.config/goose/config.yaml`) |
@@ -293,8 +291,7 @@ The script bootstraps a **local Splunk Enterprise PoC** so that:
 
 1. The **Splunk MCP Server** app is configured for local dev (e.g. **`ssl_verify=false`** on the app).
 2. **SA-Eventgen** sample data **must** run via the default modular input (init **fails** if the app is missing or still disabled).
-3. Optionally, **`SPLUNK_MLTK_USER`** receives **`MLTK_ROLE`** when **`MLTK_ROLE`** is set in env (skipped by default; Splunk AI Toolkit is out of scope for this PoC).
-4. Splunk has a dedicated **MCP execution identity**: role **`mcp_user`** (capability **`mcp_tool_execute`**) and user **`splunker`** by default. Token minting is **`scripts/mint-mcp-token.sh`** after **`splunk-init`** (not in this script).
+3. Splunk has a dedicated **MCP execution identity**: role **`mcp_user`** (capability **`mcp_tool_execute`**) and user **`splunker`**. Token minting is **`scripts/mint-mcp-token.sh`** after **`splunk-init`** (not in this script).
 
 The script is **`/bin/sh`**, uses **`set -eu`**, and talks to Splunk only through **HTTPS REST** (`curl -k` for local dev).
 
@@ -323,10 +320,8 @@ Typical environment inside `splunk-init` (from Compose):
 | -------- | ------- | ---- |
 | `SPLUNK_HOST` | `so1` | REST hostname on the Docker network |
 | `SPLUNK_PORT` | `8089` | Management port |
-| `SPLUNK_REST_USER` | `admin` | REST login user |
-| `SPLUNK_MCP_USER` | `splunker` | MCP user |
-| `SPLUNK_MLTK_USER` | `splunker` | MLTK role target |
-| `MLTK_ROLE` | *(empty)* | Optional Splunk AI Toolkit role; step 5 skipped when unset |
+| `SPLUNK_REST_USER` | `admin` | REST login user (fixed) |
+| `SPLUNK_MCP_USER` | `splunker` | MCP user (fixed) |
 | `SPLUNK_PASSWORD` | *(secret)* | REST password |
 | `SPLUNK_MCP_PASSWORD` | *(secret)* | Password for the MCP execution user |
 
@@ -336,16 +331,12 @@ Typical environment inside `splunk-init` (from Compose):
 | -------- | ------- | ------- |
 | `SPLUNK_HOST` | `localhost` | REST host |
 | `SPLUNK_PORT` | `8089` | REST port |
-| `SPLUNK_REST_USER` | `admin` | Authenticated user for REST |
+| `SPLUNK_REST_USER` | `admin` | Authenticated user for REST (fixed in the script) |
 | `SPLUNK_PASSWORD` | *(required)* | Admin password |
-| `SPLUNK_MCP_USER` | `splunker` | Splunk user to create or update |
-| `SPLUNK_MLTK_USER` | *same as `SPLUNK_MCP_USER`* | User that receives `MLTK_ROLE` |
-| `MLTK_ROLE` | *(empty)* | MLTK Splunk role; set only if AI Toolkit is installed manually |
+| `SPLUNK_MCP_USER` | `splunker` | Splunk user to create or update (fixed in the script) |
 | `SPLUNK_MCP_PASSWORD` | *(required in this repo)* | Password for the MCP execution user |
 
-Deprecated names (still read if new names unset): `SPLUNK_USER`, `SPLUNKER_USERNAME`, `MLTK_ROLES_USER`, `SPLUNKER_PASSWORD_FILE`, `FORCE_SPLUNKER_PASSWORD`, `MCP_TOKEN_USERNAME`.
-
-**Refuses to run** if `SPLUNK_MCP_USER` is `admin` (tokens must not target the admin account).
+Secrets come from **1Password** (`tpl.env` + `op run`) or a hand-written **`.env`**. There is no other password file or alias. Account names are not read from those files.
 
 ### Execution order
 
@@ -355,22 +346,20 @@ flowchart TD
   B --> C[MCP app: ssl_verify=false]
   C --> D[Ensure role mcp_user + mcp_tool_execute + s4r_workshop_control]
   D --> E[Resolve splunker password from env]
-  E --> F[Create or update user SPLUNK_MCP_USER]
-  F --> D2[Add MLTK_ROLE to SPLUNK_MLTK_USER]
-  D2 --> K[Done]
+  E --> F[Create or update user splunker]
+  F --> K[Done]
 ```
 
 ### REST interactions
 
-The script uses **basic auth** on every `auth_curl` call: `-u "${SPLUNK_REST_USER}:${SPLUNK_PASSWORD}"` with `curl -k`.
+The script uses **basic auth** on every `auth_curl` call: `-u "admin:${SPLUNK_PASSWORD}"` with `curl -k`.
 
 | Step | Method | Path (relative to `https://HOST:PORT`) | Notes |
 | ---- | ------ | ---------------------------------------- | ----- |
 | Eventgen | POST | `/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default/enable` | Fallback: same URL with `disabled=0` |
 | MCP TLS dev | POST | `/servicesNS/nobody/Splunk_MCP_Server/configs/conf-mcp/server` | Body: `ssl_verify=false` |
 | Role | GET/POST | `/services/authorization/roles/mcp_user` | Body: `capabilities=mcp_tool_execute`, `capabilities=s4r_workshop_control`, `srchJobsQuota=5` |
-| Admin + MLTK | GET/POST | `/services/authentication/users/{SPLUNK_MLTK_USER}` | Merge `roles[]`, including `MLTK_ROLE` |
-| User | POST | `/services/authentication/users` or `.../users/{name}` | Bodies: `roles=user`, `roles=mcp_user`, `locked-out=false` |
+| User | POST | `/services/authentication/users` or `.../users/splunker` | Bodies: `roles=user`, `roles=mcp_user`, `locked-out=false` |
 
 ### Helper functions
 
@@ -380,7 +369,7 @@ The script uses **basic auth** on every `auth_curl` call: `-u "${SPLUNK_REST_USE
 
 ### Idempotency
 
-Designed so **`make up` / `splunk-init` repeating** does not break: MCP `ssl_verify=false`, role/user updates, and MLTK role merge tolerate re-runs.
+Designed so **`make up` / `splunk-init` repeating** does not break: MCP `ssl_verify=false` and role/user updates tolerate re-runs.
 
 ### Security notes (dev PoC)
 
