@@ -39,6 +39,6 @@ Else: `splunk_run_query` + [docs/s4r/SPL-CATALOG.md](docs/s4r/SPL-CATALOG.md). S
 
 After `make up`: reload **splunk-mcp-server** in Cursor Settings → MCP.
 Agents: `.cursor/agents/s4r-*.md` · slides: `make marp-preview`
-Secrets: Path A `tpl.env`+`op` · Path B `.env`
+Secrets: Path A `tpl.env`+`op` · Path B `.env` · image/TZ: `config.env`
 Docs: [docs/s4r/MCP-TOOLS.md](docs/s4r/MCP-TOOLS.md) · [AGENTS.md](AGENTS.md)
 ```

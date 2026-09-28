@@ -2,7 +2,7 @@
 # Mint Splunk MCP encrypted bearer token (stdout only). Used for Claude/Cursor mcp-remote config.
 # Splunk MCP Server 1.0+ requires encrypted tokens (not legacy JWT / cloud *.api.scs.splunk.com endpoint).
 # See: https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/connecting-to-the-mcp-server-and-settings
-# Requires Splunk on localhost:8089 and secrets from .env or op run + tpl.env.
+# Requires Splunk on localhost:8089. Secrets via scripts/with-splunk-env.sh.
 
 set -euo pipefail
 
@@ -71,8 +71,8 @@ wait_for_mcp_token() {
   apply_splunk_api_defaults
   host="${SPLUNK_MCP_HOST}"
   port="${SPLUNK_PORT}"
-  rest_user="${SPLUNK_REST_USER:-${SPLUNK_USER:-admin}}"
-  mcp_user="${SPLUNK_MCP_USER:-${SPLUNKER_USERNAME:-splunker}}"
+  rest_user="admin"
+  mcp_user="splunker"
   : "${SPLUNK_PASSWORD:?SPLUNK_PASSWORD must be set}"
 
   command -v jq >/dev/null 2>&1 || {
@@ -121,27 +121,8 @@ run_mint() {
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  if [[ "${MINT_MCP_TOKEN_INTERNAL:-}" == "1" ]]; then
-    run_mint
-    exit 0
-  fi
-  if [[ -f "$ENV_OUT" ]]; then
-    set -a
-    # shellcheck disable=SC1090
-    . "$ENV_OUT" || {
-      echo "Error: could not read $ENV_OUT" >&2
-      exit 1
-    }
-    set +a
-    run_mint
-  elif [[ -f "$ENV_FILE" ]]; then
-    command -v "$OP" >/dev/null 2>&1 || {
-      echo "Error: 1Password CLI (op) not available; create $ENV_OUT from .env.example" >&2
-      exit 1
-    }
-    exec "$OP" run --env-file="$ENV_FILE" -- env MINT_MCP_TOKEN_INTERNAL=1 "$0"
-  else
-    echo "Error: need $ENV_OUT or $ENV_FILE to mint MCP token." >&2
-    exit 1
-  fi
+  # shellcheck source=scripts/with-splunk-env.sh
+  source "${ROOT}/scripts/with-splunk-env.sh"
+  with_splunk_env "$@"
+  run_mint
 fi

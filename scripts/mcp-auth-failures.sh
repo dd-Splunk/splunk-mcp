@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Admin _internal MCP auth/tool stats (last 30m). Not usable via splunker MCP.
 # Usage: ./scripts/mcp-auth-failures.sh [--detail]
-# Secrets: .env (Path B) or op run --env-file=tpl.env (Path A).
+# Secrets: scripts/with-splunk-env.sh (.env or op run --env-file=tpl.env).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -25,7 +25,7 @@ run_export() {
   local host port user
   host="${SPLUNK_MCP_HOST:-localhost}"
   port="${SPLUNK_PORT:-8089}"
-  user="${SPLUNK_REST_USER:-${SPLUNK_USER:-admin}}"
+  user="admin"
   : "${SPLUNK_PASSWORD:?SPLUNK_PASSWORD must be set}"
   curl -sk --max-time 60 -u "${user}:${SPLUNK_PASSWORD}" \
     "https://${host}:${port}/services/search/jobs/export" \
@@ -62,27 +62,8 @@ mcp_auth_failures() {
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  if [[ "${MCP_AUTH_FAILURES_INTERNAL:-}" == "1" ]]; then
-    mcp_auth_failures
-    exit 0
-  fi
-  if [[ -f "$ENV_OUT" ]]; then
-    set -a
-    # shellcheck disable=SC1090
-    . "$ENV_OUT" || {
-      echo "Error: could not read $ENV_OUT" >&2
-      exit 1
-    }
-    set +a
-    mcp_auth_failures
-  elif [[ -f "$ENV_FILE" ]]; then
-    command -v "$OP" >/dev/null 2>&1 || {
-      echo "Error: 1Password CLI (op) not available; create $ENV_OUT from .env.example" >&2
-      exit 1
-    }
-    exec "$OP" run --env-file="$ENV_FILE" -- env MCP_AUTH_FAILURES_INTERNAL=1 MCP_AUTH_DETAIL="$DETAIL" "$0"
-  else
-    echo "Error: need $ENV_OUT or $ENV_FILE for SPLUNK_PASSWORD." >&2
-    exit 1
-  fi
+  # shellcheck source=scripts/with-splunk-env.sh
+  source "${ROOT}/scripts/with-splunk-env.sh"
+  with_splunk_env "$@"
+  mcp_auth_failures
 fi

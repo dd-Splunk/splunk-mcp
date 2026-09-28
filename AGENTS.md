@@ -36,7 +36,7 @@ Do not add Cloud MCP testing, endpoints, or secrets-handling paths to this repo 
 - **`make down`**, **`make clean`**: **`scripts/mcp-client.sh park all`** first (removes **`splunk-mcp-server`** from client configs so Cursor does not reconnect with stale tokens during boot); then **`docker compose down`**. No `op` or project secrets required for park/down.
 - **`make logs`**, **`make restart`**, **`make status`**: plain **`docker`** / **`docker compose`** only—no `op` or project secrets required.
 - Bearer tokens from **`make update-mcp-clients`** are written only to client configs, not the repo.
-- **Secrets paths:** **Path A** — `tpl.env` + `op run` (no plaintext `.env`); **Path B** — hand-written **`.env`** from **`.env.example`** (plain values; Compose auto-loads it). If **`.env` is absent**, **`make up`** uses `op run --env-file=tpl.env`.
+- **Secrets paths:** **Path A** — `tpl.env` + `op run` (no plaintext `.env`); **Path B** — hand-written **`.env`** from **`.env.example`** (plain values; Compose auto-loads it). If **`.env` is absent**, **`make up`** uses `op run --env-file=tpl.env`. Image and timezone are tracked in **`config.env`**, not in those secret files.
 - **`splunk-init`** runs **`scripts/setup-splunk.sh`** after **`so1`** is healthy.
 
 ## What `scripts/setup-splunk.sh` does
@@ -45,7 +45,7 @@ Splunk REST bootstrap (see **`docs/poc/CONFIGURATION.md` § Appendix: setup-splu
 
 - MCP dev: **`ssl_verify=false`** on the Splunk MCP Server app (local dev only).
 - **SA-Eventgen**: enables the default modular input (**required**). **`splunk-init` fails** if the app is missing or the modinput stays disabled.
-- **Identity**: Splunk role **`mcp_user`** with capabilities **`mcp_tool_execute`** and **`s4r_workshop_control`**; user **`splunker`** (overridable via **`SPLUNK_MCP_USER`**) with roles **`user`** + **`mcp_user`**. Optional **`MLTK_ROLE`** / **`SPLUNK_MLTK_USER`** only when Splunk AI Toolkit is installed manually (not in **`SPLUNK_APPS_URL`**).
+- **Identity**: Splunk role **`mcp_user`** with capabilities **`mcp_tool_execute`** and **`s4r_workshop_control`**; user **`splunker`** with roles **`user`** + **`mcp_user`**. REST calls use **`admin`**. Neither account name is configurable.
 - **Password**: MCP user password is provided via **`SPLUNK_MCP_PASSWORD`** (env).
 
 **Not** in this script: MCP token minting (**`scripts/mint-mcp-token.sh`**, after init), SA-S4R MCP tool registration (**`scripts/register-s4r-mcp-tools.sh`**, host after init), or **`claude_logs`** index/file monitors. Optional ingestion: enable the bind mount in **`compose.yml`**, create the index and monitor in Splunk—**`docs/poc/CONFIGURATION.md`**.

@@ -150,8 +150,9 @@ s4r-attack-nk-status: ## Show whether NK attack Eventgen stanza is enabled
 register-s4r-mcp-tools: ## Register SA-S4R workshop MCP tools (also run by make up)
 	@./scripts/register-s4r-mcp-tools.sh
 
-test: ## Docker-free tests: MCP config shape + SA-S4R mode parse
+test: ## Docker-free tests: MCP config shape, secret loader, SA-S4R mode parse
 	@./tests/mcp-client-shape.sh
+	@./tests/with-splunk-env.sh
 	@python3 -m unittest discover -s tests -p 'test_*.py' -v
 
 marp-preview: ## Open S4R slide deck in Marp preview (single file)
