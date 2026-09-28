@@ -338,7 +338,7 @@ Edit **`tpl.env`** with your `op://` paths. **`tpl.env`** is gitignored—do not
 
 **Error**: `splunk-init exited with code 1`
 
-**Symptoms**: Splunk running but user/role/token not created; **`make status`** prints **`splunk-init: FAILED (exit N)`** and exits non-zero
+**Symptoms**: Splunk running but user/role/token not created **or** Eventgen never enabled; **`make status`** prints **`splunk-init: FAILED (exit N)`** and exits non-zero. Look in **`docker logs splunk-init`** for `error: SA-Eventgen` / `still disabled`.
 
 **Solution**:
 

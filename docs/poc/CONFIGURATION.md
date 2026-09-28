@@ -156,7 +156,7 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 | `restart` / `logs` / `status` | Lifecycle only (no secrets / `op` required) |
 | `clean` | `scripts/mcp-client.sh park all`, then `docker compose down -v`, then remove `.env` (no `op` required). Prompts unless **`make clean-y`** or **`CLEAN_YES=1`** |
 | `clean-y` | Non-interactive **`clean`** (for automation, e.g. `make clean-y && make up`) |
-| `s4r-attack-nk-enable` | **Shell fallback:** sets **`disabled = false`** on NK Eventgen stanza; run **`make restart`**. Prefer MCP **`SA-S4R_apply_nk_demo_state`** (`mode=threat`) — no restart |
+| `s4r-attack-nk-enable` | **Shell fallback:** sets **`disabled = false`** on NK Eventgen stanza; run **`make restart`**. Prefer MCP **`SA-S4R_apply_nk_demo_state`** (`mode=threat`) — no restart on HTTP **200**; HTTP **503** → **`make restart`** |
 | `s4r-attack-nk-disable` | **Shell fallback:** sets **`disabled = true`**. Prefer MCP **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) |
 | `s4r-attack-nk-status` | **Shell fallback:** prints NK stanza enabled/disabled. Prefer MCP **`SA-S4R_query_nk_demo_state`** |
 | `register-s4r-mcp-tools` | Host `POST /services/mcp_tools` for **SA-S4R** (also run by `make up`); re-run after editing `s4r_mcp_tools.json` |
@@ -168,7 +168,7 @@ Workshop behavior and validation SPL: **[SA-S4R-APP.md](../s4r/SA-S4R-APP.md)** 
 
 Summary of what runs **inside** `splunk-init` with `SPLUNK_HOST=so1`:
 
-1. Enables the **SA-Eventgen** default modular input when the app is installed.
+1. Enables the **SA-Eventgen** default modular input (**required**; init **exits 1** if the app is missing or the input stays disabled).
 2. Sets MCP server `ssl_verify=false` via REST (dev convenience).
 3. Ensures Splunk role **`mcp_user`** exists with capability **`mcp_tool_execute`** and **`srchJobsQuota=5`** (parallel S4R agent headroom).
 4. Creates or updates user **`splunker`** (override with **`SPLUNK_MCP_USER`**) with roles **`user`** + **`mcp_user`**, and clears **`locked-out`** (idempotent unlock on every init).
@@ -289,7 +289,7 @@ Reference for **[`scripts/setup-splunk.sh`](../../scripts/setup-splunk.sh)**: co
 The script bootstraps a **local Splunk Enterprise PoC** so that:
 
 1. The **Splunk MCP Server** app is configured for local dev (e.g. **`ssl_verify=false`** on the app).
-2. **SA-Eventgen** sample data can run via the default modular input, when the app is installed.
+2. **SA-Eventgen** sample data **must** run via the default modular input (init **fails** if the app is missing or still disabled).
 3. Optionally, **`SPLUNK_MLTK_USER`** receives **`MLTK_ROLE`** when **`MLTK_ROLE`** is set in env (skipped by default; Splunk AI Toolkit is out of scope for this PoC).
 4. Splunk has a dedicated **MCP execution identity**: role **`mcp_user`** (capability **`mcp_tool_execute`**) and user **`splunker`** by default. Token minting is **`scripts/mint-mcp-token.sh`** after **`splunk-init`** (not in this script).
 
@@ -373,7 +373,7 @@ The script uses **basic auth** on every `auth_curl` call: `-u "${SPLUNK_REST_USE
 
 - **`auth_curl`** — wraps `curl` with admin credentials; 2xx/3xx returns body, else fails.
 - **`must`** — runs a command and **`exit 1`** on failure.
-- **`splunk_get_json` / `wait_for_disabled_value`** — poll Eventgen stanza when `jq` is available.
+- **`splunk_get_json` / `wait_for_disabled_value`** — poll Eventgen stanza (`jq` required; init fails if still disabled).
 
 ### Idempotency
 
@@ -391,4 +391,4 @@ Designed so **`make up` / `splunk-init` repeating** does not break: MCP `ssl_ver
 | “User lacks mcp_tool_execute capability” | `mcp_user` role missing capability | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
 | Token empty / script exits 1 | MCP app missing or wrong version | Confirm `Splunk_MCP_Server` in `SPLUNK_APPS_URL` |
 | No Claude logs | Index/monitor not created | Create index/monitor in Splunk |
-| Eventgen warnings | SA-Eventgen not installed | Check Splunkbase app install |
+| Eventgen enable / verify fails | SA-Eventgen missing or still disabled | Check Splunkbase app 1924; `docker logs so1` / `splunk-init` |

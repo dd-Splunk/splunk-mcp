@@ -119,7 +119,7 @@ make up
   │  │  └─ Wait for health
   │  └─ splunk-init (waits for so1 healthy)
   │     └─ setup-splunk.sh
-  │        ├─ Enable Eventgen modinput (if SA-Eventgen present)
+  │        ├─ Enable Eventgen modinput (required; init fails if still disabled)
   │        ├─ Create/update role: mcp_user (capability mcp_tool_execute)
   │        └─ Create user: splunker
   └─ host (after splunk-init exits 0)
@@ -196,7 +196,7 @@ Claude Desktop
 - Creates or updates Splunk role **`mcp_user`** with capability **`mcp_tool_execute`**
 - Creates **`splunker`** user (`SPLUNK_MCP_USER`) with roles **`user`** + **`mcp_user`**
 - Uses `SPLUNK_MCP_PASSWORD` (env) for the MCP user (no password written to disk)
-- Enables SA-Eventgen default modinput when the app is installed
+- Enables SA-Eventgen default modinput (**required**; init fails if missing or still disabled)
 - Dependencies: `curl`, `jq` (installed in `splunk-init`)
 
 Host **Claude** / **Cursor** / **Goose** configs are updated by **`scripts/mcp-client.sh`** via **`make update-mcp-clients`** or **`make up`** (`MCP_UPDATE_ON_BOOT`, default **`cursor`**), not by this script. Goose uses **`envs`** for TLS overrides (see **`docs/poc/CONFIGURATION.md`**).

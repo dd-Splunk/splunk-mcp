@@ -2,7 +2,7 @@
 # Splunk PoC bootstrap over HTTPS REST (idempotent; safe to re-run via make up / splunk-init).
 #
 # Execution order:
-#   1. Enable SA-Eventgen modinput_eventgen://default (when the app is installed)
+#   1. Enable SA-Eventgen modinput_eventgen://default (required; init fails if still disabled)
 #   2. Splunk MCP Server: ssl_verify=false (local dev only; uses curl -k)
 #   3. Role mcp_user with mcp_tool_execute (required) and s4r_workshop_control (best-effort after SA-S4R load)
 #   4. User SPLUNK_MCP_USER (default splunker): roles user + mcp_user
@@ -114,6 +114,15 @@ splunk_get_json() { # $1 = URL
   auth_curl "$1"
 }
 
+# Normalize Splunk REST disabled (0/1, true/false, strings) to 0 or 1.
+normalize_disabled() {
+  case "${1:-}" in
+    0|false|False|FALSE) echo "0" ;;
+    1|true|True|TRUE) echo "1" ;;
+    *) echo "${1:-}" ;;
+  esac
+}
+
 wait_for_disabled_value() {
   url="$1"
   expected="$2"
@@ -122,6 +131,7 @@ wait_for_disabled_value() {
     current=""
     if command -v jq >/dev/null 2>&1; then
       current=$(splunk_get_json "${url}" | jq -r '.entry[0].content.disabled // empty' 2>/dev/null || true)
+      current="$(normalize_disabled "${current}")"
     fi
     if [ -n "${current}" ] && [ "${current}" = "${expected}" ]; then
       return 0
@@ -173,8 +183,23 @@ ensure_mltk_role() {
 }
 
 # --- 1. Eventgen modular input ---
+# This PoC always ships SA-Eventgen in SPLUNK_APPS_URL. A "healthy" empty index
+# is worse than a failed init — do not warn-and-continue.
 echo "🎛️  Enabling Eventgen modular input (SA-Eventgen: modinput_eventgen://default)..."
 EVENTGEN_INPUT_URL="${SPLUNK_URL}/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default"
+
+if ! command -v jq >/dev/null 2>&1; then
+  echo "error: jq is required to verify Eventgen is enabled (splunk-init installs jq)" >&2
+  exit 1
+fi
+
+if ! AUTH_CURL_QUIET=1 auth_curl "${EVENTGEN_INPUT_URL}?output_mode=json" >/dev/null; then
+  cleanup_last_body
+  echo "error: SA-Eventgen modinput not found at ${EVENTGEN_INPUT_URL}" >&2
+  echo "  This PoC requires Splunkbase app 1924 in SPLUNK_APPS_URL. Check docker logs so1." >&2
+  exit 1
+fi
+cleanup_last_body
 
 eventgen_enabled=0
 if AUTH_CURL_QUIET=1 auth_curl -X POST "${EVENTGEN_INPUT_URL}/enable" >/dev/null; then
@@ -183,27 +208,24 @@ if AUTH_CURL_QUIET=1 auth_curl -X POST "${EVENTGEN_INPUT_URL}/enable" >/dev/null
 fi
 if [ "${eventgen_enabled}" = "0" ]; then
   cleanup_last_body
-  auth_curl -X POST "${EVENTGEN_INPUT_URL}" \
+  if AUTH_CURL_QUIET=1 auth_curl -X POST "${EVENTGEN_INPUT_URL}" \
     -d "disabled=0" \
-    -H "Content-Type: application/x-www-form-urlencoded" >/dev/null \
-    && echo "✅ Eventgen modinput enablement POST sent (disabled=0)" \
-    || echo "⚠️  Failed to enable Eventgen modinput (app missing or endpoint changed)"
+    -H "Content-Type: application/x-www-form-urlencoded" >/dev/null; then
+    echo "✅ Eventgen modinput enablement POST sent (disabled=0)"
+  else
+    cleanup_last_body
+    echo "error: failed to enable Eventgen modinput (POST /enable and disabled=0 both failed)" >&2
+    exit 1
+  fi
 fi
 cleanup_last_body
 
-if command -v jq >/dev/null 2>&1; then
-  eventgen_verified=0
-  wait_for_disabled_value "${EVENTGEN_INPUT_URL}?output_mode=json" "0" && eventgen_verified=1
-  if [ "${eventgen_verified}" = "1" ]; then
-    echo "✅ Verified: Eventgen modinput is enabled (disabled=0)"
-  fi
-  if [ "${eventgen_verified}" = "0" ]; then
-    echo "⚠️  Could not verify Eventgen modinput state via REST (expected disabled=0)."
-    echo "    Check manually: ${EVENTGEN_INPUT_URL}?output_mode=json"
-  fi
-fi
-if ! command -v jq >/dev/null 2>&1; then
-  echo "⚠️  jq not available; skipping verification of Eventgen modinput."
+if wait_for_disabled_value "${EVENTGEN_INPUT_URL}?output_mode=json" "0"; then
+  echo "✅ Verified: Eventgen modinput is enabled (disabled=0)"
+else
+  echo "error: Eventgen modinput is still disabled after enable (expected disabled=0)" >&2
+  echo "  Check: ${EVENTGEN_INPUT_URL}?output_mode=json" >&2
+  exit 1
 fi
 
 # --- 2. MCP dev TLS ---

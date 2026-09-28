@@ -176,7 +176,7 @@ Two storylines share the same baseline traffic; the NK stanza is toggled without
 
 | Mode | Enable / disable (preferred) | After toggle |
 | ---- | -------------------------- | ------------ |
-| **Infrastructure** (default) | MCP **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) | Reloads Eventgen modinput — **no `make restart`** |
+| **Infrastructure** (default) | MCP **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) | Reloads Eventgen — **no `make restart`** on HTTP **200**. HTTP **503** means the file was written but Eventgen did not reload → **`make restart`** |
 | **Active threat** | MCP **`SA-S4R_apply_nk_demo_state`** (`mode=threat`) | Same; wait 1–2 min, then **`SA-S4R_validate_nk_attack_traffic`** |
 
 **Shell fallback:** `make s4r-attack-nk-disable` / `make s4r-attack-nk-enable` then **`make restart`** if MCP is unavailable or signal is slow.

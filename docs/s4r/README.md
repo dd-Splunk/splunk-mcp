@@ -47,7 +47,7 @@ Power User and specialists set **`model`** and **`is_background`** in YAML front
 | Start NK storyline (explicit user ask) | **`SA-S4R_apply_nk_demo_state`** (`mode: threat`); then **`SA-S4R_validate_nk_attack_traffic`** (~1–2 min) |
 | Return to infrastructure | **`SA-S4R_apply_nk_demo_state`** (`mode: infrastructure`) |
 
-MCP mode changes reload Eventgen — **no `make restart`**. Shell fallback (no MCP): `make s4r-attack-nk-status` · `make s4r-attack-nk-enable` / `disable` then **`make restart`**.
+MCP mode changes reload Eventgen — **no `make restart`** on HTTP **200**; HTTP **503** → **`make restart`**. Shell fallback (no MCP): `make s4r-attack-nk-status` · `make s4r-attack-nk-enable` / `disable` then **`make restart`**.
 
 Detail: [SA-S4R-APP.md](SA-S4R-APP.md) · discriminating SPL: [SPL-CATALOG.md § Workshop modes](SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat).
 

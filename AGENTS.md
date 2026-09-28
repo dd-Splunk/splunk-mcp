@@ -44,7 +44,7 @@ Do not add Cloud MCP testing, endpoints, or secrets-handling paths to this repo 
 Splunk REST bootstrap (see **`docs/poc/CONFIGURATION.md` § Appendix: setup-splunk.sh** for detail):
 
 - MCP dev: **`ssl_verify=false`** on the Splunk MCP Server app (local dev only).
-- **SA-Eventgen**: enables the default modular input when the app is installed.
+- **SA-Eventgen**: enables the default modular input (**required**). **`splunk-init` fails** if the app is missing or the modinput stays disabled.
 - **Identity**: Splunk role **`mcp_user`** with capabilities **`mcp_tool_execute`** and **`s4r_workshop_control`**; user **`splunker`** (overridable via **`SPLUNK_MCP_USER`**) with roles **`user`** + **`mcp_user`**. Optional **`MLTK_ROLE`** / **`SPLUNK_MLTK_USER`** only when Splunk AI Toolkit is installed manually (not in **`SPLUNK_APPS_URL`**).
 - **Password**: MCP user password is provided via **`SPLUNK_MCP_PASSWORD`** (env).
 

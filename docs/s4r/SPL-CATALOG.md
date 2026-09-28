@@ -304,7 +304,7 @@ Requires Splunk **`iplocation`** (GeoLite or equivalent).
 
 ## § Workshop modes (infrastructure vs threat)
 
-**Check mode:** **`SA-S4R_query_nk_demo_state`** (MCP) or `make s4r-attack-nk-status` (shell). **Toggle:** **`SA-S4R_apply_nk_demo_state`** (`mode`: `infrastructure` \| `threat`) — reloads Eventgen; no `make restart`. Shell fallback: `make s4r-attack-nk-enable` / `disable` then **`make restart`**, wait ~2 min, search **last 15m**. Eventgen detail: [SA-S4R-APP.md](SA-S4R-APP.md).
+**Check mode:** **`SA-S4R_query_nk_demo_state`** (MCP) or `make s4r-attack-nk-status` (shell). **Toggle:** **`SA-S4R_apply_nk_demo_state`** (`mode`: `infrastructure` \| `threat`) — reloads Eventgen; no `make restart` on HTTP **200**; HTTP **503** → **`make restart`**. Shell fallback: `make s4r-attack-nk-enable` / `disable` then **`make restart`**, wait ~2 min, search **last 15m**. Eventgen detail: [SA-S4R-APP.md](SA-S4R-APP.md).
 
 | Mode | Headline |
 | ---- | -------- |
