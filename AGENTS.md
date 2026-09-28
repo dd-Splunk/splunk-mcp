@@ -56,6 +56,7 @@ Splunk REST bootstrap (see **`docs/poc/CONFIGURATION.md` § Appendix: setup-splu
 - **`scripts/mcp-client.sh update-all [clients…]`** — one mint, write all listed clients (default: cursor goose claude); used by **`make update-mcp-clients`** and **`make up`** (**`MCP_UPDATE_ON_BOOT`**, default **`cursor`**)
 - **`scripts/mcp-client.sh park <client\|all>`** — remove **`splunk-mcp-server`** from client configs (no secrets); **`make down`** calls this automatically
 - **`scripts/mcp-client.sh verify <client\|all>`** — config check + Splunk MCP `tools/list` (`make verify-mcp-remote` defaults to **`all`**)
+- **Goose:** **`scripts/goose-mcp-yaml.py`** load/dumps **`~/.config/goose/config.yaml`** (needs **PyYAML**: `pip3 install pyyaml`)
 - **Client configs** store the **absolute path** to **`npx`** (GUI apps often lack Homebrew on `PATH`). Override at update time: **`MCP_NPX_COMMAND=/full/path/to/npx`**.
 
 ## Cursor skills (project)
@@ -101,6 +102,7 @@ Workshop agent **roles** remain in **`.cursor/agents/`** (not skills). Do not du
 - **`wait-splunk-init` looping on `created`** — `splunk-init` never starts until `so1` is healthy. Kill the wait; do not let it run 180 attempts.
 - **No data in `claude_logs`** — This repo does not create that index or inputs. Confirm bind mount, index, and monitor in Splunk (**`docs/poc/CONFIGURATION.md`**).
 - **MCP client cannot find `npx`** (Claude Desktop / GUI) — Re-run **`make update-mcp-client`** from a shell with Node on PATH, or set **`MCP_NPX_COMMAND`**.
+- **Goose YAML invalid / `ModuleNotFoundError: yaml`** — `pip3 install pyyaml` (Homebrew: `python3 -m pip install --user --break-system-packages pyyaml`), then **`make update-mcp-client MCP_CLIENT=goose`** (repairs first-run `extensions: {}` splice).
 
 ## Change discipline
 

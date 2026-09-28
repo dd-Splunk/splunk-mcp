@@ -222,8 +222,8 @@ Do not store Cloud MCP bearer tokens in **`.env`** — that file is for **stack 
 - Goose uses **extensions** with `type: stdio` (different YAML shape from Claude’s `mcpServers`).
 - `scripts/mcp-client.sh update goose` adds or updates the `splunk-mcp-server` extension entry via **`scripts/mcp-remote-splunk.sh`** (sets `NODE_TLS_REJECT_UNAUTHORIZED` in-process; Goose Desktop may not forward `envs` reliably). **`chmod 600`** on **`config.yaml`** after each update or park.
 - TLS dev override also uses Goose’s **`envs`** and **`env_keys`** (not `env`), e.g. `NODE_TLS_REJECT_UNAUTHORIZED=0` when **`SPLUNK_MCP_TLS_INSECURE=1`**.
-- Idempotent: safely updates or creates the extension without corrupting existing config.
-- Requires Python 3 for YAML regex manipulation.
+- Idempotent: **`scripts/goose-mcp-yaml.py`** load/dumps the YAML mapping (PyYAML). It repairs the first-run invalid shape `extensions: {}` followed by an indented mapping. Do not regex-splice YAML.
+- Requires **Python 3** and **PyYAML**. Install with `pip3 install pyyaml`. On Homebrew Python (PEP 668 *externally-managed-environment*): `python3 -m pip install --user --break-system-packages pyyaml`.
 
 ## Environment overrides (optional)
 

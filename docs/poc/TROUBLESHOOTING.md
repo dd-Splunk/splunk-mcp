@@ -556,9 +556,29 @@ make verify-mcp-remote MCP_VERIFY_CLIENT=goose
 # Restart Goose
 ```
 
-Confirm `~/.config/goose/config.yaml` has **`cmd: npx`** (or full path to `npx`), **`mcp-remote`**, endpoint **`https://localhost:8089/services/mcp`**, and bearer token under the extension args. TLS dev override belongs in **`envs`**, not `env`.
+Confirm `~/.config/goose/config.yaml` has **`cmd:`** pointing at **`scripts/mcp-remote-splunk.sh`**, endpoint **`https://localhost:8089/services/mcp`**, and bearer token under the extension args. TLS dev override belongs in **`envs`**, not `env`.
 
 If Goose still references **`scripts/mcp-stdio-http-bridge.mjs`**, that layout was removed — re-run **`make update-mcp-client MCP_CLIENT=goose`** and restart Goose.
+
+---
+
+#### Issue: Goose `config.yaml` is invalid YAML
+
+**Error**: `error: invalid Goose YAML`, Goose ignores `splunk-mcp-server`, or the file fails `python3 -c "import yaml; yaml.safe_load(open(...))"`
+
+**Cause**: Older `mcp-client.sh` wrote `extensions: {}` then spliced an indented `splunk-mcp-server` block after that line (invalid YAML). `pip3 install pyyaml` missing on the host also blocks update/verify.
+
+**Solution**:
+
+```bash
+pip3 install pyyaml
+# Homebrew Python (externally-managed-environment):
+# python3 -m pip install --user --break-system-packages pyyaml
+make update-mcp-client MCP_CLIENT=goose
+# Restart Goose
+```
+
+The writer repairs that first-run empty-mapping shape. Other corrupt YAML still needs a manual fix (or restore from backup).
 
 ---
 
