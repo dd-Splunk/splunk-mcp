@@ -65,7 +65,7 @@ Slash-only (`disable-model-invocation: true`) so skill bodies are **not** loaded
 | Skill | Invoke | Execution |
 | ----- | ------ | --------- |
 | **`usage`** | `/usage` | Static **SA-S4R_*** routing + short make list. No live checks unless asked. |
-| **`demo-prep`** | `/demo-prep` | `make demo-prep` → **`SA-S4R_query_nk_demo_state`** (+ **`SA-S4R_validate_nk_attack_traffic`** if threat) → **`make mcp-auth-failures`** |
+| **`demo-prep`** | `/demo-prep` | `make demo-prep` (Splunkbase pins + status + verify) → **`SA-S4R_query_nk_demo_state`** (+ **`SA-S4R_validate_nk_attack_traffic`** if threat) → **`make mcp-auth-failures`** |
 
 Workshop agent **roles** remain in **`.cursor/agents/`** (not skills). Do not duplicate Makefile/`AGENTS.md` into skill bodies.
 
@@ -75,7 +75,7 @@ Workshop agent **roles** remain in **`.cursor/agents/`** (not skills). Do not du
 | -------- | ----------------- |
 | Stack healthy? | `make status` — **`splunk-init`** line + **Splunk is ready ✓**; exits non-zero if init failed or Splunk is running but API not ready (exits **0** when stack is stopped) |
 | MCP client path OK? | `make verify-mcp-remote` (all clients) or `make verify-mcp-remote MCP_VERIFY_CLIENT=cursor` |
-| Pre-demo / both checks? | `make demo-prep` (status + verify + warm-stack reminder) or `make verify` (status then verify only) |
+| Pre-demo / both checks? | `make demo-prep` (Splunkbase pins + status + verify + warm-stack reminder) or `make verify` (status then verify only) |
 | Init failed? | `docker logs splunk-init` (see **`docs/poc/TROUBLESHOOTING.md`**) |
 | Eventgen modinput? | `curl -k -u admin:<password> "https://localhost:8089/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default?output_mode=json"` |
 | S4R workshop mode? | **`SA-S4R_query_nk_demo_state`** (MCP) or `make s4r-attack-nk-status` (shell) — infrastructure (default) vs NK threat; see **`docs/s4r/SA-S4R-APP.md`** · **`docs/s4r/MCP-TOOLS.md`** |

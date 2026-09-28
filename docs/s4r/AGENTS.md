@@ -32,7 +32,7 @@ Stakeholder question
          docs/s4r/SPL-CATALOG.md  ← canonical SPL (Labs 3–7)
                     │
                     ▼
-         Splunk MCP (splunk_run_query, saia_*)
+         Splunk MCP (SA-S4R_* when it matches; else splunk_run_query)
                     │
                     ▼
          index=main sourcetype=access_combined  (SA-S4R Eventgen)
@@ -104,7 +104,7 @@ Full SPL: [SPL-CATALOG.md](SPL-CATALOG.md).
 1. Enable **splunk-mcp-server** in `.cursor/mcp.json` (`make up` / `make update-cursor-config`).
 2. Buttercup / S4R questions: act as **Power User** ([`.cursor/rules/s4r-buttercup-agents.mdc`](../.cursor/rules/s4r-buttercup-agents.mdc)).
 3. **Read `docs/s4r/SPL-CATALOG.md`** for SPL; agents for roles and output format.
-4. Heavy parallel work: **Task** subagents — prompt must include *“Read catalog § [team] before `splunk_run_query`; MCP only — no REST/curl.”* See [`.cursor/agents/README.md`](../.cursor/agents/README.md).
+4. Heavy parallel work: **Task** subagents — prompt must include *“Prefer SA-S4R_* when it matches; else catalog SPL via splunk_run_query. Never REST/curl.”* See [`.cursor/agents/README.md`](../.cursor/agents/README.md).
 5. Confirm data: `make status`, then catalog **Quick data check**.
 6. Presales: `make demo-prep`.
 
@@ -118,13 +118,13 @@ Specialists run as **background** subagents (`is_background: true`); **Power Use
 
 ### Parallel delegation and search concurrency
 
-When all four specialists run at once, each calls `splunk_run_query` as **`splunker`**. The PoC grants **`mcp_user`** with **`srchJobsQuota=5`** — four parallel historical searches should usually succeed; if not, retry after a few seconds, stagger teams, or run sequentially for live demos. See [`.cursor/agents/README.md` § Parallel delegation](../.cursor/agents/README.md#parallel-delegation-four-teams) and [TROUBLESHOOTING.md § Parallel agent searches](TROUBLESHOOTING.md#issue-parallel-agent-searches-hit-splunker-concurrency-limit).
+When all four specialists run at once, each searches as **`splunker`** (`SA-S4R_*` or `splunk_run_query`). The PoC grants **`mcp_user`** with **`srchJobsQuota=5`** — four parallel historical searches should usually succeed; if not, retry after a few seconds, stagger teams, or run sequentially for live demos. See [`.cursor/agents/README.md` § Parallel delegation](../.cursor/agents/README.md#parallel-delegation-four-teams) and [TROUBLESHOOTING.md § Parallel agent searches](TROUBLESHOOTING.md#issue-parallel-agent-searches-hit-splunker-concurrency-limit).
 
 **Copy-paste prompt (Demo 1):**
 
 ```text
 As Buttercup Power User: is the shop losing money? Delegate to all four teams.
-Read docs/s4r/SPL-CATALOG.md per team. Splunk MCP only — splunk_run_query; never Splunk REST or curl for searches. Last 24 hours.
+Read docs/s4r/SPL-CATALOG.md per team. Prefer SA-S4R_* when it matches; else catalog SPL via splunk_run_query. Never REST or curl. Last 24 hours.
 Wait for all four summaries; synthesize one executive answer (Power User template).
 ```
 
@@ -150,7 +150,7 @@ Quick beats:
 | Beat | Show | Say |
 | ---- | ---- | --- |
 | 1. Layers | `SPL-CATALOG.md`, one `s4r-*.md`, `s4r-power-user.md`, `.cursor/mcp.json` | Runbook, roles, orchestrator, MCP bridge |
-| 2. Live ask | *“Is Buttercup losing money?”* | Delegate; `splunk_run_query` in tool trace |
+| 2. Live ask | *“Is Buttercup losing money?”* | Delegate; `SA-S4R_*` or `splunk_run_query` in tool trace |
 | 3. Synthesis | Power User table | One executive answer |
 | 4. Flip mode | **`SA-S4R_apply_nk_demo_state`** (`mode: threat`) + **`SA-S4R_validate_nk_attack_traffic`** | Data mode changes verdict |
 | 5. Threat ask | *“Infrastructure or active threat?”* (last 15m) | Security § + Workshop modes |
@@ -163,7 +163,7 @@ Also: [PRESALES.md](PRESALES.md#optional-agentic-buttercup-demo-splunk4rookies).
 **User:** *“As Buttercup Power User: is the shop losing money? Delegate to all four teams.”*
 
 1. **Power User** — last 24h; launch **four parallel** specialist subagents (IT Ops, DevOps, Business Analytics, Security & Fraud); **wait for all** before synthesizing.
-2. Each specialist — catalog § for their team; **`splunk_run_query` via MCP only** (no REST/curl) in specialist context.
+2. Each specialist — catalog § for their team; prefer **`SA-S4R_*`** when it matches, else **`splunk_run_query`** (no REST/curl) in specialist context.
 3. **Power User** — synthesize: lost revenue (Business), server-wide vs client (DevOps), status/URI errors (IT Ops), geo anomalies (Security).
 
 **Typical verdict (infrastructure):** Yes, losing money — checkout/web tier failure (~40% server-wide), not a single mobile OS.

@@ -201,7 +201,7 @@ From [SPECS.md](SPECS.md) — unchanged by this document:
 make status              # splunk-init OK + Splunk ready (when stack is up)
 make verify-mcp-remote   # client config + MCP tools/list + mcp-remote stdio
 make verify              # status then verify-mcp-remote
-make demo-prep           # status + verify + warm-stack reminder
+make demo-prep           # Splunkbase pins + status + verify + warm-stack reminder
 ```
 
 **Graduated acceptance** = same commands, run by a **non-maintainer** on a **fresh clone** with **only** documented secrets paths.

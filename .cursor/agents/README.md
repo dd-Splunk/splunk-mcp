@@ -63,8 +63,7 @@ description: IT Operations analyst for Buttercup web tier — HTTP success vs fa
 
 ```text
 You are the S4R IT Ops agent. Read .cursor/agents/s4r-it-ops.md for your role.
-Before splunk_run_query: read docs/s4r/SPL-CATALOG.md § IT Ops and run every query there.
-Splunk MCP only — use splunk_run_query; do not use Splunk REST, curl, or basic auth for searches.
+Read docs/s4r/SPL-CATALOG.md § IT Ops. Prefer SA-S4R_* when it matches; else catalog SPL via splunk_run_query. Never REST, curl, or basic auth.
 Time range: last 24 hours.
 Return IT Ops summary only; do not synthesize other teams.
 ```
@@ -77,7 +76,7 @@ Launch with Splunk MCP enabled (`subagent_type: generalPurpose` or `s4r-power-us
 
 ```text
 As Buttercup Power User: is the shop losing money? Delegate to all four teams.
-Read docs/s4r/SPL-CATALOG.md per team. Splunk MCP only — splunk_run_query; never Splunk REST or curl for searches. Last 24 hours.
+Read docs/s4r/SPL-CATALOG.md per team. Prefer SA-S4R_* when it matches; else catalog SPL via splunk_run_query. Never REST or curl. Last 24 hours.
 Wait for all four summaries; synthesize one executive answer (Power User template).
 ```
 
@@ -87,7 +86,7 @@ Wait for all four summaries; synthesize one executive answer (Power User templat
 
 ### Splunk search concurrency
 
-Four parallel specialists each call `splunk_run_query` as **`splunker`**. The PoC sets **`srchJobsQuota=5`** on role **`mcp_user`** (which **`splunker`** inherits). If a fourth search still fails, you may be hitting the built-in **`user`** role cap — error example:
+Four parallel specialists each search as **`splunker`** (`SA-S4R_*` or `splunk_run_query`). The PoC sets **`srchJobsQuota=5`** on role **`mcp_user`** (which **`splunker`** inherits). If a fourth search still fails, you may be hitting the built-in **`user`** role cap — error example:
 
 `role-based concurrency limit of historical searches for user "splunker" has been reached (usage=N, quota=N)`
 
@@ -99,7 +98,7 @@ Detail: [s4r/TROUBLESHOOTING.md § Parallel agent searches](../../docs/s4r/TROUB
 
 - `make up` and `make demo-prep`
 - Data in `main` / `access_combined` (SA-S4R Eventgen)
-- **Splunk MCP enabled** in the client (`.cursor/mcp.json`) — agents use **`splunk_run_query` only**; no Splunk REST or curl fallbacks from agent sessions
+- **Splunk MCP enabled** in the client (`.cursor/mcp.json`) — prefer **`SA-S4R_*`** when it matches, else **`splunk_run_query`**; no Splunk REST or curl fallbacks from agent sessions
 
 ## Workshop data modes
 

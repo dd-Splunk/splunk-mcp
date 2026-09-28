@@ -157,7 +157,7 @@ SA-S4R mapping: saved-search tools → `S4R Summarize Purchase Health`, `S4R Geo
 1. **`scripts/setup-splunk.sh`** (inside `splunk-init`) creates role **`mcp_user`** with **`mcp_tool_execute`** and `srchJobsQuota=5`, then grants **`s4r_workshop_control`**. `splunk-init` only mounts this script — it cannot run the host registrar.
 2. Host **`scripts/register-s4r-mcp-tools.sh`**:
    - `POST https://localhost:8089/services/mcp_tools` with `s4r_mcp_tools.json` (batch replace for `external_app_id=SA-S4R`)
-   - For each tool: enable `tool_id=SA-S4R:SA-S4R_<name>` with `override: true`
+   - For each tool: enable `tool_id=SA-S4R:SA-S4R_<name>` with `override: true` (non-2xx **fails the script**)
    - `POST …/configs/conf-savedsearches/_reload` so new saved-search stanzas are visible without **`make restart`**
 3. **`make update-mcp-clients`** mints a bearer token into client config (not the repo).
 

@@ -7,7 +7,7 @@
 | 1924 | SA-Eventgen (sample data / Eventgen modinput) | 8.2.2 |
 | 4353 | Config Explorer (optional UI utility) | 1.8.26 |
 | 7931 | Splunk MCP Server (required for `/services/mcp`) | 2.0.0 |
-| 7245 | Splunk AI Assistant | 2.3.2 |
+| 7245 | Splunk AI Assistant | 2.3.3 |
 
 Check current Splunkbase releases: `https://splunkbase.splunk.com/api/v1/app/<id>/release/` (first entry is latest). Update the `/release/VERSION/` segment in **`compose.yml`** when bumping.
 
@@ -20,9 +20,10 @@ Use this when changing the Splunk Enterprise image, Splunkbase app pins, or the 
    - Update the same tag in **`tpl.env.example`**, **`.env.example`**, and the Cursor Cloud notes in this document.
    - For Cursor Cloud or any persistent Docker volume created by another major version, run **`./scripts/cloud-bootstrap.sh --wipe`** or **`make clean-y`** before the first boot to avoid stale KVStore data.
 2. **Splunkbase apps**
-   - Check `https://splunkbase.splunk.com/api/v1/app/<id>/release/` for each app ID.
+   - Run **`make check-splunkbase-pins`** (or open `https://splunkbase.splunk.com/api/v1/app/<id>/release/` — first `name` is latest).
    - Replace only the `/release/VERSION/` segment in **`SPLUNK_APPS_URL`** unless the app ID changes.
    - Keep the comments beside **`SPLUNK_APPS_URL`** current so troubleshooting can map a failed URL back to an app.
+   - Keep the pin table in this section in sync with `compose.yml`.
 3. **`mcp-remote`**
    - Change **`MCP_REMOTE_PACKAGE`** only when a client-side bridge update is needed; the Makefile default is the repo-wide default.
    - Re-run **`make update-mcp-client MCP_CLIENT=<client>`** after changing the package so client configs pick up the new spec.
@@ -148,7 +149,8 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 | `update-claude-config` / `update-cursor-config` / `update-goose-config` | Aliases for `update-mcp-client` |
 | `verify-mcp-remote` | `scripts/mcp-client.sh verify` — client config + direct `tools/list` + **`npx mcp-remote` stdio** e2e (`MCP_VERIFY_CLIENT=all` by default) |
 | `verify` | Runs `status`, then `verify-mcp-remote` |
-| `demo-prep` | Runs `status`, then `verify-mcp-remote`, and prints the live-demo warm-stack reminder. Cursor **`/demo-prep`** also runs S4R mode + **`mcp-auth-failures`** |
+| `check-splunkbase-pins` | Compare `compose.yml` `SPLUNK_APPS_URL` pins to Splunkbase `api/v1/app/<id>/release/` (no secrets). **MISSING** = next `make up` can 404. **`STRICT=1`** exits 1 on MISSING |
+| `demo-prep` | Runs **`check-splunkbase-pins`**, then `status`, then `verify-mcp-remote`, and prints the live-demo warm-stack reminder. Cursor **`/demo-prep`** also runs S4R mode + **`mcp-auth-failures`** |
 | `mcp-auth-failures` | Admin `_internal` MCP auth/tool stats (last 30m). Needs `.env` or `tpl.env`. **`DETAIL=1`** prints raw failures. Not visible to `splunker` MCP |
 | `cloud-bootstrap` | `scripts/cloud-bootstrap.sh` — Cursor Cloud VM prep before `make up` (`CLOUD_BOOTSTRAP_ARGS` for flags) |
 | `restart` / `logs` / `status` | Lifecycle only (no secrets / `op` required) |
