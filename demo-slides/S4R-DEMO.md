@@ -362,7 +362,7 @@ On-screen table: **deck slide 32**. Expanded detail below for presenters.
 
 | Problem | Presenter action |
 | ------- | ---------------- |
-| MCP tools missing | `make update-cursor-config`; restart Cursor |
+| MCP tools missing | `make update-mcp-client MCP_CLIENT=cursor`; restart Cursor |
 | No events | `make status`; `docker logs splunk-init` |
 | NK mode no signal | **`SA-S4R_query_nk_demo_state`**; **`SA-S4R_validate_nk_attack_traffic`**; `make restart`; search **last 15m** |
 | Concurrency limit | Wait; run one team at a time |

@@ -6,7 +6,7 @@
         "mcp-remote",
         "https://localhost:8089/services/mcp",
         "--header",
-        "Authorization: Bearer REPLACE_AFTER_make_update-cursor-config"
+        "Authorization: Bearer REPLACE_AFTER_make_update-mcp-client"
       ],
       "command": "npx",
       "env": {

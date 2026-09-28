@@ -17,7 +17,6 @@ export ENV_FILE ENV_OUT ENV_EXAMPLE OP DC
 
 .PHONY: help up down restart clean clean-y logs status demo-prep verify cloud-bootstrap \
 	park-mcp-clients update-mcp-clients update-mcp-client verify-mcp-remote mcp-auth-failures \
-	update-claude-config update-cursor-config update-goose-config \
 	s4r-attack-nk-enable s4r-attack-nk-disable s4r-attack-nk-status register-s4r-mcp-tools \
 	check-splunkbase-pins marp-preview marp-serve marp-html test
 
@@ -108,15 +107,6 @@ update-mcp-clients: ## Update Claude, Cursor, and Goose (one mint, all clients)
 
 update-mcp-client: ## Update one client (MCP_CLIENT=claude|cursor|goose)
 	@./scripts/mcp-client.sh update "$(MCP_CLIENT)"
-
-update-claude-config: ## Claude: npx mcp-remote + bearer token
-	@$(MAKE) update-mcp-client MCP_CLIENT=claude
-
-update-cursor-config: ## Cursor: npx mcp-remote + bearer token
-	@$(MAKE) update-mcp-client MCP_CLIENT=cursor
-
-update-goose-config: ## Goose: npx mcp-remote + bearer token
-	@$(MAKE) update-mcp-client MCP_CLIENT=goose
 
 verify-mcp-remote: ## Verify client configs + Splunk MCP (MCP_VERIFY_CLIENT=all|…)
 	@./scripts/mcp-client.sh verify "$(MCP_VERIFY_CLIENT)"

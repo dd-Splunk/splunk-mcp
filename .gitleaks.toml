@@ -15,6 +15,7 @@ paths = [
 regexes = [
   '''op://YourVault/''',
   '''REPLACE_AFTER_make_update-cursor-config''',
+  '''REPLACE_AFTER_make_update-mcp-client''',
   '''your_password_here''',
   '''your_splunker_password''',
   '''(?i)password=changeme''',
