@@ -13,11 +13,11 @@ import splunk.rest as rest
 from splunk.persistconn.application import PersistentServerConnectionApplication
 
 from s4r_eventgen_mode import (
+    CONFIG_ENDPOINT,
     STANZA,
-    default_eventgen_conf_path,
-    local_eventgen_conf_path,
+    EventgenConfigError,
     read_disabled_flag,
-    write_disabled_flag_local,
+    write_disabled_flag,
 )
 
 MODES = frozenset({"infrastructure", "threat"})
@@ -71,20 +71,14 @@ class WorkshopModeHandler(PersistentServerConnectionApplication):
             return self._json(400, {"error": "invalid_json"})
 
         method = str(request.get("method", "GET")).upper()
-        if not os.path.isfile(default_eventgen_conf_path()):
-            return self._json(
-                500,
-                {
-                    "error": "eventgen_conf_missing",
-                    "path": default_eventgen_conf_path(),
-                },
-            )
+        session_key = self._session_key(request)
 
         if method == "GET":
-            return self._handle_get()
+            if not session_key:
+                return self._json(401, {"error": "unauthorized"})
+            return self._handle_get(session_key)
 
         if method == "POST":
-            session_key = self._session_key(request)
             if not session_key:
                 return self._json(401, {"error": "unauthorized"})
             payload = self._parse_payload(request.get("payload"))
@@ -92,8 +86,11 @@ class WorkshopModeHandler(PersistentServerConnectionApplication):
 
         return self._json(405, {"error": "method_not_allowed"})
 
-    def _handle_get(self) -> Dict[str, Any]:
-        disabled = read_disabled_flag()
+    def _handle_get(self, session_key: str) -> Dict[str, Any]:
+        try:
+            disabled = read_disabled_flag(session_key)
+        except EventgenConfigError as exc:
+            return self._config_error(exc)
         if disabled is None:
             return self._json(404, {"error": "stanza_not_found", "stanza": STANZA})
         return self._json(
@@ -102,7 +99,7 @@ class WorkshopModeHandler(PersistentServerConnectionApplication):
                 "mode": mode_from_disabled(disabled),
                 "stanza": STANZA.strip("[]"),
                 "disabled": disabled,
-                "config_path": local_eventgen_conf_path(),
+                "config_endpoint": CONFIG_ENDPOINT,
             },
         )
 
@@ -120,15 +117,18 @@ class WorkshopModeHandler(PersistentServerConnectionApplication):
                 },
             )
 
-        previous_disabled = read_disabled_flag()
+        try:
+            previous_disabled = read_disabled_flag(session_key)
+        except EventgenConfigError as exc:
+            return self._config_error(exc)
         if previous_disabled is None:
             return self._json(404, {"error": "stanza_not_found", "stanza": STANZA})
 
         disabled = disabled_from_mode(mode)
         try:
-            write_disabled_flag_local(disabled)
-        except OSError as exc:
-            return self._json(500, {"error": "write_failed", "message": str(exc)})
+            write_disabled_flag(session_key, disabled)
+        except EventgenConfigError as exc:
+            return self._config_error(exc)
 
         reloaded, reload_error = reload_eventgen(session_key)
         body = {
@@ -136,15 +136,31 @@ class WorkshopModeHandler(PersistentServerConnectionApplication):
             "stanza": STANZA.strip("[]"),
             "disabled": disabled,
             "previous_mode": mode_from_disabled(previous_disabled),
-            "config_path": local_eventgen_conf_path(),
+            "config_endpoint": CONFIG_ENDPOINT,
             "eventgen_reloaded": reloaded,
         }
         if not reloaded:
             body["error"] = "eventgen_reload_failed"
             body["reload_error"] = reload_error
-            body["hint"] = "local/eventgen.conf was written but Eventgen did not reload. Run: make restart"
+            body["hint"] = (
+                "Eventgen stanza was updated but the modinput did not reload. "
+                "Run: make restart"
+            )
             return self._json(503, body)
         return self._json(200, body)
+
+    @staticmethod
+    def _config_error(exc: EventgenConfigError) -> Dict[str, Any]:
+        status = exc.status if exc.status in (401, 403, 404) else 502
+        error = "eventgen_config_failed"
+        if status == 404:
+            error = "stanza_not_found"
+        elif status in (401, 403):
+            error = "unauthorized"
+        return WorkshopModeHandler._json(
+            status,
+            {"error": error, "message": str(exc), "stanza": STANZA},
+        )
 
     @staticmethod
     def _session_key(request: Dict[str, Any]) -> str:

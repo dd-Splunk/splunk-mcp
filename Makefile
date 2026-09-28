@@ -148,10 +148,10 @@ verify: ## Stack status then Splunk MCP client verify
 cloud-bootstrap: ## Cursor Cloud: Docker, ext4, cgroup workaround, override + .env
 	@./scripts/cloud-bootstrap.sh $(CLOUD_BOOTSTRAP_ARGS)
 
-s4r-attack-nk-enable: ## Enable NK purchase-attack Eventgen stanza (then: make restart)
+s4r-attack-nk-enable: ## Enable NK purchase-attack Eventgen stanza via Splunk REST
 	@./scripts/toggle-s4r-attack-nk.sh enable
 
-s4r-attack-nk-disable: ## Disable NK purchase-attack Eventgen stanza (default mode)
+s4r-attack-nk-disable: ## Disable NK purchase-attack Eventgen stanza via Splunk REST
 	@./scripts/toggle-s4r-attack-nk.sh disable
 
 s4r-attack-nk-status: ## Show whether NK attack Eventgen stanza is enabled

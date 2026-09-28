@@ -91,7 +91,7 @@ Use this as a scorecard. **Internal graduation** can be declared when every **re
 
 | # | Criterion | Today | Gap / action |
 | - | --------- | ----- | ------------ |
-| E1 | NK mode does not dirty git | Writes `local/eventgen.conf` | Document in [SA-S4R-APP.md](../s4r/SA-S4R-APP.md) |
+| E1 | NK mode does not dirty git | Splunk config REST writes gitignored `local/eventgen.conf` | Document in [SA-S4R-APP.md](../s4r/SA-S4R-APP.md) |
 | E2 | Dashboard / `platform` field | Manual `local/` per `SA-S4R/local/README` | Ship **SA-S4R.spl** with workshop assets **or** document “Search-only workshop” without dashboard |
 | E3 | MCP workshop tools registered on boot | `make up` → `register-s4r-mcp-tools` | None |
 | E4 | Agent + SPL runbook | [s4r/README.md](../s4r/README.md) | None for technical graduation |
@@ -129,7 +129,7 @@ These reduce the gap versus a greenfield PoC:
 - **Park on down** / early MCP mint on up (fewer stale-token failures)
 - **`make clean-y && make up`** for full reset
 - **`make verify`** / **`/demo-prep`** acceptance path
-- **MCP-first** workshop mode (`SA-S4R_*` tools); NK toggle in **`local/eventgen.conf`**
+- **MCP-first** workshop mode (`SA-S4R_*` tools); NK toggle via Splunk config REST (`local/eventgen.conf` override)
 - Tracked **`.cursor/skills/`** (`/usage`, `/demo-prep`)
 - **SA-S4R** package workflow ([CI_CD.md](CI_CD.md))
 - **Cursor Cloud** bootstrap for ephemeral VMs

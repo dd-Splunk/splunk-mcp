@@ -115,7 +115,7 @@ Default data reads as **infrastructure failure** (~40% 503/404 everywhere). For 
 
 Return to default: **`SA-S4R_apply_nk_demo_state`** with `mode: infrastructure`. No `make restart` required for MCP toggles.
 
-**Shell fallback** (no MCP): `make s4r-attack-nk-enable` → `make restart` → wait ~2 min → `make s4r-attack-nk-status`. Return: `make s4r-attack-nk-disable` then `make restart`. Validation SPL: [SPL-CATALOG.md § Workshop modes](../s4r/SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat).
+**Shell fallback** (no MCP): `make s4r-attack-nk-enable` → wait ~2 min → `make s4r-attack-nk-status`. Return: `make s4r-attack-nk-disable`. **`make restart`** only if the toggle reports an Eventgen reload failure. Validation SPL: [SPL-CATALOG.md § Workshop modes](../s4r/SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat).
 
 ## Optional: agentic Buttercup demo (Splunk4Rookies)
 

@@ -28,7 +28,7 @@ make s4r-attack-nk-status         # expect: disabled (infrastructure mode)
 
 **Warm stack:** Cold `make up` can take many minutes — start Splunk before the session.
 
-**After threat segment:** `make s4r-attack-nk-disable && make restart` to restore default mode.
+**After threat segment:** `make s4r-attack-nk-disable` to restore default mode.
 
 ---
 
@@ -172,7 +172,7 @@ Developer Day 2026: apps expose tools through **Splunk MCP Server** — recordin
 
 **Slide 27 — Demo 2 (North Korea attack):** compact slide — enable threat via chat (`SA-S4R_apply_nk_demo_state`) or one-line `make` fallback; then Power User ask; **last 15 minutes**. Validate with **`SA-S4R_validate_nk_attack_traffic`**.
 
-*Speaker notes:* See original Demo 1/2 detail below; cleanup **`SA-S4R_apply_nk_demo_state`** (`infrastructure`) or `make s4r-attack-nk-disable && make restart`.
+*Speaker notes:* See original Demo 1/2 detail below; cleanup **`SA-S4R_apply_nk_demo_state`** (`infrastructure`) or `make s4r-attack-nk-disable`.
 
 ---
 
@@ -323,7 +323,7 @@ Optional: `make verify-mcp-remote MCP_VERIFY_CLIENT=cursor` in terminal (fast).
 
 Wait ~2 min; optional **`SA-S4R_validate_nk_attack_traffic`**. Then Step 3 Demo 2 prompt (**last 15 minutes**).
 
-**Terminal fallback:** `make s4r-attack-nk-enable && make restart` (see Slide 27).
+**Terminal fallback:** `make s4r-attack-nk-enable` (see Slide 27).
 
 **Narrate:** *“Security should surface North Korea on failed purchases (`SA-S4R_geo_failed_purchases` / validate NK tool); DevOps should see scripted user agents; IT Ops still sees 503 from baseline traffic.”*
 
@@ -337,7 +337,7 @@ Wait ~2 min; optional **`SA-S4R_validate_nk_attack_traffic`**. Then Step 3 Demo 
 
 **Say:** *“Build, ask, orchestrate — one catalog in git, live answers from Splunk MCP.”*
 
-**Cleanup:** **`SA-S4R_apply_nk_demo_state`** (`infrastructure`) or `make s4r-attack-nk-disable && make restart`
+**Cleanup:** **`SA-S4R_apply_nk_demo_state`** (`infrastructure`) or `make s4r-attack-nk-disable`
 
 ---
 

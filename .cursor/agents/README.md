@@ -104,8 +104,8 @@ Detail: [s4r/TROUBLESHOOTING.md § Parallel agent searches](../../docs/s4r/TROUB
 
 | Mode | Preferred (Splunk MCP) | Shell fallback |
 | ---- | ---------------------- | -------------- |
-| Infrastructure (default) | **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) | `make s4r-attack-nk-disable` then `make restart` |
-| Active threat (NK geo) | **`SA-S4R_apply_nk_demo_state`** (`mode=threat`); validate with **`SA-S4R_validate_nk_attack_traffic`** | `make s4r-attack-nk-enable` then `make restart` |
+| Infrastructure (default) | **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) | `make s4r-attack-nk-disable` |
+| Active threat (NK geo) | **`SA-S4R_apply_nk_demo_state`** (`mode=threat`); validate with **`SA-S4R_validate_nk_attack_traffic`** | `make s4r-attack-nk-enable` |
 | Check current mode | **`SA-S4R_query_nk_demo_state`** | `make s4r-attack-nk-status` |
 
 Discriminating SPL: [SPL-CATALOG.md § Workshop modes](../../docs/s4r/SPL-CATALOG.md#-workshop-modes-infrastructure-vs-threat). Eventgen detail: [SA-S4R-APP.md](../../docs/s4r/SA-S4R-APP.md). Cursor cheat sheet: **`/usage`**.

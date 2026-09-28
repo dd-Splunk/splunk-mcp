@@ -156,9 +156,9 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 | `restart` / `logs` / `status` | Lifecycle only (no secrets / `op` required) |
 | `clean` | `scripts/mcp-client.sh park all`, then `docker compose down -v`, then remove `.env` (no `op` required). Prompts unless **`make clean-y`** or **`CLEAN_YES=1`** |
 | `clean-y` | Non-interactive **`clean`** (for automation, e.g. `make clean-y && make up`) |
-| `s4r-attack-nk-enable` | **Shell fallback:** sets **`disabled = false`** on NK Eventgen stanza; run **`make restart`**. Prefer MCP **`SA-S4R_apply_nk_demo_state`** (`mode=threat`) — no restart on HTTP **200**; HTTP **503** → **`make restart`** |
-| `s4r-attack-nk-disable` | **Shell fallback:** sets **`disabled = true`**. Prefer MCP **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) |
-| `s4r-attack-nk-status` | **Shell fallback:** prints NK stanza enabled/disabled. Prefer MCP **`SA-S4R_query_nk_demo_state`** |
+| `s4r-attack-nk-enable` | **Shell fallback:** `POST` `disabled=false` on the NK Eventgen stanza, then reload Eventgen. Prefer MCP **`SA-S4R_apply_nk_demo_state`** (`mode=threat`) — no restart on HTTP **200**; HTTP **503** or a shell reload error → **`make restart`**. Needs `.env` or `tpl.env` |
+| `s4r-attack-nk-disable` | **Shell fallback:** `POST` `disabled=true`, then reload Eventgen. Prefer MCP **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) |
+| `s4r-attack-nk-status` | **Shell fallback:** prints NK stanza enabled/disabled from Splunk properties REST. Prefer MCP **`SA-S4R_query_nk_demo_state`**. Needs `.env` or `tpl.env` |
 | `register-s4r-mcp-tools` | Host `POST /services/mcp_tools` for **SA-S4R** (also run by `make up`); re-run after editing `s4r_mcp_tools.json` |
 | `marp-preview` / `marp-serve` / `marp-html` | Preview, serve, or export the S4R presenter deck under `demo-slides/` |
 
