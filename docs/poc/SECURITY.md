@@ -63,13 +63,13 @@ Confirm validity dates, key size (RSA ≥2048 or modern EC curves), and signatur
 
 ## Bind mounts
 
-- **`scripts/setup-splunk.sh`** and **`scripts/splunk-api-env.sh`** are bind-mounted **read-only** into **`splunk-init`**.
+- **`scripts/setup-splunk.sh`**, **`scripts/splunk-api-env.sh`**, **`scripts/with-splunk-env.sh`**, **`scripts/register-s4r-mcp-tools.sh`**, and **`SA-S4R/default/s4r_mcp_tools.json`** are bind-mounted **read-only** into **`splunk-init`**.
 - **`SA-S4R/`** stays **read-write**. The official `splunk/splunk` image **chowns** `/opt/splunk/etc/apps/SA-S4R` at start; a `:ro` bind of the app root or of shipped subdirs fails with `Errno 30` and leaves **`so1`** unhealthy. Residual risk: a compromised container can rewrite **`default/`** and **`bin/`** on the host tree. Keep workshop writes in **`local/`** and review git diffs before commit. Installing GitHub **`latest` `SA-S4R.spl`** instead of the bind would stop the container writing the **git** tree, but it breaks this repo’s inner loop — keep the bind as default ([SA-S4R-APP.md](../s4r/SA-S4R-APP.md)).
 
 ## Token lifecycle
 
 - Re-run **`make update-mcp-client`** to rotate tokens in client configs. Those update and park paths **`chmod 600`** the Claude, Cursor, and Goose files that hold the bearer token.
-- **`.cursor/mcp.json` is gitignored** but this clone often lives under **OneDrive** (or similar). Sync can copy the token off-box. Use **`CURSOR_MCP_JSON`** outside the synced tree, or pause sync for that file. Do not paste the token into chat, issues, or Vellem.
+- **`.cursor/mcp.json` is gitignored** but this clone often lives under **OneDrive** (or similar). Sync can copy the token off-box. Use **`CURSOR_MCP_JSON`** outside the synced tree, or pause sync for that file. Do not paste the token into chat or issues.
 - Claude, Cursor, and Goose still pass **`Authorization: Bearer …`** to **`mcp-remote`** as **`--header`**. That matches the Splunk MCP 2.0 client shape; the Goose wrapper only sets TLS env. Treat the token as visible to local process listing. `chmod 600` on the config file does not hide argv.
 
 ## Logging and privacy

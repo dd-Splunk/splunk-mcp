@@ -41,14 +41,20 @@ services:
       so1:
         condition: service_healthy
     volumes:
-      - ./scripts/setup-splunk.sh:/setup-splunk.sh:ro
-      - ./scripts/splunk-api-env.sh:/splunk-api-env.sh:ro
+      # Layout matches register-s4r-mcp-tools.sh: ROOT is the parent of scripts/.
+      - ./scripts/setup-splunk.sh:/opt/splunk-init/scripts/setup-splunk.sh:ro
+      - ./scripts/splunk-api-env.sh:/opt/splunk-init/scripts/splunk-api-env.sh:ro
+      - ./scripts/with-splunk-env.sh:/opt/splunk-init/scripts/with-splunk-env.sh:ro
+      - ./scripts/register-s4r-mcp-tools.sh:/opt/splunk-init/scripts/register-s4r-mcp-tools.sh:ro
+      - ./SA-S4R/default/s4r_mcp_tools.json:/opt/splunk-init/SA-S4R/default/s4r_mcp_tools.json:ro
     environment:
       SPLUNK_PASSWORD: ${SPLUNK_PASSWORD:-}
       # Required: password for the MCP execution user (splunker by default).
       SPLUNK_MCP_PASSWORD: ${SPLUNK_MCP_PASSWORD:-}
       SPLUNK_HOST: so1
-    command: sh -c "apk add --no-cache curl jq && /setup-splunk.sh"
+      # Password is already in the environment; skip host .env / op lookup.
+      SPLUNK_MCP_ENV_LOADED: "1"
+    command: sh -c "apk add --no-cache curl jq bash && /opt/splunk-init/scripts/setup-splunk.sh"
     networks:
       - splunk
     restart: "no"

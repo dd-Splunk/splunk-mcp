@@ -121,10 +121,10 @@ make up
   │     └─ setup-splunk.sh
   │        ├─ Enable Eventgen modinput (required; init fails if still disabled)
   │        ├─ Create/update role: mcp_user (capability mcp_tool_execute)
-  │        └─ Create user: splunker
+  │        ├─ Create user: splunker
+  │        └─ register-s4r-mcp-tools (POST /services/mcp_tools for SA-S4R)
   └─ host (after splunk-init exits 0)
-     ├─ update-all (MCP_UPDATE_ON_BOOT; mint token into client configs)
-     └─ register-s4r-mcp-tools (POST /services/mcp_tools for SA-S4R)
+     └─ update-all (MCP_UPDATE_ON_BOOT; mint token into client configs)
 ```
 
 **Shutdown:** `make down` runs **`mcp-client.sh park all`** first (removes `splunk-mcp-server` from client configs) so clients do not reconnect with stale tokens during the next boot.
@@ -222,10 +222,9 @@ Host **Claude** / **Cursor** / **Goose** configs are updated by **`scripts/mcp-c
 ### Initialization
 
 1. splunk-init waits for healthcheck to pass
-2. Runs setup-splunk.sh (roles, MCP user, Eventgen — no token mint)
+2. Runs setup-splunk.sh (roles, MCP user, Eventgen, SA-S4R tool registration — no token mint)
 3. splunk-init container exits (`restart: "no"`)
 4. Host runs `update-all` (`MCP_UPDATE_ON_BOOT`) → mints bearer token into client configs
-5. Host runs `register-s4r-mcp-tools`
 
 ### MCP Operation
 
@@ -236,7 +235,7 @@ Host **Claude** / **Cursor** / **Goose** configs are updated by **`scripts/mcp-c
 
 ### App-augmented MCP tools (SA-S4R)
 
-Splunk Developer Day 2026 ([Apps with MCP Tools](https://www.youtube.com/watch?v=fjGCf0QiBJc) · [playlist](https://www.youtube.com/playlist?list=PLxkFdMSHYh3T2mFyCdg8iz9ef068gLdfJ)) / MCP Server 2.0: apps expose **SPL** (saved search) or **API** (REST) tools through Splunk MCP Server — no standalone MCP process. **SA-S4R** ships `tools.conf` plus a workshop-mode REST handler; `make up` batch-replaces and enables them via `POST /services/mcp_tools`.
+[MCP Server 2.0](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/about-mcp-server-for-splunk-platform) exposes **SPL** or **API** tools through one Splunk MCP Server. **SA-S4R** registers them inside **`splunk-init`**: `POST /services/mcp_tools` from `s4r_mcp_tools.json`, then enable each tool. Execution still calls a saved search or the workshop-mode REST handler. See [Managing custom tools](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/managing-custom-tools-in-splunk-mcp-server).
 
 Definitions, file map, and tool catalog: [MCP-TOOLS.md](../s4r/MCP-TOOLS.md). Workshop data: [SA-S4R-APP.md](../s4r/SA-S4R-APP.md).
 

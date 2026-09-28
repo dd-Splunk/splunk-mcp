@@ -27,8 +27,6 @@ SA-S4R/                         # tracked in git
 │   ├── restmap.conf            # /s4r_workshop_mode for API MCP tools
 │   ├── savedsearches.conf      # Governed SPL backing SPL MCP tools
 │   ├── s4r_mcp_tools.json      # Batch-replace payload for POST /services/mcp_tools
-│   ├── tool_input_payload_signatures.json  # JSON Schema per tool name
-│   ├── tools.conf              # App-packaged SPL tool stanzas (Developer Day)
 │   └── transforms.conf         # product_codes lookup (file: lookups/product_codes.csv)
 ├── lookups/
 │   └── product_codes.csv       # Demo lookup for Lab 5
@@ -66,7 +64,7 @@ Splunk apps split **shipped baseline** (`default/`) from **instance-specific ove
 **Rules (Splunk and this repo):**
 
 1. **Splunk Web, Settings → Knowledge, nav editor, field extractor, Dashboard Studio saves** — must land under **`SA-S4R/local/`** only. **Never** save customizations into **`default/`** (Splunk will overwrite shipped objects on upgrade/reinstall).
-2. **Agents and contributors** — do not add workshop dashboards, nav tabs, or Lab 4 field extractions under **`SA-S4R/default/`** in git. **Exception:** MCP packaging (`savedsearches.conf` for tool backing, `tools.conf`, `s4r_mcp_tools.json`, REST handler) is maintainer-owned in **`default/`** — [MCP-TOOLS.md](MCP-TOOLS.md). Document workshop UI setup in **`local/README`**.
+2. **Agents and contributors** — do not add workshop dashboards, nav tabs, or Lab 4 field extractions under **`SA-S4R/default/`** in git. **Exception:** MCP packaging (`savedsearches.conf` for tool backing, `s4r_mcp_tools.json`, REST handler) is maintainer-owned in **`default/`** — [MCP-TOOLS.md](MCP-TOOLS.md). Document workshop UI setup in **`local/README`**.
 3. **Packaging** — **`package-s4r.yml`** excludes **`local/`** (entire directory) so instance-specific content is not published in **`SA-S4R.spl`**. In git, **`SA-S4R/local/**`** is ignored except **`local/README`** (see **`.gitignore`**).
 4. **Container mount** — Compose bind-mounts **`SA-S4R/`** **read-write** (required: Splunk **chowns** the app path at start). Still put workshop UI and Eventgen overrides in **`local/`** only.
 
@@ -80,7 +78,7 @@ Do **not** switch Compose to [GitHub `latest` `SA-S4R.spl`](https://github.com/d
 
 - **Chown:** a `.spl` install into `so1-etc` **does** avoid `Errno 30` (no host bind). That is the only bind-mount problem it solves.
 - **Inner loop:** edits to `default/`, `bin/`, samples, and MCP JSON are invisible until you merge to **`main`**, wait for `package-s4r.yml` to move **`latest`**, and **reinstall** (existing `so1-etc` often will not refresh the app).
-- **Host scripts:** **`make s4r-attack-nk-*`** POSTs the NK stanza to Splunk config REST. Splunk writes **`local/eventgen.conf`** on the app filesystem (this bind). **`register-s4r-mcp-tools`** POSTs host **`s4r_mcp_tools.json`**. MCP **`SA-S4R_apply_nk_demo_state`** calls the same configs endpoint from inside Splunk.
+- **Host scripts:** **`make s4r-attack-nk-*`** POSTs the NK stanza to Splunk config REST. Splunk writes **`local/eventgen.conf`** on the app filesystem (this bind). **`splunk-init`** POSTs **`s4r_mcp_tools.json`**. MCP **`SA-S4R_apply_nk_demo_state`** calls the same configs endpoint from inside Splunk.
 - **Which build you boot:** `latest` is whatever last published from **`main`**, not this clone or a dirty working tree. The `.spl` **excludes `local/`**.
 - **Egress:** boot then also needs `github.com` (Splunkbase is still required for the other `SPLUNK_APPS_URL` apps).
 
@@ -181,7 +179,7 @@ Two storylines share the same baseline traffic; the NK stanza is toggled without
 
 **Shell fallback:** `make s4r-attack-nk-disable` / `make s4r-attack-nk-enable`. Same REST update and Eventgen reload as MCP. **`make restart`** only if the script reports that the reload failed.
 
-Check current mode: **`SA-S4R_query_nk_demo_state`** (MCP) or **`make s4r-attack-nk-status`** (shell). Both read the effective `disabled` value from Splunk. Toggles `POST /servicesNS/nobody/SA-S4R/configs/conf-eventgen/attack.nk.purchase.sample` (`disabled=true` or `false`). Splunk writes the override to **`SA-S4R/local/eventgen.conf`** (gitignored) so **`default/`** stays pristine. Script: **`scripts/toggle-s4r-attack-nk.sh`** (`enable` \| `disable` \| `status`). MCP tools register on **`make up`**; re-register with **`make register-s4r-mcp-tools`** — see [MCP-TOOLS.md](MCP-TOOLS.md).
+Check current mode: **`SA-S4R_query_nk_demo_state`** (MCP) or **`make s4r-attack-nk-status`** (shell). Both read the effective `disabled` value from Splunk. Toggles `POST /servicesNS/nobody/SA-S4R/configs/conf-eventgen/attack.nk.purchase.sample` (`disabled=true` or `false`). Splunk writes the override to **`SA-S4R/local/eventgen.conf`** (gitignored) so **`default/`** stays pristine. Script: **`scripts/toggle-s4r-attack-nk.sh`** (`enable` \| `disable` \| `status`). MCP tools register inside **`splunk-init`** during **`make up`**. After a JSON edit, **`make up`** again — see [MCP-TOOLS.md](MCP-TOOLS.md).
 
 Wait **1–2 minutes** after enabling threat mode before validating in Search (narrow time range to **last 15m** so old uniform traffic does not mask the attack).
 
@@ -206,7 +204,7 @@ Canonical queries for both workshop modes: **[SPL-CATALOG.md § Workshop modes](
 - **`S4R Geo Failed Purchase Hotspots`** — Security geo over **last 24h**: top failed-purchase country/city/IP hotspots plus top cities by overall activity (`iplocation`). MCP tool: **`SA-S4R_geo_failed_purchases`**.
 - **`S4R Validate NK Attack Traffic`** — NK geo check over **last 15m**; rows appear when threat mode is producing **North Korea** or **175.45.*** failed purchases. Empty results mean no NK signal yet (wait 1–2 min after enable, or confirm mode with **`SA-S4R_query_nk_demo_state`**). MCP tool: **`SA-S4R_validate_nk_attack_traffic`**.
 
-`make up` registers the MCP tools after init. **`make register-s4r-mcp-tools`** re-runs that step and reloads **`conf-savedsearches`** so new stanzas are visible without **`make restart`**.
+**`splunk-init`** registers the MCP tools and reloads **`conf-savedsearches`** so new stanzas are visible without **`make restart`**. After an edit, **`make up`**.
 
 NK attack token sources: **`samples/nk_clientip.txt`**, **`nk_status.txt`**, **`nk_useragent.txt`**, **`nk_product_id.txt`**.
 
@@ -227,8 +225,7 @@ See [AGENTS.md](AGENTS.md) for Power User delegation and [SPL-CATALOG.md](SPL-CA
 | File | Purpose |
 | ---- | ------- |
 | `default/app.conf` | **`[package] id`**, **`[launcher] version`**, UI label/description |
-| `default/tools.conf` | App-packaged MCP SPL tool stanzas (see [MCP-TOOLS.md](MCP-TOOLS.md)) |
-| `default/s4r_mcp_tools.json` | Batch-replace payload for Splunk MCP Server |
+| `default/s4r_mcp_tools.json` | Batch-replace payload for Splunk MCP Server (`POST /services/mcp_tools`) |
 | `metadata/default.meta` | Export/ACL for shipped objects (`props`, `transforms`, lookup CSV, `eventgen.conf`) |
 | `metadata/meta.conf` | Default ACL for new objects created in-app |
 

@@ -2,39 +2,35 @@
 
 How **SA-S4R** (Splunk4Rookies) registers governed tools with **Splunk MCP Server**, without a standalone MCP server.
 
-**Related:** [ARCHITECTURE.md](../poc/ARCHITECTURE.md) · [SA-S4R-APP.md](SA-S4R-APP.md) · [AGENTS.md](AGENTS.md) · [SPL-CATALOG.md](SPL-CATALOG.md) · [CONFIGURATION.md](../poc/CONFIGURATION.md) · [Managing custom tools (MCP 2.0)](https://help.splunk.com/en/splunk-enterprise/mcp-server-for-splunk-platform/2.0/managing-custom-tools-in-splunk-mcp-server)
+**Product contract:** [About MCP Server for Splunk platform](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/about-mcp-server-for-splunk-platform) · [Managing custom tools](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/managing-custom-tools-in-splunk-mcp-server)
 
-**Recordings:** [Developer Day 2026 playlist](https://www.youtube.com/playlist?list=PLxkFdMSHYh3T2mFyCdg8iz9ef068gLdfJ) · session **[Apps with MCP Tools](https://www.youtube.com/watch?v=fjGCf0QiBJc)** · recap [community announcement](https://community.splunk.com/t5/Product-News-Announcements/Splunk-Developer-Day-announcements-AI-agents-MCP-tools/ba-p/761316)
+**Related:** [ARCHITECTURE.md](../poc/ARCHITECTURE.md) · [SA-S4R-APP.md](SA-S4R-APP.md) · [AGENTS.md](AGENTS.md) · [SPL-CATALOG.md](SPL-CATALOG.md) · [CONFIGURATION.md](../poc/CONFIGURATION.md)
 
 ## Why apps expose MCP tools
 
-[Splunk Developer Day 2026](https://www.youtube.com/playlist?list=PLxkFdMSHYh3T2mFyCdg8iz9ef068gLdfJ) framed apps as the way Splunk insights are packaged for the customer. **MCP** lets those insights reach LLMs for analysis and action.
+[MCP Server for Splunk platform 2.0](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/about-mcp-server-for-splunk-platform) is the interface between AI clients and Splunk. Built-in tools use the `splunk_` and `saia_` prefixes. An external app adds its own tools by registering them on `POST /services/mcp_tools`. A registered tool stays hidden until it is enabled.
 
-The **[Apps with MCP Tools](https://www.youtube.com/watch?v=fjGCf0QiBJc)** session (official description):
+You do not build and operate a separate MCP server per app. **Splunk MCP Server** supplies authentication, RBAC, discovery (`tools/list`), collision checks, rate limiting, monitoring, and admin dashboards.
 
-> Apps are now able to create MCP tools from custom rest endpoints and saved searches. These are exposed to the Splunk MCP server via a new conf file. `tools.conf` has a stanza per tool shared over MCP specifying the name of the tool and the description to be shared with agents and LLMs.
+Execution is either an **SPL** template or an **API** call to a Splunk REST endpoint the app already owns. Clients still talk to one surface: `https://localhost:8089/services/mcp`.
 
-You do **not** build and operate a separate MCP server per app. **Splunk MCP Server** supplies authentication, RBAC, discovery (`tools/list`), collision checks, rate limiting, monitoring, and admin dashboards.
-
-Execution is either an **SPL** template (often a saved search) or an **API** call to a Splunk REST endpoint the app already owns. Clients still talk to one surface: `https://localhost:8089/services/mcp`.
-
-This PoC follows that model for Buttercup workshop tools (`SA-S4R_*`). Built-in MCP tools (`splunk_*`, `saia_*`) remain available for ad-hoc catalog SPL. In-app SDK agents ([Splunk Apps with AI: Agents Deployed in Apps](https://www.youtube.com/watch?v=JEXpWDyeBiI)) are a different path — this repo uses Cursor/Claude agents calling Splunk MCP.
+This PoC registers Buttercup workshop tools (`SA-S4R_*`) that way. Built-in MCP tools (`splunk_*`, `saia_*`) remain available for ad-hoc catalog SPL. This repo uses Cursor/Claude agents calling Splunk MCP.
 
 ## Definitions
 
-Terms match [Splunk MCP Server 2.0 custom tools](https://help.splunk.com/en/splunk-enterprise/mcp-server-for-splunk-platform/2.0/managing-custom-tools-in-splunk-mcp-server).
+Terms match [Managing custom tools in Splunk MCP Server](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/managing-custom-tools-in-splunk-mcp-server).
 
 | Term | Meaning in this repo |
 | ---- | -------------------- |
 | **Tool name** | Short id in the JSON payload (`query_nk_demo_state`). Letters, digits, underscores; must start with a letter. |
 | **MCP tool name** | What clients see after the app prefix: **`SA-S4R_<tool_name>`** (for example `SA-S4R_summarize_purchase_health`). |
-| **Tool ID** | Globally unique `external_app_id:mcp_tool_name`. Example: `SA-S4R:SA-S4R_summarize_purchase_health`. Used to enable, update, or delete a tool. |
+| **Tool ID** | Used to enable, update, or delete a tool. This stack enables **`SA-S4R:SA-S4R_<tool_name>`** (the prefixed name clients see). |
 | **External App ID** | Owning Splunk app. Always **`SA-S4R`** here (same as `[package] id` in `app.conf`). Namespaces tools and batch replace. |
 | **Built-in tools** | Shipped with the MCP Server app (`splunk_run_query`, `saia_*`, …). Not created, modified, or deleted via `/services/mcp_tools`. |
 | **Custom / app tools** | Registered by an external app. Must be **enabled** before they appear on `tools/list`. Enabling also runs collision detection against other active tools. |
 | **Execution type `spl`** | MCP substitutes `$param$` placeholders into an SPL **template** and runs a search. S4R SPL tools use `\| savedsearch "…"` so the query lives in `savedsearches.conf`. |
 | **Execution type `api`** | MCP issues HTTP against a Splunk REST path (`method`, `endpoint`, optional `headers` / `params` / `body`). S4R workshop-mode tools call `/servicesNS/nobody/SA-S4R/s4r_workshop_mode`. |
-| **inputSchema** | JSON Schema (`type: object`) for tool arguments. Good `description` text improves model tool selection. |
+| **inputSchema** | JSON Schema (`type: object`) for tool arguments, inside `s4r_mcp_tools.json`. Good `description` text improves model tool selection. |
 | **`_meta`** | Execution config, tags, examples, and `external_app_id`. SPL vs API fields must not be mixed. |
 | **Batch replace** | `POST /services/mcp_tools` with `{ "external_app_id", "tools": [ … ] }` atomically replaces **all** tools for that app (insert / update / delete missing, rollback on failure). |
 
@@ -42,7 +38,7 @@ Distinct read/write names (`query_nk_demo_state` vs `apply_nk_demo_state`) avoid
 
 ## Architecture
 
-Developer Day **[Apps with MCP Tools](https://www.youtube.com/watch?v=fjGCf0QiBJc)** (Michael Szebenyi, 13 May 2026) shows three tool layers behind one **Splunk MCP Server**:
+MCP Server 2.0 exposes three layers behind one **Splunk MCP Server**:
 
 ```text
 AI chat or Agent  (Cursor, Claude, Cisco AI Canvas, …)
@@ -55,19 +51,28 @@ Splunk MCP Server     collision detection · rate limiting
         └─ Customer private app  SA-S4R_*  (this PoC — Buttercup workshop)
 ```
 
-**How it works** (session “How Does It Work?”):
+**How registration works** ([Managing custom tools](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/managing-custom-tools-in-splunk-mcp-server)):
 
 ```text
-SA-S4R app
-  tools.conf  +  tool_input_payload_signatures.json
-  savedsearches.conf  →  Saved Search
-  restmap.conf        →  Custom REST handler
+SA-S4R/default/s4r_mcp_tools.json
         │
         ▼
-MCP Tool Registration API   (app install, or this PoC: POST /services/mcp_tools)
+POST /services/mcp_tools    batch replace for external_app_id=SA-S4R
         │
         ▼
-MCP tools callable at https://localhost:8089/services/mcp
+POST /services/mcp_tools    enable each tool (create leaves tools disabled)
+        │
+        ▼
+tools/list at https://localhost:8089/services/mcp
+```
+
+Backing objects the registry calls when a tool runs:
+
+```text
+type=spl  →  | savedsearch "S4R …"     →  savedsearches.conf
+type=api  →  GET/POST /s4r_workshop_mode
+                   →  restmap.conf + bin/s4r_workshop_mode.py
+                   →  eventgen.conf  [attack.nk.purchase.sample]
 ```
 
 This repo (Cursor / Claude / Goose):
@@ -80,15 +85,11 @@ https://localhost:8089/services/mcp
         │
         ├─ Built-in  splunk_* / saia_*
         └─ SA-S4R_*
-               ├─ type=spl  →  | savedsearch "S4R …"     →  savedsearches.conf
-               └─ type=api  →  GET/POST /s4r_workshop_mode
-                                      →  restmap.conf + bin/s4r_workshop_mode.py
-                                      →  eventgen.conf  [attack.nk.purchase.sample]
 ```
 
 **What the platform owns:** TLS endpoint, token auth, capability **`mcp_tool_execute`**, tool registry, collision checks, search execution as **`splunker`**.
 
-**What SA-S4R owns:** tool definitions, governed SPL, the workshop-mode REST handler, Eventgen stanza it toggles, and the **`s4r_workshop_control`** capability stanza.
+**What SA-S4R owns:** the registration payload, governed SPL, the workshop-mode REST handler, the Eventgen stanza it toggles, and the **`s4r_workshop_control`** capability stanza.
 
 Agents should prefer **`SA-S4R_*`** when the question matches a workshop tool; otherwise they read [SPL-CATALOG.md](SPL-CATALOG.md) and call **`splunk_run_query`**.
 
@@ -98,45 +99,16 @@ All paths are under **`SA-S4R/`** unless noted. MCP/tool packaging lives in **`d
 
 | File | Required for | Role |
 | ---- | ------------ | ---- |
-| **`default/s4r_mcp_tools.json`** | This PoC’s registration | Batch-replace payload: `external_app_id`, full tool objects (`name`, `title`, `description`, `inputSchema`, `_meta`). Source of truth for what **`scripts/register-s4r-mcp-tools.sh`** POSTs. |
-| **`default/tools.conf`** | Developer Day app packaging | One stanza per tool. Session examples: **`[savedsearches:<name>]`** (`search=` saved-search name, `description`, `tags`) and **`[restmap:<name>]`** (`endpoint_name`, `method`, `headers`, `tags`). This PoC currently lists the three SPL tools with short names + `savedsearch=`; API tools are in `restmap.conf` + `s4r_mcp_tools.json`. |
-| **`default/tool_input_payload_signatures.json`** | LLM call schema | Per-tool JSON so the model knows arguments (session: “shared with LLMs so it knows how to call the tool”). Mirrors `inputSchema` in `s4r_mcp_tools.json`. |
+| **`default/s4r_mcp_tools.json`** | Registration | Batch-replace payload: `external_app_id`, full tool objects (`name`, `title`, `description`, `inputSchema`, `_meta`). Source of truth for what **`scripts/register-s4r-mcp-tools.sh`** POSTs. |
 | **`default/savedsearches.conf`** | SPL tools | Governed searches: **`S4R Summarize Purchase Health`**, **`S4R Geo Failed Purchase Hotspots`**, **`S4R Validate NK Attack Traffic`**. SPL should match [SPL-CATALOG.md](SPL-CATALOG.md). |
 | **`default/restmap.conf`** | API tools | Exposes **`/servicesNS/nobody/SA-S4R/s4r_workshop_mode`**. Script: `s4r_workshop_mode.py`. Requires authentication; `capability = mcp_tool_execute`. |
 | **`bin/s4r_workshop_mode.py`** | API tools | REST handler: reads/writes `disabled` on `[attack.nk.purchase.sample]` via Splunk config REST (`configs/conf-eventgen` and `properties/eventgen`); allowlists `mode` to `infrastructure` \| `threat`; reloads the Eventgen modinput. POST returns **200** when reload succeeds, **503** (`eventgen_reload_failed`) when the stanza was updated but Eventgen did not reload — then **`make restart`**. |
 | **`default/authorize.conf`** | Workshop write path | Declares capability **`[capability::s4r_workshop_control]`** (two colons). `scripts/setup-splunk.sh` grants it to role **`mcp_user`** after the app loads (best-effort; the REST map still gates on `mcp_tool_execute`). |
 | **`default/eventgen.conf`** | Baseline Eventgen | Ships NK stanza with **`disabled = true`** (infrastructure default). |
 | **`local/eventgen.conf`** | Workshop mode | Gitignored override Splunk writes when MCP or `make s4r-attack-nk-*` POSTs `disabled`. Scripts do not edit this file. |
-| **`scripts/register-s4r-mcp-tools.sh`** | Host bootstrap | `POST /services/mcp_tools` batch replace, enable each tool, reload `conf-savedsearches`. Enable or reload non-2xx **exits 1**. Needs **`jq`** and admin credentials from `.env` or `op run --env-file=tpl.env`. |
+| **`scripts/register-s4r-mcp-tools.sh`** | **`splunk-init`** | Called at the end of **`setup-splunk.sh`**. `POST /services/mcp_tools` batch replace, enable each tool, reload `conf-savedsearches`. Enable or reload non-2xx **fails init**. |
 
-Two complementary packaging paths:
-
-1. **App files (Developer Day):** `tools.conf` + `tool_input_payload_signatures.json` + `savedsearches.conf` / `restmap.conf`. Session flow: app install → MCP Tool Registration API.
-2. **REST registration (this PoC):** after **`splunk-init`**, the host script batch-replaces from **`s4r_mcp_tools.json`** so tools are registered **and enabled** on local Enterprise without relying on install-time discovery. Keep the JSON, `tools.conf` stanzas, and signatures in sync when you add or rename a tool.
-
-### Official `tools.conf` shapes (session examples)
-
-Saved search:
-
-```ini
-[savedsearches:broken_block_search]
-search = broken_block_search
-description = A search for the number of blocks broken by all players
-tags = Blocks, broken, minecraft
-```
-
-Custom REST:
-
-```ini
-[restmap:myhello]
-description = A simple hello world!
-endpoint_name = myhello
-method = get
-headers = Accept:*/*
-tags = Hello, hola, welcome
-```
-
-SA-S4R mapping: saved-search tools → `S4R Summarize Purchase Health`, `S4R Geo Failed Purchase Hotspots`, `S4R Validate NK Attack Traffic`; REST tools → `s4r_workshop_mode` (`query_nk_demo_state` / `apply_nk_demo_state`).
+`tools/list` reads the registry written by that POST. It does not read app conf files. Edit `s4r_mcp_tools.json` (and the saved search or REST handler the tool calls), then run `make up` so **`splunk-init`** registers again.
 
 ## Tool catalog
 
@@ -152,22 +124,24 @@ SA-S4R mapping: saved-search tools → `S4R Summarize Purchase Health`, `S4R Geo
 
 ## Bootstrap
 
-`make up` after **`splunk-init`** exits **0**:
+**`splunk-init`** runs **`scripts/setup-splunk.sh`** after **`so1`** is healthy:
 
-1. **`scripts/setup-splunk.sh`** (inside `splunk-init`) creates role **`mcp_user`** with **`mcp_tool_execute`** and `srchJobsQuota=5`, then grants **`s4r_workshop_control`**. `splunk-init` mounts that script and **`scripts/splunk-api-env.sh`** — it cannot run the host registrar.
-2. Host **`scripts/register-s4r-mcp-tools.sh`**:
-   - `POST https://localhost:8089/services/mcp_tools` with `s4r_mcp_tools.json` (batch replace for `external_app_id=SA-S4R`)
-   - For each tool: enable `tool_id=SA-S4R:SA-S4R_<name>` with `override: true` (non-2xx **fails the script**)
-   - `POST …/configs/conf-savedsearches/_reload` so new saved-search stanzas are visible without **`make restart`** (non-2xx **fails the script**)
-3. **`make update-mcp-clients`** mints a bearer token into client config (not the repo).
+1. Create role **`mcp_user`** with **`mcp_tool_execute`** and `srchJobsQuota=5`, then grant **`s4r_workshop_control`**. Create user **`splunker`**.
+2. **`scripts/register-s4r-mcp-tools.sh`** (same container):
+   - `POST https://so1:8089/services/mcp_tools` with `s4r_mcp_tools.json` (batch replace for `external_app_id=SA-S4R`)
+   - For each tool: enable `tool_id=SA-S4R:SA-S4R_<name>` with `override: true` (non-2xx **fails init**)
+   - `POST …/configs/conf-savedsearches/_reload` so new saved-search stanzas are visible without **`make restart`** (non-2xx **fails init**)
+3. After init exits **0**, **`make update-mcp-clients`** mints a bearer token into client config (not the repo).
 
 Re-register after editing tool JSON or saved searches:
 
 ```bash
-make register-s4r-mcp-tools   # or: ./scripts/register-s4r-mcp-tools.sh
+make up
 ```
 
-Admin registration uses **`SPLUNK_PASSWORD`** (basic auth to `/services/mcp_tools`). Runtime tool **execution** uses the **`splunker`** bearer token on `/services/mcp`. Do not commit either secret.
+That starts the exited **`splunk-init`** container again. **`make down && make up`** is the full restart.
+
+The product API authenticates with a bearer token for a user that has **`mcp_tool_admin`**. This local PoC posts as **`admin`** with basic auth (`SPLUNK_PASSWORD`) to `/services/mcp_tools`. Runtime tool **execution** uses the **`splunker`** bearer token on `/services/mcp`. Do not commit either secret.
 
 ## Security
 
@@ -191,7 +165,7 @@ Admin registration uses **`SPLUNK_PASSWORD`** (basic auth to `/services/mcp_tool
 | `s4r_list_catalog_sections` | List team sections and one-line intent | `SPL-CATALOG.md` structure |
 | `s4r_run_team_query` | Run a **pre-approved** catalog query by team + query id | Catalog snippets + `splunk_run_query` |
 
-Additional catalog queries (IT Ops, DevOps) can follow the M2 pattern: stanza in `savedsearches.conf`, matching `tools.conf` + signature, SPL `template` in `s4r_mcp_tools.json`, then `make register-s4r-mcp-tools`.
+Additional catalog queries (IT Ops, DevOps) can follow the M2 pattern: stanza in `savedsearches.conf`, SPL `template` in `s4r_mcp_tools.json`, then `make up`.
 
 ## Milestones
 
@@ -200,15 +174,4 @@ Additional catalog queries (IT Ops, DevOps) can follow the M2 pattern: stanza in
 - [x] **M2** — Saved-search MCP tools (`validate_nk_attack_traffic`, `summarize_purchase_health`, `geo_failed_purchases`); more catalog queries optional
 - [ ] **M3** — Update all specialist agents; `make verify` path for S4R tools
 - [x] **M4** — Demo slides / S4R-DEMO.md mention governed tools + in-chat NK toggle
-- [x] **M5** — Deck + this doc: Developer Day architecture (`tools.conf` / signatures / how it works)
-
-## Developer Day 2026 recordings
-
-Playlist: [Developer Day 2026](https://www.youtube.com/playlist?list=PLxkFdMSHYh3T2mFyCdg8iz9ef068gLdfJ)
-
-| Session | Role for this PoC | Video |
-| ------- | ----------------- | ----- |
-| Apps with MCP Tools | **Primary** — `tools.conf`, signatures, saved searches, custom REST → Splunk MCP Server (Szebenyi, 13 May 2026) | [watch](https://www.youtube.com/watch?v=fjGCf0QiBJc) |
-| Splunk Apps with AI: Agents Deployed in Apps | Related — agents *inside* a Splunk app (Python SDK). This repo uses Cursor agents instead. | [watch](https://www.youtube.com/watch?v=JEXpWDyeBiI) |
-| Build Your First AI Agent (Agent Launchpad) | Related — Splunk AI Toolkit agents, not the S4R Cursor orchestrator | [watch](https://www.youtube.com/watch?v=W18A6q6BOA0) |
-| Splunk Developer Day Kickoff | Agenda / MCP + agentic apps framing | [watch](https://www.youtube.com/watch?v=cHdAd-7ecfY) |
+- [x] **M5** — Deck + this doc follow MCP Server 2.0 custom-tool registration (`s4r_mcp_tools.json`, then enable)

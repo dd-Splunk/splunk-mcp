@@ -83,16 +83,16 @@ Use only the blocks you need. If you remap **8089**, set **`SPLUNK_MCP_ENDPOINT`
 
 ### Service `splunk-init`
 
-Runs after `so1` is **healthy**. Uses Alpine, installs `curl` and `jq`, then runs `setup-splunk.sh`. Mounts:
+Runs after `so1` is **healthy**. Uses Alpine, installs `curl`, `jq`, and `bash`, then runs `setup-splunk.sh`. Mounts (read-only, under `/opt/splunk-init/`):
 
-- `scripts/setup-splunk.sh` → `/setup-splunk.sh` (**read-only**; script is executable in git)
-- `scripts/splunk-api-env.sh` → `/splunk-api-env.sh` (**read-only**; shared REST defaults)
-- No host secrets mount (this repo does not write tokens/passwords to disk). `compose.yml` passes `SPLUNK_PASSWORD`, `SPLUNK_MCP_PASSWORD`, and `SPLUNK_HOST=so1`. Port **8089**, REST user **`admin`**, and MCP user **`splunker`** are defaults in `scripts/splunk-api-env.sh`.
+- `scripts/setup-splunk.sh`, `scripts/splunk-api-env.sh`, `scripts/with-splunk-env.sh`, `scripts/register-s4r-mcp-tools.sh`
+- `SA-S4R/default/s4r_mcp_tools.json` (batch-replace payload)
+- No host secrets mount (this repo does not write tokens/passwords to disk). `compose.yml` passes `SPLUNK_PASSWORD`, `SPLUNK_MCP_PASSWORD`, `SPLUNK_HOST=so1`, and `SPLUNK_MCP_ENV_LOADED=1`. Port **8089**, REST user **`admin`**, and MCP user **`splunker`** are defaults in `scripts/splunk-api-env.sh`.
 
-### MCP token minting and S4R tools (host)
+### MCP token minting (host)
 
 - **`scripts/wait-splunk-init.sh`** — blocks until the **`splunk-init`** container exits `0` (`compose-up.sh` runs this after `docker compose up`).
-- **`scripts/register-s4r-mcp-tools.sh`** — after init: `POST /services/mcp_tools` for **SA-S4R** (`make up` runs this; also `make register-s4r-mcp-tools`).
+- **`scripts/register-s4r-mcp-tools.sh`** — called by **`setup-splunk.sh`** inside **`splunk-init`**: `POST /services/mcp_tools` for **SA-S4R**, then enable each tool.
 - **`scripts/mint-mcp-token.sh`** — after init: waits for Splunk API, polls **`mcp_token`**, prints encrypted token to stdout.
 - **`make update-mcp-client`** writes the token into Claude / Cursor / Goose configs only.
 
@@ -144,7 +144,7 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 
 | Target | Behavior |
 | ------ | -------- |
-| `up` | `scripts/compose-up.sh` (`.env` or `op run --env-file=tpl.env`), then `update-all` (`MCP_UPDATE_ON_BOOT`, default `cursor`), then `register-s4r-mcp-tools` |
+| `up` | `scripts/compose-up.sh` (`.env` or `op run --env-file=tpl.env`; **`splunk-init`** registers SA-S4R tools), then `update-all` (`MCP_UPDATE_ON_BOOT`, default `cursor`) |
 | `config` | Print `docker compose config` after the same secret and `config.env` load as `up`. `SPLUNK_PASSWORD`, Splunkbase user/password, and `SPLUNK_MCP_PASSWORD` are shown as `<set>` |
 | `down` | `scripts/mcp-client.sh park all` (no secrets), then `docker compose down`. `config.env` must be present so Compose can read `SPLUNK_IMAGE` and `TZ` |
 | `park-mcp-clients` | `scripts/mcp-client.sh park all` — remove `splunk-mcp-server` from client configs |
@@ -163,7 +163,6 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 | `s4r-attack-nk-enable` | **Shell fallback:** `POST` `disabled=false` on the NK Eventgen stanza, then reload Eventgen. Prefer MCP **`SA-S4R_apply_nk_demo_state`** (`mode=threat`) — no restart on HTTP **200**; HTTP **503** or a shell reload error → **`make restart`**. Needs `.env` or `tpl.env` |
 | `s4r-attack-nk-disable` | **Shell fallback:** `POST` `disabled=true`, then reload Eventgen. Prefer MCP **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) |
 | `s4r-attack-nk-status` | **Shell fallback:** prints NK stanza enabled/disabled from Splunk properties REST. Prefer MCP **`SA-S4R_query_nk_demo_state`**. Needs `.env` or `tpl.env` |
-| `register-s4r-mcp-tools` | Host `POST /services/mcp_tools` for **SA-S4R** (also run by `make up`); re-run after editing `s4r_mcp_tools.json` |
 | `marp-preview` / `marp-serve` / `marp-html` | Preview, serve, or export the S4R presenter deck under `demo-slides/` |
 
 Workshop behavior and validation SPL: **[SA-S4R-APP.md](../s4r/SA-S4R-APP.md)** (Workshop modes). Marp deck mechanics: **[demo-slides/README.md](../../demo-slides/README.md)**.
@@ -176,7 +175,8 @@ Summary of what runs **inside** `splunk-init` with `SPLUNK_HOST=so1`:
 2. Sets MCP server `ssl_verify=false` via REST (dev convenience).
 3. Ensures Splunk role **`mcp_user`** exists with capability **`mcp_tool_execute`** and **`srchJobsQuota=5`** (parallel S4R agent headroom).
 4. Creates or updates user **`splunker`** with roles **`user`** + **`mcp_user`**, and clears **`locked-out`** (idempotent unlock on every init).
-5. Uses `SPLUNK_MCP_PASSWORD` from env; this repo does not write passwords to disk.
+5. Registers SA-S4R MCP tools from `s4r_mcp_tools.json` (`POST /services/mcp_tools`, enable, saved-search reload). Init **exits 1** if that fails.
+6. Uses `SPLUNK_MCP_PASSWORD` from env; this repo does not write passwords to disk.
 
 **Full reference** (REST tables, diagrams, idempotency): [Appendix: setup-splunk.sh](#appendix-setup-splunksh).
 
@@ -297,11 +297,11 @@ The script bootstraps a **local Splunk Enterprise PoC** so that:
 
 The script is **`/bin/sh`**, uses **`set -eu`**, and talks to Splunk only through **HTTPS REST** (`curl -k` for local dev).
 
-**Out of scope:** **`claude_logs`** index and monitors—add them in Splunk if you enable the bind mount (see **Claude logs (macOS, optional)** under `compose.yml` above). SA-S4R MCP tool registration is **`scripts/register-s4r-mcp-tools.sh`** on the host after this script exits.
+**Out of scope:** **`claude_logs`** index and monitors—add them in Splunk if you enable the bind mount (see **Claude logs (macOS, optional)** under `compose.yml` above). MCP token minting stays on the host (**`scripts/mint-mcp-token.sh`**).
 
 ### Where it runs
 
-Compose starts **`splunk-init`** **after** `so1` is healthy. That container installs `curl` and `jq`, then executes this script. See [`compose.yml`](../../compose.yml).
+Compose starts **`splunk-init`** **after** `so1` is healthy. That container installs `curl`, `jq`, and `bash`, then executes this script (which registers SA-S4R MCP tools before it exits). See [`compose.yml`](../../compose.yml). After editing `s4r_mcp_tools.json`, **`make up`** starts the exited init container again.
 
 ```mermaid
 flowchart LR

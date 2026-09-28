@@ -104,7 +104,7 @@ Visible in Marp **presenter view** (`P`).
 
 ## Slide map (32)
 
-Deck follows **three steps** plus a **MCP architecture** primer (Developer Day 2026) between Step 1 and Step 2.
+Deck follows **three steps** plus a **MCP architecture** primer ([MCP Server 2.0](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/about-mcp-server-for-splunk-platform)) between Step 1 and Step 2.
 
 | # | Title | Notes |
 | - | ----- | ----- |
@@ -115,10 +115,10 @@ Deck follows **three steps** plus a **MCP architecture** primer (Developer Day 2
 | 5 | Step 1 — Workshop dashboard build | Labs 3–7 table |
 | 6 | Step 1 — What you get | Artifacts |
 | 7 | Splunk MCP architecture — Apps as tools | `lead` section divider |
-| 8 | Apps as MCP tools | Existing apps → AI tools; saved search vs REST; `tools.conf` + signatures |
+| 8 | Apps as MCP tools | Existing apps → AI tools; SPL vs API; `POST /services/mcp_tools` |
 | 9 | Splunk MCP architecture | `diagram-split`; native / Splunkbase / private `SA-S4R_*` |
 | 10 | How it works | `diagram`; app files → MCP registration |
-| 11 | `tools.conf` and signatures | `compact`; `[savedsearches:]` / `[restmap:]` |
+| 11 | Custom tool registration | `compact`; batch replace, enable, `s4r_mcp_tools.json` |
 | 12 | SA-S4R workshop tools | `compact`; five `SA-S4R_*` tools |
 | 13 | Step 2 — Ask business questions without SPL | `lead` section divider |
 | 14 | Step 2 — Business questions in plain English | Example prompts |
@@ -163,7 +163,7 @@ Deck follows **three steps** plus a **MCP architecture** primer (Developer Day 2
 ## Related docs
 
 - [S4R-DEMO.md](S4R-DEMO.md) — presenter script and demo flow
-- [MCP-TOOLS.md](../docs/s4r/MCP-TOOLS.md) — MCP architecture, definitions, app config files; [Developer Day 2026 recordings](https://www.youtube.com/playlist?list=PLxkFdMSHYh3T2mFyCdg8iz9ef068gLdfJ)
+- [MCP-TOOLS.md](../docs/s4r/MCP-TOOLS.md) — MCP architecture, definitions, registration; [Managing custom tools](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/managing-custom-tools-in-splunk-mcp-server)
 - [s4r/README.md](../docs/s4r/README.md) — Splunk4Rookies workshop hub
 - [PRESALES.md](../docs/poc/PRESALES.md) — SE checklist
 - [S4R-AGENTS.md](../docs/s4r/AGENTS.md) — agent architecture

@@ -18,22 +18,19 @@ export ENV_FILE ENV_OUT ENV_EXAMPLE OP DC SPLUNK_IMAGE TZ
 
 .PHONY: help up down restart clean clean-y logs status config demo-prep verify cloud-bootstrap \
 	park-mcp-clients update-mcp-clients update-mcp-client verify-mcp-remote mcp-auth-failures \
-	s4r-attack-nk-enable s4r-attack-nk-disable s4r-attack-nk-status register-s4r-mcp-tools \
+	s4r-attack-nk-enable s4r-attack-nk-disable s4r-attack-nk-status \
 	check-splunkbase-pins marp-preview marp-serve marp-html test
 
 help: ## Show targets
 	@awk 'BEGIN {FS = ":.*##"; printf "Splunk MCP PoC\n\n"} \
 		/^[$$()% a-zA-Z_-]+:.*?##/ { printf "  make %-22s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
-up: ## Start stack, mint MCP token, register S4R tools, update client configs
+up: ## Start stack (splunk-init registers S4R tools) and mint MCP client token
 	@echo "Starting Splunk with MCP Server app..."
 	@./scripts/compose-up.sh
 	@echo ""
 	@echo "Updating MCP client configs ($(MCP_UPDATE_ON_BOOT); one mint)..."
 	@./scripts/mcp-client.sh update-all $(MCP_UPDATE_ON_BOOT)
-	@echo ""
-	@echo "Registering SA-S4R workshop MCP tools..."
-	@$(MAKE) register-s4r-mcp-tools
 	@echo ""
 	@echo "Splunk Web UI:  https://localhost:8000"
 	@echo "Splunk MCP API: https://localhost:8089/services/mcp"
@@ -150,9 +147,6 @@ s4r-attack-nk-disable: ## Disable NK purchase-attack Eventgen stanza via Splunk 
 
 s4r-attack-nk-status: ## Show whether NK attack Eventgen stanza is enabled
 	@./scripts/toggle-s4r-attack-nk.sh status
-
-register-s4r-mcp-tools: ## Register SA-S4R workshop MCP tools (also run by make up)
-	@./scripts/register-s4r-mcp-tools.sh
 
 test: ## Docker-free tests: MCP config shape, secret loader, SA-S4R mode parse
 	@./tests/mcp-client-shape.sh
