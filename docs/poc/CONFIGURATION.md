@@ -86,7 +86,8 @@ Use only the blocks you need. If you remap **8089**, set **`SPLUNK_MCP_ENDPOINT`
 Runs after `so1` is **healthy**. Uses Alpine, installs `curl` and `jq`, then runs `setup-splunk.sh`. Mounts:
 
 - `scripts/setup-splunk.sh` → `/setup-splunk.sh` (**read-only**; script is executable in git)
-- No host secrets mount (this repo does not write tokens/passwords to disk). `compose.yml` passes REST user **`admin`**, MCP user **`splunker`**, and `SPLUNK_MCP_PASSWORD`.
+- `scripts/splunk-api-env.sh` → `/splunk-api-env.sh` (**read-only**; shared REST defaults)
+- No host secrets mount (this repo does not write tokens/passwords to disk). `compose.yml` passes `SPLUNK_PASSWORD`, `SPLUNK_MCP_PASSWORD`, and `SPLUNK_HOST=so1`. Port **8089**, REST user **`admin`**, and MCP user **`splunker`** are defaults in `scripts/splunk-api-env.sh`.
 
 ### MCP token minting and S4R tools (host)
 
@@ -145,7 +146,7 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 | ------ | -------- |
 | `up` | `scripts/compose-up.sh` (`.env` or `op run --env-file=tpl.env`), then `update-all` (`MCP_UPDATE_ON_BOOT`, default `cursor`), then `register-s4r-mcp-tools` |
 | `config` | Print `docker compose config` after the same secret and `config.env` load as `up`. `SPLUNK_PASSWORD`, Splunkbase user/password, and `SPLUNK_MCP_PASSWORD` are shown as `<set>` |
-| `down` | `scripts/mcp-client.sh park all` (no secrets), then `docker compose down` |
+| `down` | `scripts/mcp-client.sh park all` (no secrets), then `docker compose down`. `config.env` must be present so Compose can read `SPLUNK_IMAGE` and `TZ` |
 | `park-mcp-clients` | `scripts/mcp-client.sh park all` — remove `splunk-mcp-server` from client configs |
 | `update-mcp-clients` | `scripts/mcp-client.sh update-all` for cursor, goose, claude (one mint) |
 | `update-mcp-client` | One client: `MCP_CLIENT=claude\|cursor\|goose` |
@@ -157,7 +158,7 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 | `mcp-auth-failures` | Admin `_internal` MCP auth/tool stats (last 30m). Needs `.env` or `tpl.env`. **`DETAIL=1`** prints raw failures. Not visible to `splunker` MCP |
 | `cloud-bootstrap` | `scripts/cloud-bootstrap.sh` — Cursor Cloud VM prep before `make up` (`CLOUD_BOOTSTRAP_ARGS` for flags) |
 | `restart` / `logs` / `status` | Lifecycle only (no secrets / `op` required) |
-| `clean` | `scripts/mcp-client.sh park all`, then `docker compose down -v`, then remove `.env` (no `op` required). Prompts unless **`make clean-y`** or **`CLEAN_YES=1`** |
+| `clean` | `scripts/mcp-client.sh park all`, then `docker compose down -v`, then remove `.env` (no `op` required; `config.env` must be present). Prompts unless **`make clean-y`** or **`CLEAN_YES=1`** |
 | `clean-y` | Non-interactive **`clean`** (for automation, e.g. `make clean-y && make up`) |
 | `s4r-attack-nk-enable` | **Shell fallback:** `POST` `disabled=false` on the NK Eventgen stanza, then reload Eventgen. Prefer MCP **`SA-S4R_apply_nk_demo_state`** (`mode=threat`) — no restart on HTTP **200**; HTTP **503** or a shell reload error → **`make restart`**. Needs `.env` or `tpl.env` |
 | `s4r-attack-nk-disable` | **Shell fallback:** `POST` `disabled=true`, then reload Eventgen. Prefer MCP **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) |
@@ -319,10 +320,7 @@ Typical environment inside `splunk-init` (from Compose):
 
 | Variable | Example | Role |
 | -------- | ------- | ---- |
-| `SPLUNK_HOST` | `so1` | REST hostname on the Docker network |
-| `SPLUNK_PORT` | `8089` | Management port |
-| `SPLUNK_REST_USER` | `admin` | REST login user (fixed) |
-| `SPLUNK_MCP_USER` | `splunker` | MCP user (fixed) |
+| `SPLUNK_HOST` | `so1` | REST hostname on the Docker network. The script default is `localhost`, which is this container |
 | `SPLUNK_PASSWORD` | *(secret)* | REST password |
 | `SPLUNK_MCP_PASSWORD` | *(secret)* | Password for the MCP execution user |
 
@@ -330,14 +328,14 @@ Typical environment inside `splunk-init` (from Compose):
 
 | Variable | Default | Meaning |
 | -------- | ------- | ------- |
-| `SPLUNK_HOST` | `localhost` | REST host |
-| `SPLUNK_PORT` | `8089` | REST port |
-| `SPLUNK_REST_USER` | `admin` | Authenticated user for REST (fixed in the script) |
+| `SPLUNK_HOST` | `localhost` | REST host (`scripts/splunk-api-env.sh`; Compose sets `so1` on `splunk-init`) |
+| `SPLUNK_PORT` | `8089` | REST port (`scripts/splunk-api-env.sh`) |
+| `SPLUNK_REST_USER` | `admin` | Authenticated user for REST (`scripts/splunk-api-env.sh`) |
 | `SPLUNK_PASSWORD` | *(required)* | Admin password |
-| `SPLUNK_MCP_USER` | `splunker` | Splunk user to create or update (fixed in the script) |
+| `SPLUNK_MCP_USER` | `splunker` | Splunk user to create or update (`scripts/splunk-api-env.sh`) |
 | `SPLUNK_MCP_PASSWORD` | *(required in this repo)* | Password for the MCP execution user |
 
-Secrets come from **1Password** (`tpl.env` + `op run`) or a hand-written **`.env`**. There is no other password file or alias. Account names are not read from those files.
+Secrets come from **1Password** (`tpl.env` + `op run`) or a hand-written **`.env`**. There is no other password file or alias. Host, port, and account names come from `scripts/splunk-api-env.sh`. A value already in the environment overrides the default.
 
 ### Execution order
 

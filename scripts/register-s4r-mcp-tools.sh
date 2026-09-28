@@ -12,10 +12,11 @@ ENV_OUT="${ENV_OUT:-.env}"
 OP="${OP:-op}"
 TOOLS_JSON="${ROOT}/SA-S4R/default/s4r_mcp_tools.json"
 
+# shellcheck source=scripts/splunk-api-env.sh
+source "${ROOT}/scripts/splunk-api-env.sh"
+
 register_s4r_mcp_tools() {
-  SPLUNK_HOST="${SPLUNK_HOST:-localhost}"
-  SPLUNK_PORT="${SPLUNK_PORT:-8089}"
-  SPLUNK_REST_USER="admin"
+  splunk_api_env
   : "${SPLUNK_PASSWORD:?SPLUNK_PASSWORD must be set}"
   SPLUNK_URL="https://${SPLUNK_HOST}:${SPLUNK_PORT}"
 

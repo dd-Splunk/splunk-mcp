@@ -142,9 +142,37 @@ printf '%s\n' "$rendered" | grep -qx 'SPLUNK_PASSWORD: <set>' || die "compose-co
 if printf '%s\n' "$rendered" | grep -q 'your_password_here'; then
   die "compose-config output contained a secret"
 fi
-if grep -E 'SPLUNK_(REST|MCP|MLTK)_USER:-|MLTK_ROLE|SPLUNK_MLTK_USER' \
+if grep -E 'MLTK_ROLE|SPLUNK_MLTK_USER' \
   "${ROOT}/scripts/"*.sh "${ROOT}/compose.yml" >/dev/null; then
-  die "scripts still read identity overrides from the environment"
+  die "scripts still read MLTK identity settings from the environment"
 fi
+grep -q 'SPLUNK_MCP_USER="splunker"' "${ROOT}/scripts/setup-splunk.sh" \
+  && die "setup-splunk.sh overwrites SPLUNK_MCP_USER after its default"
+
+for script in setup-splunk.sh register-s4r-mcp-tools.sh toggle-s4r-attack-nk.sh \
+  mint-mcp-token.sh mcp-auth-failures.sh; do
+  grep -q 'splunk_api_env' "${ROOT}/scripts/${script}" \
+    || die "${script} does not use splunk_api_env"
+done
+if grep -E 'SPLUNK_MCP_HOST|SPLUNK_REST_USER="admin"|mcp_user="splunker"' \
+  "${ROOT}/scripts/setup-splunk.sh" "${ROOT}/scripts/register-s4r-mcp-tools.sh" \
+  "${ROOT}/scripts/toggle-s4r-attack-nk.sh" "${ROOT}/scripts/mint-mcp-token.sh" \
+  "${ROOT}/scripts/mcp-auth-failures.sh" >/dev/null; then
+  die "a REST client still hardcodes host or account names"
+fi
+grep -q 'splunk-api-env.sh:/splunk-api-env.sh:ro' "${ROOT}/compose.yml" \
+  || die "compose.yml does not mount splunk-api-env.sh"
+grep -q 'SPLUNK_HOST: so1' "${ROOT}/compose.yml" || die "compose.yml must set SPLUNK_HOST=so1"
+
+# shellcheck source=scripts/splunk-api-env.sh
+source "${ROOT}/scripts/splunk-api-env.sh"
+unset SPLUNK_HOST SPLUNK_PORT SPLUNK_REST_USER SPLUNK_MCP_USER
+splunk_api_env
+[[ "${SPLUNK_HOST}" == "localhost" && "${SPLUNK_PORT}" == "8089" \
+  && "${SPLUNK_REST_USER}" == "admin" && "${SPLUNK_MCP_USER}" == "splunker" ]] \
+  || die "splunk_api_env defaults"
+SPLUNK_HOST=so1
+splunk_api_env
+[[ "${SPLUNK_HOST}" == "so1" ]] || die "splunk_api_env overwrote SPLUNK_HOST"
 
 echo "with-splunk-env: ok"

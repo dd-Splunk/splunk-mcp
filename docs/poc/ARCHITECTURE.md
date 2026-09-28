@@ -64,7 +64,7 @@ Check mode: **`SA-S4R_query_nk_demo_state`**. Agentic analysis: [AGENTS.md](../s
 - **Purpose**: Runs initialization setup script after Splunk is healthy
 - **Dependency**: Waits for `so1` service to be healthy
 - **Restart Policy**: No (runs once and stops)
-- **Script**: `scripts/setup-splunk.sh`
+- **Script**: `scripts/setup-splunk.sh` (REST defaults from `scripts/splunk-api-env.sh`; Compose sets `SPLUNK_HOST=so1`)
 
 ### 3. Data Persistence
 
@@ -197,6 +197,7 @@ Claude Desktop
 - Creates or updates Splunk role **`mcp_user`** with capability **`mcp_tool_execute`**
 - Creates **`splunker`** with roles **`user`** + **`mcp_user`**
 - Uses `SPLUNK_MCP_PASSWORD` (env) for the MCP user (no password written to disk)
+- REST host, port, and account names come from `scripts/splunk-api-env.sh` (`localhost`, `8089`, `admin`, `splunker` unless already set)
 - Enables SA-Eventgen default modinput (**required**; init fails if missing or still disabled)
 - Dependencies: `curl`, `jq` (installed in `splunk-init`)
 

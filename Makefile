@@ -13,7 +13,8 @@ MCP_VERIFY_CLIENT ?= all
 MCP_CLIENTS := cursor goose claude
 MCP_UPDATE_ON_BOOT ?= cursor
 
-export ENV_FILE ENV_OUT ENV_EXAMPLE OP DC
+include config.env
+export ENV_FILE ENV_OUT ENV_EXAMPLE OP DC SPLUNK_IMAGE TZ
 
 .PHONY: help up down restart clean clean-y logs status config demo-prep verify cloud-bootstrap \
 	park-mcp-clients update-mcp-clients update-mcp-client verify-mcp-remote mcp-auth-failures \

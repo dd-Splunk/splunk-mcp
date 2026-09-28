@@ -12,6 +12,9 @@ ENV_OUT="${ENV_OUT:-.env}"
 OP="${OP:-op}"
 DETAIL="${MCP_AUTH_DETAIL:-0}"
 
+# shellcheck source=scripts/splunk-api-env.sh
+source "${ROOT}/scripts/splunk-api-env.sh"
+
 if [[ "${1:-}" == "--detail" ]]; then
   DETAIL=1
 fi
@@ -22,12 +25,12 @@ DETAIL_SPL='index=_internal sourcetype=mcp_monitoring_dashboard event_type IN (a
 
 run_export() {
   local spl="$1"
-  local host port user
-  host="${SPLUNK_MCP_HOST:-localhost}"
-  port="${SPLUNK_PORT:-8089}"
-  user="admin"
+  local host port
+  splunk_api_env
+  host="${SPLUNK_HOST}"
+  port="${SPLUNK_PORT}"
   : "${SPLUNK_PASSWORD:?SPLUNK_PASSWORD must be set}"
-  curl -sk --max-time 60 -u "${user}:${SPLUNK_PASSWORD}" \
+  curl -sk --max-time 60 -u "${SPLUNK_REST_USER}:${SPLUNK_PASSWORD}" \
     "https://${host}:${port}/services/search/jobs/export" \
     --data-urlencode "search=search ${spl}" \
     -d output_mode=csv \
