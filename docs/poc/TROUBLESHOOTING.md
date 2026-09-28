@@ -406,15 +406,16 @@ make up
 
 **Error**: Cursor/Claude show generic Splunk tools but not `SA-S4R_query_nk_demo_state` (or other `SA-S4R_*` tools)
 
-**Cause**: Registration runs on the **host** after `splunk-init` (`make up` → `make register-s4r-mcp-tools`). Older stacks skipped it because `splunk-init` only mounts `setup-splunk.sh`.
+**Cause**: **`splunk-init`** registers the tools and then exits. A stack that booted before that step, or an init that failed the `POST /services/mcp_tools` call, leaves them off `tools/list`.
 
 **Solution**:
 
 ```bash
-make register-s4r-mcp-tools
+docker logs splunk-init
+make up
 ```
 
-Requires **`jq`** on the host ([INSTALLATION.md](INSTALLATION.md)). See [MCP-TOOLS.md](../s4r/MCP-TOOLS.md).
+`make up` starts the exited **`splunk-init`** container again. Init installs **`jq`** itself. See [MCP-TOOLS.md](../s4r/MCP-TOOLS.md).
 
 ---
 

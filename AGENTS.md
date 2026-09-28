@@ -7,7 +7,6 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`. H
 - **Purpose**: local PoC that runs **Splunk Enterprise** in Docker and exposes **Splunk MCP Server** on `https://localhost:8089/services/mcp`.
 - **Client bridge**: **Claude Desktop**, **Cursor**, and **Goose** use **`npx mcp-remote`** to `https://localhost:8089/services/mcp` (token minted at `make update-mcp-client` after **`splunk-init`** completes; stored only in client config, not the repo). See `make update-mcp-clients` or `make update-mcp-client MCP_CLIENT=…`. **SE / presales**: **`docs/poc/PRESALES.md`**.
 - **Sample app**: **`SA-S4R`** (UI label **Splunk4Rookies**) — bind-mounted Eventgen traffic, lookups, workshop assets in **`local/`**. Workshop hub: **`docs/s4r/README.md`**. SPL runbook: **`docs/s4r/SPL-CATALOG.md`**. Data: **`docs/s4r/SA-S4R-APP.md`**. Dashboard build spec: **`docs/s4r/DASHBOARD.md`**. Agents: **`docs/s4r/AGENTS.md`** + **`.cursor/agents/`**.
-- **Session memory (Vellem)**: when the **vellem** MCP server is enabled in Cursor, start with **`search_notes_semantic`** on folder **`splunk-mcp`** (boot, verify, troubleshooting) before deep doc reads. Use **`list_expiring_contexts`** to avoid stale notes. After demos or non-obvious fixes, capture outcomes in Vellem (**`add_decision_note`** / **`append_to_daily`**) — not in git. Splunk MCP handles live data; Vellem holds repo-specific memory (no secrets).
 
 ## Scope (in / out)
 
@@ -31,7 +30,7 @@ Do not add Cloud MCP testing, endpoints, or secrets-handling paths to this repo 
 
 ## How the stack boots
 
-- **`make up`**: runs **`scripts/compose-up.sh`** → **`docker compose up -d`** with secrets from **either** a gitignored **`.env`** on disk **or** **`op run --env-file=tpl.env`** when `.env` is absent (requires signed-in `op`). After **`splunk-init`** exits **0**, **`make update-mcp-clients`** (via **`update-all`**, default **`MCP_UPDATE_ON_BOOT=cursor`**) mints one token into client configs, then **`make register-s4r-mcp-tools`**. See **`Makefile`** for exact behavior.
+- **`make up`**: runs **`scripts/compose-up.sh`** → **`docker compose up -d`** with secrets from **either** a gitignored **`.env`** on disk **or** **`op run --env-file=tpl.env`** when `.env` is absent (requires signed-in `op`). After **`splunk-init`** exits **0**, **`make update-mcp-clients`** (via **`update-all`**, default **`MCP_UPDATE_ON_BOOT=cursor`**) mints one token into client configs. Workshop MCP tools are registered inside **`splunk-init`**. See **`Makefile`** for exact behavior.
 - **`compose-up.sh`** requires non-empty **`SPLUNK_PASSWORD`**, **`SPLUNKBASE_USER`**, **`SPLUNKBASE_PASS`**, and **`SPLUNK_MCP_PASSWORD`** (both Path A and Path B), then **`scripts/wait-splunk-init.sh`** blocks until **`splunk-init`** exits **0**.
 - **`make down`**, **`make clean`**: **`scripts/mcp-client.sh park all`** first (removes **`splunk-mcp-server`** from client configs so Cursor does not reconnect with stale tokens during boot); then **`docker compose down`**. No `op` or project secrets required for park/down.
 - **`make logs`**, **`make restart`**, **`make status`**: plain **`docker`** / **`docker compose`** only—no `op` or project secrets required.
@@ -48,7 +47,7 @@ Splunk REST bootstrap (see **`docs/poc/CONFIGURATION.md` § Appendix: setup-splu
 - **Identity**: Splunk role **`mcp_user`** with capabilities **`mcp_tool_execute`** and **`s4r_workshop_control`**; user **`splunker`** with roles **`user`** + **`mcp_user`**. REST calls use **`admin`**. Host, port, and those account names are the defaults in **`scripts/splunk-api-env.sh`**. **`compose.yml`** sets **`SPLUNK_HOST=so1`** on **`splunk-init`** only.
 - **Password**: MCP user password is provided via **`SPLUNK_MCP_PASSWORD`** (env).
 
-**Not** in this script: MCP token minting (**`scripts/mint-mcp-token.sh`**, after init), SA-S4R MCP tool registration (**`scripts/register-s4r-mcp-tools.sh`**, host after init), or **`claude_logs`** index/file monitors. Optional ingestion: enable the bind mount in **`compose.yml`**, create the index and monitor in Splunk—**`docs/poc/CONFIGURATION.md`**.
+**Not** in this script: MCP token minting (**`scripts/mint-mcp-token.sh`**, after init) or **`claude_logs`** index/file monitors. SA-S4R MCP tool registration **is** in this script: it runs **`scripts/register-s4r-mcp-tools.sh`** before exiting. Optional ingestion: enable the bind mount in **`compose.yml`**, create the index and monitor in Splunk—**`docs/poc/CONFIGURATION.md`**.
 
 ## Client configuration scripts
 
@@ -94,7 +93,7 @@ Workshop agent **roles** remain in **`.cursor/agents/`** (not skills). Do not du
 - **`SPLUNK_MCP_ENDPOINT`**, **`SPLUNK_MCP_TLS_INSECURE`**, **`MCP_NPX_COMMAND`**, **`MCP_REMOTE_PACKAGE`** (default `mcp-remote@0.8.3`): see **`docs/poc/CONFIGURATION.md`**
 - **`SA-S4R_*` MCP tools** (preferred for workshop mode): **`SA-S4R_query_nk_demo_state`**, **`SA-S4R_apply_nk_demo_state`**, etc. — **`docs/s4r/MCP-TOOLS.md`**
 - **`s4r-attack-nk-enable`** / **`s4r-attack-nk-disable`** / **`s4r-attack-nk-status`**: shell fallback via Splunk config REST (reloads Eventgen; **`make restart`** only if reload fails) — **`docs/s4r/SA-S4R-APP.md`**
-- **`register-s4r-mcp-tools`**: re-register SA-S4R workshop MCP tools after editing **`s4r_mcp_tools.json`** (`make up` already runs this)
+- Editing **`s4r_mcp_tools.json`**: **`make up`** starts the exited **`splunk-init`** container again and re-registers tools. A full **`make down && make up`** is fine too.
 
 ## Common failure modes
 
@@ -109,7 +108,7 @@ Workshop agent **roles** remain in **`.cursor/agents/`** (not skills). Do not du
 ## Change discipline
 
 - Prefer small commits; keep **`make up`**, **`make status`**, **`make verify-mcp-remote`**, **`make test`** working.
-- When changing **`Makefile`**, **`compose.yml`**, or **`scripts/setup-splunk.sh`**, update **`docs/poc/CONFIGURATION.md`**, **`docs/poc/ARCHITECTURE.md`**, and/or **`docs/poc/TROUBLESHOOTING.md`** as needed; refresh or expire Vellem **`splunk-mcp`** folder notes when behavior changes. For wider rollout decisions, see **`docs/poc/GRADUATION.md`**.
+- When changing **`Makefile`**, **`compose.yml`**, or **`scripts/setup-splunk.sh`**, update **`docs/poc/CONFIGURATION.md`**, **`docs/poc/ARCHITECTURE.md`**, and/or **`docs/poc/TROUBLESHOOTING.md`** as needed. For wider rollout decisions, see **`docs/poc/GRADUATION.md`**.
 - Lint before push: **`pre-commit run --all-files`** (**gitleaks**, **shellcheck** on **`scripts/*.sh`** and **`tests/*.sh`**, **markdownlint-cli2** on Markdown) then **`make test`**. Requires **shellcheck** on PATH (`brew install shellcheck`) and **Node/npx**. Auto-fix Markdown: `npx --yes markdownlint-cli2 --fix`.
 - **SA-S4R Splunk app:** direct Splunk UI customizations (nav, views, field extractions, saved searches) belong in **`SA-S4R/local/`** only — **never** in **`default/`** (Splunk best practice). Workshop instructions: **`SA-S4R/local/README`** (only tracked file under **`local/`**; see **`.gitignore`**). See **`docs/s4r/SA-S4R-APP.md`** § **`default/` vs `local/`**.
 - **License:** contributions are under **[LICENSE](LICENSE)** (MIT).

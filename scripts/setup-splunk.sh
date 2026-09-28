@@ -6,10 +6,10 @@
 #   2. Splunk MCP Server: ssl_verify=false (local dev only; uses curl -k)
 #   3. Role mcp_user with mcp_tool_execute (required) and s4r_workshop_control (best-effort after SA-S4R load)
 #   4. User splunker: roles user + mcp_user
+#   5. SA-S4R MCP tools: register-s4r-mcp-tools.sh (batch replace, enable, saved-search reload)
 #
-# SA-S4R MCP tool registration is host-side after this script exits
-# (`make up` → `make register-s4r-mcp-tools`). splunk-init mounts this file and
-# splunk-api-env.sh only.
+# splunk-init mounts this directory's scripts and SA-S4R/default/s4r_mcp_tools.json.
+# Compose sets SPLUNK_MCP_ENV_LOADED=1 so the registrar does not look for .env or op.
 #
 # Required env: SPLUNK_PASSWORD.
 # SPLUNK_MCP_PASSWORD is required on first user creation and when FORCE_SPLUNK_MCP_PASSWORD=1.
@@ -278,6 +278,10 @@ if [ "${user_exists}" = "0" ]; then
   echo "✅ Created user ${SPLUNK_MCP_USER} (roles user + mcp_user)"
 fi
 cleanup_last_body
+
+# --- 5. SA-S4R MCP tools (fails init if register or enable fails) ---
+echo "Registering SA-S4R MCP tools..."
+"${_here}/register-s4r-mcp-tools.sh"
 
 echo "✅ Setup complete!"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

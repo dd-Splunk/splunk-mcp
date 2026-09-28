@@ -106,17 +106,17 @@ The sections below mirror slide content and **speaker script**; if the deck and 
 
 ## Slides 7–12 — Splunk MCP architecture and S4R tools
 
-Developer Day 2026: apps expose tools through **Splunk MCP Server** — recordings in the [Developer Day 2026 playlist](https://www.youtube.com/playlist?list=PLxkFdMSHYh3T2mFyCdg8iz9ef068gLdfJ). Primary session: **[Apps with MCP Tools](https://www.youtube.com/watch?v=fjGCf0QiBJc)**. Implementation: [MCP-TOOLS.md](../docs/s4r/MCP-TOOLS.md).
+Product contract: [About MCP Server for Splunk platform](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/about-mcp-server-for-splunk-platform) · [Managing custom tools](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/managing-custom-tools-in-splunk-mcp-server). Implementation: [MCP-TOOLS.md](../docs/s4r/MCP-TOOLS.md).
 
 **Slide 7:** Section divider — apps as tools.
 
-**Slide 8 — Apps as MCP tools:** Session wording — existing Splunk apps into Cursor/Claude/AI Canvas; saved search vs REST; `tools.conf` + signatures; collision detection / rate limiting.
+**Slide 8 — Apps as MCP tools:** Existing Splunk apps into Cursor/Claude/AI Canvas; SPL vs API; register with `POST /services/mcp_tools` from `s4r_mcp_tools.json`, then enable. Collision detection / rate limiting.
 
-**Slide 9 — Architecture:** Native tools · Splunkbase app tools · private app (`SA-S4R_*`). Szebenyi deck three-layer diagram.
+**Slide 9 — Architecture:** Native tools · Splunkbase app tools · private app (`SA-S4R_*`).
 
-**Slide 10 — How it works:** App files → MCP Tool Registration → saved search / REST handler.
+**Slide 10 — How it works:** `s4r_mcp_tools.json` → batch replace → enable → `/services/mcp`. Saved searches and the REST handler are what enabled tools run.
 
-**Slide 11 — `tools.conf` and signatures:** Official `[savedsearches:]` / `[restmap:]` stanzas mapped to SA-S4R; Tool ID.
+**Slide 11 — Custom tool registration:** Batch replace, enable (`SA-S4R:SA-S4R_<name>`), run. `inputSchema` in the JSON is the argument schema.
 
 **Slide 12 — SA-S4R workshop tools:** five tools (two API for NK mode, three SPL for KPIs / geo / NK validate).
 
@@ -179,7 +179,7 @@ Developer Day 2026: apps expose tools through **Splunk MCP Server** — recordin
 ## Slide 28 — Takeaways
 
 1. **Step 1** — NL dashboard build from workshop spec + catalog.
-2. **MCP architecture** — SA-S4R packages SPL and API tools in `tools.conf`; Splunk MCP Server exposes them ([Apps with MCP Tools](https://www.youtube.com/watch?v=fjGCf0QiBJc)).
+2. **MCP architecture** — SA-S4R registers SPL and API tools with `POST /services/mcp_tools`, then enables them ([MCP Server 2.0](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/about-mcp-server-for-splunk-platform)).
 3. **Step 2** — Business questions via MCP; no SPL for the user.
 4. **Step 3** — Power User orchestrates four specialists → executive synthesis.
 5. **Same data and catalog** — infrastructure vs threat without rewriting prompts.
@@ -255,7 +255,7 @@ Timings are approximate. Adjust for audience questions.
 
 ### 0:04 — Splunk MCP architecture (2 min)
 
-**Say:** *“Developer Day — Apps with MCP Tools: native Splunk tools, Splunkbase app tools, and your private app. SA-S4R is that private column — saved searches and a REST handler, registered with tools.conf and signatures.”*
+**Say:** *“MCP Server 2.0: native Splunk tools, Splunkbase app tools, and your private app. SA-S4R is that private column — a JSON payload posted to the MCP tools API, then enabled. Saved searches and a REST handler are what those tools run.”*
 
 **Show:** Slides 7–12. Point at the architecture diagram, then the five `SA-S4R_*` tools.
 

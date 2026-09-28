@@ -19,7 +19,7 @@ Do not paste secrets. Do not `make up` / `make clean` / change NK mode unless th
    - Pins **OK** / **SKIP** (offline): continue.
    - If status is init failed / so1 not healthy: `docker logs so1 --tail 80` and look for that download 404. Do not wait out `splunk-init` “still running” while so1 is restart-looping.
 2. **S4R MCP smoke** (if Splunk MCP tools are connected):
-   - Call **`SA-S4R_query_nk_demo_state`**. Missing tool → FIX: `make register-s4r-mcp-tools`, reload **splunk-mcp-server**.
+   - Call **`SA-S4R_query_nk_demo_state`**. Missing tool → FIX: `make up` (re-runs **`splunk-init`**), reload **splunk-mcp-server**.
    - If mode is **threat**: **`SA-S4R_validate_nk_attack_traffic`**. Empty rows → wait ~1–2 min or FIX Eventgen; do not apply threat yourself.
    - If mode is **infrastructure**: skip validate (empty NK is expected). Optional one-shot **`SA-S4R_summarize_purchase_health`** only if you need proof Eventgen purchases exist.
    - Else (no MCP): `make s4r-attack-nk-status`.
@@ -47,7 +47,7 @@ Cold `make up` after `make clean` takes several minutes.
 ### If not GO
 - pins MISSING → bump `compose.yml` `/release/VERSION/` (do not invent URLs; use Splunkbase default)
 - so1 404 in logs → same bump, then `make down && make up` only if the user asked
-- MCP / S4R → `make register-s4r-mcp-tools`, reload MCP, `docker logs splunk-init`
+- MCP / S4R → `docker logs splunk-init`, `make up`, reload MCP
 ```
 
 **Entry points:** `https://localhost:8000` · `https://localhost:8089/services/mcp` · `make marp-preview`

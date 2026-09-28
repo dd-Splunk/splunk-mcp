@@ -26,7 +26,7 @@ Endpoints: https://localhost:8000 · https://localhost:8089/services/mcp
 | Losing money / checkout KPIs? | `SA-S4R_summarize_purchase_health` | read, **24h** |
 | Where are failed purchases? | `SA-S4R_geo_failed_purchases` | read, **24h**; pair with validate for NK |
 
-Else: `splunk_run_query` + [docs/s4r/SPL-CATALOG.md](docs/s4r/SPL-CATALOG.md). Shell fallback: `make s4r-attack-nk-*` (REST; **`make restart`** only if Eventgen reload fails). Missing tools: `make register-s4r-mcp-tools`, reload MCP.
+Else: `splunk_run_query` + [docs/s4r/SPL-CATALOG.md](docs/s4r/SPL-CATALOG.md). Shell fallback: `make s4r-attack-nk-*` (REST; **`make restart`** only if Eventgen reload fails). Missing tools: `make up` (re-runs `splunk-init`), reload MCP.
 
 ### Stack
 | Command | Notes |
