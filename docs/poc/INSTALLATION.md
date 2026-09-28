@@ -30,6 +30,7 @@
 | `make`, `bash` | `Makefile` workflows | `make --version` |
 | `curl`, `jq` | Scripts / REST | `curl --version`, `jq --version` |
 | Node/npm | `npx mcp-remote` for MCP clients | `node --version`, `npx --version` |
+| Python 3 + PyYAML | Goose config (`make update-mcp-client MCP_CLIENT=goose`) | `python3 --version`; `python3 -c "import yaml"` (`pip3 install pyyaml`; Homebrew PEP 668: `python3 -m pip install --user --break-system-packages pyyaml`) |
 
 Optional: **Git** to clone; an editor (e.g. VS Code) to edit `tpl.env` (from **`tpl.env.example`**) and `compose.yml`.
 
@@ -112,6 +113,8 @@ jq --version
 curl --version
 node --version
 npx --version
+python3 --version
+python3 -c "import yaml"
 curl -fsS https://splunkbase.splunk.com/ >/dev/null
 ```
 

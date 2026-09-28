@@ -6,7 +6,7 @@ This repo is a **local proof-of-concept**: **Splunk Enterprise** in Docker, **Sp
 
 ## Demo success path (do this in order)
 
-1. **Prereqs on the laptop:** Docker Desktop (or equivalent) with enough RAM (prefer **8 GB+** free for Splunk), **Node** / **npm** (for `npx mcp-remote`), `make`, `bash`, `curl`, `jq`.
+1. **Prereqs on the laptop:** Docker Desktop (or equivalent) with enough RAM (prefer **8 GB+** free for Splunk), **Node** / **npm** (for `npx mcp-remote`), `make`, `bash`, `curl`, `jq`. For **Goose**, also **Python 3** and **PyYAML** (`pip3 install pyyaml`; Homebrew PEP 668: `python3 -m pip install --user --break-system-packages pyyaml`).
 2. **Secrets** — pick **one** path (next section):
 
    - **Path A:** `cp tpl.env.example tpl.env`, edit `op://` paths for **your** 1Password vault, `op` signed in.
