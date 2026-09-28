@@ -21,7 +21,7 @@ Endpoints: https://localhost:8000 · https://localhost:8089/services/mcp
 | User ask | Tool | Notes |
 | -------- | ---- | ----- |
 | What workshop mode? | `SA-S4R_query_nk_demo_state` | read |
-| Start / stop NK storyline | `SA-S4R_apply_nk_demo_state` | **write** `mode=threat` \| `infrastructure`; no `make restart` |
+| Start / stop NK storyline | `SA-S4R_apply_nk_demo_state` | **write** `mode=threat` \| `infrastructure`; no restart on HTTP 200; HTTP 503 → `make restart` |
 | NK / 175.45.* traffic yet? | `SA-S4R_validate_nk_attack_traffic` | read, last **15m**; empty → wait 1–2 min or still infrastructure |
 | Losing money / checkout KPIs? | `SA-S4R_summarize_purchase_health` | read, **24h** |
 | Where are failed purchases? | `SA-S4R_geo_failed_purchases` | read, **24h**; pair with validate for NK |

@@ -140,8 +140,10 @@ class WorkshopModeHandler(PersistentServerConnectionApplication):
             "eventgen_reloaded": reloaded,
         }
         if not reloaded:
+            body["error"] = "eventgen_reload_failed"
             body["reload_error"] = reload_error
-            body["hint"] = "If data does not change within ~2 minutes, run: make restart"
+            body["hint"] = "local/eventgen.conf was written but Eventgen did not reload. Run: make restart"
+            return self._json(503, body)
         return self._json(200, body)
 
     @staticmethod
