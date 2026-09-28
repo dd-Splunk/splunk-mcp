@@ -602,7 +602,7 @@ Use case 5 / Demo 2: make s4r-attack-nk-enable before ask. Attendees can swap qu
 
 > *Start the North Korean attack simulation for the Buttercup workshop.*
 
-Watch: **`SA-S4R_apply_nk_demo_state`** (`threat`) → **`SA-S4R_validate_nk_attack_traffic`**. Fallback: `make s4r-attack-nk-enable && make restart`
+Watch: **`SA-S4R_apply_nk_demo_state`** (`threat`) → **`SA-S4R_validate_nk_attack_traffic`**. Fallback: `make s4r-attack-nk-enable`
 
 **Then ask Cursor (Power User):**
 
@@ -611,7 +611,7 @@ Watch: **`SA-S4R_apply_nk_demo_state`** (`threat`) → **`SA-S4R_validate_nk_att
 **Expected:** Security leads on NK geo; IT Ops still sees 503/404 from baseline.
 
 <!--
-Verdict: mixed — infrastructure still broken, but Security has a lead. Cleanup after demo: SA-S4R_apply_nk_demo_state (infrastructure) or make s4r-attack-nk-disable and make restart.
+Verdict: mixed — infrastructure still broken, but Security has a lead. Cleanup after demo: SA-S4R_apply_nk_demo_state (infrastructure) or make s4r-attack-nk-disable.
 -->
 
 ---
@@ -682,7 +682,7 @@ make s4r-attack-nk-status    # expect: disabled (or SA-S4R_query_nk_demo_state �
 > *Start the North Korean attack simulation.* (then wait ~2 min)
 > *As Buttercup Power User: is the money loss due to bad infrastructure or an active threat? Delegate to all four teams. Use the last 15 minutes.*
 
-**Cleanup:** *Return to infrastructure mode* → **`SA-S4R_apply_nk_demo_state`** (`infrastructure`) or `make s4r-attack-nk-disable && make restart`
+**Cleanup:** *Return to infrastructure mode* → **`SA-S4R_apply_nk_demo_state`** (`infrastructure`) or `make s4r-attack-nk-disable`
 
 ---
 

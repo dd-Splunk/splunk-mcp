@@ -1,94 +1,122 @@
-"""Shared paths and helpers for NK workshop Eventgen mode (local override, not default/)."""
+"""NK workshop Eventgen mode via Splunk configuration REST (no direct conf edits)."""
 
 from __future__ import annotations
 
-import os
-from typing import Optional
+import json
+from typing import Any, Optional
 
-STANZA = "[attack.nk.purchase.sample]"
-APP_DIR = os.path.join("etc", "apps", "SA-S4R")
-
-
-def splunk_home() -> str:
-    return os.environ.get("SPLUNK_HOME", "/opt/splunk")
-
-
-def default_eventgen_conf_path() -> str:
-    return os.path.join(splunk_home(), APP_DIR, "default", "eventgen.conf")
+STANZA_NAME = "attack.nk.purchase.sample"
+STANZA = f"[{STANZA_NAME}]"
+CONFIG_ENDPOINT = (
+    f"/servicesNS/nobody/SA-S4R/configs/conf-eventgen/{STANZA_NAME}"
+)
+DISABLED_ENDPOINT = (
+    f"/servicesNS/nobody/SA-S4R/properties/eventgen/{STANZA_NAME}/disabled"
+)
 
 
-def local_eventgen_conf_path() -> str:
-    return os.path.join(splunk_home(), APP_DIR, "local", "eventgen.conf")
+class EventgenConfigError(Exception):
+    """Splunk rejected or did not return the Eventgen stanza setting."""
+
+    def __init__(self, message: str, status: Optional[int] = None) -> None:
+        super().__init__(message)
+        self.status = status
 
 
-def read_disabled_flag_from_file(path: str) -> Optional[bool]:
-    """Return True when the stanza is disabled (infrastructure / NK off)."""
-    in_stanza = False
-    with open(path, encoding="utf-8") as handle:
-        for line in handle:
-            stripped = line.rstrip("\n")
-            if stripped == STANZA:
-                in_stanza = True
-                continue
-            if in_stanza and stripped.startswith("disabled = "):
-                value = stripped.split("=", 1)[1].strip()
-                return value not in ("false", "0")
-            if in_stanza and stripped.startswith("[") and stripped != STANZA:
-                break
+def _is_disabled(value: Any) -> bool:
+    """True when Eventgen should not emit the NK stanza."""
+    if isinstance(value, bool):
+        return value
+    text = str(value).strip().lower()
+    if text in ("false", "0", "no", "f"):
+        return False
+    if text in ("true", "1", "yes", "t"):
+        return True
+    raise EventgenConfigError(f"unexpected disabled value: {value!r}")
+
+
+def disabled_from_body(body: str) -> Optional[bool]:
+    """Parse a properties/configs JSON document or a raw true/false/0/1 token."""
+    text = body.strip()
+    if not text:
+        return None
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError:
+        return _is_disabled(text)
+    if isinstance(payload, (str, bool, int, float)):
+        return _is_disabled(payload)
+    return disabled_from_properties_payload(payload)
+
+
+def disabled_from_properties_payload(payload: Any) -> Optional[bool]:
+    """Parse a properties or configs JSON body. None when the stanza is absent."""
+    if not isinstance(payload, dict):
+        return None
+    entries = payload.get("entry")
+    if not isinstance(entries, list) or not entries:
+        return None
+    first = entries[0]
+    if not isinstance(first, dict):
+        return None
+    content = first.get("content")
+    if isinstance(content, dict):
+        if "disabled" not in content:
+            return None
+        return _is_disabled(content.get("disabled"))
+    if isinstance(content, (str, bool, int, float)):
+        return _is_disabled(content)
     return None
 
 
-def read_disabled_flag() -> Optional[bool]:
-    """Prefer local/eventgen.conf override; fall back to default/."""
-    for path in (local_eventgen_conf_path(), default_eventgen_conf_path()):
-        if not os.path.isfile(path):
-            continue
-        disabled = read_disabled_flag_from_file(path)
-        if disabled is not None:
-            return disabled
-    return None
+def _decode_body(content: Any) -> str:
+    if isinstance(content, bytes):
+        return content.decode("utf-8", errors="replace")
+    return str(content or "")
 
 
-def write_disabled_flag_local(disabled: bool) -> None:
-    """Write workshop mode to local/eventgen.conf (gitignored; does not touch default/)."""
+def _request(
+    session_key: str,
+    path: str,
+    method: str = "GET",
+    postargs: Optional[dict[str, str]] = None,
+) -> tuple[int, str]:
+    import splunk.rest as rest
+
+    kwargs: dict[str, Any] = {
+        "sessionKey": session_key,
+        "method": method,
+        "getargs": {"output_mode": "json"},
+        "raiseAllErrors": False,
+    }
+    if postargs is not None:
+        kwargs["postargs"] = postargs
+    try:
+        response, content = rest.simpleRequest(path, **kwargs)
+    except Exception as exc:  # noqa: BLE001 — surface Splunk REST client errors
+        raise EventgenConfigError(str(exc)) from exc
+    status = int(getattr(response, "status", 0) or 0)
+    return status, _decode_body(content)
+
+
+def read_disabled_flag(session_key: str) -> Optional[bool]:
+    """Effective disabled flag (local layered over default). None if stanza missing."""
+    status, body = _request(session_key, DISABLED_ENDPOINT)
+    if status == 404:
+        return None
+    if status < 200 or status >= 300:
+        raise EventgenConfigError(f"HTTP {status}: {body[:500]}", status=status)
+    return disabled_from_body(body)
+
+
+def write_disabled_flag(session_key: str, disabled: bool) -> None:
+    """POST disabled on the NK stanza. Splunk writes the local/ override."""
     value = "true" if disabled else "false"
-    local_path = local_eventgen_conf_path()
-    local_dir = os.path.dirname(local_path)
-    os.makedirs(local_dir, exist_ok=True)
-
-    if os.path.isfile(local_path):
-        lines = open(local_path, encoding="utf-8").read().splitlines(keepends=True)
-        out: list[str] = []
-        in_stanza = False
-        updated = False
-        found_stanza = False
-        for line in lines:
-            stripped = line.rstrip("\n")
-            if stripped == STANZA:
-                in_stanza = True
-                found_stanza = True
-                out.append(line)
-                continue
-            if in_stanza and stripped.startswith("disabled = "):
-                out.append(f"disabled = {value}\n")
-                updated = True
-                continue
-            if in_stanza and stripped.startswith("[") and stripped != STANZA:
-                in_stanza = False
-            out.append(line)
-        if not found_stanza:
-            if out and not out[-1].endswith("\n"):
-                out[-1] = out[-1] + "\n"
-            out.append(f"{STANZA}\n")
-        if not updated:
-            out.append(f"disabled = {value}\n")
-        with open(local_path, "w", encoding="utf-8") as handle:
-            handle.writelines(out)
-        return
-
-    with open(local_path, "w", encoding="utf-8") as handle:
-        handle.write(
-            "# Workshop NK mode override (gitignored). Managed by SA-S4R MCP tools and make s4r-attack-nk-*.\n"
-        )
-        handle.write(f"{STANZA}\n")
-        handle.write(f"disabled = {value}\n")
+    status, body = _request(
+        session_key,
+        CONFIG_ENDPOINT,
+        method="POST",
+        postargs={"disabled": value},
+    )
+    if status < 200 or status >= 300:
+        raise EventgenConfigError(f"HTTP {status}: {body[:500]}", status=status)

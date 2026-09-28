@@ -137,7 +137,7 @@ Before “infrastructure vs threat” questions: **`SA-S4R_query_nk_demo_state`*
 | **Infrastructure** (default) | **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) | 503/404 everywhere; flat ~40% geo/platform |
 | **Active threat** | **`SA-S4R_apply_nk_demo_state`** (`mode=threat`); validate with **`SA-S4R_validate_nk_attack_traffic`** | NK / Pyongyang on failed purchases; scripted UAs |
 
-Shell fallback (requires **`make restart`** after toggle): `make s4r-attack-nk-disable` / `make s4r-attack-nk-enable`.
+Shell fallback (REST toggle; **`make restart`** only if Eventgen reload fails): `make s4r-attack-nk-disable` / `make s4r-attack-nk-enable`.
 
 Use **last 15m** after enabling threat mode.
 

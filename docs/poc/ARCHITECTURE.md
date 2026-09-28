@@ -41,8 +41,8 @@ The **SA-S4R** app ships **Eventgen** configuration for synthetic **`access_comb
 
 | Mode | Preferred (MCP) | Shell fallback | Narrative |
 | ---- | ----------------- | -------------- | --------- |
-| Infrastructure (default) | **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) | `make s4r-attack-nk-disable` + `make restart` | Uniform ~40% errors (503/404); IT Ops leads |
-| Active threat (optional) | **`SA-S4R_apply_nk_demo_state`** (`mode=threat`) | `make s4r-attack-nk-enable` + `make restart` | NK geo on failed purchases; Security leads |
+| Infrastructure (default) | **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) | `make s4r-attack-nk-disable` | Uniform ~40% errors (503/404); IT Ops leads |
+| Active threat (optional) | **`SA-S4R_apply_nk_demo_state`** (`mode=threat`) | `make s4r-attack-nk-enable` | NK geo on failed purchases; Security leads |
 
 Check mode: **`SA-S4R_query_nk_demo_state`**. Agentic analysis: [AGENTS.md](../s4r/AGENTS.md).
 

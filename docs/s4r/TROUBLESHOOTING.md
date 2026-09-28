@@ -32,6 +32,7 @@ See [SA-S4R-APP.md § `default/` vs `local/`](SA-S4R-APP.md#default-vs-local-spl
 
 ```bash
 make s4r-attack-nk-status          # should print "enabled"
+# Splunk writes the override; confirm the effective flag on disk if REST status disagrees:
 docker exec so1 grep -A1 'attack.nk.purchase' \
   /opt/splunk/etc/apps/SA-S4R/local/eventgen.conf 2>/dev/null \
   || docker exec so1 grep -A1 'attack.nk.purchase' \
@@ -40,7 +41,7 @@ docker exec so1 grep -A1 'attack.nk.purchase' \
 
 ls SA-S4R/samples/attack.nk.purchase.sample   # must exist (basename = stanza name)
 
-make restart                       # required for shell toggle only
+# make restart only if enable/disable reported an Eventgen reload failure
 # wait ~2 minutes; search last 15m only
 ```
 

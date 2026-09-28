@@ -6,7 +6,7 @@
 /opt/splunk/etc/apps/SA-S4R
 ```
 
-It is labeled in `default/app.conf` and is visible in Splunk Web as **Splunk4Rookies** (install folder name and **`[package] id`** must remain **`SA-S4R`** — Eventgen sample paths are hard-coded to that folder). Compose bind-mounts the app **read-write**: Splunk’s container entrypoint **chowns** `/opt/splunk/etc/apps/SA-S4R` recursively at start, so a read-only mount fails (`Errno 30`). Workshop mode still writes **`local/eventgen.conf`** only; do not save Splunk UI customizations into **`default/`**. **`[launcher] version`** is set in `app.conf` (bump when shipping a new `.spl`). The main purpose in this repo is to ship **Eventgen** sample data and supporting **lookups** so you can run searches against synthetic **`access_combined`** traffic without manual onboarding. **`appserver/static/Buttercup_Background.jpg`** is the dashboard background asset used by the workshop dashboard you create under **`local/`** (not app-wide chrome).
+It is labeled in `default/app.conf` and is visible in Splunk Web as **Splunk4Rookies** (install folder name and **`[package] id`** must remain **`SA-S4R`** — Eventgen sample paths are hard-coded to that folder). Compose bind-mounts the app **read-write**: Splunk’s container entrypoint **chowns** `/opt/splunk/etc/apps/SA-S4R` recursively at start, so a read-only mount fails (`Errno 30`). Workshop mode sets the NK stanza through Splunk config REST; Splunk stores that override in **`local/eventgen.conf`** only. Do not save Splunk UI customizations into **`default/`**. **`[launcher] version`** is set in `app.conf` (bump when shipping a new `.spl`). The main purpose in this repo is to ship **Eventgen** sample data and supporting **lookups** so you can run searches against synthetic **`access_combined`** traffic without manual onboarding. **`appserver/static/Buttercup_Background.jpg`** is the dashboard background asset used by the workshop dashboard you create under **`local/`** (not app-wide chrome).
 
 Generated events match the **Splunk4Rookies** workshop **`noise_apache.log`** shape: `/product.screen` and `/cart.do?action=…` URIs, Buttercup referers, workshop-era user agents, and `HTTP 1.1` request lines.
 
@@ -80,7 +80,7 @@ Do **not** switch Compose to [GitHub `latest` `SA-S4R.spl`](https://github.com/d
 
 - **Chown:** a `.spl` install into `so1-etc` **does** avoid `Errno 30` (no host bind). That is the only bind-mount problem it solves.
 - **Inner loop:** edits to `default/`, `bin/`, samples, and MCP JSON are invisible until you merge to **`main`**, wait for `package-s4r.yml` to move **`latest`**, and **reinstall** (existing `so1-etc` often will not refresh the app).
-- **Host scripts assume the bind:** **`make s4r-attack-nk-*`** writes **`SA-S4R/local/eventgen.conf`** on the host; **`register-s4r-mcp-tools`** POSTs host **`s4r_mcp_tools.json`**. Without the bind, those files are **not** the running app. MCP **`SA-S4R_apply_nk_demo_state`** still writes container `local/` (the volume).
+- **Host scripts:** **`make s4r-attack-nk-*`** POSTs the NK stanza to Splunk config REST. Splunk writes **`local/eventgen.conf`** on the app filesystem (this bind). **`register-s4r-mcp-tools`** POSTs host **`s4r_mcp_tools.json`**. MCP **`SA-S4R_apply_nk_demo_state`** calls the same configs endpoint from inside Splunk.
 - **Which build you boot:** `latest` is whatever last published from **`main`**, not this clone or a dirty working tree. The `.spl` **excludes `local/`**.
 - **Egress:** boot then also needs `github.com` (Splunkbase is still required for the other `SPLUNK_APPS_URL` apps).
 
@@ -176,12 +176,12 @@ Two storylines share the same baseline traffic; the NK stanza is toggled without
 
 | Mode | Enable / disable (preferred) | After toggle |
 | ---- | -------------------------- | ------------ |
-| **Infrastructure** (default) | MCP **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) | Reloads Eventgen — **no `make restart`** on HTTP **200**. HTTP **503** means the file was written but Eventgen did not reload → **`make restart`** |
+| **Infrastructure** (default) | MCP **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) | Reloads Eventgen — **no `make restart`** on HTTP **200**. HTTP **503** means the stanza was updated but Eventgen did not reload → **`make restart`** |
 | **Active threat** | MCP **`SA-S4R_apply_nk_demo_state`** (`mode=threat`) | Same; wait 1–2 min, then **`SA-S4R_validate_nk_attack_traffic`** |
 
-**Shell fallback:** `make s4r-attack-nk-disable` / `make s4r-attack-nk-enable` then **`make restart`** if MCP is unavailable or signal is slow.
+**Shell fallback:** `make s4r-attack-nk-disable` / `make s4r-attack-nk-enable`. Same REST update and Eventgen reload as MCP. **`make restart`** only if the script reports that the reload failed.
 
-Check current mode: **`SA-S4R_query_nk_demo_state`** (MCP), **`make s4r-attack-nk-status`** (shell), or read **`local/eventgen.conf`** (override) then **`default/eventgen.conf`**. Toggles write **`SA-S4R/local/eventgen.conf`** only (gitignored) so **`default/`** stays pristine. Script: **`scripts/toggle-s4r-attack-nk.sh`** (`enable` \| `disable` \| `status`). MCP tools register on **`make up`**; re-register with **`make register-s4r-mcp-tools`** — see [MCP-TOOLS.md](MCP-TOOLS.md).
+Check current mode: **`SA-S4R_query_nk_demo_state`** (MCP) or **`make s4r-attack-nk-status`** (shell). Both read the effective `disabled` value from Splunk. Toggles `POST /servicesNS/nobody/SA-S4R/configs/conf-eventgen/attack.nk.purchase.sample` (`disabled=true` or `false`). Splunk writes the override to **`SA-S4R/local/eventgen.conf`** (gitignored) so **`default/`** stays pristine. Script: **`scripts/toggle-s4r-attack-nk.sh`** (`enable` \| `disable` \| `status`). MCP tools register on **`make up`**; re-register with **`make register-s4r-mcp-tools`** — see [MCP-TOOLS.md](MCP-TOOLS.md).
 
 Wait **1–2 minutes** after enabling threat mode before validating in Search (narrow time range to **last 15m** so old uniform traffic does not mask the attack).
 
@@ -215,9 +215,9 @@ NK attack token sources: **`samples/nk_clientip.txt`**, **`nk_status.txt`**, **`
 | Symptom | Likely cause | Fix |
 | ------- | ------------ | --- |
 | NK enabled via MCP but no events yet | Eventgen warming up | Wait 1–2 min; **`SA-S4R_validate_nk_attack_traffic`** |
-| `make s4r-attack-nk-enable` but no NK events | Splunk not restarted (shell path) | `make restart`, wait ~2 min |
+| `make s4r-attack-nk-enable` but no NK events | Eventgen still warming up, or reload failed | Wait 1–2 min; if the script printed a reload error, `make restart` |
 | Still no NK UAs / IPs | Missing sample template | Confirm **`samples/attack.nk.purchase.sample`** exists (basename must match stanza) |
-| NK mode “stuck” on after disable | Container still running old config | `make s4r-attack-nk-disable` then **`make restart`** |
+| NK mode “stuck” on after disable | Eventgen did not reload | `make s4r-attack-nk-disable`; **`make restart`** if reload failed |
 | Geo shows NK but agents say “infrastructure” | Time range too wide | Use **last 15m** after enable; baseline traffic dilutes the signal |
 
 See [AGENTS.md](AGENTS.md) for Power User delegation and [SPL-CATALOG.md](SPL-CATALOG.md) for all workshop SPL.
