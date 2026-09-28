@@ -105,6 +105,22 @@ Runs after `so1` is **healthy**. Uses Alpine, installs `curl` and `jq`, then run
 
 **`config.env`** is tracked and holds non-secret settings (`SPLUNK_IMAGE`, `TZ`). **`make up`** loads it after secrets, so a copy of those keys in a secret file does not win. Passwords are not stored there.
 
+### Load order and effective config
+
+Host entrypoints that need stack secrets (`make up`, `make config`, token minting, S4R registration, NK shell fallback, and MCP auth stats) use the same helper path:
+
+1. **Secrets first** — `scripts/with-splunk-env.sh` sources **`.env`** when it exists. If **`.env`** is absent, it re-execs the caller under `op run --env-file=tpl.env`. If neither file exists, the command fails with Path A / Path B hints.
+2. **Non-secrets second** — `scripts/load-config-env.sh` requires **`config.env`**, exports only `SPLUNK_IMAGE` and `TZ`, and ignores other keys. This is intentional: image and timezone come from the tracked file, not from stale copies in **`.env`** or **`tpl.env`**.
+3. **Validation last** — callers that start or render Compose require non-empty `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, and `SPLUNK_MCP_PASSWORD`.
+
+Use **`make config`** before booting or after env edits to inspect the resolved Compose input without printing secret values:
+
+```bash
+make config
+```
+
+It runs `docker compose config` after the same load path as **`make up`**. Secret fields in the rendered Compose output are shown as **`<set>`** when populated and as `""` when empty. `SPLUNKBASE_USER` / `SPLUNKBASE_PASS` appear in Compose as `SPLUNKBASE_USERNAME` / `SPLUNKBASE_PASSWORD`, matching the Splunk image environment names.
+
 ### `tpl.env.example` and `tpl.env`
 
 - **`tpl.env.example`** is the **tracked** template (placeholder `op://` paths, safe to commit).
@@ -145,7 +161,7 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 | Target | Behavior |
 | ------ | -------- |
 | `up` | `scripts/compose-up.sh` (`.env` or `op run --env-file=tpl.env`), then `update-all` (`MCP_UPDATE_ON_BOOT`, default `cursor`), then `register-s4r-mcp-tools` |
-| `config` | Print `docker compose config` after the same secret and `config.env` load as `up`. `SPLUNK_PASSWORD`, Splunkbase user/password, and `SPLUNK_MCP_PASSWORD` are shown as `<set>` |
+| `config` | Print `docker compose config` after the same secret and `config.env` load as `up`. `SPLUNK_PASSWORD`, `SPLUNKBASE_USERNAME`, `SPLUNKBASE_PASSWORD`, and `SPLUNK_MCP_PASSWORD` are redacted as `<set>` when populated; empty values stay `""` |
 | `down` | `scripts/mcp-client.sh park all` (no secrets), then `docker compose down`. `config.env` must be present so Compose can read `SPLUNK_IMAGE` and `TZ` |
 | `park-mcp-clients` | `scripts/mcp-client.sh park all` — remove `splunk-mcp-server` from client configs |
 | `update-mcp-clients` | `scripts/mcp-client.sh update-all` for cursor, goose, claude (one mint) |

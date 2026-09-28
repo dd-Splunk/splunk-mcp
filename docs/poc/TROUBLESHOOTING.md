@@ -306,6 +306,24 @@ Edit **`tpl.env`** with your `op://` paths. **`tpl.env`** is gitignored—do not
 
 ---
 
+#### Issue: `make config` fails or shows blank Compose inputs
+
+**Context**: `make config` is the safe preflight for Compose input. It uses the same secret loader as **`make up`**, then loads tracked **`config.env`**, and redacts populated secret fields as **`<set>`**.
+
+**Common symptoms and fixes**:
+
+| Symptom | Meaning | Fix |
+| ------- | ------- | --- |
+| `Error: need .env or tpl.env for Splunk secrets` | Neither Path A nor Path B is configured | Copy **`tpl.env.example`** to **`tpl.env`** and sign in to `op`, or copy **`.env.example`** to **`.env`** and fill plain values |
+| `1Password CLI (op) not available` | Path A was selected but `op` cannot run | Install/sign in to **`op`**, or use Path B with a gitignored **`.env`** |
+| `Error: missing config.env (SPLUNK_IMAGE and TZ)` | The tracked non-secret config file is absent | Restore **`config.env`** from git; do not move `SPLUNK_IMAGE` / `TZ` into a secret file |
+| `SPLUNK_PASSWORD: ""`, `SPLUNKBASE_USERNAME: ""`, `SPLUNKBASE_PASSWORD: ""`, or `SPLUNK_MCP_PASSWORD: ""` | A required secret resolved empty | Fix the matching **`.env`** value or **`tpl.env`** `op://` path, then re-run **`make config`** |
+| Image or timezone differs from what you expected in **`.env`** | **`config.env`** wins over stale copies in secret files | Edit **`config.env`** for `SPLUNK_IMAGE` / `TZ`; keep secret files for passwords and Splunkbase credentials only |
+
+If **`make config`** is clean but **`docker compose up -d`** still fails, make sure you started through **`make up`** or **`./scripts/compose-up.sh`**. Bare **`docker compose up`** does not run the helper path unless a populated **`.env`** already exists.
+
+---
+
 #### Issue: Splunk logs show `Invalid Splunkbase credentials` / ansible inventory errors
 
 **Cause**: The **`so1`** container was created with **empty** `SPLUNKBASE_USER` / `SPLUNKBASE_PASS` (and often `SPLUNK_PASSWORD`). That happens if you run **`docker compose up -d`** without a **`.env`** file and without **`op run --env-file=tpl.env`**—Compose substitutes blank strings, and Splunk’s entrypoint refuses Splunkbase downloads.

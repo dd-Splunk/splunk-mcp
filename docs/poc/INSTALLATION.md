@@ -129,6 +129,12 @@ op read "op://YourVault/Splunkbase/username"
 test -s .env
 ```
 
+Confirm the effective Compose input before the first boot. This uses the same secret path as **`make up`**, loads image/timezone from tracked **`config.env`**, and redacts populated secrets as **`<set>`**:
+
+```bash
+make config
+```
+
 Network and ports:
 
 - The host must reach **splunkbase.splunk.com** and the container registry that serves `SPLUNK_IMAGE`.
