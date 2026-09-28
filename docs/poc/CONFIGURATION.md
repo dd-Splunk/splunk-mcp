@@ -52,7 +52,7 @@ Use this when changing the Splunk Enterprise image, Splunkbase app pins, or the 
 **Volumes**
 
 - Named volumes `so1-var` and `so1-etc` persist Splunk data and config.
-- `./SA-S4R` is bind-mounted read-write into `/opt/splunk/etc/apps/SA-S4R`.
+- **`./SA-S4R`** is bind-mounted **read-write** into `/opt/splunk/etc/apps/SA-S4R`. The Splunk image **chowns** that path recursively at start, so a read-only bind mount fails (`Errno 30`). Keep workshop edits in **`local/`**; **`default/`** and **`bin/`** stay maintainer-owned in git. Do not replace this bind with GitHub **`latest` `SA-S4R.spl`** as the default — [SA-S4R-APP.md](../s4r/SA-S4R-APP.md) § bind mount vs `.spl`.
 
 **Claude logs (macOS, optional)**
 
@@ -86,7 +86,7 @@ Use only the blocks you need. If you remap **8089**, set **`SPLUNK_MCP_ENDPOINT`
 
 Runs after `so1` is **healthy**. Uses Alpine, installs `curl` and `jq`, then runs `setup-splunk.sh`. Mounts:
 
-- `scripts/setup-splunk.sh` → `/setup-splunk.sh`
+- `scripts/setup-splunk.sh` → `/setup-splunk.sh` (**read-only**; script is executable in git)
 - No host secrets mount (this repo does not write tokens/passwords to disk). See `compose.yml` for `SPLUNK_REST_USER`, `SPLUNK_MCP_USER`, `SPLUNK_MCP_PASSWORD`.
 
 ### MCP token minting and S4R tools (host)
@@ -204,22 +204,23 @@ Do not store Cloud MCP bearer tokens in **`.env`** — that file is for **stack 
 
 - Path: **`~/Library/Application Support/Claude/claude_desktop_config.json`** (macOS).
 - Matches Splunk MCP Server **2.0** [client configuration](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/connecting-to-the-mcp-server-and-settings): **`npx mcp-remote`**, endpoint **`https://localhost:8089/services/mcp`**, **`Authorization: Bearer`** with an **encrypted** token.
-- `make update-claude-config` mints the token via **`scripts/mint-mcp-token.sh`** (Splunk app `mcp_token` REST). Splunk must be up. Token is stored **only** in Claude’s config, not in this repo.
+- `make update-claude-config` mints the token via **`scripts/mint-mcp-token.sh`** (Splunk app `mcp_token` REST). Splunk must be up. Token is stored **only** in Claude’s config, not in this repo. The file is **`chmod 600`** after each update or park.
 - **`NODE_TLS_REJECT_UNAUTHORIZED=0`** is written when **`SPLUNK_MCP_TLS_INSECURE`** is `1` (default for this PoC; self-signed Splunk only). Set **`SPLUNK_MCP_TLS_INSECURE=0`** to omit `env` if using proper TLS.
 - Uses **`jq`**; backs up invalid JSON with a timestamped file.
 
 ## Cursor configuration
 
-- Default output: **`.cursor/mcp.json`** (override with `CURSOR_MCP_JSON`; gitignored if it contains a live token).
+- Default output: **`.cursor/mcp.json`** (override with `CURSOR_MCP_JSON`; gitignored if it contains a live token). **`chmod 600`** after each update or park.
 - Same **2.0** `npx mcp-remote` entry as Claude (**`make update-cursor-config`**); endpoint **`https://localhost:8089/services/mcp`** only.
 - Example shape: **`.cursor/mcp.json.example`** (see Splunk doc link in Claude section above).
+- **Cloud-synced workspaces (OneDrive, iCloud, Dropbox):** gitignore does **not** stop the sync client from uploading **`.cursor/mcp.json`**. Prefer a workspace that is not cloud-synced, or set **`CURSOR_MCP_JSON`** to a path outside the synced tree. `chmod 600` only limits local UNIX sharing; the file can still leave the machine via sync.
 
 ## Goose configuration
 
 - Path: **`~/.config/goose/config.yaml`** (Unix/Linux and macOS).
 - Same Splunk MCP Server **2.0** token pattern as Claude/Cursor: endpoint **`https://localhost:8089/services/mcp`**, encrypted bearer token via **`scripts/mcp-remote-splunk.sh`** wrapper (not raw `npx` in `cmd`).
 - Goose uses **extensions** with `type: stdio` (different YAML shape from Claude’s `mcpServers`).
-- `scripts/mcp-client.sh update goose` adds or updates the `splunk-mcp-server` extension entry via **`scripts/mcp-remote-splunk.sh`** (sets `NODE_TLS_REJECT_UNAUTHORIZED` in-process; Goose Desktop may not forward `envs` reliably).
+- `scripts/mcp-client.sh update goose` adds or updates the `splunk-mcp-server` extension entry via **`scripts/mcp-remote-splunk.sh`** (sets `NODE_TLS_REJECT_UNAUTHORIZED` in-process; Goose Desktop may not forward `envs` reliably). **`chmod 600`** on **`config.yaml`** after each update or park.
 - TLS dev override also uses Goose’s **`envs`** and **`env_keys`** (not `env`), e.g. `NODE_TLS_REJECT_UNAUTHORIZED=0` when **`SPLUNK_MCP_TLS_INSECURE=1`**.
 - Idempotent: safely updates or creates the extension without corrupting existing config.
 - Requires Python 3 for YAML regex manipulation.

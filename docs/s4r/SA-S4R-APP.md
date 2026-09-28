@@ -6,7 +6,7 @@
 /opt/splunk/etc/apps/SA-S4R
 ```
 
-It is labeled in `default/app.conf` and is visible in Splunk Web as **Splunk4Rookies** (install folder name and **`[package] id`** must remain **`SA-S4R`** — Eventgen sample paths are hard-coded to that folder). **`[launcher] version`** is set in `app.conf` (bump when shipping a new `.spl`). The main purpose in this repo is to ship **Eventgen** sample data and supporting **lookups** so you can run searches against synthetic **`access_combined`** traffic without manual onboarding. **`appserver/static/Buttercup_Background.jpg`** is the dashboard background asset used by the workshop dashboard you create under **`local/`** (not app-wide chrome).
+It is labeled in `default/app.conf` and is visible in Splunk Web as **Splunk4Rookies** (install folder name and **`[package] id`** must remain **`SA-S4R`** — Eventgen sample paths are hard-coded to that folder). Compose bind-mounts the app **read-write**: Splunk’s container entrypoint **chowns** `/opt/splunk/etc/apps/SA-S4R` recursively at start, so a read-only mount fails (`Errno 30`). Workshop mode still writes **`local/eventgen.conf`** only; do not save Splunk UI customizations into **`default/`**. **`[launcher] version`** is set in `app.conf` (bump when shipping a new `.spl`). The main purpose in this repo is to ship **Eventgen** sample data and supporting **lookups** so you can run searches against synthetic **`access_combined`** traffic without manual onboarding. **`appserver/static/Buttercup_Background.jpg`** is the dashboard background asset used by the workshop dashboard you create under **`local/`** (not app-wide chrome).
 
 Generated events match the **Splunk4Rookies** workshop **`noise_apache.log`** shape: `/product.screen` and `/cart.do?action=…` URIs, Buttercup referers, workshop-era user agents, and `HTTP 1.1` request lines.
 
@@ -68,8 +68,23 @@ Splunk apps split **shipped baseline** (`default/`) from **instance-specific ove
 1. **Splunk Web, Settings → Knowledge, nav editor, field extractor, Dashboard Studio saves** — must land under **`SA-S4R/local/`** only. **Never** save customizations into **`default/`** (Splunk will overwrite shipped objects on upgrade/reinstall).
 2. **Agents and contributors** — do not add workshop dashboards, nav tabs, or Lab 4 field extractions under **`SA-S4R/default/`** in git. **Exception:** MCP packaging (`savedsearches.conf` for tool backing, `tools.conf`, `s4r_mcp_tools.json`, REST handler) is maintainer-owned in **`default/`** — [MCP-TOOLS.md](MCP-TOOLS.md). Document workshop UI setup in **`local/README`**.
 3. **Packaging** — **`package-s4r.yml`** excludes **`local/`** (entire directory) so instance-specific content is not published in **`SA-S4R.spl`**. In git, **`SA-S4R/local/**`** is ignored except **`local/README`** (see **`.gitignore`**).
+4. **Container mount** — Compose bind-mounts **`SA-S4R/`** **read-write** (required: Splunk **chowns** the app path at start). Still put workshop UI and Eventgen overrides in **`local/`** only.
 
 If you already saved something to **`default/`** inside a running container, move it to **`local/`** (or re-export from Splunk into **`local/`**), then remove the duplicate from **`default/`**.
+
+### Bind mount vs GitHub `.spl`
+
+This repo’s **default** is the bind mount: the git tree **is** the running app.
+
+Do **not** switch Compose to [GitHub `latest` `SA-S4R.spl`](https://github.com/dd-Splunk/splunk-mcp/releases/download/latest/SA-S4R.spl) as the maintainer boot. That URL is a **consumer** optional path (SE laptop, no app edits). Lessons from trying it as a substitute for `:ro` binds:
+
+- **Chown:** a `.spl` install into `so1-etc` **does** avoid `Errno 30` (no host bind). That is the only bind-mount problem it solves.
+- **Inner loop:** edits to `default/`, `bin/`, samples, and MCP JSON are invisible until you merge to **`main`**, wait for `package-s4r.yml` to move **`latest`**, and **reinstall** (existing `so1-etc` often will not refresh the app).
+- **Host scripts assume the bind:** **`make s4r-attack-nk-*`** writes **`SA-S4R/local/eventgen.conf`** on the host; **`register-s4r-mcp-tools`** POSTs host **`s4r_mcp_tools.json`**. Without the bind, those files are **not** the running app. MCP **`SA-S4R_apply_nk_demo_state`** still writes container `local/` (the volume).
+- **Which build you boot:** `latest` is whatever last published from **`main`**, not this clone or a dirty working tree. The `.spl` **excludes `local/`**.
+- **Egress:** boot then also needs `github.com` (Splunkbase is still required for the other `SPLUNK_APPS_URL` apps).
+
+Keep a GitHub-install path as an optional Compose override if you add one; do not make it the tracked default.
 
 ### Dashboard background (hint)
 

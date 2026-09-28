@@ -11,6 +11,10 @@ on:
     paths:
       - "SA-S4R/**"
       - ".github/workflows/package-s4r.yml"
+  pull_request:
+    paths:
+      - "SA-S4R/**"
+      - ".github/workflows/package-s4r.yml"
 
 concurrency:
   group: package-s4r-latest-release
@@ -42,6 +46,9 @@ jobs:
           retention-days: 7
 
       - name: Publish GitHub Release (latest)
+        if: >-
+          (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+          (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

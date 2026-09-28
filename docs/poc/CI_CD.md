@@ -41,14 +41,17 @@ Automation in this repo is intentionally small: it supports a **local PoC** stac
 
 - **`workflow_dispatch`** (manual run from the Actions tab).
 - **Push** when paths change under **`SA-S4R/**`** or when **`.github/workflows/package-s4r.yml`** itself changes.
+- **`pull_request`** for the same paths (build + artifact only).
 
 **What it runs**
 
 1. Builds **`SA-S4R.spl`** using **`COPYFILE_DISABLE=1`** and **`tar --format ustar`** (aligned with Splunk packaging guidance).
 2. Uploads **`SA-S4R.spl`** as a **workflow artifact** (short retention; see below).
-3. **Deletes** any existing **`latest`** release and tag, **recreates** tag **`latest`** on the **current commit**, **force-pushes** the tag, and **creates** a GitHub Release titled **SA-S4R (latest)** with the `.spl` attached (marked as the repository’s **latest** release).
+3. **Publish `latest` only from `main` / `master`:** on **push** or **`workflow_dispatch`** when **`github.ref`** is **`refs/heads/main`** or **`refs/heads/master`**, the job **deletes** any existing **`latest`** release and tag, **recreates** tag **`latest`** on the **current commit**, **force-pushes** the tag, and **creates** a GitHub Release titled **SA-S4R (latest)** with the `.spl` attached (marked as the repository’s **latest** release). Feature-branch pushes and pull requests **do not** move **`latest`**.
 
 The package excludes **`local/`** and **`metadata/local.meta`**. Workshop dashboard/nav/field-extraction overrides stay local to the running Splunk instance; git tracks only **`SA-S4R/local/README`** as the setup guide.
+
+Compose does **not** install this `.spl` by default. The running app is the **bind-mounted git tree**. Use the release URL only as an optional consumer path — [SA-S4R-APP.md](../s4r/SA-S4R-APP.md) § bind mount vs `.spl`.
 
 **Permissions**
 
@@ -60,9 +63,9 @@ The package excludes **`local/`** and **`metadata/local.meta`**. Workshop dashbo
 
 **PoC limitations**
 
-- **No versioning**: the **`latest`** tag and release **move on every successful run**. There is **no semver**, change log, or compatibility promise.
-- **`workflow_dispatch`** can run from **any branch**; that still **moves `latest`** to that branch’s HEAD. Release notes include the short SHA and ref name—check them before trusting the artifact.
-- **GitHub workflow `paths` filters are literals**; they cannot reference `env`. If you rename **`SA-S4R/`**, update **`env.SPLUNK_APP_DIR`** and the **`on.push.paths`** entries together.
+- **No versioning**: the **`latest`** tag and release **move on every successful publish from `main`/`master`**. There is **no semver**, change log, or compatibility promise.
+- **`workflow_dispatch`** from a **non-main** branch builds the artifact but **does not** move **`latest`**.
+- **GitHub workflow `paths` filters are literals**; they cannot reference `env`. If you rename **`SA-S4R/`**, update **`env.SPLUNK_APP_DIR`** and the **`on.push.paths`** / **`on.pull_request.paths`** entries together.
 - **Workflow artifacts** use **limited retention** (currently **7 days**). For a durable download link, use the **Release** asset, not the Actions artifact (after retention expires, the artifact disappears).
 - **No** Splunk AppInspect, signing, staging deploy, or promotion gates—appropriate for demos only.
 - **Forks / tokens**: contributors forking the repo may have restricted **`GITHUB_TOKEN`** capabilities for releases; maintainers run this on the canonical repo.

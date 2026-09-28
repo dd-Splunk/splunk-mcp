@@ -40,6 +40,13 @@ die() {
   exit 1
 }
 
+# Bearer tokens live in these files. Tighten mode after every write (update or park).
+restrict_client_config_mode() {
+  local file="$1"
+  [[ -f "$file" ]] || return 0
+  chmod 600 "$file" || die "could not chmod 600 $file"
+}
+
 valid_client() {
   local c="$1"
   case " $VALID_CLIENTS " in
@@ -128,6 +135,7 @@ update_json_mcp_remote() {
     [[ -f "$file" ]] && cp "$file" "${file}.backup.$(date +%s)"
     merge_json_mcp_server "$file" "$block"
   fi
+  restrict_client_config_mode "$file"
   echo "Updated $label: $file ($npx_cmd mcp-remote → $endpoint)"
   echo "Bearer token stored in client config only (not in this repo)."
 }
@@ -210,6 +218,7 @@ content = content[:end_of_line] + new_entry + content[end_of_line:]
 with open(config_file, "w", encoding="utf-8") as f:
     f.write(content)
 PY
+  restrict_client_config_mode "$file"
   echo "Updated Goose: $file ($wrapper → $endpoint)"
 }
 
@@ -224,7 +233,10 @@ update_goose() {
 remove_goose_splunk_mcp() {
   local file="${HOME}/.config/goose/config.yaml"
   [[ -f "$file" ]] || return 0
-  grep -q 'splunk-mcp-server:' "$file" || return 0
+  grep -q 'splunk-mcp-server:' "$file" || {
+    restrict_client_config_mode "$file"
+    return 0
+  }
   python3 - "$file" <<'PY'
 import re
 import sys
@@ -238,6 +250,7 @@ if new_content != content:
     with open(config_file, "w", encoding="utf-8") as f:
         f.write(new_content)
 PY
+  restrict_client_config_mode "$file"
   echo "Parked Goose: removed splunk-mcp-server from $file"
 }
 
@@ -251,6 +264,7 @@ park_json_mcp_remote() {
     mv "${file}.tmp" "$file"
     echo "Parked $label: removed splunk-mcp-server from $file"
   fi
+  restrict_client_config_mode "$file"
 }
 
 park_client() {
