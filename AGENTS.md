@@ -5,7 +5,7 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`. H
 ## What this repo is
 
 - **Purpose**: local PoC that runs **Splunk Enterprise** in Docker and exposes **Splunk MCP Server** on `https://localhost:8089/services/mcp`.
-- **Client bridge**: **Claude Desktop**, **Cursor**, and **Goose** use **`npx mcp-remote`** to `https://localhost:8089/services/mcp` (token minted at `make update-*-config` after **`splunk-init`** completes; stored only in client config, not the repo). See `make update-mcp-clients` or `make update-mcp-client MCP_CLIENT=…`. **SE / presales**: **`docs/poc/PRESALES.md`**.
+- **Client bridge**: **Claude Desktop**, **Cursor**, and **Goose** use **`npx mcp-remote`** to `https://localhost:8089/services/mcp` (token minted at `make update-mcp-client` after **`splunk-init`** completes; stored only in client config, not the repo). See `make update-mcp-clients` or `make update-mcp-client MCP_CLIENT=…`. **SE / presales**: **`docs/poc/PRESALES.md`**.
 - **Sample app**: **`SA-S4R`** (UI label **Splunk4Rookies**) — bind-mounted Eventgen traffic, lookups, workshop assets in **`local/`**. Workshop hub: **`docs/s4r/README.md`**. SPL runbook: **`docs/s4r/SPL-CATALOG.md`**. Data: **`docs/s4r/SA-S4R-APP.md`**. Dashboard build spec: **`docs/s4r/DASHBOARD.md`**. Agents: **`docs/s4r/AGENTS.md`** + **`.cursor/agents/`**.
 - **Session memory (Vellem)**: when the **vellem** MCP server is enabled in Cursor, start with **`search_notes_semantic`** on folder **`splunk-mcp`** (boot, verify, troubleshooting) before deep doc reads. Use **`list_expiring_contexts`** to avoid stale notes. After demos or non-obvious fixes, capture outcomes in Vellem (**`add_decision_note`** / **`append_to_daily`**) — not in git. Splunk MCP handles live data; Vellem holds repo-specific memory (no secrets).
 
@@ -24,8 +24,8 @@ Do not add Cloud MCP testing, endpoints, or secrets-handling paths to this repo 
 - **Never commit secrets**:
   - `.env` (admin password, Splunkbase creds, MCP user password)
   - **`tpl.env`** (local `op://` paths to **your** vault—gitignored; start from tracked **`tpl.env.example`**)
-  - `.cursor/mcp.json` if it contains a live bearer token (expected after `make update-cursor-config`; **`chmod 600`**, still OneDrive-synced if the clone lives under a cloud folder)
-  - `~/.config/goose/config.yaml` if it contains a live bearer token (expected after `make update-goose-config`; **`chmod 600`**)
+  - `.cursor/mcp.json` if it contains a live bearer token (expected after `make update-mcp-client MCP_CLIENT=cursor`; **`chmod 600`**, still OneDrive-synced if the clone lives under a cloud folder)
+  - `~/.config/goose/config.yaml` if it contains a live bearer token (expected after `make update-mcp-client MCP_CLIENT=goose`; **`chmod 600`**)
 - **Do not paste tokens/passwords** into issues, PRs, or logs.
 - **Keep changes idempotent**: `make up` / `splunk-init` should be safe to run repeatedly.
 

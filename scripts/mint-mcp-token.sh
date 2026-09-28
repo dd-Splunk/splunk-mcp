@@ -107,7 +107,7 @@ wait_for_mcp_token() {
 
   echo "Error: mcp_token not available after ~$((attempts * interval / 60)) min." >&2
   echo "  Check: Splunk MCP Server app (7931), splunk-init (docker logs splunk-init), user ${mcp_user}." >&2
-  echo "  Retry: make update-cursor-config  (or MCP_CLIENT=claude)" >&2
+  echo "  Retry: make update-mcp-client MCP_CLIENT=cursor  (or MCP_CLIENT=claude)" >&2
   return 1
 }
 

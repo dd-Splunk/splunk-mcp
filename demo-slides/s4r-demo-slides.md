@@ -692,7 +692,7 @@ make s4r-attack-nk-status    # expect: disabled (or SA-S4R_query_nk_demo_state â
 
 | Problem | Presenter action |
 | ------- | ---------------- |
-| MCP tools missing | `make update-cursor-config`; restart Cursor |
+| MCP tools missing | `make update-mcp-client MCP_CLIENT=cursor`; restart Cursor |
 | No events | `make status`; `docker logs splunk-init` |
 | NK mode no signal | `SA-S4R_query_nk_demo_state` / validate NK; search **last 15m** |
 | Concurrency limit | Wait; run one team at a time |

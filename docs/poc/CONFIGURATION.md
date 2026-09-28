@@ -146,7 +146,6 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 | `park-mcp-clients` | `scripts/mcp-client.sh park all` — remove `splunk-mcp-server` from client configs |
 | `update-mcp-clients` | `scripts/mcp-client.sh update-all` for cursor, goose, claude (one mint) |
 | `update-mcp-client` | One client: `MCP_CLIENT=claude\|cursor\|goose` |
-| `update-claude-config` / `update-cursor-config` / `update-goose-config` | Aliases for `update-mcp-client` |
 | `verify-mcp-remote` | `scripts/mcp-client.sh verify` — client config + direct `tools/list` + **`npx mcp-remote` stdio** e2e (`MCP_VERIFY_CLIENT=all` by default) |
 | `verify` | Runs `status`, then `verify-mcp-remote` |
 | `test` | Docker-free: MCP client JSON/YAML shape (`write-shape` / `verify-config` / `park`) plus SA-S4R mode/payload unit tests |
@@ -205,14 +204,14 @@ Do not store Cloud MCP bearer tokens in **`.env`** — that file is for **stack 
 
 - Path: **`~/Library/Application Support/Claude/claude_desktop_config.json`** (macOS).
 - Matches Splunk MCP Server **2.0** [client configuration](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/connecting-to-the-mcp-server-and-settings): **`npx mcp-remote`**, endpoint **`https://localhost:8089/services/mcp`**, **`Authorization: Bearer`** with an **encrypted** token.
-- `make update-claude-config` mints the token via **`scripts/mint-mcp-token.sh`** (Splunk app `mcp_token` REST). Splunk must be up. Token is stored **only** in Claude’s config, not in this repo. The file is **`chmod 600`** after each update or park.
+- `make update-mcp-client MCP_CLIENT=claude` mints the token via **`scripts/mint-mcp-token.sh`** (Splunk app `mcp_token` REST). Splunk must be up. Token is stored **only** in Claude’s config, not in this repo. The file is **`chmod 600`** after each update or park.
 - **`NODE_TLS_REJECT_UNAUTHORIZED=0`** is written when **`SPLUNK_MCP_TLS_INSECURE`** is `1` (default for this PoC; self-signed Splunk only). Set **`SPLUNK_MCP_TLS_INSECURE=0`** to omit `env` if using proper TLS.
 - Uses **`jq`**; backs up invalid JSON with a timestamped file.
 
 ## Cursor configuration
 
 - Default output: **`.cursor/mcp.json`** (override with `CURSOR_MCP_JSON`; gitignored if it contains a live token). **`chmod 600`** after each update or park.
-- Same **2.0** `npx mcp-remote` entry as Claude (**`make update-cursor-config`**); endpoint **`https://localhost:8089/services/mcp`** only.
+- Same **2.0** `npx mcp-remote` entry as Claude (**`make update-mcp-client MCP_CLIENT=cursor`**); endpoint **`https://localhost:8089/services/mcp`** only.
 - Example shape: **`.cursor/mcp.json.example`** (see Splunk doc link in Claude section above).
 - **Cloud-synced workspaces (OneDrive, iCloud, Dropbox):** gitignore does **not** stop the sync client from uploading **`.cursor/mcp.json`**. Prefer a workspace that is not cloud-synced, or set **`CURSOR_MCP_JSON`** to a path outside the synced tree. `chmod 600` only limits local UNIX sharing; the file can still leave the machine via sync.
 
