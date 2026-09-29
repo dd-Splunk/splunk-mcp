@@ -4,7 +4,7 @@ Agent roles for the **Splunk4Rookies** attendee workshop (Apr 2026 deck) and thi
 
 **Related docs:** [SPL-CATALOG.md](SPL-CATALOG.md) (**SPL runbook**), [DASHBOARD.md](DASHBOARD.md) (dashboard layout), [SA-S4R-APP.md](SA-S4R-APP.md) (Eventgen data; **`default/` vs `local/`**), [README.md](README.md) (workshop hub), [`.cursor/agents/`](../.cursor/agents/) (role prompts for Cursor).
 
-**Splunk app rule:** workshop dashboards, nav, and field extractions live in **`SA-S4R/local/`** (see **`local/README`**). **Never** save them to **`default/`** in Splunk Web or git.
+**Splunk app rule:** workshop dashboards, nav, and field extractions live in the installed app’s **`local/`** (see [SA-S4R-APP.md § Workshop objects](SA-S4R-APP.md#workshop-objects-in-local)). **Never** save them to **`default/`** in Splunk Web or git.
 
 ## Educational model
 

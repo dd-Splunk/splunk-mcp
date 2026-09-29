@@ -1,6 +1,6 @@
 ## compose.yml
 
-**`SPLUNK_APPS_URL`** in **`compose.yml`** is a comma-separated list of Splunkbase download URLs; the **`compose.yml`** comments identify each app. Current entries (app ID → name):
+**`SPLUNK_APPS_URL`** in **`compose.yml`** is a comma-separated list of package download URLs; the **`compose.yml`** comments identify each app. Splunkbase entries (app ID → name):
 
 | App ID | App | Pinned release |
 | ------ | --- | -------------- |
@@ -8,6 +8,7 @@
 | 4353 | Config Explorer (optional UI utility) | 1.8.26 |
 | 7931 | Splunk MCP Server (required for `/services/mcp`) | 2.0.0 |
 | 7245 | Splunk AI Assistant | 2.3.3 |
+| — | SA-S4R (this repo) | GitHub Release [`latest`](https://github.com/dd-Splunk/splunk-mcp/releases/download/latest/SA-S4R.spl) |
 
 Check current Splunkbase releases: `https://splunkbase.splunk.com/api/v1/app/<id>/release/` (first entry is latest). Update the `/release/VERSION/` segment in **`compose.yml`** when bumping.
 
@@ -40,7 +41,7 @@ Use this when changing the Splunk Enterprise image, Splunkbase app pins, or the 
 | `SPLUNK_START_ARGS` | License acceptance |
 | `SPLUNK_PASSWORD` | Admin password (from `.env` and/or `op run` / shell env) |
 | `SPLUNKBASE_USERNAME` / `SPLUNKBASE_PASSWORD` | Splunkbase downloads |
-| `SPLUNK_APPS_URL` | Comma-separated Splunkbase package URLs |
+| `SPLUNK_APPS_URL` | Comma-separated package URLs (Splunkbase apps plus GitHub **`SA-S4R.spl`**) |
 | `TZ` | Container timezone from **`config.env`** |
 
 **Ports**
@@ -51,7 +52,7 @@ Use this when changing the Splunk Enterprise image, Splunkbase app pins, or the 
 **Volumes**
 
 - Named volumes `so1-var` and `so1-etc` persist Splunk data and config.
-- **`./SA-S4R`** is bind-mounted **read-write** into `/opt/splunk/etc/apps/SA-S4R`. The Splunk image **chowns** that path recursively at start, so a read-only bind mount fails (`Errno 30`). Keep workshop edits in **`local/`**; **`default/`** and **`bin/`** stay maintainer-owned in git. Do not replace this bind with GitHub **`latest` `SA-S4R.spl`** as the default — [SA-S4R-APP.md](../s4r/SA-S4R-APP.md) § bind mount vs `.spl`.
+- **SA-S4R** is not bind-mounted. The image downloads [GitHub **`latest` `SA-S4R.spl`**](https://github.com/dd-Splunk/splunk-mcp/releases/download/latest/SA-S4R.spl) from **`SPLUNK_APPS_URL`** on the first start of an empty **`so1-etc`**. Recreate that volume to install the app or to pick up a newer package. Workshop edits belong in the installed app’s **`local/`** (inside the volume). Do not bind-mount the app **`:ro`** — the image **chowns** that path and fails with **`Errno 30`**. See [SA-S4R-APP.md](../s4r/SA-S4R-APP.md) § Install from GitHub `.spl`.
 
 **Claude logs (macOS, optional)**
 

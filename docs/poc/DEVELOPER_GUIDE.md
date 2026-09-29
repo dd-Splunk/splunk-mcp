@@ -11,8 +11,8 @@ Contributing and changing this PoC. Stack design: [ARCHITECTURE.md](ARCHITECTURE
 | MCP client paths / token flow | [CONFIGURATION.md](CONFIGURATION.md), [API_REFERENCE.md](API_REFERENCE.md) |
 | SA-S4R Eventgen / NK toggle | [SA-S4R-APP.md](../s4r/SA-S4R-APP.md), [s4r/README.md](../s4r/README.md) |
 | SA-S4R MCP tools (`s4r_mcp_tools.json`, saved searches, REST handler) | [MCP-TOOLS.md](../s4r/MCP-TOOLS.md); re-run **`make up`** (restarts **`splunk-init`**) |
-| SA-S4R app UI / knowledge objects | **`SA-S4R/local/`** only (never **`default/`**); workshop guide **`local/README`** (only tracked file under **`local/`**) — [SA-S4R-APP.md](../s4r/SA-S4R-APP.md) |
-| `SA-S4R` packaging / `.github/workflows/package-s4r.yml` | [CI_CD.md](CI_CD.md), [SA-S4R-APP.md](../s4r/SA-S4R-APP.md), and `SA-S4R/local/README` if package exclusions change |
+| SA-S4R app UI / knowledge objects | Installed app **`local/`** only (never **`default/`**) — [SA-S4R-APP.md](../s4r/SA-S4R-APP.md) § Workshop objects in `local/` |
+| `SA-S4R` packaging / `.github/workflows/package-s4r.yml` | [CI_CD.md](CI_CD.md) and [SA-S4R-APP.md](../s4r/SA-S4R-APP.md) |
 | Workshop SPL | [S4R-SPL-CATALOG.md](../s4r/SPL-CATALOG.md) only (agents reference this path) |
 | Agent prompts | `.cursor/agents/s4r-*.md`, [S4R-AGENTS.md](../s4r/AGENTS.md) |
 | Cursor project skills (`/usage`, `/demo-prep`) | `.cursor/skills/*/SKILL.md`, root [AGENTS.md](../../AGENTS.md#cursor-skills-project), and [CONFIGURATION.md § Makefile targets](CONFIGURATION.md#makefile-targets) if command behavior changes |
@@ -40,7 +40,7 @@ make verify         # status + MCP client verify
 
 Logs: `make logs` · shell in Splunk: `docker exec -it so1 bash`
 
-Never recover a broken `so1` with bare **`docker compose up -d`** unless a populated **`.env`** exists. That recreates the container with empty Splunkbase env (ansible “No inventory was parsed”). Use **`./scripts/compose-up.sh`** or **`make up`**. Do not bind **`SA-S4R` `:ro`** to “harden” the tree — [TROUBLESHOOTING.md](TROUBLESHOOTING.md) · [SA-S4R-APP.md](../s4r/SA-S4R-APP.md) § bind mount vs `.spl`.
+Never recover a broken `so1` with bare **`docker compose up -d`** unless a populated **`.env`** exists. That recreates the container with empty Splunkbase env (ansible “No inventory was parsed”). Use **`./scripts/compose-up.sh`** or **`make up`**. Do not bind **`SA-S4R` `:ro`** — [TROUBLESHOOTING.md](TROUBLESHOOTING.md) · [SA-S4R-APP.md](../s4r/SA-S4R-APP.md) § Install from GitHub `.spl`.
 
 ## Lint before push
 

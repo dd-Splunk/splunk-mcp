@@ -51,9 +51,9 @@ Automation in this repo is intentionally small: it supports a **local PoC** stac
 2. Uploads **`SA-S4R.spl`** as a **workflow artifact** (short retention; see below).
 3. **Publish `latest` only from `main` / `master`:** on **push** or **`workflow_dispatch`** when **`github.ref`** is **`refs/heads/main`** or **`refs/heads/master`**, the job **deletes** any existing **`latest`** release and tag, **recreates** tag **`latest`** on the **current commit**, **force-pushes** the tag, and **creates** a GitHub Release titled **SA-S4R (latest)** with the `.spl` attached (marked as the repository’s **latest** release). Feature-branch pushes and pull requests **do not** move **`latest`**.
 
-The package excludes **`local/`** and **`metadata/local.meta`**. Workshop dashboard/nav/field-extraction overrides stay local to the running Splunk instance; git tracks only **`SA-S4R/local/README`** as the setup guide.
+The package excludes **`local/`** and **`metadata/local.meta`**. Workshop dashboard/nav/field-extraction overrides stay in the running app’s **`local/`** (inside **`so1-etc`**). Git ignores **`SA-S4R/local/**`**.
 
-Compose does **not** install this `.spl` by default. The running app is the **bind-mounted git tree**. Use the release URL only as an optional consumer path — [SA-S4R-APP.md](../s4r/SA-S4R-APP.md) § bind mount vs `.spl`.
+Compose installs this `.spl` from the **`latest`** release URL in **`SPLUNK_APPS_URL`**. The image downloads it on the first start of an empty **`so1-etc`**. See [SA-S4R-APP.md](../s4r/SA-S4R-APP.md) § Install from GitHub `.spl`.
 
 **Permissions**
 

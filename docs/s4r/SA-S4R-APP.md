@@ -1,12 +1,12 @@
 ## What is SA-S4R?
 
-**SA-S4R** is a Splunk **app** mounted from the repository into the container at:
+**SA-S4R** is a Splunk **app** installed from the GitHub **`latest`** package into:
 
 ```text
 /opt/splunk/etc/apps/SA-S4R
 ```
 
-It is labeled in `default/app.conf` and is visible in Splunk Web as **Splunk4Rookies** (install folder name and **`[package] id`** must remain **`SA-S4R`** — Eventgen sample paths are hard-coded to that folder). Compose bind-mounts the app **read-write**: Splunk’s container entrypoint **chowns** `/opt/splunk/etc/apps/SA-S4R` recursively at start, so a read-only mount fails (`Errno 30`). Workshop mode sets the NK stanza through Splunk config REST; Splunk stores that override in **`local/eventgen.conf`** only. Do not save Splunk UI customizations into **`default/`**. **`[launcher] version`** is set in `app.conf` (bump when shipping a new `.spl`). The main purpose in this repo is to ship **Eventgen** sample data and supporting **lookups** so you can run searches against synthetic **`access_combined`** traffic without manual onboarding. **`appserver/static/Buttercup_Background.jpg`** is the dashboard background asset used by the workshop dashboard you create under **`local/`** (not app-wide chrome).
+It is labeled in `default/app.conf` and is visible in Splunk Web as **Splunk4Rookies** (install folder name and **`[package] id`** must remain **`SA-S4R`** — Eventgen sample paths are hard-coded to that folder). Compose downloads [**`SA-S4R.spl`**](https://github.com/dd-Splunk/splunk-mcp/releases/download/latest/SA-S4R.spl) from the moving GitHub Release **`latest`** via **`SPLUNK_APPS_URL`**. The official image installs that list only on the first start of an empty **`so1-etc`** volume. Workshop mode sets the NK stanza through Splunk config REST; Splunk stores that override in **`local/eventgen.conf`** inside the installed app. Do not save Splunk UI customizations into **`default/`**. **`[launcher] version`** is set in `app.conf` (bump when shipping a new `.spl`). The main purpose in this repo is to ship **Eventgen** sample data and supporting **lookups** so you can run searches against synthetic **`access_combined`** traffic without manual onboarding. **`appserver/static/Buttercup_Background.jpg`** is the dashboard background asset used by the workshop dashboard you create under **`local/`** (not app-wide chrome).
 
 Generated events match the **Splunk4Rookies** workshop **`noise_apache.log`** shape: `/product.screen` and `/cart.do?action=…` URIs, Buttercup referers, workshop-era user agents, and `HTTP 1.1` request lines.
 
@@ -48,7 +48,7 @@ SA-S4R/                         # tracked in git
     ├── nk_status.txt
     ├── nk_useragent.txt
     └── nk_product_id.txt
-local/                          # gitignored overrides; README tracked (workshop guide)
+local/                          # created in the running app (so1-etc); gitignored
 ```
 
 ## `default/` vs `local/` (Splunk best practice)
@@ -58,35 +58,31 @@ Splunk apps split **shipped baseline** (`default/`) from **instance-specific ove
 | Directory | Purpose in this repo | Who edits it |
 | --------- | -------------------- | ------------ |
 | **`default/`** | PoC baseline shipped in git and **`SA-S4R.spl`**: Eventgen, core props, barebones nav, lookups | **Maintainers only** — intentional product changes in git, not ad hoc Splunk UI saves |
-| **`local/`** | Workshop dashboard, nav tab, Lab 4 **`platform`** extraction, and anything you customize in Splunk Web | **You / attendees** — all direct Splunk interaction |
-| **`local/README`** | Tracked workshop guide (props, nav, metadata snippets; links to dashboard spec) | Maintainers when updating workshop instructions |
+| **`local/`** | Workshop dashboard, nav tab, Lab 4 **`platform`** extraction, and anything you customize in Splunk Web (lives in **`so1-etc`**, not git) | **You / attendees** — all direct Splunk interaction |
 
 **Rules (Splunk and this repo):**
 
 1. **Splunk Web, Settings → Knowledge, nav editor, field extractor, Dashboard Studio saves** — must land under **`SA-S4R/local/`** only. **Never** save customizations into **`default/`** (Splunk will overwrite shipped objects on upgrade/reinstall).
-2. **Agents and contributors** — do not add workshop dashboards, nav tabs, or Lab 4 field extractions under **`SA-S4R/default/`** in git. **Exception:** MCP packaging (`savedsearches.conf` for tool backing, `s4r_mcp_tools.json`, REST handler) is maintainer-owned in **`default/`** — [MCP-TOOLS.md](MCP-TOOLS.md). Document workshop UI setup in **`local/README`**.
-3. **Packaging** — **`package-s4r.yml`** excludes **`local/`** (entire directory) so instance-specific content is not published in **`SA-S4R.spl`**. In git, **`SA-S4R/local/**`** is ignored except **`local/README`** (see **`.gitignore`**).
-4. **Container mount** — Compose bind-mounts **`SA-S4R/`** **read-write** (required: Splunk **chowns** the app path at start). Still put workshop UI and Eventgen overrides in **`local/`** only.
+2. **Agents and contributors** — do not add workshop dashboards, nav tabs, or Lab 4 field extractions under **`SA-S4R/default/`** in git. **Exception:** MCP packaging (`savedsearches.conf` for tool backing, `s4r_mcp_tools.json`, REST handler) is maintainer-owned in **`default/`** — [MCP-TOOLS.md](MCP-TOOLS.md). Workshop UI setup is in [Workshop objects in `local/`](#workshop-objects-in-local) and [DASHBOARD.md](DASHBOARD.md).
+3. **Packaging** — **`package-s4r.yml`** excludes **`local/`** (entire directory) so instance-specific content is not published in **`SA-S4R.spl`**. Git ignores **`SA-S4R/local/**`** (see **`.gitignore`**).
+4. **Install** — Compose does not bind-mount the app tree. The package lands in **`so1-etc`**. Workshop UI and Eventgen overrides still belong in that installed app’s **`local/`**.
 
 If you already saved something to **`default/`** inside a running container, move it to **`local/`** (or re-export from Splunk into **`local/`**), then remove the duplicate from **`default/`**.
 
-### Bind mount vs GitHub `.spl`
+### Install from GitHub `.spl`
 
-This repo’s **default** is the bind mount: the git tree **is** the running app.
+Compose installs [**`SA-S4R.spl`**](https://github.com/dd-Splunk/splunk-mcp/releases/download/latest/SA-S4R.spl) from the moving **`latest`** release. **`package-s4r.yml`** rebuilds that asset when **`SA-S4R/**`** changes on **`main`**.
 
-Do **not** switch Compose to [GitHub `latest` `SA-S4R.spl`](https://github.com/dd-Splunk/splunk-mcp/releases/download/latest/SA-S4R.spl) as the maintainer boot. That URL is a **consumer** optional path (SE laptop, no app edits). Lessons from trying it as a substitute for `:ro` binds:
-
-- **Chown:** a `.spl` install into `so1-etc` **does** avoid `Errno 30` (no host bind). That is the only bind-mount problem it solves.
-- **Inner loop:** edits to `default/`, `bin/`, samples, and MCP JSON are invisible until you merge to **`main`**, wait for `package-s4r.yml` to move **`latest`**, and **reinstall** (existing `so1-etc` often will not refresh the app).
-- **Host scripts:** **`make s4r-attack-nk-*`** POSTs the NK stanza to Splunk config REST. Splunk writes **`local/eventgen.conf`** on the app filesystem (this bind). **`splunk-init`** POSTs **`s4r_mcp_tools.json`**. MCP **`SA-S4R_apply_nk_demo_state`** calls the same configs endpoint from inside Splunk.
-- **Which build you boot:** `latest` is whatever last published from **`main`**, not this clone or a dirty working tree. The `.spl` **excludes `local/`**.
-- **Egress:** boot then also needs `github.com` (Splunkbase is still required for the other `SPLUNK_APPS_URL` apps).
-
-Keep a GitHub-install path as an optional Compose override if you add one; do not make it the tracked default.
+- **First start only:** the official image downloads **`SPLUNK_APPS_URL`** when **`so1-etc`** is empty. A volume created while the app was bind-mounted does not contain the package. Recreate it (`make down && make clean && make up`, or remove volume **`so1-etc`**) to install or to pick up a newer **`latest`**.
+- **Which build you boot:** **`latest`** is the last package published from **`main`**, not this clone or a dirty working tree. The `.spl` **excludes `local/`**.
+- **Source edits:** changes under **`default/`**, **`bin/`**, samples, and the tool JSON are invisible in Splunk until they are on **`main`**, **`package-s4r.yml`** moves **`latest`**, and **`so1-etc`** is recreated.
+- **Host scripts:** **`make s4r-attack-nk-*`** POSTs the NK stanza to Splunk config REST. Splunk writes **`local/eventgen.conf`** inside the installed app. **`splunk-init`** still bind-mounts **`SA-S4R/default/s4r_mcp_tools.json`** from the checkout and POSTs it. MCP **`SA-S4R_apply_nk_demo_state`** calls the same configs endpoint from inside Splunk.
+- **Egress:** boot needs **`github.com`** for this package and Splunkbase for the other **`SPLUNK_APPS_URL`** apps.
+- **Do not bind-mount the app `:ro`.** The image **chowns** `/opt/splunk/etc/apps/SA-S4R` at start; a read-only bind fails with **`Errno 30`**. The package install avoids that bind.
 
 ### Dashboard background (hint)
 
-**`Buttercup_Background.jpg`** is for the **Buttercup Enterprises** workshop dashboard—not Splunk Web app chrome. Do not use **`application.css`** for this; create the dashboard under **`SA-S4R/local/`** per **`SA-S4R/local/README`** and [DASHBOARD.md](DASHBOARD.md), then reference the file from the dashboard’s own HTML or CSS.
+**`Buttercup_Background.jpg`** is for the **Buttercup Enterprises** workshop dashboard—not Splunk Web app chrome. Do not use **`application.css`** for this; create the dashboard under the installed app’s **`local/`** per [Workshop objects in `local/`](#workshop-objects-in-local) and [DASHBOARD.md](DASHBOARD.md), then reference the file from the dashboard’s own HTML or CSS.
 
 - **Repo path:** `SA-S4R/appserver/static/Buttercup_Background.jpg`
 - **Splunk Web URL:** `/static/app/SA-S4R/Buttercup_Background.jpg`
@@ -135,13 +131,13 @@ All use workshop-style `HTTP 1.1`, Buttercup referers, and a trailing response-t
 
 **`default/data/ui/nav/default.xml`** follows Splunk’s **barebones** app template (`share/splunk/app_templates/barebones/`): **Search** (default), **Analytics**, **Datasets**, **Reports**, **Alerts**, **Dashboards**, and **Modules**.
 
-The **Buttercup Enterprises** workshop tab and Dashboard Studio view live under **`local/`** only (gitignored except **`local/README`**). Create them per **`local/README`** and [DASHBOARD.md](DASHBOARD.md), then **`make restart`** if Splunk is already running.
+The **Buttercup Enterprises** workshop tab and Dashboard Studio view live under the installed app’s **`local/`** only. Create them per [Workshop objects in `local/`](#workshop-objects-in-local) and [DASHBOARD.md](DASHBOARD.md). They persist in **`so1-etc`**.
 
 ## Field extractions and lookup
 
 **`default/props.conf`** extracts `action`, `product_id`, `uid`, and `JSESSIONID` from the request line so workshop SPL such as `action=purchase` works without manual field extraction.
 
-**`platform`** (Lab 4) belongs in **`local/props.conf`** — see **`SA-S4R/local/README`**. Agents/MCP still use inline `rex` per [SPL-CATALOG.md](SPL-CATALOG.md).
+**`platform`** (Lab 4) belongs in the installed app’s **`local/props.conf`** — see [Workshop objects in `local/`](#workshop-objects-in-local). Agents/MCP still use inline `rex` per [SPL-CATALOG.md](SPL-CATALOG.md).
 
 **`default/transforms.conf`** registers lookup **`product_codes`** (backed by **`lookups/product_codes.csv`**) for Lab 5:
 
@@ -231,7 +227,36 @@ See [AGENTS.md](AGENTS.md) for Power User delegation and [SPL-CATALOG.md](SPL-CA
 
 **Do not package** runtime paths: `local/`, `metadata/local.meta`, `.DS_Store` (excluded in **`package-s4r.yml`**). **`local/`** holds workshop dashboard/nav overrides and may contain HEC inputs or tokens from a live container — keep gitignored.
 
-**Workshop assets:** Dashboard Studio view, nav tab, and **`platform`** extraction — create under **`local/`** per **`local/README`**. Optional follow-up: app icon under `appserver/static/`.
+**Workshop assets:** Dashboard Studio view, nav tab, and **`platform`** extraction — create under the installed app’s **`local/`** ([Workshop objects in `local/`](#workshop-objects-in-local)). Optional follow-up: app icon under `appserver/static/`.
+
+### Workshop objects in `local/`
+
+These are instance overrides. Create them in Splunk Web (they land under the installed app’s **`local/`** in **`so1-etc`**). Do not add them under **`default/`** in git. Layout and panels: [DASHBOARD.md](DASHBOARD.md).
+
+Lab 4 — **`local/props.conf`**:
+
+```conf
+[access_combined]
+EXTRACT-platform = \((?<platform>Linux; Android [0-9.]+|Macintosh; Intel Mac OS X [0-9_]+|Windows|iPhone; CPU iPhone OS [0-9_]+)
+```
+
+Workshop nav tab — **`local/data/ui/nav/local.xml`**:
+
+```xml
+<nav search_view="search" color="#791CF8">
+  <view name="buttercup_enterprises_dashboard" />
+</nav>
+```
+
+Dashboard permissions — **`local/metadata/local.meta`**:
+
+```conf
+[views/buttercup_enterprises_dashboard]
+access = read : [ admin, sc_admin, power, user ], write : [ admin, sc_admin ]
+export = none
+```
+
+Build the Dashboard Studio view in Splunk Web and save it under **`local/data/ui/views/`**. Background asset: `/static/app/SA-S4R/Buttercup_Background.jpg`.
 
 ## See also
 

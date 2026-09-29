@@ -20,7 +20,7 @@ The [Model Context Protocol](https://modelcontextprotocol.io/) lets a client (Cl
 
 ## Splunkbase applications
 
-`compose.yml` sets `SPLUNK_APPS_URL` to a comma-separated list of Splunkbase download URLs. Installed from Splunkbase: **SA-Eventgen** (1924), **Config Explorer** (4353), **Splunk MCP Server** (7931), and **Splunk AI Assistant** (7245). Pin details and the full table live in [CONFIGURATION.md](CONFIGURATION.md#composeyml).
+`compose.yml` sets `SPLUNK_APPS_URL` to a comma-separated list of package download URLs. Installed from Splunkbase: **SA-Eventgen** (1924), **Config Explorer** (4353), **Splunk MCP Server** (7931), and **Splunk AI Assistant** (7245). **SA-S4R** is installed from this repo’s GitHub Release **`latest`** (`SA-S4R.spl`). Pin details and the full table live in [CONFIGURATION.md](CONFIGURATION.md#composeyml).
 
 You need valid **Splunkbase** credentials via **`tpl.env`** or **`.env`** (Path B): **`SPLUNKBASE_USER`** and **`SPLUNKBASE_PASS`**.
 
@@ -91,7 +91,7 @@ Check mode: **`SA-S4R_query_nk_demo_state`**. Agentic analysis: [AGENTS.md](../s
 - **compose.yml**: Docker Compose configuration
 - **tpl.env.example**: Tracked template; copy to **tpl.env** (gitignored) for real `op://` paths
 - **.env**: Optional runtime file (git-ignored), hand-written from **`.env.example`** (Path B)
-- **SA-S4R/**: Bundled sample Splunk app (bind-mounted **read-write** into `$SPLUNK_HOME/etc/apps`; Splunk chowns this path, so `:ro` is not viable with the official image)
+- **SA-S4R/**: Sample Splunk app source. Compose installs the published **`SA-S4R.spl`** into `$SPLUNK_HOME/etc/apps` (no app bind mount). **`splunk-init`** still bind-mounts **`default/s4r_mcp_tools.json`** read-only.
 
 ### 4. Claude Logs Index
 

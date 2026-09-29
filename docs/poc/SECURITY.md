@@ -64,7 +64,7 @@ Confirm validity dates, key size (RSA ≥2048 or modern EC curves), and signatur
 ## Bind mounts
 
 - **`scripts/setup-splunk.sh`**, **`scripts/splunk-api-env.sh`**, **`scripts/with-splunk-env.sh`**, **`scripts/register-s4r-mcp-tools.sh`**, and **`SA-S4R/default/s4r_mcp_tools.json`** are bind-mounted **read-only** into **`splunk-init`**.
-- **`SA-S4R/`** stays **read-write**. The official `splunk/splunk` image **chowns** `/opt/splunk/etc/apps/SA-S4R` at start; a `:ro` bind of the app root or of shipped subdirs fails with `Errno 30` and leaves **`so1`** unhealthy. Residual risk: a compromised container can rewrite **`default/`** and **`bin/`** on the host tree. Keep workshop writes in **`local/`** and review git diffs before commit. Installing GitHub **`latest` `SA-S4R.spl`** instead of the bind would stop the container writing the **git** tree, but it breaks this repo’s inner loop — keep the bind as default ([SA-S4R-APP.md](../s4r/SA-S4R-APP.md)).
+- **`SA-S4R`** is installed from GitHub **`latest` `SA-S4R.spl`** into **`so1-etc`**, not bind-mounted from the git tree. A compromised container can change the installed app inside the volume; it cannot rewrite the checkout’s **`default/`** or **`bin/`**. Do not add a **`:ro`** bind of the app tree — the image **chowns** that path and fails with **`Errno 30`** ([SA-S4R-APP.md](../s4r/SA-S4R-APP.md)).
 
 ## Token lifecycle
 

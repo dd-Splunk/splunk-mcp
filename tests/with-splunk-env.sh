@@ -170,6 +170,11 @@ done
 grep -q 'register-s4r-mcp-tools.sh' "${ROOT}/scripts/setup-splunk.sh" \
   || die "setup-splunk.sh does not register SA-S4R MCP tools"
 grep -q 'SPLUNK_HOST: so1' "${ROOT}/compose.yml" || die "compose.yml must set SPLUNK_HOST=so1"
+grep -q 'releases/download/latest/SA-S4R.spl' "${ROOT}/compose.yml" \
+  || die "compose.yml must install SA-S4R from the GitHub latest release"
+if grep -q 'SA-S4R:/opt/splunk/etc/apps/SA-S4R' "${ROOT}/compose.yml"; then
+  die "compose.yml still bind-mounts the SA-S4R app tree"
+fi
 
 # shellcheck source=scripts/splunk-api-env.sh
 source "${ROOT}/scripts/splunk-api-env.sh"

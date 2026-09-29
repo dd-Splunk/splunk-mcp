@@ -4,7 +4,7 @@ PoC Splunk app: Buttercup Enterprises **Eventgen** traffic (`access_combined`), 
 
 Install folder name must remain **`SA-S4R`** (Eventgen token paths and static URLs use this id).
 
-**Splunk best practice:** direct Splunk UI changes (nav, dashboards, field extractions, saved searches) go in **`local/`** only — **never** in **`default/`**. Workshop setup: **`SA-S4R/local/README`** (tracked). Details: [docs/s4r/SA-S4R-APP.md](../docs/s4r/SA-S4R-APP.md) § **`default/` vs `local/`**.
+**Splunk best practice:** direct Splunk UI changes (nav, dashboards, field extractions, saved searches) go in the installed app’s **`local/`** only — **never** in **`default/`**. Workshop setup: [docs/s4r/SA-S4R-APP.md](../docs/s4r/SA-S4R-APP.md) § Workshop objects in `local/`.
 
 Full stack and layout: [docs/s4r/SA-S4R-APP.md](../docs/s4r/SA-S4R-APP.md). MCP tools (architecture and config files): [docs/s4r/MCP-TOOLS.md](../docs/s4r/MCP-TOOLS.md). SPL runbook: [docs/s4r/SPL-CATALOG.md](../docs/s4r/SPL-CATALOG.md). Workshop agents: [docs/s4r/AGENTS.md](../docs/s4r/AGENTS.md) and [`.cursor/agents/`](../.cursor/agents/).
 
@@ -18,4 +18,4 @@ Full stack and layout: [docs/s4r/SA-S4R-APP.md](../docs/s4r/SA-S4R-APP.md). MCP 
 
 MCP toggles reload Eventgen — **no `make restart`** on HTTP **200**; HTTP **503** → **`make restart`**. Shell fallback (`scripts/toggle-s4r-attack-nk.sh` via `make s4r-attack-nk-*`) uses the same config REST call and Eventgen reload; **`make restart`** only if reload fails. Wait ~2 minutes before validating threat traffic. Validation SPL and per-agent expectations: [docs/s4r/SA-S4R-APP.md](../docs/s4r/SA-S4R-APP.md).
 
-**Buttercup dashboard (workshop):** create nav, **`platform`** extraction, and Dashboard Studio view under **`local/`** (not **`default/`**). Follow **`local/README`** and [docs/s4r/DASHBOARD.md](../docs/s4r/DASHBOARD.md). Run **`make restart`** after changes if Splunk is already up.
+**Buttercup dashboard (workshop):** create nav, **`platform`** extraction, and Dashboard Studio view under the installed app’s **`local/`** (not **`default/`**). Follow [docs/s4r/SA-S4R-APP.md](../docs/s4r/SA-S4R-APP.md) § Workshop objects and [docs/s4r/DASHBOARD.md](../docs/s4r/DASHBOARD.md). Those files persist in the **`so1-etc`** volume.

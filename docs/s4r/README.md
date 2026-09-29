@@ -21,7 +21,7 @@ Stack install and MCP bootstrap: [../poc/PRESALES.md](../poc/PRESALES.md) · [..
 | ---------- | -------- |
 | Run canonical SPL (agents + dashboards) | [SPL-CATALOG.md](SPL-CATALOG.md) |
 | Build the Lab 3–7 dashboard | [DASHBOARD.md](DASHBOARD.md) |
-| Workshop `local/` setup (props, nav, permissions) | [SA-S4R/local/README](../../SA-S4R/local/README) |
+| Workshop `local/` setup (props, nav, permissions) | [SA-S4R-APP.md § Workshop objects](SA-S4R-APP.md#workshop-objects-in-local) |
 | Present the agentic demo (slides + script) | [demo-slides/](../../demo-slides/) — `s4r-demo-slides.md`, [S4R-DEMO.md](../../demo-slides/S4R-DEMO.md) |
 | Cursor agent prompts | [`.cursor/agents/`](../../.cursor/agents/) |
 | Repo cheat sheet / pre-demo | Cursor **`/usage`** (`SA-S4R_*` routing) · **`/demo-prep`** (Splunkbase pins + mode + NK data smoke). See [AGENTS.md § Cursor skills](../../AGENTS.md#cursor-skills-project) |
