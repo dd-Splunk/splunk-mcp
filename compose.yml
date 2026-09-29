@@ -18,14 +18,15 @@ services:
       #   app/7245  = Splunk AI Assistant (SPL / saia_* MCP tools)
       # If a download fails (404, etc.), replace the /release/VERSION/ segment with a current
       # release for that app from https://splunkbase.splunk.com/app/<id> .
-      SPLUNK_APPS_URL: https://splunkbase.splunk.com/app/1924/release/8.2.2/download/,https://splunkbase.splunk.com/app/4353/release/1.8.26/download/,https://splunkbase.splunk.com/app/7931/release/2.0.0/download/,https://splunkbase.splunk.com/app/7245/release/2.3.3/download/
+      # SA-S4R is this repo's package from the moving GitHub Release `latest`
+      # (package-s4r.yml). The image downloads SPLUNK_APPS_URL only on the first
+      # start of an empty so1-etc volume.
+      SPLUNK_APPS_URL: https://splunkbase.splunk.com/app/1924/release/8.2.2/download/,https://splunkbase.splunk.com/app/4353/release/1.8.26/download/,https://splunkbase.splunk.com/app/7931/release/2.0.0/download/,https://splunkbase.splunk.com/app/7245/release/2.3.3/download/,https://github.com/dd-Splunk/splunk-mcp/releases/download/latest/SA-S4R.spl
       TZ: ${TZ:?set TZ in config.env}
     volumes:
       - so1-var:/opt/splunk/var
       - so1-etc:/opt/splunk/etc
-      # Read-write: Splunk's entrypoint chowns this path recursively (ro bind mounts
-      # fail with Errno 30). Workshop writes belong in local/; do not edit default/.
-      - ./SA-S4R:/opt/splunk/etc/apps/SA-S4R:rw
+      # SA-S4R is installed from SPLUNK_APPS_URL (GitHub latest .spl) into so1-etc.
       # - ${HOME}/Library/Logs/Claude:/var/log/claude_logs:rw
     ports:
       - "127.0.0.1:8000:8000" # Splunk Web UI (localhost only)

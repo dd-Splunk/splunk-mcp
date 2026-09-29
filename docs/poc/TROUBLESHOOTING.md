@@ -146,9 +146,9 @@ make down && make clean && make up
 
 **Cause**: The official Splunk image **chowns** `/opt/splunk/etc/apps/SA-S4R` recursively at start. A **read-only** bind of the app root **or** of shipped subdirs (`default/`, `bin/`, …) fails that step. A half-finished chown can leave `/opt/splunk` unwritable for the healthcheck.
 
-**Solution**: Keep **`./SA-S4R:/opt/splunk/etc/apps/SA-S4R:rw`** in `compose.yml`. Recover with **`./scripts/compose-up.sh`** (or **`make up`**). Do **not** run bare **`docker compose up`** without secrets.
+**Solution**: Leave the app bind out of `compose.yml`. The default install is [GitHub `latest` `SA-S4R.spl`](https://github.com/dd-Splunk/splunk-mcp/releases/download/latest/SA-S4R.spl) via `SPLUNK_APPS_URL` (app lands in `so1-etc`). Recover a bad bind with **`./scripts/compose-up.sh`** (or **`make up`**) after removing the mount. Do **not** run bare **`docker compose up`** without secrets.
 
-**Lesson**: Nested `:ro` binds of `default/`, `bin/`, lookups, or samples fail the **same** recursive chown. Installing [GitHub `latest` `SA-S4R.spl`](https://github.com/dd-Splunk/splunk-mcp/releases/download/latest/SA-S4R.spl) via `SPLUNK_APPS_URL` avoids the bind (app lands in `so1-etc`) but is **not** the default for this repo — see [SA-S4R-APP.md](../s4r/SA-S4R-APP.md) § bind mount vs `.spl`.
+**Lesson**: Nested `:ro` binds of `default/`, `bin/`, lookups, or samples fail the **same** recursive chown. See [SA-S4R-APP.md](../s4r/SA-S4R-APP.md) § Install from GitHub `.spl`.
 
 ---
 

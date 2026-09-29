@@ -32,6 +32,7 @@ import re
 import sys
 import urllib.error
 import urllib.request
+from urllib.parse import urlparse
 
 compose_path = os.environ["COMPOSE_FILE"]
 timeout = float(os.environ.get("TIMEOUT", "15"))
@@ -44,13 +45,24 @@ if not match:
     sys.exit(1)
 
 pins = []
+skipped = []
 for url in match.group(1).split(","):
     url = url.strip().rstrip(",")
+    if not url:
+        continue
+    host = urlparse(url).hostname or ""
     parsed = re.search(r"/app/(\d+)/release/([^/]+)/download", url)
+    if host != "splunkbase.splunk.com":
+        skipped.append(url)
+        continue
     if not parsed:
         print("error: could not parse app id/version from", url, file=sys.stderr)
         sys.exit(1)
     pins.append((parsed.group(1), parsed.group(2), url))
+
+if not pins:
+    print("error: no Splunkbase pins in SPLUNK_APPS_URL", file=sys.stderr)
+    sys.exit(1)
 
 print("=== Splunkbase pins (compose.yml vs api/v1/app/<id>/release/) ===")
 print(f"{'app':<8} {'pin':<12} {'latest':<12} status")
@@ -88,6 +100,9 @@ for app_id, pin, _url in pins:
         status = "MISSING"
         worst = "MISSING"
     print(f"{app_id:<8} {pin:<12} {latest:<12} {status}")
+
+for url in skipped:
+    print(f"{'—':<8} {'—':<12} {'—':<12} SKIP (not Splunkbase) {url}")
 
 if any_skip and worst == "OK":
     worst = "SKIP"

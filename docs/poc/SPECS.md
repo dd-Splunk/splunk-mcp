@@ -45,7 +45,7 @@ Splunk AI Toolkit (2890) and Python for Scientific Computing (2882) are **out of
 
 - Eventgen **`access_combined`** traffic into **`main`**
 - **`product_codes`** lookup CSV under **`lookups/`**
-- Workshop UI assets under **`local/`** only (see **`SA-S4R/local/README`**)
+- Workshop UI assets under the installed app’s **`local/`** only (see [SA-S4R-APP.md](../s4r/SA-S4R-APP.md) § Workshop objects in `local/`)
 
 ## MCP clients
 

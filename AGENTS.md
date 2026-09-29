@@ -6,7 +6,7 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`. H
 
 - **Purpose**: local PoC that runs **Splunk Enterprise** in Docker and exposes **Splunk MCP Server** on `https://localhost:8089/services/mcp`.
 - **Client bridge**: **Claude Desktop**, **Cursor**, and **Goose** use **`npx mcp-remote`** to `https://localhost:8089/services/mcp` (token minted at `make update-mcp-client` after **`splunk-init`** completes; stored only in client config, not the repo). See `make update-mcp-clients` or `make update-mcp-client MCP_CLIENT=…`. **SE / presales**: **`docs/poc/PRESALES.md`**.
-- **Sample app**: **`SA-S4R`** (UI label **Splunk4Rookies**) — bind-mounted Eventgen traffic, lookups, workshop assets in **`local/`**. Workshop hub: **`docs/s4r/README.md`**. SPL runbook: **`docs/s4r/SPL-CATALOG.md`**. Data: **`docs/s4r/SA-S4R-APP.md`**. Dashboard build spec: **`docs/s4r/DASHBOARD.md`**. Agents: **`docs/s4r/AGENTS.md`** + **`.cursor/agents/`**.
+- **Sample app**: **`SA-S4R`** (UI label **Splunk4Rookies**) — installed from the GitHub **`latest`** **`SA-S4R.spl`** (Eventgen traffic, lookups). Workshop hub: **`docs/s4r/README.md`**. SPL runbook: **`docs/s4r/SPL-CATALOG.md`**. Data: **`docs/s4r/SA-S4R-APP.md`**. Dashboard build spec: **`docs/s4r/DASHBOARD.md`**. Agents: **`docs/s4r/AGENTS.md`** + **`.cursor/agents/`**.
 
 ## Scope (in / out)
 
@@ -99,7 +99,7 @@ Workshop agent **roles** remain in **`.cursor/agents/`** (not skills). Do not du
 
 - **“User lacks required mcp_tool_execute capability”** — Role **`mcp_user`** missing the capability. Re-run setup or POST **`capabilities=mcp_tool_execute`** to **`/services/authorization/roles/mcp_user`** (see **`scripts/setup-splunk.sh`**).
 - **`splunk-init` exited non-zero** — **`make status`** prints **`FAILED (exit N)`**; Splunk may still be up but roles/token/MCP setup incomplete. **`docker logs splunk-init`**, then **`make down && make up`** or fix env and re-run init.
-- **`so1` unhealthy / `Errno 30` on SA-S4R** — Do not bind the app **`:ro`**, including nested `default/` / `bin/` mounts. Splunk **chowns** that path. Recover with **`./scripts/compose-up.sh`** (or **`make up`**). Bare **`docker compose up`** without **`.env`** / **`op run`** blanks Splunkbase creds. Details: **`docs/poc/TROUBLESHOOTING.md`**.
+- **`so1` unhealthy / `Errno 30` on SA-S4R** — The app is installed from the GitHub **`.spl`**, not a bind mount. Do not add a **`:ro`** bind of the app tree; Splunk **chowns** that path. Recover with **`./scripts/compose-up.sh`** (or **`make up`**). Bare **`docker compose up`** without **`.env`** / **`op run`** blanks Splunkbase creds. Details: **`docs/poc/TROUBLESHOOTING.md`**.
 - **`wait-splunk-init` looping on `created`** — `splunk-init` never starts until `so1` is healthy. Kill the wait; do not let it run 180 attempts.
 - **No data in `claude_logs`** — This repo does not create that index or inputs. Confirm bind mount, index, and monitor in Splunk (**`docs/poc/CONFIGURATION.md`**).
 - **MCP client cannot find `npx`** (Claude Desktop / GUI) — Re-run **`make update-mcp-client`** from a shell with Node on PATH, or set **`MCP_NPX_COMMAND`**.
@@ -110,7 +110,7 @@ Workshop agent **roles** remain in **`.cursor/agents/`** (not skills). Do not du
 - Prefer small commits; keep **`make up`**, **`make status`**, **`make verify-mcp-remote`**, **`make test`** working.
 - When changing **`Makefile`**, **`compose.yml`**, or **`scripts/setup-splunk.sh`**, update **`docs/poc/CONFIGURATION.md`**, **`docs/poc/ARCHITECTURE.md`**, and/or **`docs/poc/TROUBLESHOOTING.md`** as needed. For wider rollout decisions, see **`docs/poc/GRADUATION.md`**.
 - Lint before push: **`pre-commit run --all-files`** (**gitleaks**, **shellcheck** on **`scripts/*.sh`** and **`tests/*.sh`**, **markdownlint-cli2** on Markdown) then **`make test`**. Requires **shellcheck** on PATH (`brew install shellcheck`) and **Node/npx**. Auto-fix Markdown: `npx --yes markdownlint-cli2 --fix`.
-- **SA-S4R Splunk app:** direct Splunk UI customizations (nav, views, field extractions, saved searches) belong in **`SA-S4R/local/`** only — **never** in **`default/`** (Splunk best practice). Workshop instructions: **`SA-S4R/local/README`** (only tracked file under **`local/`**; see **`.gitignore`**). See **`docs/s4r/SA-S4R-APP.md`** § **`default/` vs `local/`**.
+- **SA-S4R Splunk app:** Compose installs the GitHub **`latest`** **`.spl`** (no app bind mount). Direct Splunk UI customizations (nav, views, field extractions, saved searches) belong in the installed app’s **`local/`** only — **never** in **`default/`**. See **`docs/s4r/SA-S4R-APP.md`** § **`default/` vs `local/`** and § Workshop objects in `local/`.
 - **License:** contributions are under **[LICENSE](LICENSE)** (MIT).
 
 ## CI
