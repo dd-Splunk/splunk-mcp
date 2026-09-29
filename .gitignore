@@ -46,9 +46,8 @@ docker-compose.override.yml
 *.tmp
 .*.tmp
 
-# Splunk app local/ — ignore everything except tracked workshop README
+# Splunk app local/ — instance overrides; not part of the packaged app
 SA-S4R/local/**
-!SA-S4R/local/README
 *.lic
 **/metadata/local.meta
 
