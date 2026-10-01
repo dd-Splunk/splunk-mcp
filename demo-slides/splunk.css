@@ -227,12 +227,12 @@ section .mermaid svg {
 .mermaid .node.shell .label foreignObject span,
 .mermaid .node.shell .nodeLabel {
     color: #00B3F0 !important;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    /* Must match classDef shell font-family: Mermaid sizes the box from that font */
+    font-family: monospace !important;
 }
 
 .mermaid .node.shell .label foreignObject > div {
     background-color: #0d0d0d !important;
-    padding: 0.15em 0.35em !important;
     border-radius: 6px;
 }
 
