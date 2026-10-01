@@ -66,6 +66,7 @@ Slash-only (`disable-model-invocation: true`) so skill bodies are **not** loaded
 | ----- | ------ | --------- |
 | **`usage`** | `/usage` | Static **SA-S4R_*** routing + short make list. No live checks unless asked. |
 | **`demo-prep`** | `/demo-prep` | `make demo-prep` (Splunkbase pins + status + verify) → **`SA-S4R_query_nk_demo_state`** (+ **`SA-S4R_validate_nk_attack_traffic`** if threat) → **`make mcp-auth-failures`** |
+| **`splunk-enterprise-administration-advisor`** | `/splunk-enterprise-administration-advisor` | Read-only Splunk advice on roles, capabilities, config precedence, `btool`. Vendored from [splunk/splunk-agent-skills](https://github.com/splunk/splunk-agent-skills) `488d7c7` (Apache-2.0, `LICENSE` beside it); only change: `disable-model-invocation: true`. |
 
 Workshop agent **roles** remain in **`.cursor/agents/`** (not skills). Do not duplicate Makefile/`AGENTS.md` into skill bodies.
 
