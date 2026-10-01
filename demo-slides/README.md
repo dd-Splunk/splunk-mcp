@@ -59,7 +59,7 @@ flowchart TB
 
 **Offline / air-gapped:** export with `make marp-html` on a machine with network first, or open the generated HTML after export. Live preview needs CDN access for Mermaid.
 
-**Label clipping:** theme sets isolated `14px` font on `.mermaid` (12px on split slides) so node boxes match label size.
+**Label clipping:** the deck script renders each diagram with `mermaid.render` (detached from Marp's scaled slide SVG) after `document.fonts.ready`, so node boxes are measured at true size whatever the window size. Page CSS is not applied while Mermaid measures: a label font that differs from the theme default must be set in the `classDef` too (see `shell`, `font-family:monospace`, matched in `splunk.css`).
 
 ## Slide classes
 

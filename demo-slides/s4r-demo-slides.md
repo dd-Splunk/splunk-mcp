@@ -19,10 +19,24 @@ footer: '![w:46](https://www.splunk.com/content/dam/splunk2/en_us/images/icon-li
       fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
     },
   });
-  const renderMermaid = async () => {
-    const nodes = document.querySelectorAll('.mermaid:not([data-processed])');
-    if (nodes.length) await mermaid.run({ nodes });
-  };
+  // Render detached from Marp's scaled slide SVG: in-place mermaid.run measures
+  // labels at the viewport scale, so node boxes come out smaller than their text.
+  // Page CSS does not apply while measuring; set label fonts in classDef instead.
+  let seq = 0;
+  let pending = null;
+  const renderMermaid = () => (pending ??= (async () => {
+    await document.fonts.ready;
+    for (const el of document.querySelectorAll('pre.mermaid:not([data-processed])')) {
+      el.setAttribute('data-processed', 'true');
+      try {
+        const { svg, bindFunctions } = await mermaid.render(`s4r-mermaid-${seq++}`, el.textContent);
+        el.innerHTML = svg;
+        bindFunctions?.(el);
+      } catch (err) {
+        console.error('Mermaid render failed', err);
+      }
+    }
+  })());
   document.addEventListener('DOMContentLoaded', renderMermaid);
   window.addEventListener('load', renderMermaid);
 </script>
@@ -475,7 +489,7 @@ flowchart TB
   NK --> M2
   M1 --- C1
   M2 --- C2
-  classDef shell fill:#0d0d0d,stroke:#333,color:#00B3F0
+  classDef shell fill:#0d0d0d,stroke:#333,color:#00B3F0,font-family:monospace
   class C1,C2 shell
 </pre>
 
