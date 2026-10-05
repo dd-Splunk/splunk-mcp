@@ -130,7 +130,7 @@ These reduce the gap versus a greenfield PoC:
 - **`make clean-y && make up`** for full reset
 - **`make verify`** / **`/demo-prep`** acceptance path
 - **MCP-first** workshop mode (`SA-S4R_*` tools); NK toggle via Splunk config REST (`local/eventgen.conf` override)
-- Tracked **`.cursor/skills/`** (`/usage`, `/demo-prep`)
+- Tracked **`.cursor/skills/`** (`/usage`, `/demo-prep`, `/splunk-enterprise-administration-advisor`)
 - **SA-S4R** package workflow ([CI_CD.md](CI_CD.md))
 - **Cursor Cloud** bootstrap for ephemeral VMs
 
