@@ -56,7 +56,7 @@ make up
 
 ### Splunk crashes on startup (`available_memory_size_in_bytes`)
 
-**Symptom:** Splunk 10.4.x SIGABRT during `setupIndexPipeline` on Cursor Cloud.
+**Symptom:** Splunk 10.x SIGABRT during `setupIndexPipeline` on Cursor Cloud.
 
 **Solution:** Use default bootstrap (fake cgroup mount) or pin `splunk/splunk:9.3.2` with `./scripts/cloud-bootstrap.sh --image splunk/splunk:9.3.2`.
 

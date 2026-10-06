@@ -2,7 +2,7 @@
 # Bootstrap a Cursor Cloud VM for the Splunk MCP PoC (Docker-in-Docker).
 #
 # Idempotent per VM boot: start Docker, ext4 loopback for Splunk data, cgroup workaround
-# for Splunk 10.4.x, and gitignored docker-compose.override.yml + .env (when missing).
+# for Splunk 10.x, and gitignored docker-compose.override.yml + .env (when missing).
 #
 # Usage:
 #   ./scripts/cloud-bootstrap.sh [--wipe] [--force-env] [--image IMAGE]
@@ -34,7 +34,7 @@ CONFIG_ENV="${CONFIG_ENV:-config.env}"
 if [[ -z "${SPLUNK_IMAGE:-}" && -f "$CONFIG_ENV" ]]; then
   SPLUNK_IMAGE="$(sed -n 's/^SPLUNK_IMAGE=//p' "$CONFIG_ENV" | head -n 1)"
 fi
-SPLUNK_IMAGE="${SPLUNK_IMAGE:-splunk/splunk:10.4}"
+SPLUNK_IMAGE="${SPLUNK_IMAGE:-splunk/splunk:10.6.0}"
 CLOUD_SPLUNKDB_IMG="${CLOUD_SPLUNKDB_IMG:-/splunkdb.img}"
 CLOUD_SPLUNKDB_MOUNT="${CLOUD_SPLUNKDB_MOUNT:-/mnt/splunkdb}"
 CLOUD_SPLUNKDB_SIZE="${CLOUD_SPLUNKDB_SIZE:-25G}"
@@ -191,7 +191,7 @@ ensure_splunkdb_mount() {
 
 ensure_fake_cgroup() {
   local r="$CLOUD_FAKE_CGROUP_ROOT"
-  echo "→ Ensuring fake cgroup tree at $r (Splunk 10.4.x workaround)…"
+  echo "→ Ensuring fake cgroup tree at $r (Splunk 10.x workaround)…"
   sudo mkdir -p "$r"
   printf 'cpuset cpu io memory pids\n' | sudo tee "$r/cgroup.controllers" >/dev/null
   printf '\n' | sudo tee "$r/cgroup.subtree_control" >/dev/null

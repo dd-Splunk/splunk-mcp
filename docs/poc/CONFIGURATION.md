@@ -5,7 +5,7 @@
 | App ID | App | Pinned release |
 | ------ | --- | -------------- |
 | 1924 | SA-Eventgen (sample data / Eventgen modinput) | 8.2.2 |
-| 4353 | Config Explorer (optional UI utility) | 1.8.26 |
+| 4353 | Config Explorer (optional UI utility) | 1.8.26 (Splunkbase lists Splunk up to 10.4; runs on 10.6 but not declared) |
 | 7931 | Splunk MCP Server (required for `/services/mcp`) | 2.0.0 |
 | 7245 | Splunk AI Assistant | 2.3.3 |
 | — | SA-S4R (this repo) | GitHub Release [`latest`](https://github.com/dd-Splunk/splunk-mcp/releases/download/latest/SA-S4R.spl) |
@@ -261,20 +261,20 @@ make verify
 | File | Source | Notes |
 | ---- | ------ | ----- |
 | `.env` | Path A: values resolved from **`tpl.env`** via `op run`; Path B: Splunkbase values from environment plus generated `SPLUNK_PASSWORD` / `SPLUNK_MCP_PASSWORD` | Gitignored. Existing file is preserved unless **`--force-env`** is used. Use it locally for Splunk Web admin login; never paste or commit it. |
-| `docker-compose.override.yml` | Generated every run | Gitignored. Binds the ext4 mount as `so1-var`; for Splunk 10.4.x, also binds the fake cgroup tree. |
+| `docker-compose.override.yml` | Generated every run | Gitignored. Binds the ext4 mount as `so1-var`; for Splunk 10.x, also binds the fake cgroup tree. |
 
 `--wipe` resets Splunk data and Compose volumes but does not recreate `.env` unless paired with **`--force-env`**. Use **`--force-env`** intentionally when rotating generated Path B passwords or switching between Path A and Path B.
 
 | Flag / env | Purpose |
 | ---------- | ------- |
 | `--wipe` | Reformat ext4 Splunk data + `docker compose down -v` (use when changing Splunk major versions) |
-| `--image IMAGE` / `SPLUNK_IMAGE` | Default `splunk/splunk:10.4` |
+| `--image IMAGE` / `SPLUNK_IMAGE` | Default `splunk/splunk:10.6.0` |
 | `--force-env` | Recreate gitignored `.env` |
 | `ENV_FILE` | 1Password template (default **`tpl.env`**) |
 | `OP_SERVICE_ACCOUNT_TOKEN` | Headless **`op`** on Cursor Cloud (no desktop sign-in) |
 | `CLOUD_SPLUNKDB_MOUNT` | Default `/mnt/splunkdb` (bind-mounted as `so1-var`) |
 
-Writes gitignored **`docker-compose.override.yml`** (ext4 bind + fake cgroup for 10.4.x). Full notes: [AGENTS.md](../../AGENTS.md) § Cursor Cloud.
+Writes gitignored **`docker-compose.override.yml`** (ext4 bind + fake cgroup for 10.x). Full notes: [AGENTS.md](../../AGENTS.md) § Cursor Cloud.
 
 ## See also
 

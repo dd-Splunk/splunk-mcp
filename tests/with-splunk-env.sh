@@ -103,13 +103,13 @@ grep -q 'redact_compose_secrets' "${ROOT}/scripts/compose-config.sh" || die "com
 # shellcheck source=scripts/compose-config.sh
 source "${ROOT}/scripts/compose-config.sh"
 redacted="$(printf '%s\n' \
-  '    image: splunk/splunk:10.4' \
+  '    image: splunk/splunk:10.6.0' \
   '    SPLUNK_PASSWORD: your_password_here' \
   '    SPLUNKBASE_USERNAME: "your_password_here"' \
   '    SPLUNKBASE_PASSWORD: '"'"'your_password_here'"'" \
   '    SPLUNK_MCP_PASSWORD: ""' \
   '    TZ: Europe/Brussels' | redact_compose_secrets)"
-printf '%s\n' "$redacted" | grep -qx '    image: splunk/splunk:10.4' || die "image line changed"
+printf '%s\n' "$redacted" | grep -qx '    image: splunk/splunk:10.6.0' || die "image line changed"
 printf '%s\n' "$redacted" | grep -qx '    TZ: Europe/Brussels' || die "timezone line changed"
 printf '%s\n' "$redacted" | grep -qx '    SPLUNK_PASSWORD: <set>' || die "password not redacted"
 printf '%s\n' "$redacted" | grep -qx '    SPLUNKBASE_USERNAME: <set>' || die "splunkbase user not redacted"
