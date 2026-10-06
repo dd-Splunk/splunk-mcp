@@ -143,13 +143,13 @@ This section is for cloud agents running in the Cursor Cloud VM (Docker-in-Docke
 
 **Options:** `--wipe` reformats the ext4 Splunk data mount and removes Compose volumes (required when changing Splunk major versions — otherwise KVStore can stay `failed`). `--image splunk/splunk:9.3.2` skips the fake-cgroup workaround. `--force-env` recreates gitignored `.env`. See `./scripts/cloud-bootstrap.sh --help`.
 
-The script writes gitignored **`docker-compose.override.yml`** (ext4 bind mount for `so1-var`; fake cgroup mount for Splunk **10.4.x**) and **`.env`** (generated admin/MCP passwords + Splunkbase creds from secrets). Default image: **`splunk/splunk:10.4`**.
+The script writes gitignored **`docker-compose.override.yml`** (ext4 bind mount for `so1-var`; fake cgroup mount for Splunk **10.x**) and **`.env`** (generated admin/MCP passwords + Splunkbase creds from secrets). Default image: **`splunk/splunk:10.6.0`**.
 
 ### What the bootstrap script does
 
 - **Docker daemon** — not auto-started (no systemd). Starts `dockerd`, fixes socket permissions, runs `hello-world`.
 - **ext4 loopback** — Splunk rejects overlay/tmpfs (`unusable filesystem`). Backs `/opt/splunk/var` via `/mnt/splunkdb` ← `/splunkdb.img` (25G default).
-- **Splunk 10.4.x cgroup workaround** — `splunk/splunk:10.4.x` crashes without a fake cgroup-v2 tree bind-mounted at `/sys/fs/cgroup:ro` (see script). **9.3.2** uses `cgroup: host` instead (no fake tree).
+- **Splunk 10.x cgroup workaround** — `splunk/splunk:10.x` crashes without a fake cgroup-v2 tree bind-mounted at `/sys/fs/cgroup:ro` (see script). **9.3.2** uses `cgroup: host` instead (no fake tree).
 - **`.env` + override** — see quick start above.
 
 ### Manual reference (if not using the script)
