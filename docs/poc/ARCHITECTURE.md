@@ -60,7 +60,7 @@ Check mode: **`SA-S4R_query_nk_demo_state`**. Agentic analysis: [AGENTS.md](../s
 
 ### 2. Splunk Initialization Container (splunk-init)
 
-- **Image**: `alpine:latest` (installs `curl` and `jq` at container start)
+- **Image**: `alpine:3.21` (installs `curl`, `jq`, and `bash` at container start)
 - **Purpose**: Runs initialization setup script after Splunk is healthy
 - **Dependency**: Waits for `so1` service to be healthy
 - **Restart Policy**: No (runs once and stops)
@@ -120,7 +120,7 @@ make up
   │  └─ splunk-init (waits for so1 healthy)
   │     └─ setup-splunk.sh
   │        ├─ Enable Eventgen modinput (required; init fails if still disabled)
-  │        ├─ Create/update role: mcp_user (capability mcp_tool_execute)
+  │        ├─ Create/update role: mcp_user (mcp_tool_execute, s4r_workshop_control, srchJobsQuota=5)
   │        ├─ Create user: splunker
   │        └─ register-s4r-mcp-tools (POST /services/mcp_tools for SA-S4R)
   └─ host (after splunk-init exits 0)
@@ -144,10 +144,10 @@ make up
 
 | User | Role(s) | Auth | Scope | Expiry |
 | ---- | ------- | ---- | ----- | ------ |
-| `splunker` | `user`, `mcp_user` (holds `mcp_tool_execute` capability) | Bearer token (MCP) | MCP (PoC) | Per Splunk MCP / token policy |
+| `splunker` | `user`, `mcp_user` (holds `mcp_tool_execute`; `setup-splunk.sh` also attempts `s4r_workshop_control`) | Bearer token (MCP) | MCP (PoC) | Per Splunk MCP / token policy |
 | `admin` | Built-in | Password | Full admin | N/A |
 
-The setup script assigns Splunk role **`mcp_user`** and ensures capability **`mcp_tool_execute`** is present on that role. It does **not** grant **`admin`** to the MCP user (add manually in Splunk only if you accept the risk).
+The setup script assigns Splunk role **`mcp_user`**, ensures capability **`mcp_tool_execute`** is present, sets **`srchJobsQuota=5`** for parallel S4R agent headroom, and then attempts the SA-S4R custom capability **`s4r_workshop_control`** after reloading the app. It does **not** grant **`admin`** to the MCP user (add manually in Splunk only if you accept the risk).
 
 ### Environment variables
 
@@ -162,7 +162,7 @@ SPLUNK_MCP_PASSWORD=<secret>
 
 `SPLUNK_IMAGE` and `TZ` are in tracked **`config.env`**.
 
-**Splunk Enterprise build** is determined by the Docker image tag (default `latest` resolves to whatever you last pulled—verify with Splunk Web **Settings → Server settings** or `services/server/info`). **Splunk MCP Server** app builds are pinned by **`SPLUNK_APPS_URL`** in `compose.yml` (Splunkbase download URLs).
+**Splunk Enterprise build** is determined by the Docker image tag in **`config.env`** (default **`splunk/splunk:10.6.0`**; verify with Splunk Web **Settings → Server settings** or `services/server/info`). **Splunk MCP Server** app builds are pinned by **`SPLUNK_APPS_URL`** in `compose.yml` (Splunkbase download URLs).
 
 ## Claude Desktop Integration
 
@@ -194,12 +194,13 @@ Claude Desktop
 
 ### setup-splunk.sh
 
-- Creates or updates Splunk role **`mcp_user`** with capability **`mcp_tool_execute`**
+- Creates or updates Splunk role **`mcp_user`** with capability **`mcp_tool_execute`**, **`srchJobsQuota=5`**, and best-effort **`s4r_workshop_control`**
 - Creates **`splunker`** with roles **`user`** + **`mcp_user`**
+- Registers SA-S4R MCP tools via **`scripts/register-s4r-mcp-tools.sh`** before init exits
 - Uses `SPLUNK_MCP_PASSWORD` (env) for the MCP user (no password written to disk)
 - REST host, port, and account names come from `scripts/splunk-api-env.sh` (`localhost`, `8089`, `admin`, `splunker` unless already set)
 - Enables SA-Eventgen default modinput (**required**; init fails if missing or still disabled)
-- Dependencies: `curl`, `jq` (installed in `splunk-init`)
+- Dependencies: `curl`, `jq`, `bash` (installed in `splunk-init`)
 
 Host **Claude** / **Cursor** / **Goose** configs are updated by **`scripts/mcp-client.sh`** via **`make update-mcp-clients`** or **`make up`** (`MCP_UPDATE_ON_BOOT`, default **`cursor`**), not by this script. Goose uses **`envs`** for TLS overrides (see **`docs/poc/CONFIGURATION.md`**).
 

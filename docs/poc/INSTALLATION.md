@@ -141,7 +141,7 @@ Network and ports:
 make up
 ```
 
-This runs **`docker compose up -d`** using **`.env`** if present, otherwise **`op run --env-file=tpl.env`**. It starts **`so1`**, runs **`splunk-init`** after Splunk is healthy, then mints an MCP token and updates client configs (**`MCP_UPDATE_ON_BOOT`**, default **`cursor`**), then registers SA-S4R MCP tools.
+This runs **`docker compose up -d`** using **`.env`** if present, otherwise **`op run --env-file=tpl.env`**. It starts **`so1`**, then runs **`splunk-init`** after Splunk is healthy. Inside **`splunk-init`**, **`scripts/setup-splunk.sh`** enables Eventgen, creates or updates the **`mcp_user`** role and **`splunker`** user, and registers SA-S4R MCP tools before init exits. Only after that does the host mint an MCP token and update client configs (**`MCP_UPDATE_ON_BOOT`**, default **`cursor`**).
 
 After **`splunk-init`** exits, **`scripts/mcp-client.sh update-all`** writes client configs pointing at **`https://localhost:8089/services/mcp`**. For all three clients on boot: `make up MCP_UPDATE_ON_BOOT="cursor goose claude"`.
 

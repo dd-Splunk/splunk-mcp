@@ -344,10 +344,12 @@ Secrets come from **1Password** (`tpl.env` + `op run`) or a hand-written **`.env
 flowchart TD
   A[Start set -eu] --> B[Enable Eventgen modinput]
   B --> C[MCP app: ssl_verify=false]
-  C --> D[Ensure role mcp_user + mcp_tool_execute + s4r_workshop_control]
-  D --> E[Resolve splunker password from env]
-  E --> F[Create or update user splunker]
-  F --> K[Done]
+  C --> D[Ensure role mcp_user + mcp_tool_execute + srchJobsQuota=5]
+  D --> E[Reload SA-S4R and grant s4r_workshop_control best effort]
+  E --> F[Resolve splunker password from env]
+  F --> G[Create or update user splunker]
+  G --> H[Register and enable SA-S4R MCP tools]
+  H --> K[Done]
 ```
 
 ### REST interactions
