@@ -162,7 +162,7 @@ SPLUNK_MCP_PASSWORD=<secret>
 
 `SPLUNK_IMAGE` and `TZ` are in tracked **`config.env`**.
 
-**Splunk Enterprise build** is determined by the Docker image tag (default `latest` resolves to whatever you last pulled—verify with Splunk Web **Settings → Server settings** or `services/server/info`). **Splunk MCP Server** app builds are pinned by **`SPLUNK_APPS_URL`** in `compose.yml` (Splunkbase download URLs).
+**Splunk Enterprise build** is determined by the pinned Docker image tag in **`config.env`** (currently `splunk/splunk:10.6.0`; verify with Splunk Web **Settings → Server settings** or `services/server/info`). **Splunk MCP Server** app builds are pinned by **`SPLUNK_APPS_URL`** in `compose.yml` (Splunkbase download URLs). When bumping the image across major versions, wipe compatible Docker volumes first as described in [CONFIGURATION.md § Version bump workflow](CONFIGURATION.md#version-bump-workflow).
 
 ## Claude Desktop Integration
 
