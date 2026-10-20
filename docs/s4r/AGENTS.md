@@ -110,7 +110,7 @@ Full SPL: [SPL-CATALOG.md](SPL-CATALOG.md).
 
 ### Model configuration
 
-**Power User** uses **`claude-4.6-sonnet-medium-thinking`**; specialists use **`composer-2.5-fast`** (not `inherit`) so parallel workers stay fast and cheap while the orchestrator handles synthesis. Table, upgrade paths, and Cursor caveats: [`.cursor/agents/README.md` § Model configuration](../.cursor/agents/README.md#model-configuration).
+**Power User** uses **`claude-sonnet-5-5-high`**; specialists use **`grok-4.7-high-fast`** so parallel workers stay fast while the orchestrator handles synthesis. Table, upgrade paths, and Cursor caveats: [`.cursor/agents/README.md` § Model configuration](../.cursor/agents/README.md#model-configuration).
 
 ### Foreground / background (`is_background`)
 

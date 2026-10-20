@@ -1,6 +1,6 @@
 ---
 name: s4r-business-analytics
-model: composer-2.5-fast
+model: grok-4.7-high-fast
 is_background: true
 description: Business Analytics analyst — quantify lost revenue from failed e-commerce purchases via product lookup.
 ---

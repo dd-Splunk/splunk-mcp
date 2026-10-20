@@ -1,6 +1,6 @@
 ---
 name: s4r-devops
-model: composer-2.5-fast
+model: grok-4.7-high-fast
 is_background: true
 description: DevOps analyst for Buttercup — platform and browser failures, client-specific vs server-wide verdict.
 ---

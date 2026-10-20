@@ -1,6 +1,6 @@
 ---
 name: s4r-security-fraud
-model: composer-2.5-fast
+model: grok-4.7-high-fast
 is_background: true
 description: Security and Fraud analyst for Buttercup — geographic activity, anomalies, failed-purchase geo hotspots.
 ---
