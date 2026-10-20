@@ -32,8 +32,8 @@ Power User and specialists set **`model`** and **`is_background`** in YAML front
 
 | Agent | Model | Background |
 | ----- | ----- | ---------- |
-| `s4r-power-user` | `claude-4.6-sonnet-medium-thinking` | No (foreground orchestrator) |
-| Four specialists | `composer-2.5-fast` | Yes (parallel workers) |
+| `s4r-power-user` | `claude-sonnet-5-5-high` | No (foreground orchestrator) |
+| Four specialists | `grok-4.7-high-fast` | Yes (parallel workers) |
 
 **Parallel demos:** four specialists share **`splunker`** search concurrency (`srchJobsQuota=5` on **`mcp_user`**; stagger if you still hit limits) — [TROUBLESHOOTING.md](TROUBLESHOOTING.md#parallel-agent-searches-hit-splunker-concurrency-limit).
 

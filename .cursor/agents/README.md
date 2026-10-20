@@ -28,10 +28,10 @@ Each agent sets **`model`** in YAML frontmatter ([Subagents → Model configurat
 
 | Agent | `model` | Rationale |
 | ----- | ------- | --------- |
-| `s4r-power-user` | `claude-4.6-sonnet-medium-thinking` | Routing, wait-for-all, cross-team synthesis, infrastructure vs threat verdict |
-| `s4r-it-ops`, `s4r-devops`, `s4r-business-analytics`, `s4r-security-fraud` | `composer-2.5-fast` | Catalog § → MCP → template; runbook-driven, cost/latency friendly in parallel |
+| `s4r-power-user` | `claude-sonnet-5-5-high` | Routing, wait-for-all, cross-team synthesis, infrastructure vs threat verdict |
+| `s4r-it-ops`, `s4r-devops`, `s4r-business-analytics`, `s4r-security-fraud` | `grok-4.7-high-fast` | Catalog § → MCP → template; runbook-driven, cost/latency friendly in parallel |
 
-**Upgrades:** Flagship demos — Power User → `claude-opus-4-8-thinking-high`. Weak DevOps/Security verdicts in rehearsal — bump only those two to `claude-4.6-sonnet-medium-thinking`.
+**Upgrades:** Flagship demos — Power User → `claude-opus-5-5-medium`. Weak DevOps/Security verdicts in rehearsal — bump only those two to `claude-sonnet-5-5-high`.
 
 **Caveats:** Cursor may override models (plan, Max Mode, org policy). Rehearse with your subscription before a live workshop.
 
@@ -53,7 +53,7 @@ Example specialist frontmatter:
 ```yaml
 ---
 name: s4r-it-ops
-model: composer-2.5-fast
+model: grok-4.7-high-fast
 is_background: true
 description: IT Operations analyst for Buttercup web tier — HTTP success vs failure.
 ---

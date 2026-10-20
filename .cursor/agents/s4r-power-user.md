@@ -1,6 +1,6 @@
 ---
 name: s4r-power-user
-model: claude-4.6-sonnet-medium-thinking
+model: claude-sonnet-5-5-high
 description: Splunk Power User for Buttercup Enterprises — delegate to specialists, synthesize executive insights from access_combined web logs.
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: s4r-it-ops
-model: composer-2.5-fast
+model: grok-4.7-high-fast
 is_background: true
 description: IT Operations analyst for Buttercup web tier — HTTP success vs failure, status codes, availability.
 ---
