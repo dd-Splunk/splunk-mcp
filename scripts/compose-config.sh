@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Print resolved compose.yml for manual checks.
 # Usage: ./scripts/compose-config.sh
-# Env overrides: ENV_FILE, ENV_OUT, OP, DC, CONFIG_ENV (same as Makefile).
+# Env overrides: ENV_OUT, DC, CONFIG_ENV (same as Makefile).
 #
 # Password and Splunkbase values are replaced with <set>. The Splunk image
 # reads those from the environment, so Compose file secrets would not remove
@@ -35,9 +35,7 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   ROOT="$(cd "$(dirname "$0")/.." && pwd)"
   cd "$ROOT"
 
-  ENV_FILE="${ENV_FILE:-tpl.env}"
   ENV_OUT="${ENV_OUT:-.env}"
-  OP="${OP:-op}"
   DC="${DC:-docker compose}"
 
   # shellcheck source=scripts/with-splunk-env.sh
@@ -48,12 +46,8 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   load_config_env
 
   if [[ -z "${SPLUNK_PASSWORD:-}" || -z "${SPLUNKBASE_USER:-}" || -z "${SPLUNKBASE_PASS:-}" || -z "${SPLUNK_MCP_PASSWORD:-}" ]]; then
-    if [[ -f "$ENV_OUT" ]]; then
-      echo "Error: $ENV_OUT must set SPLUNK_PASSWORD, SPLUNKBASE_USER, SPLUNKBASE_PASS, and SPLUNK_MCP_PASSWORD." >&2
-    else
-      echo "Error: SPLUNK_PASSWORD, SPLUNKBASE_USER, SPLUNKBASE_PASS, and SPLUNK_MCP_PASSWORD must be non-empty after op run." >&2
-      echo "Fix op:// paths in ${ENV_FILE}. Test with: op read \"op://...\"" >&2
-    fi
+    echo "Error: SPLUNK_PASSWORD, SPLUNKBASE_USER, SPLUNKBASE_PASS, and SPLUNK_MCP_PASSWORD must be non-empty." >&2
+    echo "Set them in ${ENV_OUT} (see .env.example) or export them." >&2
     exit 1
   fi
 

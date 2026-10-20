@@ -1,11 +1,10 @@
 # Environment files (contain secrets)
 .env
-# Local copy of tpl.env.example — edit op:// paths here (never commit)
-tpl.env
 
 # Leftover local files from older checkouts. The stack does not read or write these.
 .secrets/
 *.token
+tpl.env
 
 # Maintainer-only machine hooks (Git credential helpers, etc.). Not part of the PoC.
 scripts/local/

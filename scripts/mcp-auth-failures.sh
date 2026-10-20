@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
 # Admin _internal MCP auth/tool stats (last 30m). Not usable via splunker MCP.
 # Usage: ./scripts/mcp-auth-failures.sh [--detail]
-# Secrets: scripts/with-splunk-env.sh (.env or op run --env-file=tpl.env).
+# Secrets: scripts/with-splunk-env.sh (.env or the process environment).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-ENV_FILE="${ENV_FILE:-tpl.env}"
 ENV_OUT="${ENV_OUT:-.env}"
-OP="${OP:-op}"
 DETAIL="${MCP_AUTH_DETAIL:-0}"
 
 # shellcheck source=scripts/splunk-api-env.sh

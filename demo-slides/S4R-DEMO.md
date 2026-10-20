@@ -21,7 +21,7 @@ make s4r-attack-nk-status         # expect: disabled (infrastructure mode)
 
 | Check | Command / action |
 | ----- | ---------------- |
-| Splunk Web | `https://localhost:8000` (admin — password from vault) |
+| Splunk Web | `https://localhost:8000` (admin — password from `.env`) |
 | MCP in Cursor | Restart Cursor; Splunk MCP tools visible |
 | Data flowing | Search: `index=main sourcetype=access_combined \| head 5` |
 | Tabs pre-open | `docs/s4r/SPL-CATALOG.md`, `.cursor/agents/s4r-power-user.md`, `.cursor/agents/s4r-it-ops.md`, `.cursor/mcp.json` |

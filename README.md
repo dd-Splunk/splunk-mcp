@@ -5,7 +5,7 @@ Local **proof-of-concept**: **Splunk Enterprise** in Docker, **Splunk MCP Server
 **Scope:** on-prem **local Enterprise only**. **Splunk Cloud** MCP (OAuth, `*.splunkcloud.com`, staging stacks) is **out of scope** — not tested or supported in this repo. See [docs/poc/README.md](docs/poc/README.md#scope).
 
 ```bash
-cp tpl.env.example tpl.env   # or .env.example → .env
+cp .env.example .env          # fill values; never commit .env
 make up
 make verify-mcp-remote
 ```

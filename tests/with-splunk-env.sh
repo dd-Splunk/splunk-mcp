@@ -36,64 +36,52 @@ echo "ok"
 EOF
 chmod +x "${TMP}/caller.sh"
 
-# Path B: source .env in-process. Must not invoke op.
+# .env is sourced in-process.
 printf '%s\n' 'SPLUNK_PASSWORD=your_password_here' >"${TMP}/dotenv"
-op_count="${TMP}/op-count"
-: >"${op_count}"
-ENV_OUT="${TMP}/dotenv" \
-  ENV_FILE="${TMP}/missing-tpl.env" \
-  OP="${TMP}/should-not-run" \
+env -u SPLUNK_MCP_ENV_LOADED \
+  ENV_OUT="${TMP}/dotenv" \
   EXPECT=your_password_here \
   EXPECT_ARG=status \
-  "${TMP}/caller.sh" status | grep -qx 'ok' || die "path B did not load dotenv"
-[[ ! -s "${op_count}" ]] || die "path B invoked op"
+  "${TMP}/caller.sh" status | grep -qx 'ok' || die "dotenv did not load"
 
-# Path A: re-exec once under a fake op. Second invocation must not loop.
-cat >"${TMP}/fake-op" <<EOF
-#!/usr/bin/env bash
-set -euo pipefail
-count_file="${op_count}"
-n=0
-[[ -s "\$count_file" ]] && n="\$(tr -d '[:space:]' <"\$count_file")"
-n=\$((n + 1))
-printf '%s\n' "\$n" >"\$count_file"
-[[ "\$n" -eq 1 ]] || { echo "op loop" >&2; exit 9; }
-[[ "\${1:-}" == "run" ]] || exit 2
-[[ "\${2:-}" == --env-file=* ]] || exit 3
-[[ "\${3:-}" == "--" ]] || exit 4
-shift 3
-export SPLUNK_PASSWORD="\${OP_INJECT:?}"
-exec "\$@"
-EOF
-chmod +x "${TMP}/fake-op"
-printf '%s\n' 'SPLUNK_PASSWORD=op://YourVault/item/password' >"${TMP}/tpl.env"
-ENV_OUT="${TMP}/missing.env" \
-  ENV_FILE="${TMP}/tpl.env" \
-  OP="${TMP}/fake-op" \
-  OP_INJECT=your_splunker_password \
+# No file: an already-exported password is enough.
+env -u SPLUNK_MCP_ENV_LOADED \
+  ENV_OUT="${TMP}/missing.env" \
+  SPLUNK_PASSWORD=your_splunker_password \
   EXPECT=your_splunker_password \
   EXPECT_ARG=status \
-  "${TMP}/caller.sh" status | grep -qx 'ok' || die "path A did not re-exec"
-[[ "$(tr -d '[:space:]' <"${op_count}")" == "1" ]] || die "path A op count"
+  "${TMP}/caller.sh" status | grep -qx 'ok' || die "inherited env did not load"
 
-# Neither file.
-if ENV_OUT="${TMP}/no.env" ENV_FILE="${TMP}/no.tpl" "${TMP}/caller.sh" status >/dev/null 2>"${TMP}/err"; then
-  die "missing files should fail"
+# .env wins over a different inherited value.
+printf '%s\n' 'SPLUNK_PASSWORD=from_file' >"${TMP}/dotenv"
+env -u SPLUNK_MCP_ENV_LOADED \
+  ENV_OUT="${TMP}/dotenv" \
+  SPLUNK_PASSWORD=from_env \
+  EXPECT=from_file \
+  EXPECT_ARG=status \
+  "${TMP}/caller.sh" status | grep -qx 'ok' || die ".env did not override the environment"
+
+# Neither file nor password.
+if env -u SPLUNK_MCP_ENV_LOADED -u SPLUNK_PASSWORD \
+  ENV_OUT="${TMP}/no.env" "${TMP}/caller.sh" status >/dev/null 2>"${TMP}/err"; then
+  die "missing secrets should fail"
 fi
-grep -q 'Path B' "${TMP}/err" || die "missing-file error lacks Path B hint"
+grep -q '.env.example' "${TMP}/err" || die "missing-secret error lacks .env.example hint"
 
-# tpl.env present, op binary missing.
-if ENV_OUT="${TMP}/no.env" ENV_FILE="${TMP}/tpl.env" OP="${TMP}/no-such-op" \
-  "${TMP}/caller.sh" status >/dev/null 2>"${TMP}/err"; then
-  die "missing op should fail"
+# Container shortcut: splunk-init already has secrets and does not mount .env.
+(
+  # shellcheck source=scripts/with-splunk-env.sh
+  source "${HELPER}"
+  ENV_OUT="${TMP}/no.env" SPLUNK_MCP_ENV_LOADED=1 with_splunk_env status
+) || die "SPLUNK_MCP_ENV_LOADED should skip the .env lookup"
+
+if grep -E 'op run|tpl\.env|1Password' "${ROOT}/scripts/"*.sh "${ROOT}/Makefile" >/dev/null; then
+  die "scripts or Makefile still reference 1Password"
 fi
-grep -q 'not available' "${TMP}/err" || die "missing-op error"
 
-for secret_file in tpl.env.example .env.example; do
-  if grep -E '^(SPLUNK_IMAGE|TZ)=' "${ROOT}/${secret_file}" >/dev/null; then
-    die "${secret_file} still sets SPLUNK_IMAGE or TZ"
-  fi
-done
+if grep -E '^(SPLUNK_IMAGE|TZ)=' "${ROOT}/.env.example" >/dev/null; then
+  die ".env.example still sets SPLUNK_IMAGE or TZ"
+fi
 grep -E '^SPLUNK_IMAGE=' "${ROOT}/config.env" >/dev/null || die "config.env missing SPLUNK_IMAGE"
 grep -E '^TZ=' "${ROOT}/config.env" >/dev/null || die "config.env missing TZ"
 grep -q 'load_config_env' "${ROOT}/scripts/compose-up.sh" || die "compose-up does not load config.env"
@@ -133,7 +121,7 @@ printf '%s\n' \
   "TZ: ${TZ}"
 EOF
 chmod +x "${TMP}/fake-dc"
-rendered="$(ENV_OUT="${TMP}/dotenv" ENV_FILE="${TMP}/missing-tpl.env" OP="${TMP}/should-not-run" \
+rendered="$(ENV_OUT="${TMP}/dotenv" \
   CONFIG_ENV="${ROOT}/config.env" DC="${TMP}/fake-dc" \
   "${ROOT}/scripts/compose-config.sh")"
 printf '%s\n' "$rendered" | grep -qx "image: $(sed -n 's/^SPLUNK_IMAGE=//p' "${ROOT}/config.env")" \

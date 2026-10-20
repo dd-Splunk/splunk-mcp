@@ -22,7 +22,7 @@ The [Model Context Protocol](https://modelcontextprotocol.io/) lets a client (Cl
 
 `compose.yml` sets `SPLUNK_APPS_URL` to a comma-separated list of package download URLs. Installed from Splunkbase: **SA-Eventgen** (1924), **Config Explorer** (4353), **Splunk MCP Server** (7931), and **Splunk AI Assistant** (7245). **SA-S4R** is installed from this repo’s GitHub Release **`latest`** (`SA-S4R.spl`). Pin details and the full table live in [CONFIGURATION.md](CONFIGURATION.md#composeyml).
 
-You need valid **Splunkbase** credentials via **`tpl.env`** or **`.env`** (Path B): **`SPLUNKBASE_USER`** and **`SPLUNKBASE_PASS`**.
+You need valid **Splunkbase** credentials in **`.env`** (or the process environment): **`SPLUNKBASE_USER`** and **`SPLUNKBASE_PASS`**.
 
 ## Client connections
 
@@ -30,10 +30,9 @@ Per [Splunk MCP Server 2.0](https://help.splunk.com/en/splunk-cloud-platform/mcp
 
 ## Secrets flow
 
-1. **`tpl.env.example`** → copy to **`tpl.env`** (gitignored): `op://` references only. Non-secret settings are in tracked **`config.env`**.
-2. **`make up` without `.env`**: `op run --env-file=tpl.env -- docker compose …` (nothing written to disk).
-3. **Path B**: hand-written **`.env`** from **`.env.example`**; Compose auto-loads it.
-4. **Clients:** tokens minted by **`scripts/mint-mcp-token.sh`** after **`splunk-init`**; stored only in client configs.
+1. Copy **`.env.example`** to gitignored **`.env`** and fill the four required secrets. Non-secret settings are in tracked **`config.env`**.
+2. **`make up`** sources **`.env`** when it exists. CI can export the same variables instead.
+3. **Clients:** tokens minted by **`scripts/mint-mcp-token.sh`** after **`splunk-init`**; stored only in client configs.
 
 ## Sample data (SA-S4R)
 
@@ -89,8 +88,8 @@ Check mode: **`SA-S4R_query_nk_demo_state`**. Agentic analysis: [AGENTS.md](../s
 #### Local Files
 
 - **compose.yml**: Docker Compose configuration
-- **tpl.env.example**: Tracked template; copy to **tpl.env** (gitignored) for real `op://` paths
-- **.env**: Optional runtime file (git-ignored), hand-written from **`.env.example`** (Path B)
+- **.env.example**: Tracked template with empty secret values
+- **.env**: Gitignored runtime file, copied from **`.env.example`** and filled locally
 - **SA-S4R/**: Sample Splunk app source. Compose installs the published **`SA-S4R.spl`** into `$SPLUNK_HOME/etc/apps` (no app bind mount). **`splunk-init`** still bind-mounts **`default/s4r_mcp_tools.json`** read-only.
 
 ### 4. Claude Logs Index
@@ -111,7 +110,7 @@ Check mode: **`SA-S4R_query_nk_demo_state`**. Agentic analysis: [AGENTS.md](../s
 
 ```text
 make up
-  ├─ docker compose up -d (secrets: .env if present, else op run --env-file=tpl.env; create tpl.env via cp tpl.env.example tpl.env)
+  ├─ docker compose up -d (secrets from .env, or the process environment when .env is absent)
   │  ├─ so1 (Splunk)
   │  │  ├─ Pull image
   │  │  ├─ Start container
@@ -138,7 +137,7 @@ make up
    - Admin operations: Username/password (admin user)
    - MCP operations: Bearer token from `scripts/mint-mcp-token.sh` in client config
 3. **Transport Security**: HTTPS with self-signed certificates (localhost only)
-4. **Credential Management**: 1Password CLI integration
+4. **Credential Management**: gitignored `.env` (or exported variables in CI)
 
 ### User Roles
 
@@ -151,7 +150,7 @@ The setup script assigns Splunk role **`mcp_user`** and ensures capability **`mc
 
 ### Environment variables
 
-Supplied to Compose via **`.env`** (Path B) **or** **`op run --env-file=tpl.env`** (default `make up` when `.env` is absent; **`tpl.env`** is local, from **`cp tpl.env.example tpl.env`**). Example shape:
+Supplied to Compose via gitignored **`.env`**, or via the process environment when that file is absent. Example shape:
 
 ```bash
 SPLUNK_PASSWORD=<secret>
@@ -206,7 +205,6 @@ Host **Claude** / **Cursor** / **Goose** configs are updated by **`scripts/mcp-c
 ### Makefile
 
 - Automation targets
-- 1Password integration
 - Docker command shortcuts
 
 ## Data Flow

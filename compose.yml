@@ -8,7 +8,7 @@ services:
       SPLUNK_GENERAL_TERMS: --accept-sgt-current-at-splunk-com
       SPLUNK_START_ARGS: --accept-license
       SPLUNK_PASSWORD: ${SPLUNK_PASSWORD:-}
-      # Splunkbase: set SPLUNKBASE_USER / SPLUNKBASE_PASS in project .env (see .env.example) or op run --env-file=tpl.env
+      # Splunkbase: set SPLUNKBASE_USER / SPLUNKBASE_PASS in project .env (see .env.example)
       SPLUNKBASE_USERNAME: ${SPLUNKBASE_USER:-}
       SPLUNKBASE_PASSWORD: ${SPLUNKBASE_PASS:-}
       # Splunkbase: comma-separated package URLs (requires valid SPLUNKBASE_*). Order here:
@@ -53,7 +53,7 @@ services:
       # Required: password for the MCP execution user (splunker by default).
       SPLUNK_MCP_PASSWORD: ${SPLUNK_MCP_PASSWORD:-}
       SPLUNK_HOST: so1
-      # Password is already in the environment; skip host .env / op lookup.
+      # Password is already in the environment; skip the host .env lookup.
       SPLUNK_MCP_ENV_LOADED: "1"
     command: sh -c "apk add --no-cache curl jq bash && /opt/splunk-init/scripts/setup-splunk.sh"
     networks:

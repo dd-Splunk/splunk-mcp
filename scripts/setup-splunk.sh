@@ -9,7 +9,7 @@
 #   5. SA-S4R MCP tools: register-s4r-mcp-tools.sh (batch replace, enable, saved-search reload)
 #
 # splunk-init mounts this directory's scripts and SA-S4R/default/s4r_mcp_tools.json.
-# Compose sets SPLUNK_MCP_ENV_LOADED=1 so the registrar does not look for .env or op.
+# Compose sets SPLUNK_MCP_ENV_LOADED=1 so the registrar does not look for a host .env.
 #
 # Required env: SPLUNK_PASSWORD.
 # SPLUNK_MCP_PASSWORD is required on first user creation and when FORCE_SPLUNK_MCP_PASSWORD=1.

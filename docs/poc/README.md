@@ -19,7 +19,7 @@ For Cloud MCP, use Splunk’s official docs (e.g. [About MCP Server](https://hel
 | Document | Purpose |
 | -------- | ------- |
 | [PRESALES.md](PRESALES.md) | Demo runbook, secrets paths, checklist |
-| [INSTALLATION.md](INSTALLATION.md) | Hardware, 1Password, verification |
+| [INSTALLATION.md](INSTALLATION.md) | Hardware, secrets, verification |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Components, boot flow, MCP clients |
 | [CONFIGURATION.md](CONFIGURATION.md) | Compose, env, MCP auth, client configs |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Docker, init, MCP, connectivity |

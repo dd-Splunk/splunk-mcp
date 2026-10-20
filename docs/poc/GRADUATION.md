@@ -56,7 +56,7 @@ Use this as a scorecard. **Internal graduation** can be declared when every **re
 
 | # | Criterion | Today | Gap / action |
 | - | --------- | ----- | ------------ |
-| A1 | Single canonical path in docs (no “ask maintainer for `tpl.env`”) | Path A + B documented | Publish org-standard: e.g. “Path B for first clone” in [INSTALLATION.md](INSTALLATION.md) |
+| A1 | Single canonical path in docs | Gitignored `.env` from `.env.example` | None for doc-only graduation |
 | A2 | Prerequisites with pass/fail commands (Docker RAM, Splunkbase reachability, Node/`npx`) | [INSTALLATION.md](INSTALLATION.md#preflight-before-first-make-up) lists local checks; [PRESALES.md](PRESALES.md#technical-quick-reference) has the short demo path | Optional: convert preflight to a script if handoffs still miss prerequisites |
 | A3 | First-run duration documented | [INSTALLATION.md](INSTALLATION.md#preflight-before-first-make-up) and [PRESALES.md](PRESALES.md#demo-success-path-do-this-in-order) call out cold-start timing | None for doc-only graduation |
 | A4 | Acceptance command documented | [INSTALLATION.md](INSTALLATION.md#mcp-clients) distinguishes default Cursor verification from all-client **`make verify`**; [SPECS.md](SPECS.md#acceptance-criteria-minimum) keeps data-level criteria | None for doc-only graduation |
@@ -65,9 +65,9 @@ Use this as a scorecard. **Internal graduation** can be declared when every **re
 
 | # | Criterion | Today | Gap / action |
 | - | --------- | ----- | ------------ |
-| B1 | Four required vars documented | Yes (`.env.example`, `tpl.env.example`) | None for doc-only graduation |
+| B1 | Four required vars documented | Yes (`.env.example`) | None for doc-only graduation |
 | B2 | Splunkbase account called out as mandatory | Yes | Org policy for **shared vs personal** Splunkbase creds |
-| B3 | No personal `op://` paths in shared templates | `tpl.env.example` only | Contributors use gitignored `tpl.env` locally |
+| B3 | No personal secret paths in shared templates | `.env.example` has empty values | Contributors fill gitignored `.env` locally |
 | B4 | CI secrets story (if smoke ever added) | Not implemented | Document which secrets go in GitHub org settings |
 
 ### C. Supported platform matrix (required)

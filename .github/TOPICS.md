@@ -5,7 +5,7 @@
 Use this text (or a shortened variant) in **Repository → Settings → General → About**, or via CLI:
 
 ```bash
-gh repo edit dd-Splunk/splunk-mcp --description "PoC: Splunk Enterprise + Splunk MCP Server in Docker. Splunk4Rookies (SA-S4R) sample data, multi-agent demo, Marp presenter deck. Cursor, Claude Desktop, or Goose via npx mcp-remote; secrets with 1Password or .env."
+gh repo edit dd-Splunk/splunk-mcp --description "PoC: Splunk Enterprise + Splunk MCP Server in Docker. Splunk4Rookies (SA-S4R) sample data, multi-agent demo, Marp presenter deck. Cursor, Claude Desktop, or Goose via npx mcp-remote; secrets in gitignored .env."
 ```
 
 ## Topics
