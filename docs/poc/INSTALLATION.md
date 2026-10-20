@@ -1,6 +1,6 @@
 # Installation & setup
 
-**Presales or customer demo?** Use **[PRESALES.md](PRESALES.md)** for the happy path, time budget, and client steps; use this file for **hardware, 1Password item layout, and long-form** setup. Quick commands: [PRESALES.md § Technical quick reference](PRESALES.md#technical-quick-reference). If anything fails, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+**Presales or customer demo?** Use **[PRESALES.md](PRESALES.md)** for the happy path, time budget, and client steps; use this file for **hardware and long-form** setup. Quick commands: [PRESALES.md § Technical quick reference](PRESALES.md#technical-quick-reference). If anything fails, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 ## Prerequisites
 
@@ -26,17 +26,16 @@
 | Tool | Purpose | Verify |
 | ---- | ------- | ------ |
 | Docker + Compose | Splunk containers | `docker --version`, `docker compose version`, `docker info` |
-| 1Password CLI (`op`) | Secrets from local `tpl.env` | `op --version` (sign in: `op account add` or desktop integration) |
 | `make`, `bash` | `Makefile` workflows | `make --version` |
 | `curl`, `jq` | Scripts / REST | `curl --version`, `jq --version` |
 | Node/npm | `npx mcp-remote` for MCP clients | `node --version`, `npx --version` |
 | Python 3 + PyYAML | Goose config (`make update-mcp-client MCP_CLIENT=goose`) | `python3 --version`; `python3 -c "import yaml"` (`pip3 install pyyaml`; Homebrew PEP 668: `python3 -m pip install --user --break-system-packages pyyaml`) |
 
-Optional: **Git** to clone; an editor (e.g. VS Code) to edit `tpl.env` (from **`tpl.env.example`**) and `compose.yml`.
+Optional: **Git** to clone; an editor (e.g. VS Code) to edit `.env` (from **`.env.example`**) and `compose.yml`.
 
 **Windows:** Prefer **WSL2** with Docker so `make` and paths behave like the docs (macOS/Linux).
 
-**Without 1Password:** you can still run the stack with a git-ignored **`.env`** file containing plain values for `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, and `SPLUNK_MCP_PASSWORD`. Image and timezone are in tracked **`config.env`**. See **[PRESALES.md](PRESALES.md)** (Path B).
+Create a gitignored **`.env`** with `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, and `SPLUNK_MCP_PASSWORD`. Image and timezone are in tracked **`config.env`**. See **[PRESALES.md](PRESALES.md)**.
 
 ### Cursor Cloud
 
@@ -48,57 +47,28 @@ make up
 make verify
 ```
 
-This writes gitignored local runtime files (`.env` and `docker-compose.override.yml`). With **Path B** (only Splunkbase secrets in the Cursor Cloud environment), bootstrap generates **`SPLUNK_PASSWORD`** and **`SPLUNK_MCP_PASSWORD`** into the local `.env`; use those values for admin login and MCP user resets, but do not paste or commit them. Flags such as `--wipe`, `--image`, and `--force-env` are documented in [CONFIGURATION.md § Cursor Cloud bootstrap](CONFIGURATION.md#cursor-cloud-bootstrap); common VM-specific failures are in [TROUBLESHOOTING.md § Cursor Cloud](TROUBLESHOOTING.md#cursor-cloud-docker-in-docker).
+This writes gitignored local runtime files (`.env` and `docker-compose.override.yml`). Bootstrap generates **`SPLUNK_PASSWORD`** and **`SPLUNK_MCP_PASSWORD`** into the local `.env` when they are not already set; use those values for admin login and MCP user resets, but do not paste or commit them. Flags such as `--wipe`, `--image`, and `--force-env` are documented in [CONFIGURATION.md § Cursor Cloud bootstrap](CONFIGURATION.md#cursor-cloud-bootstrap); common VM-specific failures are in [TROUBLESHOOTING.md § Cursor Cloud](TROUBLESHOOTING.md#cursor-cloud-docker-in-docker).
 
-## 1Password
+## Secrets
 
-### Create items (example names)
+You need four values:
 
-Use any vault you control. Names below are **illustrative**—they must match whatever you put in **`tpl.env`**.
-
-1. **Splunk admin password** — e.g. a Login item whose **password** field holds the Splunk `admin` password.
-2. **Splunkbase** — a Login item with **username** and **password** for [Splunkbase](https://splunkbase.splunk.com/) (required for app downloads at container start).
-
-### Align `tpl.env`
-
-Either create items that match each `op://vault/item/field` in **`tpl.env`**, or edit **`tpl.env`** so every path resolves in your vault. Without that, `make up` (with `op run`) will fail.
-
-### Test reads
-
-Substitute paths to match **`tpl.env`**:
-
-```bash
-op read "op://YourVault/YourItem/password"
-op read "op://YourVault/Splunkbase/username"
-op read "op://YourVault/Splunkbase/password"
-```
+1. **`SPLUNK_PASSWORD`** — Splunk `admin` password.
+2. **`SPLUNKBASE_USER`** and **`SPLUNKBASE_PASS`** — [Splunkbase](https://splunkbase.splunk.com/) account that can download apps.
+3. **`SPLUNK_MCP_PASSWORD`** — password for the MCP execution user (default `splunker`).
 
 ## Clone and configure
 
 ```bash
 git clone <repository-url> splunk-mcp
 cd splunk-mcp
-cp tpl.env.example tpl.env
+cp .env.example .env
+chmod 600 .env
 ```
 
-Edit **`tpl.env`** (gitignored) so every `op://` path matches your vault. Review the tracked example anytime:
+Edit **`.env`** (gitignored). Leave the values unquoted. Image and timezone are in tracked **`config.env`**, not in **`.env`**.
 
-```bash
-cat tpl.env.example
-```
-
-Example shape (paths must be yours in **`tpl.env`**):
-
-```bash
-SPLUNK_PASSWORD=op://YourVault/YourItem/password
-SPLUNKBASE_USER=op://YourVault/Splunkbase/username
-SPLUNKBASE_PASS=op://YourVault/Splunkbase/password
-SPLUNK_MCP_PASSWORD=op://YourVault/Splunk-MCP/splunker-password
-```
-
-Image and timezone are in tracked **`config.env`**, not in **`tpl.env`**.
-
-Expected layout includes `Makefile`, `compose.yml`, `tpl.env.example`, local `tpl.env` (after copy), `scripts/` (including `setup-splunk.sh`, `compose-up.sh`, `mcp-client.sh`), and `SA-S4R/`. See root [README.md](../../README.md) for the full picture.
+Expected layout includes `Makefile`, `compose.yml`, `.env.example`, local `.env` (after copy), `scripts/` (including `setup-splunk.sh`, `compose-up.sh`, `mcp-client.sh`), and `SA-S4R/`. See root [README.md](../../README.md) for the full picture.
 
 ## Preflight before first `make up`
 
@@ -118,14 +88,9 @@ python3 -c "import yaml"
 curl -fsS https://splunkbase.splunk.com/ >/dev/null
 ```
 
-Then validate the chosen secrets path:
+Then confirm the secret file exists and is non-empty. Do not print it:
 
 ```bash
-# Path A: confirm op is signed in and each tpl.env reference resolves.
-op account list
-op read "op://YourVault/Splunkbase/username"
-
-# Path B: confirm .env exists and has all required keys populated.
 test -s .env
 ```
 
@@ -141,11 +106,11 @@ Network and ports:
 make up
 ```
 
-This runs **`docker compose up -d`** using **`.env`** if present, otherwise **`op run --env-file=tpl.env`**. It starts **`so1`**, runs **`splunk-init`** after Splunk is healthy, then mints an MCP token and updates client configs (**`MCP_UPDATE_ON_BOOT`**, default **`cursor`**), then registers SA-S4R MCP tools.
+This runs **`docker compose up -d`** using **`.env`** (or exported variables when that file is absent). It starts **`so1`**, runs **`splunk-init`** after Splunk is healthy, then mints an MCP token and updates client configs (**`MCP_UPDATE_ON_BOOT`**, default **`cursor`**), then registers SA-S4R MCP tools.
 
 After **`splunk-init`** exits, **`scripts/mcp-client.sh update-all`** writes client configs pointing at **`https://localhost:8089/services/mcp`**. For all three clients on boot: `make up MCP_UPDATE_ON_BOOT="cursor goose claude"`.
 
-For Path B (plain **`.env`** without 1Password at runtime), see [CONFIGURATION.md](CONFIGURATION.md#plain-env-path-b).
+Secret file details: [CONFIGURATION.md](CONFIGURATION.md#configenv-and-env).
 
 Watch progress:
 
@@ -157,7 +122,7 @@ make status    # splunk-init line + "Splunk is ready ✓"; exits non-zero if ini
 ## Splunk Web
 
 1. Open `https://localhost:8000`.
-2. Log in as **admin** with **`SPLUNK_PASSWORD`** from your secret source: your vault / hand-written `.env`, or the generated gitignored `.env` on Cursor Cloud Path B.
+2. Log in as **admin** with **`SPLUNK_PASSWORD`** from gitignored `.env` (hand-written locally, or generated by Cloud bootstrap).
 3. Accept the self-signed certificate warning (local dev only).
 
 REST smoke test (replace `<password>`):
@@ -205,11 +170,11 @@ In Claude Desktop, open a chat and confirm **splunk-mcp-server** tools appear.
 
 ## Troubleshooting
 
-Use **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** for Docker, ports, `op` auth, Splunkbase downloads, and token timeouts. Common quick checks: `make logs`, `make status`, confirm **`tpl.env`** paths and Splunkbase credentials.
+Use **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** for Docker, ports, Splunkbase downloads, and token timeouts. Common quick checks: `make logs`, `make status`, and confirm **`.env`** has Splunkbase credentials.
 
 ## Security (local PoC)
 
-This setup targets **trusted localhost** use: self-signed TLS, dev-oriented MCP settings. Do not treat it as production-ready. See [SECURITY.md](SECURITY.md). Do not commit **`.env`**, **`tpl.env`**, or client files containing live MCP bearer tokens. Passwords come from 1Password or that `.env` file.
+This setup targets **trusted localhost** use: self-signed TLS, dev-oriented MCP settings. Do not treat it as production-ready. See [SECURITY.md](SECURITY.md). Do not commit **`.env`** or client files containing live MCP bearer tokens. Passwords live only in that file or in the process environment.
 
 ## Next steps
 

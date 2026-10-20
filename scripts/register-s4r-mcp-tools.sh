@@ -2,15 +2,13 @@
 # Register SA-S4R workshop MCP tools with Splunk MCP Server (idempotent batch replace).
 # splunk-init runs this at the end of setup-splunk.sh. After a JSON edit, make up
 # starts the exited init container again. Host-only run still loads secrets via
-# scripts/with-splunk-env.sh (.env or op run --env-file=tpl.env).
+# scripts/with-splunk-env.sh (.env or the process environment).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-ENV_FILE="${ENV_FILE:-tpl.env}"
 ENV_OUT="${ENV_OUT:-.env}"
-OP="${OP:-op}"
 TOOLS_JSON="${ROOT}/SA-S4R/default/s4r_mcp_tools.json"
 
 # shellcheck source=scripts/splunk-api-env.sh

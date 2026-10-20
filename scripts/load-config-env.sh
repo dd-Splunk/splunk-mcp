@@ -3,7 +3,7 @@
 #
 # Reads CONFIG_ENV (default config.env) and exports only SPLUNK_IMAGE and TZ.
 # Other keys in that file are ignored. Call after secrets are loaded so these
-# two values win over leftover copies in tpl.env or .env.
+# two values win over leftover copies in .env.
 
 load_config_env() {
   local line key val

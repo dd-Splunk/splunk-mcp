@@ -14,7 +14,7 @@ We will acknowledge reports as quickly as practicable for a community PoC.
 
 **Supported versions:** only the latest commit on **`main`** is maintained (see [CI_CD.md](CI_CD.md)).
 
-**Secret scanning:** CI and pre-commit run **gitleaks**. Do not commit credentials, vault paths, or bearer tokens—even in “temporary” examples.
+**Secret scanning:** CI and pre-commit run **gitleaks**. Do not commit credentials or bearer tokens—even in “temporary” examples.
 
 ## Scope
 
@@ -22,9 +22,8 @@ This document applies to the workspace **development PoC** context: single host,
 
 ## Credential handling
 
-- **`tpl.env.example`** (tracked): Placeholder `op://` paths only—safe to publish.
-- **`tpl.env`** (gitignored): Your local file from **`cp tpl.env.example tpl.env`**; may contain real `op://` paths—**never commit**.
-- **`.env`**: Optional; hand-written from **`.env.example`** (Path B) and **git-ignored** when present. With **`tpl.env`** only, **`make up`** passes secrets via **`op run`** without creating `.env`.
+- **`.env.example`** (tracked): Empty placeholders only.
+- **`.env`**: Gitignored. Create it with `cp .env.example .env`, fill the four required values, and `chmod 600`. CI may export the same variables instead of writing the file.
 - **Do not** commit `.env`, token files, or private keys. See [AGENTS.md](../../AGENTS.md).
 
 ### Secret scanning
@@ -35,7 +34,7 @@ Local pre-commit and CI both run **gitleaks** using [`.gitleaks.toml`](../../.gi
 pre-commit run --all-files
 ```
 
-If gitleaks reports a real secret, rotate it outside git and remove it from history before publishing. Do not suppress findings for live credentials, bearer tokens, private keys, or machine-specific vault paths.
+If gitleaks reports a real secret, rotate it outside git and remove it from history before publishing. Do not suppress findings for live credentials, bearer tokens, or private keys.
 
 ## TLS and trust
 

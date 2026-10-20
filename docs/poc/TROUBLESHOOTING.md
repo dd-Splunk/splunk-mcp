@@ -18,16 +18,15 @@ make up
 
 Requires secrets when creating **`.env`** (first boot or after **`--force-env`**):
 
-- **Path A:** **`tpl.env`** + signed-in **`op`** (or **`OP_SERVICE_ACCOUNT_TOKEN`**) — resolves Splunkbase and all other secrets from 1Password, same as local **`make up`**.
-- **Path B:** Cursor Cloud secrets **`SPLUNKBASE_USER`** / **`SPLUNKBASE_PASS`** only; bootstrap generates admin/MCP passwords into the gitignored local **`.env`**.
+- Cursor Cloud secrets **`SPLUNKBASE_USER`** / **`SPLUNKBASE_PASS`**. Bootstrap writes gitignored **`.env`** and generates admin/MCP passwords when those variables are unset.
 
 See [CONFIGURATION.md](CONFIGURATION.md#cursor-cloud-bootstrap) and [AGENTS.md](../../AGENTS.md).
 
-### Cannot log in after Path B bootstrap
+### Cannot log in after Cloud bootstrap
 
-**Symptom:** `make up` succeeded in Cursor Cloud Path B, but you do not know the Splunk Web admin password.
+**Symptom:** `make up` succeeded in Cursor Cloud, but you do not know the Splunk Web admin password.
 
-**Cause:** With Path B, **`scripts/cloud-bootstrap.sh`** creates random **`SPLUNK_PASSWORD`** and **`SPLUNK_MCP_PASSWORD`** values in the gitignored local **`.env`**. They are intentionally not printed in logs.
+**Cause:** **`scripts/cloud-bootstrap.sh`** creates **`SPLUNK_PASSWORD`** and **`SPLUNK_MCP_PASSWORD`** in the gitignored local **`.env`** when they were not already set. They are intentionally not printed in logs.
 
 **Use locally without printing secrets:**
 
@@ -39,7 +38,7 @@ curl -sk -u "admin:${SPLUNK_PASSWORD}" \
   "https://localhost:8089/services/server/info?output_mode=json" >/dev/null
 ```
 
-For Splunk Web, log in as **admin** with **`SPLUNK_PASSWORD`** from `.env`. To rotate generated Path B passwords, run **`./scripts/cloud-bootstrap.sh --force-env --wipe`** before **`make up`**; do not commit or paste `.env`.
+For Splunk Web, log in as **admin** with **`SPLUNK_PASSWORD`** from `.env`. To rotate generated passwords, run **`./scripts/cloud-bootstrap.sh --force-env --wipe`** before **`make up`**; do not commit or paste `.env`.
 
 ### KVStore status `failed` / MCP token mint fails
 
@@ -191,134 +190,29 @@ make down && make clean && make up
 
 ### Environment & Configuration Issues
 
-#### Issue: `make up` fails with 1Password authentication error
+#### Issue: `.env` missing or `SPLUNK_PASSWORD` not set
 
-**Error**: `Not currently authenticated` or `Account not found`
-
-**Solution**:
-
-```bash
-# Authenticate with 1Password
-op account add
-
-# Follow the prompts:
-# 1. Enter your 1Password account domain (e.g., my.1password.com)
-# 2. Enter your email
-# 3. Enter your master password
-# 4. Enter your secret key
-
-# Verify authentication
-op account list
-
-# Retry
-make up
-```
-
----
-
-#### Issue: `op` command not found
-
-**Error**: `op: command not found`
+**Error**: `need .env or SPLUNK_PASSWORD` or Compose reports an empty password.
 
 **Solution**:
 
 ```bash
-# Install 1Password CLI
-# macOS
-brew install 1password-cli
-
-# Verify
-op --version
-
-# Retry
-make up
+cp .env.example .env
+chmod 600 .env
 ```
 
----
-
-#### Issue: `tpl.env` not found (fresh clone)
-
-**Error** (from `make up`): `tpl.env missing` / `copy the example…`
-
-**Solution**: Create a local file from the tracked template (once per clone):
-
-```bash
-cp tpl.env.example tpl.env
-```
-
-Edit **`tpl.env`** with your `op://` paths. **`tpl.env`** is gitignored—do not commit it.
-
----
-
-#### Issue: `make up` fails even though `op read "op://…"` works
-
-**Common causes**:
-
-1. **Extra quotes in `tpl.env`** — Use `VAR=op://vault/item/field` (no surrounding `"`…`"`). If the value is `"op://…"`, `op run` may leave quotes in the value and Compose will see invalid credentials.
-2. **Spaces in item titles** — **`make up`** resolves secrets with **`op run --env-file=tpl.env`** (not **`op inject`**), which handles spaces in `op://` paths when unquoted.
-
----
-
-#### Issue: Missing secrets in 1Password
-
-**Error**: `ERROR: item "op://YourVault/YourItem/password" not found`
-
-**Solution**:
-
-1. Verify items in 1Password:
-
-   ```bash
-   op read "op://YourVault/YourItem/password"
-   ```
-
-2. If not found, create items:
-   - See [INSTALLATION.md](INSTALLATION.md) for 1Password setup steps
-
-3. Update `tpl.env` if paths are different:
-
-   ```bash
-   cat tpl.env
-   ```
-
----
-
-#### Issue: `.env` file not created / `SPLUNK_PASSWORD` not set
-
-**Context**: `make up` uses **`op run --env-file=tpl.env`** when `.env` is missing. If `op` cannot resolve secrets, Compose will not get passwords.
-
-**Error**: `Error: SPLUNK_PASSWORD not set` (or similar from Compose)
-
-**Solution**:
-
-1. Sign in: `op signin` (or use desktop integration) and confirm `op read` works for every path in **`tpl.env`**, then **`make up`**.
-2. Or create **`.env` manually** from **`.env.example`** (Path B; dev only; do not commit):
-
-   ```bash
-   cat > .env << 'EOF'
-   SPLUNK_PASSWORD=your_password_here
-   SPLUNKBASE_USER=your_username
-   SPLUNKBASE_PASS=your_password
-   SPLUNK_MCP_PASSWORD=your_splunker_password
-   EOF
-
-   make up
-   ```
+Fill `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, and `SPLUNK_MCP_PASSWORD`. Do not commit `.env`. Then `make up`.
 
 ---
 
 #### Issue: Splunk logs show `Invalid Splunkbase credentials` / ansible inventory errors
 
-**Cause**: The **`so1`** container was created with **empty** `SPLUNKBASE_USER` / `SPLUNKBASE_PASS` (and often `SPLUNK_PASSWORD`). That happens if you run **`docker compose up -d`** without a **`.env`** file and without **`op run --env-file=tpl.env`**—Compose substitutes blank strings, and Splunk’s entrypoint refuses Splunkbase downloads.
+**Cause**: The **`so1`** container was created with **empty** `SPLUNKBASE_USER` / `SPLUNKBASE_PASS` (and often `SPLUNK_PASSWORD`). That happens if you run **`docker compose up -d`** without a populated **`.env`**—Compose substitutes blank strings, and Splunk’s entrypoint refuses Splunkbase downloads.
 
 **Fix**:
 
-1. Prefer **`make up`**, which injects secrets via **`op run`** (or uses **`.env`**). Do not rely on plain **`docker compose up`** unless **`.env`** exists and is populated.
-2. Verify 1Password paths in **`tpl.env`** (item titles with **spaces** must match exactly). Test:
-
-   ```bash
-   op read "op://YourVault/YourItem/password"
-   ```
-
+1. Prefer **`make up`**, which loads **`.env`**. Do not rely on plain **`docker compose up`** unless **`.env`** exists and is populated.
+2. Confirm the four required keys in **`.env`** are non-empty. Do not print the file.
 3. After changing secrets, reset volumes so the container is **recreated** with new env:
 
    ```bash
@@ -390,11 +284,7 @@ cat compose.yml | grep SPLUNK_APPS_URL
 # If a 404 on download, update the /release/VERSION/ segment in SPLUNK_APPS_URL for that app.
 make check-splunkbase-pins   # compose.yml pin vs Splunkbase default (no secrets)
 
-# Verify Splunkbase credentials:
-op read "op://YourVault/Splunkbase/username"
-op read "op://YourVault/Splunkbase/password"
-
-# If credentials wrong, update 1Password (or .env) and recycle the stack:
+# If Splunkbase credentials are wrong, update .env and recycle the stack:
 make down
 docker volume rm so1-var so1-etc
 make up
@@ -676,20 +566,21 @@ Dashboard, NK threat mode, and parallel agent issues: **[s4r/TROUBLESHOOTING.md]
 
 **Cause**: Splunk locks local accounts after repeated failed login attempts. Common PoC triggers:
 
-1. **`SPLUNK_MCP_PASSWORD` drift** — password in `.env` / `tpl.env` no longer matches Splunk (setup only sets password on **create** or when **`FORCE_SPLUNK_MCP_PASSWORD=1`**).
+1. **`SPLUNK_MCP_PASSWORD` drift** — password in `.env` no longer matches Splunk (setup only sets password on **create** or when **`FORCE_SPLUNK_MCP_PASSWORD=1`**).
 2. **Parallel subagents using REST fallback** — several workers attempted `-u splunker:…` via Splunk REST when MCP was unavailable; wrong or stale password locks the account quickly. **Agents must use Splunk MCP only** — prefer **`SA-S4R_*`** when it matches, else **`splunk_run_query`** (see `.cursor/agents/s4r-*.md`).
 3. **Manual REST probes** with an incorrect password.
 
 **Fix (immediate — unlock)**:
 
 ```bash
-# From repo root; requires SPLUNK_PASSWORD (admin) in .env or tpl.env + op
-op run --env-file=tpl.env -- bash -c '
+# From repo root; requires SPLUNK_PASSWORD (admin) in .env
+set -a
+. ./.env
+set +a
 curl -sk -u "admin:${SPLUNK_PASSWORD}" -X POST \
   "https://localhost:8089/services/authentication/users/splunker" \
   -d "locked-out=false" \
   -H "Content-Type: application/x-www-form-urlencoded"
-'
 ```
 
 Or re-run init (clears lock idempotently after `setup-splunk.sh` unlock step):
@@ -713,7 +604,7 @@ curl -sk -u "splunker:${SPLUNK_MCP_PASSWORD}" \
   "https://localhost:8089/services/authentication/current-context?output_mode=json"
 ```
 
-**Prevention**: Workshop agents and subagents must use **Splunk MCP only** (prefer **`SA-S4R_*`**, else **`splunk_run_query`**) — never REST basic auth as `splunker`. Prefer **`make verify-mcp-remote MCP_VERIFY_CLIENT=all`** before delegating four teams. Keep **`SPLUNK_MCP_PASSWORD`** aligned with vault; use **`FORCE_SPLUNK_MCP_PASSWORD=1`** after rotating the password. Parallel agent limits: [s4r/TROUBLESHOOTING.md](../s4r/TROUBLESHOOTING.md).
+**Prevention**: Workshop agents and subagents must use **Splunk MCP only** (prefer **`SA-S4R_*`**, else **`splunk_run_query`**) — never REST basic auth as `splunker`. Prefer **`make verify-mcp-remote MCP_VERIFY_CLIENT=all`** before delegating four teams. Keep **`SPLUNK_MCP_PASSWORD`** aligned with `.env`; use **`FORCE_SPLUNK_MCP_PASSWORD=1`** after rotating the password. Parallel agent limits: [s4r/TROUBLESHOOTING.md](../s4r/TROUBLESHOOTING.md).
 
 ---
 
@@ -842,7 +733,6 @@ make restart
 - Splunk API: <https://docs.splunk.com/Documentation/Splunk/latest/RESTREF>
 - MCP Protocol: <https://modelcontextprotocol.io/>
 - Docker: <https://docs.docker.com/>
-- 1Password CLI: <https://developer.1password.com/docs/cli/>
 
 ## Debug Mode
 

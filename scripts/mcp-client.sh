@@ -126,7 +126,7 @@ update_json_mcp_remote() {
   endpoint=$(splunk_mcp_endpoint)
   npx_cmd="$(npx_command)"
   if [[ -z "$token" ]]; then
-    token="$(mint_mcp_token)" || die "could not mint MCP token (is Splunk up? secrets in .env or tpl.env?)"
+    token="$(mint_mcp_token)" || die "could not mint MCP token (is Splunk up? secrets in .env?)"
   fi
   mkdir -p "$(dirname "$file")"
   block=$(mcp_servers_block_mcp_remote_jq "$endpoint" "$token" "$npx_cmd")
@@ -253,7 +253,7 @@ cmd_update_all() {
 
   endpoint=$(splunk_mcp_endpoint)
   npx_cmd="$(npx_command)"
-  token="$(mint_mcp_token)" || die "could not mint MCP token (is Splunk up? secrets in .env or tpl.env?)"
+  token="$(mint_mcp_token)" || die "could not mint MCP token (is Splunk up? secrets in .env?)"
 
   for client in "${clients[@]}"; do
     case "$client" in

@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
 # Toggle SA-S4R North Korea attack Eventgen stanza (attack.nk.purchase.sample).
 # Writes through Splunk config REST so local/eventgen.conf stays a Splunk-managed override.
-# Secrets: scripts/with-splunk-env.sh (.env or op run --env-file=tpl.env).
+# Secrets: scripts/with-splunk-env.sh (.env or the process environment).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-ENV_FILE="${ENV_FILE:-tpl.env}"
 ENV_OUT="${ENV_OUT:-.env}"
-OP="${OP:-op}"
 STANZA_NAME="attack.nk.purchase.sample"
 
 # shellcheck source=scripts/splunk-api-env.sh
@@ -26,7 +24,7 @@ Usage: $(basename "$0") <enable|disable|status>
   status   Print whether the attack stanza is enabled
 
 Uses Splunk config REST (https://localhost:8089). Requires SPLUNK_PASSWORD
-from ${ENV_OUT} or ${ENV_FILE}. Splunk stores the override in
+from ${ENV_OUT}. Splunk stores the override in
 SA-S4R/local/eventgen.conf; this script does not edit that file.
 If the Eventgen reload fails, run: docker compose restart so1
 EOF

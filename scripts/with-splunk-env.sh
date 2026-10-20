@@ -1,17 +1,16 @@
 #!/usr/bin/env bash
-# Load Splunk secrets for host scripts (Path B .env, or Path A op run + tpl.env).
+# Load Splunk secrets for host scripts.
 # Source this file, then call: with_splunk_env "$@"
 #
-# Path B: source $ENV_OUT (default .env) into the current process and return.
-# Path A: re-exec this script under `op run --env-file=$ENV_FILE` (default tpl.env).
-# The re-exec sets SPLUNK_MCP_ENV_LOADED=1 so the second pass does not loop.
+# Sources $ENV_OUT (default .env) when that file exists.
+# Otherwise uses variables already exported in the environment.
+# SPLUNK_MCP_ENV_LOADED=1 skips the file (splunk-init already has the password
+# in its environment and does not mount a host .env).
 #
-# Does not validate which variables are set. Callers check SPLUNK_PASSWORD and friends.
+# Does not require every secret. Callers that need the full set check it.
 
 with_splunk_env() {
-  ENV_FILE="${ENV_FILE:-tpl.env}"
   ENV_OUT="${ENV_OUT:-.env}"
-  OP="${OP:-op}"
 
   if [[ "${SPLUNK_MCP_ENV_LOADED:-}" == "1" ]]; then
     return 0
@@ -28,16 +27,11 @@ with_splunk_env() {
     return 0
   fi
 
-  if [[ -f "$ENV_FILE" ]]; then
-    command -v "$OP" >/dev/null 2>&1 || {
-      echo "Error: 1Password CLI (op) not available; create $ENV_OUT from .env.example (Path B) or install/sign in to op." >&2
-      exit 1
-    }
-    exec "$OP" run --env-file="$ENV_FILE" -- env SPLUNK_MCP_ENV_LOADED=1 "$0" "$@"
+  if [[ -n "${SPLUNK_PASSWORD:-}" ]]; then
+    return 0
   fi
 
-  echo "Error: need $ENV_OUT or $ENV_FILE for Splunk secrets." >&2
-  echo "  Path B: cp .env.example .env and set values" >&2
-  echo "  Path A: cp tpl.env.example tpl.env and run: op signin" >&2
+  echo "Error: need $ENV_OUT or SPLUNK_PASSWORD in the environment." >&2
+  echo "  cp .env.example .env and set SPLUNK_PASSWORD, SPLUNKBASE_USER, SPLUNKBASE_PASS, and SPLUNK_MCP_PASSWORD" >&2
   exit 1
 }

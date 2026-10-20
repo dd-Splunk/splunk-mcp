@@ -39,7 +39,7 @@ Use this when changing the Splunk Enterprise image, Splunkbase app pins, or the 
 | `platform: linux/amd64` | Run x86 image on ARM via emulation when needed |
 | `SPLUNK_GENERAL_TERMS` | Accepts Splunk general terms non-interactively |
 | `SPLUNK_START_ARGS` | License acceptance |
-| `SPLUNK_PASSWORD` | Admin password (from `.env` and/or `op run` / shell env) |
+| `SPLUNK_PASSWORD` | Admin password (from `.env` or the shell environment) |
 | `SPLUNKBASE_USERNAME` / `SPLUNKBASE_PASSWORD` | Splunkbase downloads |
 | `SPLUNK_APPS_URL` | Comma-separated package URLs (Splunkbase apps plus GitHub **`SA-S4R.spl`**) |
 | `TZ` | Container timezone from **`config.env`** |
@@ -102,32 +102,16 @@ Runs after `so1` is **healthy**. Uses Alpine, installs `curl`, `jq`, and `bash`,
 - Bridge network **`splunk`** for `so1` ↔ `splunk-init`.
 - Named volumes **`so1-var`** and **`so1-etc`** (explicit names in Compose).
 
-## config.env, tpl.env, and .env
+## config.env and .env
 
-**`config.env`** is tracked and holds non-secret settings (`SPLUNK_IMAGE`, `TZ`). **`make up`** loads it after secrets, so a copy of those keys in a secret file does not win. Passwords are not stored there.
+**`config.env`** is tracked and holds non-secret settings (`SPLUNK_IMAGE`, `TZ`). **`make up`** loads it after secrets, so a copy of those keys in `.env` does not win. Passwords are not stored there.
 
-### `tpl.env.example` and `tpl.env`
-
-- **`tpl.env.example`** is the **tracked** template (placeholder `op://` paths, safe to commit).
-- **`tpl.env`** is **gitignored**. Create it once: `cp tpl.env.example tpl.env`, then edit paths for **your** vault.
-- May use `op://` references for 1Password CLI **or** plain values for local testing—**never commit `tpl.env`**.
-- Align vault names, item titles, and field names with your 1Password layout.
-
-### Plain `.env` (Path B)
-
-If **`.env` is missing**, `make up` runs:
-
-`op run --env-file=tpl.env -- docker compose up -d`
-
-1Password **resolves** the `op://` references and passes the values in the process environment. **Nothing in this path writes a `.env` file**—resolved secrets are not left on disk by the Makefile (aside from what Splunk/Compose do inside containers per `compose.yml`).
-
-For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env.example`](../../.env.example) to **`.env`**, fill values, and run **`make up`**. Compose auto-loads **`.env`**. Use for CI or contributors without `op`.
+Copy [`.env.example`](../../.env.example) to **`.env`**, fill the four required values, and run **`make up`**. **`.env`** is gitignored. `chmod 600 .env`. Compose auto-loads it. CI and Cursor Cloud can export the same variables instead of writing a file; host scripts use the process environment when `.env` is absent.
 
 | Situation | Use |
 | --------- | --- |
-| Local development with 1Password | **`tpl.env`** + **`make up`** (no `.env` file) |
-| CI or no `op` | **`.env`** from **`.env.example`** (Path B in [PRESALES.md](PRESALES.md)) |
-| CI with 1Password | `OP_SERVICE_ACCOUNT_TOKEN` + `op run --env-file=tpl.env -- make up` (no `.env` artifact) |
+| Local development | Gitignored **`.env`** from **`.env.example`** |
+| CI or Cursor Cloud | Exported `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, and `SPLUNK_MCP_PASSWORD`. Cloud bootstrap writes a gitignored `.env` from those Splunkbase values and generates the other two passwords when they are unset. |
 
 ### Typical variables
 
@@ -135,17 +119,17 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 | -------- | ------- | ----- |
 | `SPLUNK_IMAGE` | Splunk Docker image tag | `config.env` |
 | `TZ` | Container timezone | `config.env` |
-| `SPLUNK_PASSWORD` | Admin password | `tpl.env` or `.env` |
-| `SPLUNKBASE_USER` / `SPLUNKBASE_PASS` | Splunkbase (names in `compose.yml` map these) | `tpl.env` or `.env` |
-| `SPLUNK_MCP_PASSWORD` | MCP user password | `tpl.env` or `.env` |
+| `SPLUNK_PASSWORD` | Admin password | `.env` or the environment |
+| `SPLUNKBASE_USER` / `SPLUNKBASE_PASS` | Splunkbase (names in `compose.yml` map these) | `.env` or the environment |
+| `SPLUNK_MCP_PASSWORD` | MCP user password | `.env` or the environment |
 
-**Note:** `compose.yml` expects `SPLUNKBASE_USER` and `SPLUNKBASE_PASS` in the environment. Define them in **`tpl.env`** or **`.env`**. Variable **names** must match what Compose references.
+**Note:** `compose.yml` expects `SPLUNKBASE_USER` and `SPLUNKBASE_PASS` in the environment. Define them in **`.env`**. Variable **names** must match what Compose references.
 
 ## Makefile targets
 
 | Target | Behavior |
 | ------ | -------- |
-| `up` | `scripts/compose-up.sh` (`.env` or `op run --env-file=tpl.env`; **`splunk-init`** registers SA-S4R tools), then `update-all` (`MCP_UPDATE_ON_BOOT`, default `cursor`) |
+| `up` | `scripts/compose-up.sh` (`.env` or the process environment; **`splunk-init`** registers SA-S4R tools), then `update-all` (`MCP_UPDATE_ON_BOOT`, default `cursor`) |
 | `config` | Print `docker compose config` after the same secret and `config.env` load as `up`. `SPLUNK_PASSWORD`, Splunkbase user/password, and `SPLUNK_MCP_PASSWORD` are shown as `<set>` |
 | `down` | `scripts/mcp-client.sh park all` (no secrets), then `docker compose down`. `config.env` must be present so Compose can read `SPLUNK_IMAGE` and `TZ` |
 | `park-mcp-clients` | `scripts/mcp-client.sh park all` — remove `splunk-mcp-server` from client configs |
@@ -156,14 +140,14 @@ For a **plaintext `.env`** on disk (no 1Password at `make up` time), copy [`.env
 | `test` | Docker-free: MCP client JSON/YAML shape (`write-shape` / `verify-config` / `park`) plus SA-S4R mode/payload unit tests |
 | `check-splunkbase-pins` | Compare `compose.yml` `SPLUNK_APPS_URL` pins to Splunkbase `api/v1/app/<id>/release/` (no secrets). **MISSING** = next `make up` can 404. **`STRICT=1`** exits 1 on MISSING |
 | `demo-prep` | Runs **`check-splunkbase-pins`**, then `status`, then `verify-mcp-remote`, and prints the live-demo warm-stack reminder. Cursor **`/demo-prep`** also runs S4R mode + **`mcp-auth-failures`** |
-| `mcp-auth-failures` | Admin `_internal` MCP auth/tool stats (last 30m). Needs `.env` or `tpl.env`. **`DETAIL=1`** prints raw failures. Not visible to `splunker` MCP |
+| `mcp-auth-failures` | Admin `_internal` MCP auth/tool stats (last 30m). Needs `.env` or `SPLUNK_PASSWORD` in the environment. **`DETAIL=1`** prints raw failures. Not visible to `splunker` MCP |
 | `cloud-bootstrap` | `scripts/cloud-bootstrap.sh` — Cursor Cloud VM prep before `make up` (`CLOUD_BOOTSTRAP_ARGS` for flags) |
-| `restart` / `logs` / `status` | Lifecycle only (no secrets / `op` required) |
-| `clean` | `scripts/mcp-client.sh park all`, then `docker compose down -v`, then remove `.env` (no `op` required; `config.env` must be present). Prompts unless **`make clean-y`** or **`CLEAN_YES=1`** |
+| `restart` / `logs` / `status` | Lifecycle only (no secrets required) |
+| `clean` | `scripts/mcp-client.sh park all`, then `docker compose down -v`, then remove `.env` (`config.env` must be present). Prompts unless **`make clean-y`** or **`CLEAN_YES=1`** |
 | `clean-y` | Non-interactive **`clean`** (for automation, e.g. `make clean-y && make up`) |
-| `s4r-attack-nk-enable` | **Shell fallback:** `POST` `disabled=false` on the NK Eventgen stanza, then reload Eventgen. Prefer MCP **`SA-S4R_apply_nk_demo_state`** (`mode=threat`) — no restart on HTTP **200**; HTTP **503** or a shell reload error → **`make restart`**. Needs `.env` or `tpl.env` |
+| `s4r-attack-nk-enable` | **Shell fallback:** `POST` `disabled=false` on the NK Eventgen stanza, then reload Eventgen. Prefer MCP **`SA-S4R_apply_nk_demo_state`** (`mode=threat`) — no restart on HTTP **200**; HTTP **503** or a shell reload error → **`make restart`**. Needs `.env` or `SPLUNK_PASSWORD` in the environment |
 | `s4r-attack-nk-disable` | **Shell fallback:** `POST` `disabled=true`, then reload Eventgen. Prefer MCP **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) |
-| `s4r-attack-nk-status` | **Shell fallback:** prints NK stanza enabled/disabled from Splunk properties REST. Prefer MCP **`SA-S4R_query_nk_demo_state`**. Needs `.env` or `tpl.env` |
+| `s4r-attack-nk-status` | **Shell fallback:** prints NK stanza enabled/disabled from Splunk properties REST. Prefer MCP **`SA-S4R_query_nk_demo_state`**. Needs `.env` or `SPLUNK_PASSWORD` in the environment |
 | `marp-preview` / `marp-serve` / `marp-html` | Preview, serve, or export the S4R presenter deck under `demo-slides/` |
 
 Workshop behavior and validation SPL: **[SA-S4R-APP.md](../s4r/SA-S4R-APP.md)** (Workshop modes). Marp deck mechanics: **[demo-slides/README.md](../../demo-slides/README.md)**.
@@ -254,24 +238,23 @@ make up
 make verify
 ```
 
-**Prerequisites (`.env` creation):** prefer **Path A** — **`tpl.env`** with your `op://` paths + **`op`** signed in (or **`OP_SERVICE_ACCOUNT_TOKEN`** in Cursor Cloud secrets). Fallback **Path B:** set **`SPLUNKBASE_USER`** / **`SPLUNKBASE_PASS`** only in Cursor Cloud secrets (admin/MCP passwords are generated).
+**Prerequisites (`.env` creation):** set **`SPLUNKBASE_USER`** and **`SPLUNKBASE_PASS`** in the environment (Cursor Cloud secrets). Bootstrap writes gitignored **`.env`**. It reuses **`SPLUNK_PASSWORD`** and **`SPLUNK_MCP_PASSWORD`** when those are already set, and generates them otherwise.
 
 ### What bootstrap writes
 
 | File | Source | Notes |
 | ---- | ------ | ----- |
-| `.env` | Path A: values resolved from **`tpl.env`** via `op run`; Path B: Splunkbase values from environment plus generated `SPLUNK_PASSWORD` / `SPLUNK_MCP_PASSWORD` | Gitignored. Existing file is preserved unless **`--force-env`** is used. Use it locally for Splunk Web admin login; never paste or commit it. |
+| `.env` | Splunkbase values from the environment. Admin and MCP passwords are reused when set, otherwise generated | Gitignored. Existing file is preserved unless **`--force-env`** is used. Use it locally for Splunk Web admin login; never paste or commit it. |
 | `docker-compose.override.yml` | Generated every run | Gitignored. Binds the ext4 mount as `so1-var`; for Splunk 10.x, also binds the fake cgroup tree. |
 
-`--wipe` resets Splunk data and Compose volumes but does not recreate `.env` unless paired with **`--force-env`**. Use **`--force-env`** intentionally when rotating generated Path B passwords or switching between Path A and Path B.
+`--wipe` resets Splunk data and Compose volumes but does not recreate `.env` unless paired with **`--force-env`**. Use **`--force-env`** intentionally when rotating generated admin or MCP passwords.
 
 | Flag / env | Purpose |
 | ---------- | ------- |
 | `--wipe` | Reformat ext4 Splunk data + `docker compose down -v` (use when changing Splunk major versions) |
 | `--image IMAGE` / `SPLUNK_IMAGE` | Default `splunk/splunk:10.6.0` |
 | `--force-env` | Recreate gitignored `.env` |
-| `ENV_FILE` | 1Password template (default **`tpl.env`**) |
-| `OP_SERVICE_ACCOUNT_TOKEN` | Headless **`op`** on Cursor Cloud (no desktop sign-in) |
+| `SPLUNKBASE_USER` / `SPLUNKBASE_PASS` | Required in the environment when creating `.env` |
 | `CLOUD_SPLUNKDB_MOUNT` | Default `/mnt/splunkdb` (bind-mounted as `so1-var`) |
 
 Writes gitignored **`docker-compose.override.yml`** (ext4 bind + fake cgroup for 10.x). Full notes: [AGENTS.md](../../AGENTS.md) § Cursor Cloud.
@@ -336,7 +319,7 @@ Typical environment inside `splunk-init` (from Compose):
 | `SPLUNK_MCP_USER` | `splunker` | Splunk user to create or update (`scripts/splunk-api-env.sh`) |
 | `SPLUNK_MCP_PASSWORD` | *(required in this repo)* | Password for the MCP execution user |
 
-Secrets come from **1Password** (`tpl.env` + `op run`) or a hand-written **`.env`**. There is no other password file or alias. Host, port, and account names come from `scripts/splunk-api-env.sh`. A value already in the environment overrides the default.
+Secrets come from gitignored **`.env`** or variables already in the environment. Host, port, and account names come from `scripts/splunk-api-env.sh`. A value already in the environment is kept when `.env` does not set it; keys in `.env` override the environment.
 
 ### Execution order
 
@@ -374,7 +357,7 @@ Designed so **`make up` / `splunk-init` repeating** does not break: MCP `ssl_ver
 ### Security notes (dev PoC)
 
 - **`curl -k`** and **`ssl_verify=false`** are **dev-only**; see [SECURITY.md](SECURITY.md).
-- Never commit `.env` / `tpl.env` or client configs with secrets. See [AGENTS.md](../../AGENTS.md).
+- Never commit `.env` or client configs with secrets. See [AGENTS.md](../../AGENTS.md).
 
 ### Troubleshooting pointers
 

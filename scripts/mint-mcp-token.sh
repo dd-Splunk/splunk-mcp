@@ -9,9 +9,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-ENV_FILE="${ENV_FILE:-tpl.env}"
 ENV_OUT="${ENV_OUT:-.env}"
-OP="${OP:-op}"
 
 # shellcheck source=scripts/wait-splunk-init.sh
 source "${ROOT}/scripts/wait-splunk-init.sh"

@@ -27,7 +27,7 @@ MCP user must **not** be `admin`. The **`ai`** SPL command is available to all u
 ## Secrets
 
 - No secrets in git; no secrets written to repo files during normal operation
-- Support **Path A** (`op run` + **`tpl.env`**) and **Path B** (plain **`.env`**)
+- Load secrets from gitignored **`.env`** or from the process environment
 - Secrets must not be echoed to logs
 
 ## Splunkbase apps (pinned in `compose.yml`)

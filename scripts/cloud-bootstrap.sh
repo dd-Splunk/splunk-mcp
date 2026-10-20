@@ -13,9 +13,8 @@
 #   CLOUD_SPLUNKDB_MOUNT      default /mnt/splunkdb
 #   CLOUD_SPLUNKDB_SIZE       default 25G
 #   CLOUD_FAKE_CGROUP_ROOT    default /opt/splunk-fake-cgroup
-#   SPLUNKBASE_USER / SPLUNKBASE_PASS  fallback when creating .env without 1Password
-#   ENV_FILE / OP                      Path A: tpl.env + op run (same as make up)
-#   OP_SERVICE_ACCOUNT_TOKEN           headless op on Cursor Cloud (no desktop sign-in)
+#   SPLUNKBASE_USER / SPLUNKBASE_PASS  required when creating .env
+#   SPLUNK_PASSWORD / SPLUNK_MCP_PASSWORD  used when already set; otherwise generated
 #
 # After bootstrap: make up
 
@@ -26,9 +25,6 @@ cd "$ROOT"
 
 DC="${DC:-docker compose}"
 ENV_OUT="${ENV_OUT:-.env}"
-ENV_FILE="${ENV_FILE:-tpl.env}"
-ENV_EXAMPLE="${ENV_EXAMPLE:-tpl.env.example}"
-OP="${OP:-op}"
 OVERRIDE_FILE="${OVERRIDE_FILE:-docker-compose.override.yml}"
 CONFIG_ENV="${CONFIG_ENV:-config.env}"
 if [[ -z "${SPLUNK_IMAGE:-}" && -f "$CONFIG_ENV" ]]; then
@@ -59,9 +55,8 @@ Options:
 
 Requires secrets when creating .env (first run or --force-env):
 
-  Path A (preferred): $ENV_FILE with op:// paths + signed-in op (or OP_SERVICE_ACCOUNT_TOKEN).
-  Path B (fallback):  SPLUNKBASE_USER and SPLUNKBASE_PASS in the environment (e.g. Cursor Cloud secrets).
-                      Admin and MCP passwords are generated randomly.
+  SPLUNKBASE_USER and SPLUNKBASE_PASS in the environment (for example Cursor Cloud secrets).
+  SPLUNK_PASSWORD and SPLUNK_MCP_PASSWORD are reused when already set, otherwise generated.
 EOF
 }
 
@@ -83,46 +78,6 @@ while [[ $# -gt 0 ]]; do
     *) die "unknown option: $1 (try --help)" ;;
   esac
 done
-
-need_splunkbase_creds() {
-  [[ -n "${SPLUNKBASE_USER:-}" && -n "${SPLUNKBASE_PASS:-}" ]] \
-    || die "SPLUNKBASE_USER and SPLUNKBASE_PASS must be set for Path B (or use Path A: $ENV_FILE + op)"
-}
-
-op_can_run() {
-  command -v "$OP" >/dev/null 2>&1 || return 1
-  if [[ -n "${OP_SERVICE_ACCOUNT_TOKEN:-}" ]]; then
-    return 0
-  fi
-  "$OP" account list >/dev/null 2>&1
-}
-
-write_env_from_op() {
-  [[ -f "$ENV_FILE" ]] || return 1
-  op_can_run || return 1
-
-  echo "→ Resolving secrets from 1Password ($ENV_FILE)…"
-  # Same mechanism as compose-up.sh (handles spaces in op:// item titles).
-  if ! "$OP" run --env-file="$ENV_FILE" -- bash -c "
-    set -euo pipefail
-    if [[ -z \"\${SPLUNK_PASSWORD:-}\" || -z \"\${SPLUNKBASE_USER:-}\" || -z \"\${SPLUNKBASE_PASS:-}\" || -z \"\${SPLUNK_MCP_PASSWORD:-}\" ]]; then
-      echo 'Error: op run did not resolve SPLUNK_PASSWORD, SPLUNKBASE_USER, SPLUNKBASE_PASS, and SPLUNK_MCP_PASSWORD.' >&2
-      echo \"Check op:// paths in ${ENV_FILE} (test: op read \\\"op://...\\\").\" >&2
-      exit 1
-    fi
-    umask 077
-    cat > \"${ENV_OUT}\" <<ENVEOF
-SPLUNK_PASSWORD=\${SPLUNK_PASSWORD}
-SPLUNKBASE_USER=\${SPLUNKBASE_USER}
-SPLUNKBASE_PASS=\${SPLUNKBASE_PASS}
-SPLUNK_MCP_PASSWORD=\${SPLUNK_MCP_PASSWORD}
-ENVEOF
-  "; then
-    return 1
-  fi
-  echo "✓ Created $ENV_OUT from 1Password ($ENV_FILE; chmod 600)"
-  return 0
-}
 
 random_password() {
   openssl rand -base64 24 | tr -d '/+=' | head -c 24
@@ -241,19 +196,21 @@ write_env_file() {
     return 0
   fi
 
-  if write_env_from_op; then
-    return 0
-  fi
+  [[ -n "${SPLUNKBASE_USER:-}" && -n "${SPLUNKBASE_PASS:-}" ]] \
+    || die "SPLUNKBASE_USER and SPLUNKBASE_PASS must be set to create $ENV_OUT"
 
-  if [[ -f "$ENV_FILE" ]]; then
-    echo "Note: $ENV_FILE present but 1Password resolution failed (install/sign in to op, or set OP_SERVICE_ACCOUNT_TOKEN)." >&2
-  fi
-
-  echo "→ 1Password Path A unavailable; using Splunkbase from environment (Path B)…"
-  need_splunkbase_creds
   local admin_pw mcp_pw
-  admin_pw="$(random_password)"
-  mcp_pw="$(random_password)"
+  if [[ -n "${SPLUNK_PASSWORD:-}" ]]; then
+    admin_pw="${SPLUNK_PASSWORD}"
+  else
+    admin_pw="$(random_password)"
+  fi
+  if [[ -n "${SPLUNK_MCP_PASSWORD:-}" ]]; then
+    mcp_pw="${SPLUNK_MCP_PASSWORD}"
+  else
+    mcp_pw="$(random_password)"
+  fi
+  umask 077
   cat >"$ENV_OUT" <<EOF
 SPLUNK_PASSWORD=${admin_pw}
 SPLUNKBASE_USER=${SPLUNKBASE_USER}
@@ -261,7 +218,7 @@ SPLUNKBASE_PASS=${SPLUNKBASE_PASS}
 SPLUNK_MCP_PASSWORD=${mcp_pw}
 EOF
   chmod 600 "$ENV_OUT"
-  echo "✓ Created $ENV_OUT (chmod 600; Splunkbase from environment; other passwords generated)"
+  echo "✓ Created $ENV_OUT (chmod 600; Splunkbase from environment)"
 }
 
 main() {

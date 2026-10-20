@@ -21,8 +21,7 @@ Do not add Cloud MCP testing, endpoints, or secrets-handling paths to this repo 
 ## Golden rules (don’t break these)
 
 - **Never commit secrets**:
-  - `.env` (admin password, Splunkbase creds, MCP user password)
-  - **`tpl.env`** (local `op://` paths to **your** vault—gitignored; start from tracked **`tpl.env.example`**)
+  - `.env` (admin password, Splunkbase creds, MCP user password; `chmod 600`; start from tracked **`.env.example`**)
   - `.cursor/mcp.json` if it contains a live bearer token (expected after `make update-mcp-client MCP_CLIENT=cursor`; **`chmod 600`**, still OneDrive-synced if the clone lives under a cloud folder)
   - `~/.config/goose/config.yaml` if it contains a live bearer token (expected after `make update-mcp-client MCP_CLIENT=goose`; **`chmod 600`**)
 - **Do not paste tokens/passwords** into issues, PRs, or logs.
@@ -30,12 +29,12 @@ Do not add Cloud MCP testing, endpoints, or secrets-handling paths to this repo 
 
 ## How the stack boots
 
-- **`make up`**: runs **`scripts/compose-up.sh`** → **`docker compose up -d`** with secrets from **either** a gitignored **`.env`** on disk **or** **`op run --env-file=tpl.env`** when `.env` is absent (requires signed-in `op`). After **`splunk-init`** exits **0**, **`make update-mcp-clients`** (via **`update-all`**, default **`MCP_UPDATE_ON_BOOT=cursor`**) mints one token into client configs. Workshop MCP tools are registered inside **`splunk-init`**. See **`Makefile`** for exact behavior.
-- **`compose-up.sh`** requires non-empty **`SPLUNK_PASSWORD`**, **`SPLUNKBASE_USER`**, **`SPLUNKBASE_PASS`**, and **`SPLUNK_MCP_PASSWORD`** (both Path A and Path B), then **`scripts/wait-splunk-init.sh`** blocks until **`splunk-init`** exits **0**.
-- **`make down`**, **`make clean`**: **`scripts/mcp-client.sh park all`** first (removes **`splunk-mcp-server`** from client configs so Cursor does not reconnect with stale tokens during boot); then **`docker compose down`**. No `op` or project secrets required for park/down.
-- **`make logs`**, **`make restart`**, **`make status`**: plain **`docker`** / **`docker compose`** only—no `op` or project secrets required.
+- **`make up`**: runs **`scripts/compose-up.sh`** → **`docker compose up -d`** with secrets from gitignored **`.env`**, or from the process environment when that file is absent. After **`splunk-init`** exits **0**, **`make update-mcp-clients`** (via **`update-all`**, default **`MCP_UPDATE_ON_BOOT=cursor`**) mints one token into client configs. Workshop MCP tools are registered inside **`splunk-init`**. See **`Makefile`** for exact behavior.
+- **`compose-up.sh`** requires non-empty **`SPLUNK_PASSWORD`**, **`SPLUNKBASE_USER`**, **`SPLUNKBASE_PASS`**, and **`SPLUNK_MCP_PASSWORD`**, then **`scripts/wait-splunk-init.sh`** blocks until **`splunk-init`** exits **0**.
+- **`make down`**, **`make clean`**: **`scripts/mcp-client.sh park all`** first (removes **`splunk-mcp-server`** from client configs so Cursor does not reconnect with stale tokens during boot); then **`docker compose down`**. No project secrets required for park/down.
+- **`make logs`**, **`make restart`**, **`make status`**: plain **`docker`** / **`docker compose`** only—no project secrets required.
 - Bearer tokens from **`make update-mcp-clients`** are written only to client configs, not the repo.
-- **Secrets paths:** **Path A** — `tpl.env` + `op run` (no plaintext `.env`); **Path B** — hand-written **`.env`** from **`.env.example`** (plain values; Compose auto-loads it). If **`.env` is absent**, **`make up`** uses `op run --env-file=tpl.env`. Image and timezone are tracked in **`config.env`**, not in those secret files.
+- **Secrets:** gitignored **`.env`** from **`.env.example`** (Compose auto-loads it). CI can export the same four variables instead. Image and timezone are tracked in **`config.env`**, not in `.env`.
 - **`splunk-init`** runs **`scripts/setup-splunk.sh`** after **`so1`** is healthy.
 
 ## What `scripts/setup-splunk.sh` does
@@ -86,10 +85,8 @@ Workshop agent **roles** remain in **`.cursor/agents/`** (not skills). Do not du
 
 ## Makefile knobs
 
-- **`ENV_FILE`**: file for `op run` (default **`tpl.env`**)
-- **`ENV_EXAMPLE`**: tracked template (default **`tpl.env.example`**)
-- **`ENV_OUT`**: optional plain env file for Path B (default **`.env`**)
-- **`OP`**, **`DC`**: 1Password CLI and docker compose command
+- **`ENV_OUT`**: secret file to source (default **`.env`**)
+- **`DC`**: docker compose command
 - **`MCP_CLIENT`**, **`MCP_VERIFY_CLIENT`**, **`MCP_UPDATE_ON_BOOT`**: single-client update/verify (default **`cursor`** / **`all`**); boot-time client list for **`make up`** (default **`cursor`**; set to **`cursor goose claude`** for all)
 - **`SPLUNK_MCP_ENDPOINT`**, **`SPLUNK_MCP_TLS_INSECURE`**, **`MCP_NPX_COMMAND`**, **`MCP_REMOTE_PACKAGE`** (default `mcp-remote@0.8.3`): see **`docs/poc/CONFIGURATION.md`**
 - **`SA-S4R_*` MCP tools** (preferred for workshop mode): **`SA-S4R_query_nk_demo_state`**, **`SA-S4R_apply_nk_demo_state`**, etc. — **`docs/s4r/MCP-TOOLS.md`**
@@ -100,7 +97,7 @@ Workshop agent **roles** remain in **`.cursor/agents/`** (not skills). Do not du
 
 - **“User lacks required mcp_tool_execute capability”** — Role **`mcp_user`** missing the capability. Re-run setup or POST **`capabilities=mcp_tool_execute`** to **`/services/authorization/roles/mcp_user`** (see **`scripts/setup-splunk.sh`**).
 - **`splunk-init` exited non-zero** — **`make status`** prints **`FAILED (exit N)`**; Splunk may still be up but roles/token/MCP setup incomplete. **`docker logs splunk-init`**, then **`make down && make up`** or fix env and re-run init.
-- **`so1` unhealthy / `Errno 30` on SA-S4R** — The app is installed from the GitHub **`.spl`**, not a bind mount. Do not add a **`:ro`** bind of the app tree; Splunk **chowns** that path. Recover with **`./scripts/compose-up.sh`** (or **`make up`**). Bare **`docker compose up`** without **`.env`** / **`op run`** blanks Splunkbase creds. Details: **`docs/poc/TROUBLESHOOTING.md`**.
+- **`so1` unhealthy / `Errno 30` on SA-S4R** — The app is installed from the GitHub **`.spl`**, not a bind mount. Do not add a **`:ro`** bind of the app tree; Splunk **chowns** that path. Recover with **`./scripts/compose-up.sh`** (or **`make up`**). Bare **`docker compose up`** without **`.env`** blanks Splunkbase creds. Details: **`docs/poc/TROUBLESHOOTING.md`**.
 - **`wait-splunk-init` looping on `created`** — `splunk-init` never starts until `so1` is healthy. Kill the wait; do not let it run 180 attempts.
 - **No data in `claude_logs`** — This repo does not create that index or inputs. Confirm bind mount, index, and monitor in Splunk (**`docs/poc/CONFIGURATION.md`**).
 - **MCP client cannot find `npx`** (Claude Desktop / GUI) — Re-run **`make update-mcp-client`** from a shell with Node on PATH, or set **`MCP_NPX_COMMAND`**.
@@ -124,9 +121,7 @@ This section is for cloud agents running in the Cursor Cloud VM (Docker-in-Docke
 
 ### Quick start
 
-1. **Secrets (pick one):**
-   - **Path A (preferred):** copy your local **`tpl.env`** into the Cloud workspace (`cp tpl.env.example tpl.env` then edit `op://` paths), install **`op`**, and set **`OP_SERVICE_ACCOUNT_TOKEN`** as a Cursor Cloud secret (or sign in to `op` if the VM supports it). Bootstrap resolves **all** secrets from 1Password—same as local **`make up`**.
-   - **Path B (fallback):** set Cursor Cloud secrets **`SPLUNKBASE_USER`** and **`SPLUNKBASE_PASS`** only; bootstrap generates random admin/MCP passwords.
+1. **Secrets:** set Cursor Cloud secrets **`SPLUNKBASE_USER`** and **`SPLUNKBASE_PASS`**. Bootstrap writes gitignored **`.env`** and generates admin and MCP passwords when those are not already set.
 2. Bootstrap (idempotent per boot):
 
    ```bash
