@@ -16,6 +16,6 @@ Full stack and layout: [docs/s4r/SA-S4R-APP.md](../docs/s4r/SA-S4R-APP.md). MCP 
 | Infrastructure (default) | **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) |
 | Active threat (NK geo) | **`SA-S4R_apply_nk_demo_state`** (`mode=threat`); validate with **`SA-S4R_validate_nk_attack_traffic`** |
 
-MCP toggles reload Eventgen — **no `make restart`** on HTTP **200**; HTTP **503** → **`make restart`**. Shell fallback (`scripts/toggle-s4r-attack-nk.sh` via `make s4r-attack-nk-*`) uses the same config REST call and Eventgen reload; **`make restart`** only if reload fails. Wait ~2 minutes before validating threat traffic. Validation SPL and per-agent expectations: [docs/s4r/SA-S4R-APP.md](../docs/s4r/SA-S4R-APP.md).
+MCP toggles reload Eventgen — **no `make restart`** on HTTP **200**; HTTP **503** → follow the response **`hint`** (**`make restart`**, or **`make up`** if Eventgen was left disabled). Shell fallback (`scripts/toggle-s4r-attack-nk.sh` via `make s4r-attack-nk-*`) uses the same config REST call and Eventgen reload; on reload failure follow the printed hint. Wait ~2 minutes before validating threat traffic. Validation SPL and per-agent expectations: [docs/s4r/SA-S4R-APP.md](../docs/s4r/SA-S4R-APP.md).
 
 **Buttercup dashboard (workshop):** create nav, **`platform`** extraction, and Dashboard Studio view under the installed app’s **`local/`** (not **`default/`**). Follow [docs/s4r/SA-S4R-APP.md](../docs/s4r/SA-S4R-APP.md) § Workshop objects and [docs/s4r/DASHBOARD.md](../docs/s4r/DASHBOARD.md). Those files persist in the **`so1-etc`** volume.

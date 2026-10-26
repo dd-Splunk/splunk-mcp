@@ -324,7 +324,7 @@ verify_splunk_mcp() {
   cleanup() { rm -f "${tmp:-}"; }
   trap cleanup RETURN
 
-  if ! curl -kfsS -X POST "$endpoint" \
+  if ! curl -kfsS --connect-timeout 10 --max-time 60 -X POST "$endpoint" \
     -H "Authorization: Bearer ${token}" \
     -H 'Content-Type: application/json' \
     -H 'Accept: application/json' \
