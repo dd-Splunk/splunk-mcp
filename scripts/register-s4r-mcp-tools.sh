@@ -14,6 +14,32 @@ TOOLS_JSON="${ROOT}/SA-S4R/default/s4r_mcp_tools.json"
 # shellcheck source=scripts/splunk-api-env.sh
 source "${ROOT}/scripts/splunk-api-env.sh"
 
+# A fresh install answers /services/mcp_tools with 503 until the KV Store is ready
+# (often longer than the batch-replace retries below), so wait for it first.
+wait_for_kvstore() {
+  local waited=0 max_wait=300 status=""
+  while [ "${waited}" -lt "${max_wait}" ]; do
+    status="$(curl -sSk --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" -u "${SPLUNK_REST_USER}:${SPLUNK_ADMIN_PASSWORD}" \
+      "${SPLUNK_URL}/services/kvstore/status?output_mode=json" 2>/dev/null \
+      | jq -r '.entry[0].content.current.status // empty' 2>/dev/null || true)"
+    case "${status}" in
+      ready)
+        [ "${waited}" -gt 0 ] && echo "   KV Store ready after ${waited}s."
+        return 0
+        ;;
+      failed)
+        echo "error: KV Store status is failed; see docs/poc/TROUBLESHOOTING.md (KVStore status failed)" >&2
+        exit 1
+        ;;
+    esac
+    [ "${waited}" -eq 0 ] && echo "   Waiting for KV Store (status: ${status:-unknown}, up to ${max_wait}s)..."
+    sleep 5
+    waited=$((waited + 5))
+  done
+  echo "error: KV Store not ready after ${max_wait}s (last status: ${status:-unknown}); re-run make up" >&2
+  exit 1
+}
+
 register_s4r_mcp_tools() {
   splunk_api_env
   : "${SPLUNK_ADMIN_PASSWORD:?SPLUNK_ADMIN_PASSWORD must be set}"
@@ -35,6 +61,7 @@ register_s4r_mcp_tools() {
   fi
 
   echo "🔧 Registering SA-S4R MCP tools (batch replace)..."
+  wait_for_kvstore
 
   attempt=0
   max_attempts=6
