@@ -23,6 +23,7 @@ wait_for_splunk() {
   port="${SPLUNK_PORT}"
   for _ in {1..60}; do
     code="$(curl -k -s -o /dev/null -w '%{http_code}' \
+      --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" \
       "https://${host}:${port}/services/server/info" 2>/dev/null || true)"
     if [[ "$code" = "200" || "$code" = "401" ]]; then
       return 0
@@ -58,7 +59,7 @@ parse_mcp_token_wait_reason() {
 
 # Order: splunk-init (user/roles) → Splunk API → Splunkbase MCP app mcp_token endpoint.
 wait_for_mcp_token() {
-  local rest_user mcp_user host port url body token msg
+  local rest_user mcp_user host port url response code body token msg
   local attempts="${MCP_TOKEN_WAIT_ATTEMPTS:-120}"
   local interval="${MCP_TOKEN_WAIT_INTERVAL:-5}"
   local n=1
@@ -78,11 +79,24 @@ wait_for_mcp_token() {
   wait_splunk_init
   wait_for_splunk
 
-  url="https://${host}:${port}/servicesNS/${rest_user}/Splunk_MCP_Server/mcp_token?username=${mcp_user}&output_mode=json"
+  url="https://${host}:${port}/servicesNS/${rest_user}/Splunk_MCP_Server/mcp_token"
   echo "Waiting for Splunk MCP Server mcp_token endpoint…" >&2
 
   while [[ "$n" -le "$attempts" ]]; do
-    body="$(curl -k -sS -u "${rest_user}:${SPLUNK_PASSWORD}" "$url" 2>/dev/null || true)"
+    # Last line is the HTTP status (000 when the connection fails or times out).
+    response="$(curl -k -s -u "${rest_user}:${SPLUNK_PASSWORD}" \
+      --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" \
+      -G --data-urlencode "username=${mcp_user}" -d output_mode=json \
+      -w '\n%{http_code}' "$url" 2>/dev/null || true)"
+    code="${response##*$'\n'}"
+    body="${response%$'\n'*}"
+    # Splunk answered server/info above, so 401 here is a wrong password, not a
+    # warming-up app. Retrying would only burn the full wait.
+    if [[ "$code" == "401" ]]; then
+      echo "Error: Splunk rejected ${rest_user} credentials (HTTP 401) at https://${host}:${port}." >&2
+      echo "  Check SPLUNK_PASSWORD in ${ENV_OUT} matches the running so1 admin password." >&2
+      return 1
+    fi
     token="$(parse_mcp_token_body "$body")"
     if [[ -n "$token" ]]; then
       printf '%s' "$token"

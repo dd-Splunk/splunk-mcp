@@ -26,7 +26,8 @@ Usage: $(basename "$0") <enable|disable|status>
 Uses Splunk config REST (https://localhost:8089). Requires SPLUNK_PASSWORD
 from ${ENV_OUT}. Splunk stores the override in
 SA-S4R/local/eventgen.conf; this script does not edit that file.
-If the Eventgen reload fails, run: docker compose restart so1
+If the Eventgen reload fails, follow the printed hint (make restart, or make up
+when Eventgen was left disabled).
 EOF
 }
 
@@ -51,7 +52,7 @@ require_splunk_env() {
 splunk_curl() {
   local tmp http_code
   tmp="$(mktemp)"
-  if ! http_code="$(curl -sk -u "${SPLUNK_REST_USER}:${SPLUNK_PASSWORD}" \
+  if ! http_code="$(curl -sk --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" -u "${SPLUNK_REST_USER}:${SPLUNK_PASSWORD}" \
     -sS -o "${tmp}" -w "%{http_code}" "$@")"; then
     rm -f "${tmp}"
     echo "error: Splunk REST request failed" >&2
@@ -119,21 +120,33 @@ fetch_disabled() {
   parse_disabled "${CURL_BODY}"
 }
 
+eventgen_action() { # $1 = disable|enable; prints the HTTP status (000 on connection failure)
+  local url="${SPLUNK_URL}/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default/$1"
+  local code
+  code="$(curl -sk --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" \
+    -u "${SPLUNK_REST_USER}:${SPLUNK_PASSWORD}" \
+    -sS -o /dev/null -w "%{http_code}" -X POST "${url}")" || code="000"
+  printf '%s' "${code}"
+}
+
 reload_eventgen() {
-  local action url code
-  for action in disable enable; do
-    url="${SPLUNK_URL}/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default/${action}"
-    code="$(curl -sk -u "${SPLUNK_REST_USER}:${SPLUNK_PASSWORD}" \
-      -sS -o /dev/null -w "%{http_code}" -X POST "${url}")" || code="000"
-    case "${code}" in
-      2??) ;;
-      *)
-        echo "error: Eventgen ${action} returned HTTP ${code}" >&2
-        echo "Stanza was updated. Run: docker compose restart so1" >&2
-        return 1
-        ;;
-    esac
+  local code attempt
+  code="$(eventgen_action disable)"
+  if [[ ! "${code}" =~ ^2 ]]; then
+    # The input still runs with the old stanza; a restart picks up the change.
+    echo "error: Eventgen disable returned HTTP ${code}" >&2
+    echo "Stanza was updated. Run: make restart" >&2
+    return 1
+  fi
+  for attempt in 1 2 3; do
+    code="$(eventgen_action enable)"
+    [[ "${code}" =~ ^2 ]] && return 0
+    [[ "${attempt}" -lt 3 ]] && sleep 1
   done
+  # Disabled state persists in inputs.conf, so make restart would not help.
+  echo "error: Eventgen enable returned HTTP ${code}; the Eventgen modinput is now DISABLED (no workshop data)." >&2
+  echo "Run: make up (splunk-init re-enables it)" >&2
+  return 1
 }
 
 set_disabled() {

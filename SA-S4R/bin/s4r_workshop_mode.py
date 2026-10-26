@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import time
 from typing import Any, Dict, Tuple
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -27,6 +28,18 @@ EVENTGEN_DISABLE_URL = (
 EVENTGEN_ENABLE_URL = (
     "/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default/enable"
 )
+ENABLE_ATTEMPTS = 3
+ENABLE_RETRY_SECONDS = 1.0
+
+# Disable failed: the input still runs with the old stanza, so a restart reloads it.
+HINT_RELOAD_FAILED = (
+    "Eventgen stanza was updated but the modinput did not reload. Run: make restart"
+)
+# Enable failed after disable: the input stays disabled across restarts.
+HINT_LEFT_DISABLED = (
+    "Eventgen modinput is DISABLED (re-enable failed), so no workshop data is flowing. "
+    "Run: make up (splunk-init re-enables it)"
+)
 
 
 def mode_from_disabled(disabled: bool) -> str:
@@ -41,21 +54,35 @@ def disabled_from_mode(mode: str) -> bool:
     raise ValueError(f"unsupported mode: {mode}")
 
 
-def reload_eventgen(session_key: str) -> Tuple[bool, str]:
-    for endpoint in (EVENTGEN_DISABLE_URL, EVENTGEN_ENABLE_URL):
-        try:
-            response, _content = rest.simpleRequest(
-                endpoint,
-                sessionKey=session_key,
-                method="POST",
-                raiseAllErrors=True,
-            )
-        except Exception as exc:  # noqa: BLE001 — surface Splunk REST errors to caller
-            return False, f"{endpoint}: {exc}"
-        status = getattr(response, "status", None)
-        if status is not None and int(status) >= 400:
-            return False, f"{endpoint}: HTTP {status}"
-    return True, ""
+def _post_eventgen(session_key: str, endpoint: str) -> str:
+    """POST to an Eventgen modinput action. Empty string on success, else the error."""
+    try:
+        response, _content = rest.simpleRequest(
+            endpoint,
+            sessionKey=session_key,
+            method="POST",
+            raiseAllErrors=True,
+        )
+    except Exception as exc:  # noqa: BLE001 — surface Splunk REST errors to caller
+        return f"{endpoint}: {exc}"
+    status = getattr(response, "status", None)
+    if status is not None and int(status) >= 400:
+        return f"{endpoint}: HTTP {status}"
+    return ""
+
+
+def reload_eventgen(session_key: str) -> Tuple[bool, str, str]:
+    """Disable then enable the Eventgen modinput. Returns (ok, error, hint)."""
+    error = _post_eventgen(session_key, EVENTGEN_DISABLE_URL)
+    if error:
+        return False, error, HINT_RELOAD_FAILED
+    for attempt in range(ENABLE_ATTEMPTS):
+        if attempt:
+            time.sleep(ENABLE_RETRY_SECONDS)
+        error = _post_eventgen(session_key, EVENTGEN_ENABLE_URL)
+        if not error:
+            return True, "", ""
+    return False, error, HINT_LEFT_DISABLED
 
 
 class WorkshopModeHandler(PersistentServerConnectionApplication):
@@ -71,6 +98,8 @@ class WorkshopModeHandler(PersistentServerConnectionApplication):
             return self._json(400, {"error": "invalid_json"})
 
         method = str(request.get("method", "GET")).upper()
+        # The system token lets splunker change one fixed stanza without write
+        # access to eventgen.conf. restmap.conf limits POST to s4r_workshop_control.
         session_key = self._session_key(request)
 
         if method == "GET":
@@ -130,7 +159,7 @@ class WorkshopModeHandler(PersistentServerConnectionApplication):
         except EventgenConfigError as exc:
             return self._config_error(exc)
 
-        reloaded, reload_error = reload_eventgen(session_key)
+        reloaded, reload_error, hint = reload_eventgen(session_key)
         body = {
             "mode": mode,
             "stanza": STANZA.strip("[]"),
@@ -142,10 +171,7 @@ class WorkshopModeHandler(PersistentServerConnectionApplication):
         if not reloaded:
             body["error"] = "eventgen_reload_failed"
             body["reload_error"] = reload_error
-            body["hint"] = (
-                "Eventgen stanza was updated but the modinput did not reload. "
-                "Run: make restart"
-            )
+            body["hint"] = hint
             return self._json(503, body)
         return self._json(200, body)
 

@@ -254,7 +254,7 @@ make down && make up
 
 **Cause**: `splunk-init` exited 0 but never created role **`mcp_user`** / user **`splunker`**. Classic log line: `This user doesn't have permissions to assign capability=s4r_workshop_control` — Splunk rejects the whole role POST when that capability is unknown (wrong `authorize.conf` stanza or app not loaded yet).
 
-**Solution**: Confirm with `docker logs splunk-init`. Fixed path: **`[capability::s4r_workshop_control]`** (two colons) in **`SA-S4R/default/authorize.conf`**; init creates the role with **`mcp_tool_execute` first**, then grants the custom cap. Recycle init or:
+**Solution**: Confirm with `docker logs splunk-init`. Fixed path: **`[capability::s4r_workshop_control]`** (two colons) in **`SA-S4R/default/authorize.conf`**; init creates the role with **`mcp_tool_execute` first**, then grants the custom cap. If that grant fails, `splunk-init` now exits non-zero (without it, `SA-S4R_apply_nk_demo_state` returns HTTP 403). Recycle init or:
 
 ```bash
 make down && make up

@@ -99,5 +99,50 @@ class EventgenPayloadParseTests(unittest.TestCase):
             eventgen.disabled_from_body("maybe")
 
 
+class ReloadEventgenTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.calls: list[str] = []
+        self._orig_post = workshop._post_eventgen
+        self._orig_sleep = workshop.time.sleep
+        workshop.time.sleep = lambda _seconds: None
+
+    def tearDown(self) -> None:
+        workshop._post_eventgen = self._orig_post
+        workshop.time.sleep = self._orig_sleep
+
+    def _stub(self, results: list[str]) -> None:
+        def fake(_session_key: str, endpoint: str) -> str:
+            self.calls.append(endpoint)
+            return results.pop(0)
+
+        workshop._post_eventgen = fake
+
+    def test_success(self) -> None:
+        self._stub(["", ""])
+        self.assertEqual(workshop.reload_eventgen("k"), (True, "", ""))
+        self.assertEqual(self.calls, [workshop.EVENTGEN_DISABLE_URL, workshop.EVENTGEN_ENABLE_URL])
+
+    def test_disable_fails_suggests_restart(self) -> None:
+        self._stub(["disable: HTTP 500"])
+        ok, error, hint = workshop.reload_eventgen("k")
+        self.assertFalse(ok)
+        self.assertEqual(error, "disable: HTTP 500")
+        self.assertEqual(hint, workshop.HINT_RELOAD_FAILED)
+        self.assertEqual(len(self.calls), 1)
+
+    def test_enable_retries_then_succeeds(self) -> None:
+        self._stub(["", "enable: HTTP 500", ""])
+        self.assertEqual(workshop.reload_eventgen("k"), (True, "", ""))
+        self.assertEqual(len(self.calls), 3)
+
+    def test_enable_exhausted_reports_left_disabled(self) -> None:
+        self._stub([""] + ["enable: HTTP 500"] * workshop.ENABLE_ATTEMPTS)
+        ok, error, hint = workshop.reload_eventgen("k")
+        self.assertFalse(ok)
+        self.assertEqual(error, "enable: HTTP 500")
+        self.assertEqual(hint, workshop.HINT_LEFT_DISABLED)
+        self.assertEqual(len(self.calls), 1 + workshop.ENABLE_ATTEMPTS)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -145,7 +145,7 @@ Copy [`.env.example`](../../.env.example) to **`.env`**, fill the four required 
 | `restart` / `logs` / `status` | Lifecycle only (no secrets required) |
 | `clean` | `scripts/mcp-client.sh park all`, then `docker compose down -v`, then remove `.env` (`config.env` must be present). Prompts unless **`make clean-y`** or **`CLEAN_YES=1`** |
 | `clean-y` | Non-interactive **`clean`** (for automation, e.g. `make clean-y && make up`) |
-| `s4r-attack-nk-enable` | **Shell fallback:** `POST` `disabled=false` on the NK Eventgen stanza, then reload Eventgen. Prefer MCP **`SA-S4R_apply_nk_demo_state`** (`mode=threat`) — no restart on HTTP **200**; HTTP **503** or a shell reload error → **`make restart`**. Needs `.env` or `SPLUNK_PASSWORD` in the environment |
+| `s4r-attack-nk-enable` | **Shell fallback:** `POST` `disabled=false` on the NK Eventgen stanza, then reload Eventgen. Prefer MCP **`SA-S4R_apply_nk_demo_state`** (`mode=threat`) — no restart on HTTP **200**; HTTP **503** or a shell reload error → follow the printed hint (**`make restart`**, or **`make up`** if Eventgen was left disabled). Needs `.env` or `SPLUNK_PASSWORD` in the environment |
 | `s4r-attack-nk-disable` | **Shell fallback:** `POST` `disabled=true`, then reload Eventgen. Prefer MCP **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) |
 | `s4r-attack-nk-status` | **Shell fallback:** prints NK stanza enabled/disabled from Splunk properties REST. Prefer MCP **`SA-S4R_query_nk_demo_state`**. Needs `.env` or `SPLUNK_PASSWORD` in the environment |
 | `marp-preview` / `marp-serve` / `marp-html` | Preview, serve, or export the S4R presenter deck under `demo-slides/` |
@@ -318,6 +318,8 @@ Typical environment inside `splunk-init` (from Compose):
 | `SPLUNK_PASSWORD` | *(required)* | Admin password |
 | `SPLUNK_MCP_USER` | `splunker` | Splunk user to create or update (`scripts/splunk-api-env.sh`) |
 | `SPLUNK_MCP_PASSWORD` | *(required in this repo)* | Password for the MCP execution user |
+| `SPLUNK_CURL_CONNECT_TIMEOUT` | `10` | curl `--connect-timeout` seconds for REST calls (`scripts/splunk-api-env.sh`) |
+| `SPLUNK_CURL_MAX_TIME` | `60` | curl `--max-time` seconds per REST call (`scripts/splunk-api-env.sh`) |
 
 Secrets come from gitignored **`.env`** or variables already in the environment. Host, port, and account names come from `scripts/splunk-api-env.sh`. A value already in the environment is kept when `.env` does not set it; keys in `.env` override the environment.
 
