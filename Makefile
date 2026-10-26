@@ -13,7 +13,7 @@ MCP_UPDATE_ON_BOOT ?= cursor
 include config.env
 export ENV_OUT DC SPLUNK_IMAGE TZ
 
-.PHONY: help up down restart clean clean-y logs status config demo-prep verify cloud-bootstrap \
+.PHONY: help env up down restart clean clean-y logs status config demo-prep verify cloud-bootstrap \
 	park-mcp-clients update-mcp-clients update-mcp-client verify-mcp-remote mcp-auth-failures \
 	s4r-attack-nk-enable s4r-attack-nk-disable s4r-attack-nk-status \
 	check-splunkbase-pins marp-preview marp-serve marp-html test
@@ -21,6 +21,9 @@ export ENV_OUT DC SPLUNK_IMAGE TZ
 help: ## Show targets
 	@awk 'BEGIN {FS = ":.*##"; printf "Splunk MCP PoC\n\n"} \
 		/^[$$()% a-zA-Z_-]+:.*?##/ { printf "  make %-22s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+
+env: ## Write .env from macOS keychain items S4R-demo + splunkbase (ENV_FORCE=1 overwrites)
+	@./scripts/env-from-keychain.sh $(if $(ENV_FORCE),--force)
 
 up: ## Start stack (splunk-init registers S4R tools) and mint MCP client token
 	@echo "Starting Splunk with MCP Server app..."
@@ -145,9 +148,10 @@ s4r-attack-nk-disable: ## Disable NK purchase-attack Eventgen stanza via Splunk 
 s4r-attack-nk-status: ## Show whether NK attack Eventgen stanza is enabled
 	@./scripts/toggle-s4r-attack-nk.sh status
 
-test: ## Docker-free tests: MCP config shape, secret loader, SA-S4R mode parse
+test: ## Docker-free tests: MCP config shape, secret loader, keychain .env, SA-S4R mode parse
 	@./tests/mcp-client-shape.sh
 	@./tests/with-splunk-env.sh
+	@./tests/env-from-keychain.sh
 	@python3 -m unittest discover -s tests -p 'test_*.py' -v
 
 marp-preview: ## Open S4R slide deck in Marp preview (single file)

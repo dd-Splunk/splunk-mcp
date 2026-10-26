@@ -203,6 +203,8 @@ chmod 600 .env
 
 Fill `SPLUNK_ADMIN_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, and `SPLUNK_SPLUNKER_PASSWORD`. Do not commit `.env`. Then `make up`.
 
+On macOS, `make env` builds `.env` from keychain items instead. If it reports `keychain item '…' not found`, create the item ([CONFIGURATION.md](CONFIGURATION.md#env-from-the-macos-keychain)). The first run may show a macOS prompt allowing `security` to read the item.
+
 #### Issue: `SPLUNK_PASSWORD was renamed to SPLUNK_ADMIN_PASSWORD`
 
 **Cause**: `.env` (or the environment) still uses the old names. `SPLUNK_PASSWORD` is now `SPLUNK_ADMIN_PASSWORD`, and `SPLUNK_MCP_PASSWORD` is now `SPLUNK_SPLUNKER_PASSWORD`.

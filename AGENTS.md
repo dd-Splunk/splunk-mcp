@@ -34,7 +34,7 @@ Do not add Cloud MCP testing, endpoints, or secrets-handling paths to this repo 
 - **`make down`**, **`make clean`**: **`scripts/mcp-client.sh park all`** first (removes **`splunk-mcp-server`** from client configs so Cursor does not reconnect with stale tokens during boot); then **`docker compose down`**. No project secrets required for park/down.
 - **`make logs`**, **`make restart`**, **`make status`**: plain **`docker`** / **`docker compose`** only—no project secrets required.
 - Bearer tokens from **`make update-mcp-clients`** are written only to client configs, not the repo.
-- **Secrets:** gitignored **`.env`** from **`.env.example`** (Compose auto-loads it). CI can export the same four variables instead. Image and timezone are tracked in **`config.env`**, not in `.env`.
+- **Secrets:** gitignored **`.env`** from **`.env.example`** (Compose auto-loads it). On macOS, **`make env`** (**`scripts/env-from-keychain.sh`**) builds it from keychain items **`S4R-demo`** + **`splunkbase`**; **`make up`** does that when `.env` is missing. CI can export the same four variables instead. Image and timezone are tracked in **`config.env`**, not in `.env`.
 - **`splunk-init`** runs **`scripts/setup-splunk.sh`** after **`so1`** is healthy.
 
 ## What `scripts/setup-splunk.sh` does
