@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Mint Splunk MCP encrypted bearer token (stdout only). Used for Claude/Cursor mcp-remote config.
-# Splunk MCP Server 1.0+ requires encrypted tokens (not legacy JWT / cloud *.api.scs.splunk.com endpoint).
+# Splunk MCP Server 2.1+ requires tokens encrypted with the server's key pair (not legacy JWT /
+# cloud *.api.scs.splunk.com endpoint). The key pair is created here on first use (idempotent):
+#   POST /services/mcp_token/key-pair  -> 201 created, 409 already exists
+#   POST /services/mcp_token/tokens    -> {"token": "<encrypted>"} (admin may pass username=<owner>)
 # See: https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/connecting-to-the-mcp-server-and-settings
 # Requires Splunk on localhost:8089. Secrets via scripts/with-splunk-env.sh.
 
@@ -42,7 +45,7 @@ parse_mcp_token_body() {
 parse_mcp_token_wait_reason() {
   local body="$1"
   local msg
-  msg="$(echo "$body" | jq -r '.messages[0].text // empty' 2>/dev/null || true)"
+  msg="$(echo "$body" | jq -r '.messages[0].text // .message // .details // empty' 2>/dev/null || true)"
   if [[ -n "$msg" ]]; then
     printf '%s' "$msg"
     return
@@ -57,12 +60,12 @@ parse_mcp_token_wait_reason() {
   fi
 }
 
-# Order: splunk-init (user/roles) → Splunk API → Splunkbase MCP app mcp_token endpoint.
+# Order: splunk-init (user/roles) → Splunk API → MCP app key pair → token for splunker.
 wait_for_mcp_token() {
-  local rest_user mcp_user host port url response code body token msg
+  local rest_user mcp_user host port base response code body token msg
   local attempts="${MCP_TOKEN_WAIT_ATTEMPTS:-120}"
   local interval="${MCP_TOKEN_WAIT_INTERVAL:-5}"
-  local n=1
+  local n=1 key_ready=0
 
   splunk_api_env
   host="${SPLUNK_HOST}"
@@ -79,29 +82,55 @@ wait_for_mcp_token() {
   wait_splunk_init
   wait_for_splunk
 
-  url="https://${host}:${port}/servicesNS/${rest_user}/Splunk_MCP_Server/mcp_token"
+  base="https://${host}:${port}/services/mcp_token"
   echo "Waiting for Splunk MCP Server mcp_token endpoint…" >&2
 
   while [[ "$n" -le "$attempts" ]]; do
-    # Last line is the HTTP status (000 when the connection fails or times out).
-    response="$(curl -k -s -u "${rest_user}:${SPLUNK_ADMIN_PASSWORD}" \
-      --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" \
-      -G --data-urlencode "username=${mcp_user}" -d output_mode=json \
-      -w '\n%{http_code}' "$url" 2>/dev/null || true)"
-    code="${response##*$'\n'}"
-    body="${response%$'\n'*}"
-    # Splunk answered server/info above, so 401 here is a wrong password, not a
-    # warming-up app. Retrying would only burn the full wait.
-    if [[ "$code" == "401" ]]; then
-      echo "Error: Splunk rejected ${rest_user} credentials (HTTP 401) at https://${host}:${port}." >&2
-      echo "  Check SPLUNK_ADMIN_PASSWORD in ${ENV_OUT} matches the running so1 admin password." >&2
-      return 1
+    if [[ "$key_ready" -eq 0 ]]; then
+      # Last line is the HTTP status (000 when the connection fails or times out).
+      response="$(curl -k -s -u "${rest_user}:${SPLUNK_ADMIN_PASSWORD}" \
+        --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" \
+        -X POST -d output_mode=json -w '\n%{http_code}' "${base}/key-pair" 2>/dev/null || true)"
+      code="${response##*$'\n'}"
+      body="${response%$'\n'*}"
+      # Splunk answered server/info above, so 401 here is a wrong password, not a
+      # warming-up app. Retrying would only burn the full wait.
+      if [[ "$code" == "401" ]]; then
+        echo "Error: Splunk rejected ${rest_user} credentials (HTTP 401) at https://${host}:${port}." >&2
+        echo "  Check SPLUNK_ADMIN_PASSWORD in ${ENV_OUT} matches the running so1 admin password." >&2
+        return 1
+      fi
+      if [[ "$code" == "201" ]]; then
+        echo "Created MCP token encryption key (valid until $(echo "$body" | jq -r '.valid_until // "unknown"' 2>/dev/null))." >&2
+        key_ready=1
+      elif [[ "$code" == "409" ]]; then
+        key_ready=1
+      fi
     fi
-    token="$(parse_mcp_token_body "$body")"
-    if [[ -n "$token" ]]; then
-      printf '%s' "$token"
-      return 0
+
+    if [[ "$key_ready" -eq 1 ]]; then
+      response="$(curl -k -s -u "${rest_user}:${SPLUNK_ADMIN_PASSWORD}" \
+        --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" \
+        -X POST --data-urlencode "username=${mcp_user}" -d output_mode=json \
+        -w '\n%{http_code}' "${base}/tokens" 2>/dev/null || true)"
+      code="${response##*$'\n'}"
+      body="${response%$'\n'*}"
+      if [[ "$code" == "401" ]]; then
+        echo "Error: Splunk rejected ${rest_user} credentials (HTTP 401) at https://${host}:${port}." >&2
+        echo "  Check SPLUNK_ADMIN_PASSWORD in ${ENV_OUT} matches the running so1 admin password." >&2
+        return 1
+      fi
+      token="$(parse_mcp_token_body "$body")"
+      if [[ -n "$token" ]]; then
+        printf '%s' "$token"
+        return 0
+      fi
+      # Key deleted out from under us (rotation): create it again on the next pass.
+      if [[ "$body" == *"No active encryption keys"* ]]; then
+        key_ready=0
+      fi
     fi
+
     if (( n % 6 == 0 )); then
       msg="$(parse_mcp_token_wait_reason "$body")"
       if [[ -n "$msg" ]]; then
@@ -115,7 +144,7 @@ wait_for_mcp_token() {
   done
 
   echo "Error: mcp_token not available after ~$((attempts * interval / 60)) min." >&2
-  echo "  Check: Splunk MCP Server app (7931), splunk-init (docker logs splunk-init), user ${mcp_user}." >&2
+  echo "  Check: Splunk MCP Server app (7931, 2.1.0+), splunk-init (docker logs splunk-init), user ${mcp_user}." >&2
   echo "  Retry: make update-mcp-client MCP_CLIENT=cursor  (or MCP_CLIENT=claude)" >&2
   return 1
 }

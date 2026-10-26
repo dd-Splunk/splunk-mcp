@@ -182,7 +182,7 @@ sequenceDiagram
     Init-->>DC: exit 0
     Make->>DC: wait-splunk-init.sh until exit 0
     Make->>MC: update-all cursor
-    MC->>SO1: wait for mcp_token endpoint, mint token for splunker
+    MC->>SO1: ensure MCP key pair (201/409), mint token for splunker
     MC->>Cur: write bearer token (mode 600)
     end
 
@@ -271,9 +271,9 @@ Claude Desktop
 
 ### Token Management
 
-- **Generation**: After **`splunk-init`** exits, the host runs **`scripts/mint-mcp-token.sh`** (admin REST → Splunk MCP Server **`mcp_token`** for **`splunker`**). **`setup-splunk.sh` does not mint tokens.**
+- **Generation**: After **`splunk-init`** exits, the host runs **`scripts/mint-mcp-token.sh`** (admin REST → Splunk MCP Server **`/services/mcp_token`**: create the encryption key pair if missing, then a token for **`splunker`**). **`setup-splunk.sh` does not mint tokens.**
 - **Storage**: Client config files only (not the repo).
-- **Expiry**: Depends on Splunk MCP app and token settings (docs may cite ~15 days as a rule of thumb—verify in your build).
+- **Expiry**: Splunk MCP Server 2.1 caps every token at the encryption key's validity (key default 180 days, max 365). When the key expires, **all** tokens stop working until the key is rotated (see **`docs/poc/TROUBLESHOOTING.md`**).
 - **Renewal**: Re-run `make update-mcp-client` to mint a new token.
 
 ## Configuration Files
