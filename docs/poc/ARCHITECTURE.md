@@ -6,7 +6,7 @@ This repository packages a **repeatable local environment** for:
 
 1. Running **Splunk Enterprise** in Docker with the **Splunk MCP Server** application from Splunkbase.
 2. Provisioning a dedicated Splunk user suitable for MCP tool execution.
-3. Wiring **Claude Desktop**, **Cursor**, and **Goose** via **`npx mcp-remote`** (encrypted bearer token in client config only).
+3. Wiring **Claude Desktop**, **Claude Code**, **Cursor**, and **Goose** via **`npx mcp-remote`** (encrypted bearer token in client config only).
 
 It is a **proof-of-concept**: fast iteration on Splunk + LLM tooling, not a production deployment template.
 

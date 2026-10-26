@@ -15,6 +15,7 @@ TMP="$(mktemp -d "${TMPDIR:-/tmp}/mcp-client-shape.XXXXXX")"
 trap 'rm -rf "${TMP}"' EXIT
 
 export CLAUDE_MCP_JSON="${TMP}/claude.json"
+export CLAUDE_CODE_MCP_JSON="${TMP}/claude-code.json"
 export CURSOR_MCP_JSON="${TMP}/cursor.json"
 export GOOSE_MCP_YAML="${TMP}/goose.yaml"
 export MCP_SHAPE_TOKEN="shape-test-placeholder"
@@ -29,7 +30,7 @@ extensions:
     cmd: echo
 EOF
 
-./scripts/mcp-client.sh write-shape cursor goose claude
+./scripts/mcp-client.sh write-shape cursor goose claude claude-code
 
 jq -e '.mcpServers["splunk-mcp-server"].command | test("npx$")' "${CURSOR_MCP_JSON}" >/dev/null \
   || die "cursor command is not npx"
@@ -44,6 +45,8 @@ jq -e '.mcpServers["splunk-mcp-server"].env.NODE_TLS_REJECT_UNAUTHORIZED == "0"'
 
 jq -e '.mcpServers["splunk-mcp-server"].command | test("npx$")' "${CLAUDE_MCP_JSON}" >/dev/null \
   || die "claude command is not npx"
+jq -e '.mcpServers["splunk-mcp-server"].args | map(tostring) | any(test("^https://localhost:8089/services/mcp$"))' \
+  "${CLAUDE_CODE_MCP_JSON}" >/dev/null || die "claude-code missing local MCP endpoint"
 
 python3 - <<PY
 import os
@@ -68,6 +71,10 @@ jq -e '.mcpServers["splunk-mcp-server"]' "${CURSOR_MCP_JSON}" >/dev/null 2>&1 \
 jq -e '.mcpServers.other.command == "true"' "${CURSOR_MCP_JSON}" >/dev/null \
   || die "park removed sibling mcpServers.other"
 
+./scripts/mcp-client.sh park claude-code
+jq -e '.mcpServers["splunk-mcp-server"]' "${CLAUDE_CODE_MCP_JSON}" >/dev/null 2>&1 \
+  && die "park left splunk-mcp-server in claude-code JSON"
+
 ./scripts/mcp-client.sh park goose
 python3 - <<PY
 import os
@@ -83,6 +90,13 @@ PY
 
 if ./scripts/mcp-client.sh verify-config cursor >/dev/null 2>&1; then
   die "verify-config should fail after parking cursor"
+fi
+
+# all skips parked clients while one is still configured (claude), and fails once none are.
+./scripts/mcp-client.sh verify-config all >/dev/null || die "verify-config all should skip parked clients"
+./scripts/mcp-client.sh park claude
+if ./scripts/mcp-client.sh verify-config all >/dev/null 2>&1; then
+  die "verify-config all should fail when no client is configured"
 fi
 
 echo "OK: mcp-client JSON/YAML shape tests"
