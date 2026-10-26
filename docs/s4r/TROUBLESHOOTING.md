@@ -36,7 +36,7 @@ docker exec so1 grep -A1 'attack.nk.purchase' \
 
 ls SA-S4R/samples/attack.nk.purchase.sample   # must exist (basename = stanza name)
 
-# make restart only if enable/disable reported an Eventgen reload failure
+# On an Eventgen reload failure, follow the printed hint (make restart, or make up if left disabled)
 # wait ~2 minutes; search last 15m only
 ```
 

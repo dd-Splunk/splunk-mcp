@@ -170,10 +170,10 @@ Two storylines share the same baseline traffic; the NK stanza is toggled without
 
 | Mode | Enable / disable (preferred) | After toggle |
 | ---- | -------------------------- | ------------ |
-| **Infrastructure** (default) | MCP **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) | Reloads Eventgen — **no `make restart`** on HTTP **200**. HTTP **503** means the stanza was updated but Eventgen did not reload → **`make restart`** |
+| **Infrastructure** (default) | MCP **`SA-S4R_apply_nk_demo_state`** (`mode=infrastructure`) | Reloads Eventgen — **no `make restart`** on HTTP **200**. HTTP **503** means the stanza was updated but Eventgen did not reload → follow the response **`hint`** (**`make restart`**, or **`make up`** if Eventgen was left disabled). HTTP **403** means the user lacks **`s4r_workshop_control`** |
 | **Active threat** | MCP **`SA-S4R_apply_nk_demo_state`** (`mode=threat`) | Same; wait 1–2 min, then **`SA-S4R_validate_nk_attack_traffic`** |
 
-**Shell fallback:** `make s4r-attack-nk-disable` / `make s4r-attack-nk-enable`. Same REST update and Eventgen reload as MCP. **`make restart`** only if the script reports that the reload failed.
+**Shell fallback:** `make s4r-attack-nk-disable` / `make s4r-attack-nk-enable`. Same REST update and Eventgen reload as MCP. If the script reports a reload failure, follow its hint.
 
 Check current mode: **`SA-S4R_query_nk_demo_state`** (MCP) or **`make s4r-attack-nk-status`** (shell). Both read the effective `disabled` value from Splunk. Toggles `POST /servicesNS/nobody/SA-S4R/configs/conf-eventgen/attack.nk.purchase.sample` (`disabled=true` or `false`). Splunk writes the override to **`SA-S4R/local/eventgen.conf`** (gitignored) so **`default/`** stays pristine. Script: **`scripts/toggle-s4r-attack-nk.sh`** (`enable` \| `disable` \| `status`). MCP tools register inside **`splunk-init`** during **`make up`**. After a JSON edit, **`make up`** again — see [MCP-TOOLS.md](MCP-TOOLS.md).
 
@@ -209,9 +209,10 @@ NK attack token sources: **`samples/nk_clientip.txt`**, **`nk_status.txt`**, **`
 | Symptom | Likely cause | Fix |
 | ------- | ------------ | --- |
 | NK enabled via MCP but no events yet | Eventgen warming up | Wait 1–2 min; **`SA-S4R_validate_nk_attack_traffic`** |
-| `make s4r-attack-nk-enable` but no NK events | Eventgen still warming up, or reload failed | Wait 1–2 min; if the script printed a reload error, `make restart` |
+| `make s4r-attack-nk-enable` but no NK events | Eventgen still warming up, or reload failed | Wait 1–2 min; if the script printed a reload error, follow its hint |
 | Still no NK UAs / IPs | Missing sample template | Confirm **`samples/attack.nk.purchase.sample`** exists (basename must match stanza) |
-| NK mode “stuck” on after disable | Eventgen did not reload | `make s4r-attack-nk-disable`; **`make restart`** if reload failed |
+| NK mode “stuck” on after disable | Eventgen did not reload | `make s4r-attack-nk-disable`; follow the printed hint if reload failed |
+| `SA-S4R_apply_nk_demo_state` returns HTTP **403** | Role **`mcp_user`** lacks **`s4r_workshop_control`** | **`make up`** (re-runs `splunk-init`, which grants it; init fails if the grant fails) |
 | Geo shows NK but agents say “infrastructure” | Time range too wide | Use **last 15m** after enable; baseline traffic dilutes the signal |
 
 See [AGENTS.md](AGENTS.md) for Power User delegation and [SPL-CATALOG.md](SPL-CATALOG.md) for all workshop SPL.

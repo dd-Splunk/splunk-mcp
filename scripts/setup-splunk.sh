@@ -4,7 +4,7 @@
 # Execution order:
 #   1. Enable SA-Eventgen modinput_eventgen://default (required; init fails if still disabled)
 #   2. Splunk MCP Server: ssl_verify=false (local dev only; uses curl -k)
-#   3. Role mcp_user with mcp_tool_execute (required) and s4r_workshop_control (best-effort after SA-S4R load)
+#   3. Role mcp_user with mcp_tool_execute and s4r_workshop_control (both required; the latter after SA-S4R load)
 #   4. User splunker: roles user + mcp_user
 #   5. SA-S4R MCP tools: register-s4r-mcp-tools.sh (batch replace, enable, saved-search reload)
 #
@@ -34,7 +34,6 @@ SPLUNK_URL="https://${SPLUNK_HOST}:${SPLUNK_PORT}"
 : "${SPLUNK_MCP_PASSWORD:=}"
 FORCE_SPLUNK_MCP_PASSWORD="${FORCE_SPLUNK_MCP_PASSWORD:-0}"
 
-CURL_OPTS="-k"
 LAST_BODY_FILE=""
 
 # True for 1, true, yes (any case) — used by FORCE_* flags.
@@ -54,7 +53,7 @@ auth_curl() { # $@ = curl args excluding auth
     esac
   done
 
-  if code="$(curl ${CURL_OPTS} -u "${SPLUNK_REST_USER}:${SPLUNK_PASSWORD}" -sS -o "${tmp_body}" -w "%{http_code}" "$@")"; then
+  if code="$(curl -k --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" -u "${SPLUNK_REST_USER}:${SPLUNK_PASSWORD}" -sS -o "${tmp_body}" -w "%{http_code}" "$@")"; then
     :
   else
     code="000"
@@ -237,7 +236,10 @@ while [ "$n" -lt 8 ]; do
   cleanup_last_body
 done
 if [ "${s4r_cap_ok}" = "0" ]; then
-  echo "⚠️  Could not grant s4r_workshop_control (REST handler still uses mcp_tool_execute). Check SA-S4R/default/authorize.conf stanza [capability::s4r_workshop_control]."
+  # restmap.conf gates POST s4r_workshop_mode on this capability: without it
+  # SA-S4R_apply_nk_demo_state returns 403.
+  echo "error: could not grant s4r_workshop_control on mcp_user. Check SA-S4R/default/authorize.conf stanza [capability::s4r_workshop_control]." >&2
+  exit 1
 fi
 cleanup_last_body
 
@@ -260,7 +262,7 @@ if is_truthy "${FORCE_SPLUNK_MCP_PASSWORD}"; then
     echo "❌ FORCE_SPLUNK_MCP_PASSWORD is set but SPLUNK_MCP_PASSWORD is empty." >&2
     exit 1
   }
-  set -- -d "password=${SPLUNK_MCP_PASSWORD}" "$@"
+  set -- --data-urlencode "password=${SPLUNK_MCP_PASSWORD}" "$@"
 fi
 
 if [ "${user_exists}" = "1" ]; then
@@ -273,7 +275,7 @@ if [ "${user_exists}" = "1" ]; then
 fi
 if [ "${user_exists}" = "0" ]; then
   must auth_curl -X POST "${SPLUNK_URL}/services/authentication/users" \
-    -d "name=${SPLUNK_MCP_USER}" -d "password=${SPLUNK_MCP_PASSWORD}" "$@" \
+    --data-urlencode "name=${SPLUNK_MCP_USER}" --data-urlencode "password=${SPLUNK_MCP_PASSWORD}" "$@" \
     -H "Content-Type: application/x-www-form-urlencoded" >/dev/null
   echo "✅ Created user ${SPLUNK_MCP_USER} (roles user + mcp_user)"
 fi
