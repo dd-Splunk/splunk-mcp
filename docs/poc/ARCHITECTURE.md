@@ -144,6 +144,7 @@ sequenceDiagram
     participant Init as splunk-init (setup-splunk.sh)
     participant MC as mcp-client.sh
     participant Cur as .cursor/mcp.json
+    participant CC as .mcp.json (Claude Code)
     participant Rem as npx mcp-remote
     participant MCP as MCP Server /services/mcp
     participant S4R as SA-S4R s4r_workshop_mode
@@ -154,6 +155,7 @@ sequenceDiagram
     Op->>Make: make clean-y
     Make->>MC: park all
     MC->>Cur: remove splunk-mcp-server entry
+    MC->>CC: remove splunk-mcp-server entry
     Make->>DC: docker compose down -v
     Make->>Make: rm .env
     end
@@ -181,9 +183,11 @@ sequenceDiagram
     Init->>SO1: enable each SA-S4R_* tool and reload saved searches
     Init-->>DC: exit 0
     Make->>DC: wait-splunk-init.sh until exit 0
-    Make->>MC: update-all cursor
+    Make->>MC: update-all cursor claude-code
     MC->>SO1: ensure MCP key pair (201/409), mint token for splunker
     MC->>Cur: write bearer token (mode 600)
+    MC->>CC: write bearer token (mode 600)
+    MC->>SO1: prune superseded active MCP tokens
     end
 
     rect rgba(128,128,128,0.08)
@@ -191,8 +195,8 @@ sequenceDiagram
     Op->>Make: make status
     Make->>SO1: splunk-init exit code + API ready
     Op->>Make: make verify-mcp-remote
-    Make->>MCP: tools/list direct
-    Make->>Rem: tools/list via stdio
+    Make->>MCP: tools/list direct with token from client config
+    Make->>Rem: tools/list via stdio with same token
     Rem->>MCP: tools/list with bearer token
     MCP-->>Op: tool list incl. 5 SA-S4R_*
     end
@@ -274,7 +278,8 @@ Claude Desktop
 - **Generation**: After **`splunk-init`** exits, the host runs **`scripts/mint-mcp-token.sh`** (admin REST → Splunk MCP Server **`/services/mcp_token`**: create the encryption key pair if missing, then a token for **`splunker`**). **`setup-splunk.sh` does not mint tokens.**
 - **Storage**: Client config files only (not the repo).
 - **Expiry**: Splunk MCP Server 2.1 caps every token at the encryption key's validity (key default 180 days, max 365). When the key expires, **all** tokens stop working until the key is rotated (see **`docs/poc/TROUBLESHOOTING.md`**).
-- **Renewal**: Re-run `make update-mcp-client` to mint a new token.
+- **Renewal**: Re-run **`make update-mcp-client MCP_CLIENT=<client>`** to mint one new token for a single client without revoking older tokens. Use **`make update-mcp-clients`** or **`make up`** for the `update-all` path: it mints once, rewrites the requested clients plus any other already-configured clients, then runs **`scripts/prune-mcp-tokens.sh`** to revoke superseded active tokens.
+- **Verification**: **`make verify-mcp-remote`** reads tokens from client configs and mints nothing. It verifies the direct JSON-RPC `tools/list` endpoint and the same `npx mcp-remote` stdio path used by GUI clients.
 
 ## Configuration Files
 

@@ -105,9 +105,9 @@ Network and ports:
 make up
 ```
 
-This runs **`docker compose up -d`** using **`.env`** (or exported variables when that file is absent). It starts **`so1`**, runs **`splunk-init`** after Splunk is healthy, then mints an MCP token and updates client configs (**`MCP_UPDATE_ON_BOOT`**, default **`cursor claude-code`**), then registers SA-S4R MCP tools.
+This runs **`docker compose up -d`** using **`.env`** (or exported variables when that file is absent). It starts **`so1`**, runs **`splunk-init`** after Splunk is healthy, registers SA-S4R MCP tools inside **`splunk-init`**, then mints one MCP token and updates client configs (**`MCP_UPDATE_ON_BOOT`**, default **`cursor claude-code`**).
 
-After **`splunk-init`** exits, **`scripts/mcp-client.sh update-all`** writes client configs pointing at **`https://localhost:8089/services/mcp`**. To include Claude Desktop on boot: `make up MCP_UPDATE_ON_BOOT="cursor claude-code claude"`.
+After **`splunk-init`** exits, **`scripts/mcp-client.sh update-all`** writes client configs pointing at **`https://localhost:8089/services/mcp`**. It also refreshes any other client that already has a **`splunk-mcp-server`** entry before revoking older active MCP tokens, so a previously configured client is not left with a dead token. To include Claude Desktop on first boot: `make up MCP_UPDATE_ON_BOOT="cursor claude-code claude"`.
 
 Secret file details: [CONFIGURATION.md](CONFIGURATION.md#configenv-and-env).
 
@@ -145,6 +145,8 @@ Shell smoke test for the default Cursor path:
 ```bash
 make verify-mcp-remote MCP_VERIFY_CLIENT=cursor
 ```
+
+`make verify-mcp-remote` checks the bearer token already stored in the selected client config; it does **not** mint or rotate a token. If verification reports **`token revoked or expired`**, reload/restart that MCP client so it reads the refreshed config, or run **`make update-mcp-clients`** if the config was edited by hand.
 
 All-client acceptance is:
 

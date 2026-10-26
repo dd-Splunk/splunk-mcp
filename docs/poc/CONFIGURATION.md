@@ -96,7 +96,7 @@ Runs after `so1` is **healthy**. Uses Alpine, installs `curl`, `jq`, and `bash`,
 - **`scripts/register-s4r-mcp-tools.sh`** — called by **`setup-splunk.sh`** inside **`splunk-init`**: waits up to 5 minutes for the KV Store to be ready, `POST /services/mcp_tools` for **SA-S4R**, then enable each tool.
 - **`scripts/mint-mcp-token.sh`** — after init: waits for Splunk API, creates the MCP encryption key pair if missing (`POST /services/mcp_token/key-pair`, 201 or 409), then mints a token for **`splunker`** (`POST /services/mcp_token/tokens`) and prints it to stdout.
 - **`scripts/prune-mcp-tokens.sh`** — after `update-all`: deletes every older active token of the MCP user from the MCP Server token registry (`GET`/`DELETE /services/mcp_token/tokens`), keeping the newest (`--dry-run` lists them). Prints the number deleted.
-- **`make update-mcp-client`** writes the token into Claude / Cursor configs only.
+- **`make update-mcp-client`** writes the token into Claude Desktop, Claude Code, or Cursor configs only.
 
 ### Alert tools added in MCP Server 2.1
 
