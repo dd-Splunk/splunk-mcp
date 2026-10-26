@@ -23,7 +23,7 @@ This document applies to the workspace **development PoC** context: single host,
 ## Credential handling
 
 - **`.env.example`** (tracked): Empty placeholders only.
-- **`.env`**: Gitignored. Create it with `cp .env.example .env`, fill the four required values, and `chmod 600`. CI may export the same variables instead of writing the file.
+- **`.env`**: Gitignored. Create it with `cp .env.example .env`, fill the four required values, and `chmod 600`, or on macOS with `make env` (keychain, see [CONFIGURATION.md](CONFIGURATION.md#env-from-the-macos-keychain)). CI may export the same variables instead of writing the file.
 - **Do not** commit `.env`, token files, or private keys. See [AGENTS.md](../../AGENTS.md).
 
 ### Secret scanning

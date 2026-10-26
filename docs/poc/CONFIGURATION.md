@@ -111,7 +111,26 @@ Copy [`.env.example`](../../.env.example) to **`.env`**, fill the four required 
 | Situation | Use |
 | --------- | --- |
 | Local development | Gitignored **`.env`** from **`.env.example`** |
+| Local development (macOS) | **`make env`** writes **`.env`** from keychain items (below). **`make up`** does this automatically when `.env` is missing and `SPLUNK_ADMIN_PASSWORD` is not exported. |
 | CI or Cursor Cloud | Exported `SPLUNK_ADMIN_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, and `SPLUNK_SPLUNKER_PASSWORD`. Cloud bootstrap writes a gitignored `.env` from those Splunkbase values and generates the other two passwords when they are unset. |
+
+### `.env` from the macOS keychain
+
+**`scripts/env-from-keychain.sh`** (`make env`) reads two generic-password items and writes a `chmod 600` **`.env`**. It prints no values and keeps an existing `.env` unless **`ENV_FORCE=1`** (`--force`).
+
+| Keychain service | Account | Password | `.env` keys |
+| ---------------- | ------- | -------- | ----------- |
+| `S4R-demo` (`KEYCHAIN_SPLUNK_SERVICE`) | any | Splunk password | `SPLUNK_ADMIN_PASSWORD`, `SPLUNK_SPLUNKER_PASSWORD` |
+| `splunkbase` (`KEYCHAIN_SPLUNKBASE_SERVICE`) | Splunkbase user | Splunkbase password | `SPLUNKBASE_USER`, `SPLUNKBASE_PASS` |
+
+Create the items once; `-w` with no value prompts, so the password stays out of shell history:
+
+```bash
+security add-generic-password -s S4R-demo -a "$USER" -U -w
+security add-generic-password -s splunkbase -a <splunkbase-user> -U -w
+```
+
+Changing the keychain password does not change a running stack: Splunk reads the admin password only on first boot, and `splunker` is reset only with **`FORCE_SPLUNK_SPLUNKER_PASSWORD=1`**. Rotate in Splunk first, then rewrite `.env` with **`make env ENV_FORCE=1`**.
 
 ### Typical variables
 
@@ -129,7 +148,8 @@ Copy [`.env.example`](../../.env.example) to **`.env`**, fill the four required 
 
 | Target | Behavior |
 | ------ | -------- |
-| `up` | `scripts/compose-up.sh` (`.env` or the process environment; **`splunk-init`** registers SA-S4R tools), then `update-all` (`MCP_UPDATE_ON_BOOT`, default `cursor`) |
+| `env` | Write `.env` from keychain items `S4R-demo` + `splunkbase` (macOS). **`ENV_FORCE=1`** overwrites |
+| `up` | `scripts/compose-up.sh` (`.env`, the process environment, or on macOS a `.env` built from the keychain; **`splunk-init`** registers SA-S4R tools), then `update-all` (`MCP_UPDATE_ON_BOOT`, default `cursor`) |
 | `config` | Print `docker compose config` after the same secret and `config.env` load as `up`. `SPLUNK_ADMIN_PASSWORD`, Splunkbase user/password, and `SPLUNK_SPLUNKER_PASSWORD` are shown as `<set>` |
 | `down` | `scripts/mcp-client.sh park all` (no secrets), then `docker compose down`. `config.env` must be present so Compose can read `SPLUNK_IMAGE` and `TZ` |
 | `park-mcp-clients` | `scripts/mcp-client.sh park all` — remove `splunk-mcp-server` from client configs |
