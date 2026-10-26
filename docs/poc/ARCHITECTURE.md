@@ -110,6 +110,7 @@ Check mode: **`SA-S4R_query_nk_demo_state`**. Agentic analysis: [AGENTS.md](../s
 
 ```text
 make up
+  ├─ .env missing on macOS: env-from-keychain.sh (S4R-demo + splunkbase)
   ├─ docker compose up -d (secrets from .env, or the process environment when .env is absent)
   │  ├─ so1 (Splunk)
   │  │  ├─ Pull image
@@ -119,14 +120,107 @@ make up
   │  └─ splunk-init (waits for so1 healthy)
   │     └─ setup-splunk.sh
   │        ├─ Enable Eventgen modinput (required; init fails if still disabled)
-  │        ├─ Create/update role: mcp_user (capability mcp_tool_execute)
+  │        ├─ Create/update role: mcp_user (mcp_tool_execute, s4r_workshop_control)
   │        ├─ Create user: splunker
-  │        └─ register-s4r-mcp-tools (POST /services/mcp_tools for SA-S4R)
+  │        └─ register-s4r-mcp-tools (wait for KV Store, POST /services/mcp_tools for SA-S4R)
   └─ host (after splunk-init exits 0)
      └─ update-all (MCP_UPDATE_ON_BOOT; mint token into client configs)
 ```
 
 **Shutdown:** `make down` runs **`mcp-client.sh park all`** first (removes `splunk-mcp-server` from client configs) so clients do not reconnect with stale tokens during the next boot.
+
+### End-to-end sequence
+
+A full run from a wiped stack: teardown, boot, health checks, then the SA-S4R workshop tools called as **`splunker`** through **`npx mcp-remote`**. Reading the mode needs **`mcp_tool_execute`**; changing it needs **`s4r_workshop_control`**.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Op as Operator
+    participant Make as make / compose-up.sh
+    participant KC as macOS keychain
+    participant DC as Docker Compose
+    participant SO1 as so1 (Splunk)
+    participant Init as splunk-init (setup-splunk.sh)
+    participant MC as mcp-client.sh
+    participant Cur as .cursor/mcp.json
+    participant Rem as npx mcp-remote
+    participant MCP as MCP Server /services/mcp
+    participant S4R as SA-S4R s4r_workshop_mode
+    participant EG as Eventgen
+
+    rect rgba(128,128,128,0.08)
+    Note over Op,Cur: Teardown with make clean-y
+    Op->>Make: make clean-y
+    Make->>MC: park all
+    MC->>Cur: remove splunk-mcp-server entry
+    Make->>DC: docker compose down -v
+    Make->>Make: rm .env
+    end
+
+    rect rgba(128,128,128,0.08)
+    Note over Op,EG: Boot with make up
+    Op->>Make: make up
+    Make->>KC: env-from-keychain.sh (.env missing)
+    KC-->>Make: S4R-demo password, splunkbase account and password
+    Make->>Make: write .env mode 600 (admin, splunker, Splunkbase)
+    Make->>Make: with_splunk_env checks 4 required vars
+    Make->>DC: docker compose up -d
+    DC->>SO1: start with SPLUNK_PASSWORD = SPLUNK_ADMIN_PASSWORD
+    SO1->>SO1: install SPLUNK_APPS_URL apps (MCP Server, Eventgen, SA-S4R.spl ...)
+    SO1-->>DC: healthcheck healthy
+    DC->>Init: start (depends_on so1 healthy)
+    Init->>SO1: enable Eventgen modinput and verify disabled=0
+    Init->>SO1: MCP Server ssl_verify=false
+    Init->>SO1: role mcp_user + mcp_tool_execute + s4r_workshop_control
+    Init->>SO1: user splunker with roles user + mcp_user
+    loop every 5s, up to 300s
+        Init->>SO1: GET /services/kvstore/status
+    end
+    Init->>SO1: POST /services/mcp_tools (batch replace, 5 tools)
+    Init->>SO1: enable each SA-S4R_* tool and reload saved searches
+    Init-->>DC: exit 0
+    Make->>DC: wait-splunk-init.sh until exit 0
+    Make->>MC: update-all cursor
+    MC->>SO1: wait for mcp_token endpoint, mint token for splunker
+    MC->>Cur: write bearer token (mode 600)
+    end
+
+    rect rgba(128,128,128,0.08)
+    Note over Op,MCP: Health checks
+    Op->>Make: make status
+    Make->>SO1: splunk-init exit code + API ready
+    Op->>Make: make verify-mcp-remote
+    Make->>MCP: tools/list direct
+    Make->>Rem: tools/list via stdio
+    Rem->>MCP: tools/list with bearer token
+    MCP-->>Op: tool list incl. 5 SA-S4R_*
+    end
+
+    rect rgba(128,128,128,0.08)
+    Note over Op,EG: Workshop tool calls as splunker
+    Op->>Rem: tools/call SA-S4R_query_nk_demo_state
+    Rem->>MCP: tools/call
+    MCP->>S4R: GET (needs mcp_tool_execute)
+    S4R-->>Op: mode infrastructure
+    Op->>Rem: tools/call SA-S4R_apply_nk_demo_state mode=threat
+    Rem->>MCP: tools/call
+    MCP->>S4R: POST (needs s4r_workshop_control)
+    S4R->>EG: enable attack.nk.purchase.sample and reload
+    S4R-->>Op: mode threat, eventgen_reloaded true
+    EG->>SO1: index NK failed purchases (175.45.x)
+    Note over Op,EG: wait about 90s
+    Op->>Rem: SA-S4R_validate_nk_attack_traffic / geo_failed_purchases
+    Rem->>MCP: tools/call
+    MCP->>SO1: run saved search as splunker
+    SO1-->>Op: North Korea hotspots
+    Op->>Rem: SA-S4R_apply_nk_demo_state mode=infrastructure
+    Rem->>MCP: tools/call
+    MCP->>S4R: POST
+    S4R->>EG: disable NK stanza and reload
+    S4R-->>Op: mode infrastructure
+    end
+```
 
 ## Security Architecture
 
