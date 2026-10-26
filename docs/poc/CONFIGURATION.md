@@ -99,7 +99,7 @@ Runs after `so1` is **healthy**. Uses Alpine, installs `curl`, `jq`, and `bash`,
 
 ### Alert tools added in MCP Server 2.1
 
-`splunk_find_silent_alerts`, `splunk_get_alert_action_status`, and `splunk_get_fired_alert_results` are available to **`splunker`**. The first two read **`_audit`** and **`_internal`**, which the `user` role's `srchIndexesAllowed = *` does not cover (underscore indexes are excluded from `*`). As configured here, `splunk_find_silent_alerts` answers *"The _audit index is required … It is disabled"* even though the index is enabled. This repo keeps `splunker` least-privilege; grant `_audit` / `_internal` to `mcp_user` only if you want those tools to work. `splunk_get_fired_alert_results` needs retained search-job results for the given `sid`.
+`splunk_find_silent_alerts`, `splunk_get_alert_action_status`, and `splunk_get_fired_alert_results` are registered for **`splunker`**. The first two read **`_audit`** and **`_internal`**, which are restricted to admin roles by design, so they return errors for `splunker` (`splunk_find_silent_alerts` says *"The _audit index is required … It is disabled"* although the index is enabled). That is expected; this repo does not grant `splunker` access to them. `splunk_get_fired_alert_results` needs retained search-job results for the given `sid`.
 
 ### Network and volumes
 
