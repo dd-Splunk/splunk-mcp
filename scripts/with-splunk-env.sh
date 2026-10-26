@@ -9,6 +9,20 @@
 #
 # Does not require every secret. Callers that need the full set check it.
 
+# SPLUNK_PASSWORD and SPLUNK_MCP_PASSWORD were renamed. Fail with a hint when
+# only the old name is set, instead of a vague "must be set" later.
+check_renamed_splunk_vars() {
+  local pair old new
+  for pair in SPLUNK_PASSWORD:SPLUNK_ADMIN_PASSWORD SPLUNK_MCP_PASSWORD:SPLUNK_SPLUNKER_PASSWORD; do
+    old="${pair%%:*}"
+    new="${pair#*:}"
+    if [[ -n "${!old:-}" && -z "${!new:-}" ]]; then
+      echo "Error: ${old} was renamed to ${new}. Rename it in ${ENV_OUT} or your environment." >&2
+      exit 1
+    fi
+  done
+}
+
 with_splunk_env() {
   ENV_OUT="${ENV_OUT:-.env}"
 
@@ -24,14 +38,17 @@ with_splunk_env() {
       exit 1
     }
     set +a
+    check_renamed_splunk_vars
     return 0
   fi
 
-  if [[ -n "${SPLUNK_PASSWORD:-}" ]]; then
+  if [[ -n "${SPLUNK_ADMIN_PASSWORD:-}" ]]; then
+    check_renamed_splunk_vars
     return 0
   fi
 
-  echo "Error: need $ENV_OUT or SPLUNK_PASSWORD in the environment." >&2
-  echo "  cp .env.example .env and set SPLUNK_PASSWORD, SPLUNKBASE_USER, SPLUNKBASE_PASS, and SPLUNK_MCP_PASSWORD" >&2
+  check_renamed_splunk_vars
+  echo "Error: need $ENV_OUT or SPLUNK_ADMIN_PASSWORD in the environment." >&2
+  echo "  cp .env.example .env and set SPLUNK_ADMIN_PASSWORD, SPLUNKBASE_USER, SPLUNKBASE_PASS, and SPLUNK_SPLUNKER_PASSWORD" >&2
   exit 1
 }

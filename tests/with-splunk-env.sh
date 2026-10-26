@@ -24,7 +24,7 @@ set -euo pipefail
 # shellcheck source=scripts/with-splunk-env.sh
 source "${HELPER}"
 with_splunk_env "\$@"
-[[ "\${SPLUNK_PASSWORD:-}" == "\${EXPECT:?}" ]] || {
+[[ "\${SPLUNK_ADMIN_PASSWORD:-}" == "\${EXPECT:?}" ]] || {
   echo "secret not loaded" >&2
   exit 1
 }
@@ -37,7 +37,7 @@ EOF
 chmod +x "${TMP}/caller.sh"
 
 # .env is sourced in-process.
-printf '%s\n' 'SPLUNK_PASSWORD=your_password_here' >"${TMP}/dotenv"
+printf '%s\n' 'SPLUNK_ADMIN_PASSWORD=your_password_here' >"${TMP}/dotenv"
 env -u SPLUNK_MCP_ENV_LOADED \
   ENV_OUT="${TMP}/dotenv" \
   EXPECT=your_password_here \
@@ -47,26 +47,40 @@ env -u SPLUNK_MCP_ENV_LOADED \
 # No file: an already-exported password is enough.
 env -u SPLUNK_MCP_ENV_LOADED \
   ENV_OUT="${TMP}/missing.env" \
-  SPLUNK_PASSWORD=your_splunker_password \
+  SPLUNK_ADMIN_PASSWORD=your_splunker_password \
   EXPECT=your_splunker_password \
   EXPECT_ARG=status \
   "${TMP}/caller.sh" status | grep -qx 'ok' || die "inherited env did not load"
 
 # .env wins over a different inherited value.
-printf '%s\n' 'SPLUNK_PASSWORD=from_file' >"${TMP}/dotenv"
+printf '%s\n' 'SPLUNK_ADMIN_PASSWORD=from_file' >"${TMP}/dotenv"
 env -u SPLUNK_MCP_ENV_LOADED \
   ENV_OUT="${TMP}/dotenv" \
-  SPLUNK_PASSWORD=from_env \
+  SPLUNK_ADMIN_PASSWORD=from_env \
   EXPECT=from_file \
   EXPECT_ARG=status \
   "${TMP}/caller.sh" status | grep -qx 'ok' || die ".env did not override the environment"
 
 # Neither file nor password.
-if env -u SPLUNK_MCP_ENV_LOADED -u SPLUNK_PASSWORD \
+if env -u SPLUNK_MCP_ENV_LOADED -u SPLUNK_ADMIN_PASSWORD \
   ENV_OUT="${TMP}/no.env" "${TMP}/caller.sh" status >/dev/null 2>"${TMP}/err"; then
   die "missing secrets should fail"
 fi
 grep -q '.env.example' "${TMP}/err" || die "missing-secret error lacks .env.example hint"
+
+# Old variable names fail with a rename hint.
+printf '%s\n' 'SPLUNK_PASSWORD=your_password_here' >"${TMP}/old.env"
+if env -u SPLUNK_MCP_ENV_LOADED -u SPLUNK_ADMIN_PASSWORD \
+  ENV_OUT="${TMP}/old.env" "${TMP}/caller.sh" status >/dev/null 2>"${TMP}/err"; then
+  die "old SPLUNK_PASSWORD name should fail"
+fi
+grep -q 'renamed to SPLUNK_ADMIN_PASSWORD' "${TMP}/err" || die "old-name error lacks rename hint"
+if env -u SPLUNK_MCP_ENV_LOADED -u SPLUNK_SPLUNKER_PASSWORD \
+  ENV_OUT="${TMP}/missing.env" SPLUNK_ADMIN_PASSWORD=x SPLUNK_MCP_PASSWORD=y \
+  "${TMP}/caller.sh" status >/dev/null 2>"${TMP}/err"; then
+  die "old SPLUNK_MCP_PASSWORD name should fail"
+fi
+grep -q 'renamed to SPLUNK_SPLUNKER_PASSWORD' "${TMP}/err" || die "old-name error lacks rename hint"
 
 # Container shortcut: splunk-init already has secrets and does not mount .env.
 (
@@ -93,31 +107,33 @@ source "${ROOT}/scripts/compose-config.sh"
 redacted="$(printf '%s\n' \
   '    image: splunk/splunk:10.6.0' \
   '    SPLUNK_PASSWORD: your_password_here' \
+  '    SPLUNK_ADMIN_PASSWORD: your_password_here' \
   '    SPLUNKBASE_USERNAME: "your_password_here"' \
   '    SPLUNKBASE_PASSWORD: '"'"'your_password_here'"'" \
-  '    SPLUNK_MCP_PASSWORD: ""' \
+  '    SPLUNK_SPLUNKER_PASSWORD: ""' \
   '    TZ: Europe/Brussels' | redact_compose_secrets)"
 printf '%s\n' "$redacted" | grep -qx '    image: splunk/splunk:10.6.0' || die "image line changed"
 printf '%s\n' "$redacted" | grep -qx '    TZ: Europe/Brussels' || die "timezone line changed"
-printf '%s\n' "$redacted" | grep -qx '    SPLUNK_PASSWORD: <set>' || die "password not redacted"
+printf '%s\n' "$redacted" | grep -qx '    SPLUNK_PASSWORD: <set>' || die "so1 password not redacted"
+printf '%s\n' "$redacted" | grep -qx '    SPLUNK_ADMIN_PASSWORD: <set>' || die "password not redacted"
 printf '%s\n' "$redacted" | grep -qx '    SPLUNKBASE_USERNAME: <set>' || die "splunkbase user not redacted"
 printf '%s\n' "$redacted" | grep -qx '    SPLUNKBASE_PASSWORD: <set>' || die "splunkbase password not redacted"
-printf '%s\n' "$redacted" | grep -qx '    SPLUNK_MCP_PASSWORD: ""' || die "empty mcp password should stay empty"
+printf '%s\n' "$redacted" | grep -qx '    SPLUNK_SPLUNKER_PASSWORD: ""' || die "empty splunker password should stay empty"
 if printf '%s\n' "$redacted" | grep -q 'your_password_here'; then
   die "redaction left a secret value"
 fi
 
 cat >"${TMP}/dotenv" <<'EOF'
-SPLUNK_PASSWORD=your_password_here
+SPLUNK_ADMIN_PASSWORD=your_password_here
 SPLUNKBASE_USER=your_password_here
 SPLUNKBASE_PASS=your_password_here
-SPLUNK_MCP_PASSWORD=your_password_here
+SPLUNK_SPLUNKER_PASSWORD=your_password_here
 EOF
 cat >"${TMP}/fake-dc" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' \
   "image: ${SPLUNK_IMAGE}" \
-  "SPLUNK_PASSWORD: ${SPLUNK_PASSWORD}" \
+  "SPLUNK_ADMIN_PASSWORD: ${SPLUNK_ADMIN_PASSWORD}" \
   "TZ: ${TZ}"
 EOF
 chmod +x "${TMP}/fake-dc"
@@ -126,7 +142,7 @@ rendered="$(ENV_OUT="${TMP}/dotenv" \
   "${ROOT}/scripts/compose-config.sh")"
 printf '%s\n' "$rendered" | grep -qx "image: $(sed -n 's/^SPLUNK_IMAGE=//p' "${ROOT}/config.env")" \
   || die "compose-config did not apply SPLUNK_IMAGE"
-printf '%s\n' "$rendered" | grep -qx 'SPLUNK_PASSWORD: <set>' || die "compose-config printed a password"
+printf '%s\n' "$rendered" | grep -qx 'SPLUNK_ADMIN_PASSWORD: <set>' || die "compose-config printed a password"
 if printf '%s\n' "$rendered" | grep -q 'your_password_here'; then
   die "compose-config output contained a secret"
 fi

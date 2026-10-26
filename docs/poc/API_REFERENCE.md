@@ -11,7 +11,7 @@ All Splunk REST API calls require authentication. Choose one method:
 #### Method 1: Basic Auth (Admin)
 
 ```bash
-curl -k -u "admin:${SPLUNK_PASSWORD}" https://localhost:8089/services/server/info
+curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" https://localhost:8089/services/server/info
 ```
 
 #### Method 2: Splunk MCP (encrypted bearer token)
@@ -69,7 +69,7 @@ POST /services/authentication/users
 Content-Type: application/x-www-form-urlencoded
 
 name=splunker
-password=${SPLUNK_MCP_PASSWORD}
+password=${SPLUNK_SPLUNKER_PASSWORD}
 roles=user
 roles=mcp_user
 tz=Europe/Brussels
@@ -91,7 +91,7 @@ GET /services/authentication/users/splunker
 
 ```bash
 POST /services/authentication/users/splunker
-password=${NEW_SPLUNK_MCP_PASSWORD}
+password=${NEW_SPLUNK_SPLUNKER_PASSWORD}
 ```
 
 #### 3. Token Management (notes)
@@ -128,17 +128,17 @@ set -euo pipefail
 
 HOST="localhost:8089"
 ADMIN_USER="admin"
-: "${SPLUNK_PASSWORD:?Set SPLUNK_PASSWORD first}"
-: "${SPLUNK_MCP_PASSWORD:?Set SPLUNK_MCP_PASSWORD first}"
+: "${SPLUNK_ADMIN_PASSWORD:?Set SPLUNK_ADMIN_PASSWORD first}"
+: "${SPLUNK_SPLUNKER_PASSWORD:?Set SPLUNK_SPLUNKER_PASSWORD first}"
 
 # Create role (matches setup-splunk.sh)
 curl -k -X POST https://$HOST/services/authorization/roles \
-  -u "$ADMIN_USER:$SPLUNK_PASSWORD" -d "name=mcp_user" -d "capabilities=mcp_tool_execute"
+  -u "$ADMIN_USER:$SPLUNK_ADMIN_PASSWORD" -d "name=mcp_user" -d "capabilities=mcp_tool_execute"
 
 # Create user
 curl -k -X POST https://$HOST/services/authentication/users \
-  -u "$ADMIN_USER:$SPLUNK_PASSWORD" \
-  -d "name=splunker" -d "password=$SPLUNK_MCP_PASSWORD" -d "roles=user" -d "roles=mcp_user"
+  -u "$ADMIN_USER:$SPLUNK_ADMIN_PASSWORD" \
+  -d "name=splunker" -d "password=$SPLUNK_SPLUNKER_PASSWORD" -d "roles=user" -d "roles=mcp_user"
 ```
 
 ### Example 2: List MCP tools (Splunk MCP Server)
@@ -155,7 +155,7 @@ curl -kfsS -X POST "https://localhost:8089/services/mcp" \
 ### Example 3: Direct SPL via basic auth (recommended for “direct SPL” tests)
 
 ```bash
-curl -k -u "splunker:${SPLUNK_MCP_PASSWORD}" \
+curl -k -u "splunker:${SPLUNK_SPLUNKER_PASSWORD}" \
   "https://localhost:8089/services/search/jobs?output_mode=json" \
   -d 'search=index=main | stats values(sourcetype) AS Sourcetype'
 ```
@@ -293,7 +293,7 @@ log stream --predicate 'process == "Claude"' --level debug
 Many endpoints support JSON responses with `output_mode=json` parameter:
 
 ```bash
-curl -k -u "admin:${SPLUNK_PASSWORD}" \
+curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" \
   "https://localhost:8089/services/server/info?output_mode=json"
 ```
 
@@ -304,7 +304,7 @@ curl -k -u "admin:${SPLUNK_PASSWORD}" \
 **Search all Claude logs:**
 
 ```bash
-curl -k -u "admin:${SPLUNK_PASSWORD}" \
+curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" \
   "https://localhost:8089/services/search/jobs" \
   -d "search=index=claude_logs" \
   -d "output_mode=json"
@@ -327,7 +327,7 @@ index=claude_logs earliest=-1h | tail 20
 **Get claude_logs index stats:**
 
 ```bash
-curl -k -u "admin:${SPLUNK_PASSWORD}" \
+curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" \
   "https://localhost:8089/services/data/indexes/claude_logs"
 ```
 
@@ -336,26 +336,26 @@ curl -k -u "admin:${SPLUNK_PASSWORD}" \
 ### Enable Verbose Output
 
 ```bash
-curl -v -k -u "admin:${SPLUNK_PASSWORD}" https://localhost:8089/services/server/info
+curl -v -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" https://localhost:8089/services/server/info
 ```
 
 ### Check Request/Response Headers
 
 ```bash
-curl -i -k -u "admin:${SPLUNK_PASSWORD}" https://localhost:8089/services/server/info
+curl -i -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" https://localhost:8089/services/server/info
 ```
 
 ### Use jq for JSON Parsing
 
 ```bash
-curl -k -u "admin:${SPLUNK_PASSWORD}" \
+curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" \
   "https://localhost:8089/services/server/info?output_mode=json" | jq .
 ```
 
 ### Save Response to File
 
 ```bash
-curl -k -u "admin:${SPLUNK_PASSWORD}" https://localhost:8089/services/server/info > response.xml
+curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" https://localhost:8089/services/server/info > response.xml
 ```
 
 ## Advanced Topics
@@ -384,7 +384,7 @@ Avoid aliases that embed passwords or tokens. Prefer functions that read secrets
 
 ```bash
 splunk_info() {
-  curl -k -u "admin:${SPLUNK_PASSWORD:?Set SPLUNK_PASSWORD first}" \
+  curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD:?Set SPLUNK_ADMIN_PASSWORD first}" \
     "https://localhost:8089/services/server/info?output_mode=json"
 }
 ```

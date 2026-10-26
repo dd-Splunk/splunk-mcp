@@ -164,7 +164,7 @@ These reduce the gap versus a greenfield PoC:
 4. MCP `tools/list` (direct + optional `mcp-remote` stdio)  
 5. Optional: `SA-S4R_*` tools present after `splunk-init` exits 0
 
-**Prerequisites:** GitHub Actions secrets for `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, `SPLUNK_MCP_PASSWORD`; **~30–45 min** job timeout; tolerate Splunkbase/network flakes.
+**Prerequisites:** GitHub Actions secrets for `SPLUNK_ADMIN_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, `SPLUNK_SPLUNKER_PASSWORD`; **~30–45 min** job timeout; tolerate Splunkbase/network flakes.
 
 ---
 

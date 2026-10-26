@@ -14,7 +14,7 @@
 #   CLOUD_SPLUNKDB_SIZE       default 25G
 #   CLOUD_FAKE_CGROUP_ROOT    default /opt/splunk-fake-cgroup
 #   SPLUNKBASE_USER / SPLUNKBASE_PASS  required when creating .env
-#   SPLUNK_PASSWORD / SPLUNK_MCP_PASSWORD  used when already set; otherwise generated
+#   SPLUNK_ADMIN_PASSWORD / SPLUNK_SPLUNKER_PASSWORD  used when already set; otherwise generated
 #
 # After bootstrap: make up
 
@@ -56,7 +56,7 @@ Options:
 Requires secrets when creating .env (first run or --force-env):
 
   SPLUNKBASE_USER and SPLUNKBASE_PASS in the environment (for example Cursor Cloud secrets).
-  SPLUNK_PASSWORD and SPLUNK_MCP_PASSWORD are reused when already set, otherwise generated.
+  SPLUNK_ADMIN_PASSWORD and SPLUNK_SPLUNKER_PASSWORD are reused when already set, otherwise generated.
 EOF
 }
 
@@ -200,22 +200,22 @@ write_env_file() {
     || die "SPLUNKBASE_USER and SPLUNKBASE_PASS must be set to create $ENV_OUT"
 
   local admin_pw mcp_pw
-  if [[ -n "${SPLUNK_PASSWORD:-}" ]]; then
-    admin_pw="${SPLUNK_PASSWORD}"
+  if [[ -n "${SPLUNK_ADMIN_PASSWORD:-}" ]]; then
+    admin_pw="${SPLUNK_ADMIN_PASSWORD}"
   else
     admin_pw="$(random_password)"
   fi
-  if [[ -n "${SPLUNK_MCP_PASSWORD:-}" ]]; then
-    mcp_pw="${SPLUNK_MCP_PASSWORD}"
+  if [[ -n "${SPLUNK_SPLUNKER_PASSWORD:-}" ]]; then
+    mcp_pw="${SPLUNK_SPLUNKER_PASSWORD}"
   else
     mcp_pw="$(random_password)"
   fi
   umask 077
   cat >"$ENV_OUT" <<EOF
-SPLUNK_PASSWORD=${admin_pw}
+SPLUNK_ADMIN_PASSWORD=${admin_pw}
 SPLUNKBASE_USER=${SPLUNKBASE_USER}
 SPLUNKBASE_PASS=${SPLUNKBASE_PASS}
-SPLUNK_MCP_PASSWORD=${mcp_pw}
+SPLUNK_SPLUNKER_PASSWORD=${mcp_pw}
 EOF
   chmod 600 "$ENV_OUT"
   echo "✓ Created $ENV_OUT (chmod 600; Splunkbase from environment)"

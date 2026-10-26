@@ -18,8 +18,8 @@ source "${ROOT}/scripts/load-config-env.sh"
 with_splunk_env "$@"
 load_config_env
 
-if [[ -z "${SPLUNK_PASSWORD:-}" || -z "${SPLUNKBASE_USER:-}" || -z "${SPLUNKBASE_PASS:-}" || -z "${SPLUNK_MCP_PASSWORD:-}" ]]; then
-  echo "Error: SPLUNK_PASSWORD, SPLUNKBASE_USER, SPLUNKBASE_PASS, and SPLUNK_MCP_PASSWORD must be non-empty." >&2
+if [[ -z "${SPLUNK_ADMIN_PASSWORD:-}" || -z "${SPLUNKBASE_USER:-}" || -z "${SPLUNKBASE_PASS:-}" || -z "${SPLUNK_SPLUNKER_PASSWORD:-}" ]]; then
+  echo "Error: SPLUNK_ADMIN_PASSWORD, SPLUNKBASE_USER, SPLUNKBASE_PASS, and SPLUNK_SPLUNKER_PASSWORD must be non-empty." >&2
   echo "Set them in ${ENV_OUT} (see .env.example) or export them before make up." >&2
   exit 1
 fi

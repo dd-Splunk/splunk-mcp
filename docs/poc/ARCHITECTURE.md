@@ -153,10 +153,10 @@ The setup script assigns Splunk role **`mcp_user`** and ensures capability **`mc
 Supplied to Compose via gitignored **`.env`**, or via the process environment when that file is absent. Example shape:
 
 ```bash
-SPLUNK_PASSWORD=<secret>
+SPLUNK_ADMIN_PASSWORD=<secret>
 SPLUNKBASE_USER=<splunkbase user>
 SPLUNKBASE_PASS=<splunkbase password>
-SPLUNK_MCP_PASSWORD=<secret>
+SPLUNK_SPLUNKER_PASSWORD=<secret>
 ```
 
 `SPLUNK_IMAGE` and `TZ` are in tracked **`config.env`**.
@@ -195,7 +195,7 @@ Claude Desktop
 
 - Creates or updates Splunk role **`mcp_user`** with capability **`mcp_tool_execute`**
 - Creates **`splunker`** with roles **`user`** + **`mcp_user`**
-- Uses `SPLUNK_MCP_PASSWORD` (env) for the MCP user (no password written to disk)
+- Uses `SPLUNK_SPLUNKER_PASSWORD` (env) for the MCP user (no password written to disk)
 - REST host, port, and account names come from `scripts/splunk-api-env.sh` (`localhost`, `8089`, `admin`, `splunker` unless already set)
 - Enables SA-Eventgen default modinput (**required**; init fails if missing or still disabled)
 - Dependencies: `curl`, `jq` (installed in `splunk-init`)

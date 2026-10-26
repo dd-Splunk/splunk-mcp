@@ -27,8 +27,8 @@ run_export() {
   splunk_api_env
   host="${SPLUNK_HOST}"
   port="${SPLUNK_PORT}"
-  : "${SPLUNK_PASSWORD:?SPLUNK_PASSWORD must be set}"
-  curl -sk --max-time 60 -u "${SPLUNK_REST_USER}:${SPLUNK_PASSWORD}" \
+  : "${SPLUNK_ADMIN_PASSWORD:?SPLUNK_ADMIN_PASSWORD must be set}"
+  curl -sk --max-time 60 -u "${SPLUNK_REST_USER}:${SPLUNK_ADMIN_PASSWORD}" \
     "https://${host}:${port}/services/search/jobs/export" \
     --data-urlencode "search=search ${spl}" \
     -d output_mode=csv \
