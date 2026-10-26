@@ -5,7 +5,7 @@
 Use this text (or a shortened variant) in **Repository → Settings → General → About**, or via CLI:
 
 ```bash
-gh repo edit dd-Splunk/splunk-mcp --description "PoC: Splunk Enterprise + Splunk MCP Server in Docker. Splunk4Rookies (SA-S4R) sample data, multi-agent demo, Marp presenter deck. Cursor, Claude Desktop, or Goose via npx mcp-remote; secrets in gitignored .env."
+gh repo edit dd-Splunk/splunk-mcp --description "PoC: Splunk Enterprise + Splunk MCP Server in Docker. Splunk4Rookies (SA-S4R) sample data, multi-agent demo, Marp presenter deck. Cursor, Claude Desktop, or Claude Code via npx mcp-remote; secrets in gitignored .env."
 ```
 
 ## Topics
@@ -22,7 +22,6 @@ Suggested topics for discoverability (Splunk, MCP, Splunk4Rookies, Marp):
 | **marp** | Marp slide deck in `demo-slides/` |
 | **claude** | Anthropic Claude Desktop |
 | **cursor** | Cursor IDE MCP client |
-| **goose** | Goose AI agent / MCP extension |
 | **llm** | Large language models |
 | **docker** | Container runtime |
 | **docker-compose** | Compose orchestration |

@@ -22,7 +22,7 @@ Automation in this repo is intentionally small: it supports a **local PoC** stac
 
 - **gitleaks** on the full git history (**.gitleaks.toml** allowlists PoC placeholders)
 - **pre-commit** (**.pre-commit-config.yaml**): **gitleaks** on tracked files, **shellcheck** on **`scripts/*.sh`** and **`tests/*.sh`**, **markdownlint-cli2** on project Markdown (via **`.markdownlint-cli2.jsonc`**)
-- **`make test`**: MCP client JSON/YAML shape (no Splunk) and SA-S4R mode/payload unit tests (**PyYAML** + **jq** + **npx**)
+- **`make test`**: MCP client JSON shape (no Splunk) and SA-S4R mode/payload unit tests (**jq** + **npx**)
 
 **Permissions**
 
@@ -33,7 +33,7 @@ Automation in this repo is intentionally small: it supports a **local PoC** stac
 - Does **not** build Docker images, start Splunk, run integration tests, or validate MCP connectivity.
 - **Does** run Docker-free unit tests (`make test`).
 - Does **not** package Splunk apps or publish releases.
-- Match CI locally: `pip install pre-commit && pre-commit install`, then **`pre-commit run --all-files`** and **`make test`** before pushing (requires **shellcheck** on PATH, **Node/npx**, **jq**, and **PyYAML**). CI installs **shellcheck** and **jq** via **apt**; on macOS use **`brew install shellcheck`**. Optional full-history scan: **`brew install gitleaks && gitleaks detect --source . --config .gitleaks.toml`**.
+- Match CI locally: `pip install pre-commit && pre-commit install`, then **`pre-commit run --all-files`** and **`make test`** before pushing (requires **shellcheck** on PATH, **Node/npx**, and **jq**). CI installs **shellcheck** and **jq** via **apt**; on macOS use **`brew install shellcheck`**. Optional full-history scan: **`brew install gitleaks && gitleaks detect --source . --config .gitleaks.toml`**.
 
 ---
 
