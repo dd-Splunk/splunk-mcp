@@ -93,7 +93,7 @@ Runs after `so1` is **healthy**. Uses Alpine, installs `curl`, `jq`, and `bash`,
 ### MCP token minting (host)
 
 - **`scripts/wait-splunk-init.sh`** — blocks until the **`splunk-init`** container exits `0` (`compose-up.sh` runs this after `docker compose up`).
-- **`scripts/register-s4r-mcp-tools.sh`** — called by **`setup-splunk.sh`** inside **`splunk-init`**: `POST /services/mcp_tools` for **SA-S4R**, then enable each tool.
+- **`scripts/register-s4r-mcp-tools.sh`** — called by **`setup-splunk.sh`** inside **`splunk-init`**: waits up to 5 minutes for the KV Store to be ready, `POST /services/mcp_tools` for **SA-S4R**, then enable each tool.
 - **`scripts/mint-mcp-token.sh`** — after init: waits for Splunk API, polls **`mcp_token`**, prints encrypted token to stdout.
 - **`make update-mcp-client`** writes the token into Claude / Cursor / Goose configs only.
 
