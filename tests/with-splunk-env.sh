@@ -9,7 +9,7 @@ die() { echo "FAIL: $*" >&2; exit 1; }
 
 [[ -f "$HELPER" ]] || die "missing $HELPER"
 
-for script in mint-mcp-token.sh register-s4r-mcp-tools.sh mcp-auth-failures.sh \
+for script in mint-mcp-token.sh prune-mcp-tokens.sh register-s4r-mcp-tools.sh mcp-auth-failures.sh \
   toggle-s4r-attack-nk.sh compose-up.sh compose-config.sh; do
   grep -q 'with_splunk_env "$@"' "${ROOT}/scripts/${script}" \
     || die "${script} does not call with_splunk_env"

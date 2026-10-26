@@ -105,9 +105,9 @@ Network and ports:
 make up
 ```
 
-This runs **`docker compose up -d`** using **`.env`** (or exported variables when that file is absent). It starts **`so1`**, runs **`splunk-init`** after Splunk is healthy, then mints an MCP token and updates client configs (**`MCP_UPDATE_ON_BOOT`**, default **`cursor`**), then registers SA-S4R MCP tools.
+This runs **`docker compose up -d`** using **`.env`** (or exported variables when that file is absent). It starts **`so1`**, runs **`splunk-init`** after Splunk is healthy, then mints an MCP token and updates client configs (**`MCP_UPDATE_ON_BOOT`**, default **`cursor claude-code`**), then registers SA-S4R MCP tools.
 
-After **`splunk-init`** exits, **`scripts/mcp-client.sh update-all`** writes client configs pointing at **`https://localhost:8089/services/mcp`**. For every client on boot: `make up MCP_UPDATE_ON_BOOT="cursor claude claude-code"`.
+After **`splunk-init`** exits, **`scripts/mcp-client.sh update-all`** writes client configs pointing at **`https://localhost:8089/services/mcp`**. To include Claude Desktop on boot: `make up MCP_UPDATE_ON_BOOT="cursor claude-code claude"`.
 
 Secret file details: [CONFIGURATION.md](CONFIGURATION.md#configenv-and-env).
 
@@ -136,9 +136,9 @@ After `make up` completes:
 
 | Client | Action |
 | ------ | ------ |
-| **Cursor** (default) | **`make up`** updates **`.cursor/mcp.json`** (`MCP_UPDATE_ON_BOOT=cursor`). Restart Cursor or reload MCP servers. |
+| **Cursor** (default) | **`make up`** updates **`.cursor/mcp.json`** (`MCP_UPDATE_ON_BOOT`, default `cursor claude-code`). Restart Cursor or reload MCP servers. |
 | **Claude Desktop** (macOS) | Run **`make update-mcp-client MCP_CLIENT=claude`** or **`make up MCP_UPDATE_ON_BOOT="cursor claude"`**. Quit Claude fully (**Cmd+Q**), then reopen. Config: `~/Library/Application Support/Claude/claude_desktop_config.json`. |
-| **Claude Code** | Run **`make update-mcp-client MCP_CLIENT=claude-code`** or include **`claude-code`** in **`MCP_UPDATE_ON_BOOT`**. Writes gitignored **`.mcp.json`** at the repo root; start a new Claude Code session in the repo and approve **splunk-mcp-server** (or check with **`/mcp`**). |
+| **Claude Code** | Run **`make update-mcp-client MCP_CLIENT=claude-code`** or rely on the default **`MCP_UPDATE_ON_BOOT`**, which includes it. Writes gitignored **`.mcp.json`** at the repo root; start a new Claude Code session in the repo and approve **splunk-mcp-server** (or check with **`/mcp`**). |
 
 Shell smoke test for the default Cursor path:
 

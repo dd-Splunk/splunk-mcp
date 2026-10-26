@@ -124,7 +124,7 @@ make up
   │        ├─ Create user: splunker
   │        └─ register-s4r-mcp-tools (wait for KV Store, POST /services/mcp_tools for SA-S4R)
   └─ host (after splunk-init exits 0)
-     └─ update-all (MCP_UPDATE_ON_BOOT; mint token into client configs)
+     └─ update-all (MCP_UPDATE_ON_BOOT; mint token into client configs, revoke older tokens)
 ```
 
 **Shutdown:** `make down` runs **`mcp-client.sh park all`** first (removes `splunk-mcp-server` from client configs) so clients do not reconnect with stale tokens during the next boot.
@@ -294,7 +294,7 @@ Claude Desktop
 - Enables SA-Eventgen default modinput (**required**; init fails if missing or still disabled)
 - Dependencies: `curl`, `jq` (installed in `splunk-init`)
 
-Host **Claude** / **Cursor** configs are updated by **`scripts/mcp-client.sh`** via **`make update-mcp-clients`** or **`make up`** (`MCP_UPDATE_ON_BOOT`, default **`cursor`**), not by this script. TLS overrides are described in **`docs/poc/CONFIGURATION.md`**.
+Host **Claude** / **Cursor** configs are updated by **`scripts/mcp-client.sh`** via **`make update-mcp-clients`** or **`make up`** (`MCP_UPDATE_ON_BOOT`, default **`cursor claude-code`**), not by this script. TLS overrides are described in **`docs/poc/CONFIGURATION.md`**.
 
 ### Makefile
 
@@ -316,7 +316,7 @@ Host **Claude** / **Cursor** configs are updated by **`scripts/mcp-client.sh`** 
 1. splunk-init waits for healthcheck to pass
 2. Runs setup-splunk.sh (roles, MCP user, Eventgen, SA-S4R tool registration — no token mint)
 3. splunk-init container exits (`restart: "no"`)
-4. Host runs `update-all` (`MCP_UPDATE_ON_BOOT`) → mints bearer token into client configs
+4. Host runs `update-all` (`MCP_UPDATE_ON_BOOT`) → mints a bearer token into client configs and revokes superseded tokens
 
 ### MCP Operation
 
