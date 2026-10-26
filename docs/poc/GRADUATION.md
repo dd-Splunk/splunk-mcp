@@ -140,7 +140,7 @@ These reduce the gap versus a greenfield PoC:
 
 1. **Splunkbase credentials** — every operator needs a valid account; downloads fail without it.
 2. **Cold start time** — unattended users may assume `make up` is “a few minutes.”
-3. **Cursor-first boot** — Claude/Goose need explicit `make update-mcp-client` or `MCP_UPDATE_ON_BOOT="cursor goose claude"`.
+3. **Cursor-first boot** — Claude Desktop, Claude Code, and Goose need explicit `make update-mcp-client` or `MCP_UPDATE_ON_BOOT="cursor goose claude claude-code"`.
 4. **Workshop dashboard** — still built in **`SA-S4R/local/`**; not in git except README.
 5. **No formal “supported matrix”** — Windows/WSL/Linux ambiguity creates support load.
 6. **No recorded external dry run** — graduation is a claim until F1 is done.
