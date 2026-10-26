@@ -67,6 +67,7 @@ Confirm validity dates, key size (RSA ≥2048 or modern EC curves), and signatur
 
 ## Token lifecycle
 
+- Splunk MCP Server 2.1 encrypts every token with one administrator-managed key pair (created by **`scripts/mint-mcp-token.sh`** on first mint). Tokens expire no later than the key (default 180 days). Deleting the key invalidates every token; it is refused while any token is still active.
 - Re-run **`make update-mcp-client`** to rotate tokens in client configs. Those update and park paths **`chmod 600`** the Claude Desktop, Claude Code, and Cursor files that hold the bearer token.
 - **`.cursor/mcp.json` and `.mcp.json` are gitignored** but this clone often lives under **OneDrive** (or similar). Sync can copy the token off-box. Use **`CURSOR_MCP_JSON`** / **`CLAUDE_CODE_MCP_JSON`** outside the synced tree, or pause sync for that file. Do not paste the token into chat or issues.
 - Claude Desktop, Claude Code, and Cursor still pass **`Authorization: Bearer …`** to **`mcp-remote`** as **`--header`**. That matches the Splunk MCP 2.0 client shape. Treat the token as visible to local process listing. `chmod 600` on the config file does not hide argv.
