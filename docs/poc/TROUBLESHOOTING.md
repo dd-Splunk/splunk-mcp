@@ -18,7 +18,7 @@ make up
 
 Requires secrets when creating **`.env`** (first boot or after **`--force-env`**):
 
-- Cursor Cloud secrets **`SPLUNKBASE_USER`** / **`SPLUNKBASE_PASS`**. Bootstrap writes gitignored **`.env`** and generates admin/MCP passwords when those variables are unset.
+- Cursor Cloud secrets **`SPLUNKBASE_USER`** / **`SPLUNKBASE_PASS`**. Bootstrap writes gitignored **`.env`** and generates admin/splunker passwords when those variables are unset.
 
 See [CONFIGURATION.md](CONFIGURATION.md#cursor-cloud-bootstrap) and [AGENTS.md](../../AGENTS.md).
 
