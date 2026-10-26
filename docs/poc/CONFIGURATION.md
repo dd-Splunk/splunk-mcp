@@ -95,6 +95,7 @@ Runs after `so1` is **healthy**. Uses Alpine, installs `curl`, `jq`, and `bash`,
 - **`scripts/wait-splunk-init.sh`** — blocks until the **`splunk-init`** container exits `0` (`compose-up.sh` runs this after `docker compose up`).
 - **`scripts/register-s4r-mcp-tools.sh`** — called by **`setup-splunk.sh`** inside **`splunk-init`**: waits up to 5 minutes for the KV Store to be ready, `POST /services/mcp_tools` for **SA-S4R**, then enable each tool.
 - **`scripts/mint-mcp-token.sh`** — after init: waits for Splunk API, creates the MCP encryption key pair if missing (`POST /services/mcp_token/key-pair`, 201 or 409), then mints a token for **`splunker`** (`POST /services/mcp_token/tokens`) and prints it to stdout.
+- **`scripts/prune-mcp-tokens.sh`** — after `update-all`: deletes every older active token of the MCP user from the MCP Server token registry (`GET`/`DELETE /services/mcp_token/tokens`), keeping the newest (`--dry-run` lists them). Prints the number deleted.
 - **`make update-mcp-client`** writes the token into Claude / Cursor configs only.
 
 ### Alert tools added in MCP Server 2.1
@@ -153,7 +154,7 @@ Changing the keychain password does not change a running stack: Splunk reads the
 | Target | Behavior |
 | ------ | -------- |
 | `env` | Write `.env` from keychain items `S4R-demo` + `splunkbase` (macOS). **`ENV_FORCE=1`** overwrites |
-| `up` | `scripts/compose-up.sh` (`.env`, the process environment, or on macOS a `.env` built from the keychain; **`splunk-init`** registers SA-S4R tools), then `update-all` (`MCP_UPDATE_ON_BOOT`, default `cursor`) |
+| `up` | `scripts/compose-up.sh` (`.env`, the process environment, or on macOS a `.env` built from the keychain; **`splunk-init`** registers SA-S4R tools), then `update-all` (`MCP_UPDATE_ON_BOOT`, default `cursor claude-code`) |
 | `config` | Print `docker compose config` after the same secret and `config.env` load as `up`. `SPLUNK_ADMIN_PASSWORD`, Splunkbase user/password, and `SPLUNK_SPLUNKER_PASSWORD` are shown as `<set>` |
 | `down` | `scripts/mcp-client.sh park all` (no secrets), then `docker compose down`. `config.env` must be present so Compose can read `SPLUNK_IMAGE` and `TZ` |
 | `park-mcp-clients` | `scripts/mcp-client.sh park all` — remove `splunk-mcp-server` from client configs |

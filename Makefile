@@ -8,7 +8,7 @@ ENV_OUT ?= .env
 MCP_CLIENT ?= cursor
 MCP_VERIFY_CLIENT ?= all
 MCP_CLIENTS := cursor claude claude-code
-MCP_UPDATE_ON_BOOT ?= cursor
+MCP_UPDATE_ON_BOOT ?= cursor claude-code
 
 include config.env
 export ENV_OUT DC SPLUNK_IMAGE TZ
@@ -152,6 +152,7 @@ test: ## Docker-free tests: MCP config shape, secret loader, token mint, keychai
 	@./tests/mcp-client-shape.sh
 	@./tests/with-splunk-env.sh
 	@./tests/mint-mcp-token.sh
+	@./tests/prune-mcp-tokens.sh
 	@./tests/env-from-keychain.sh
 	@python3 -m unittest discover -s tests -p 'test_*.py' -v
 
