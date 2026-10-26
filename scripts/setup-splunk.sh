@@ -11,11 +11,11 @@
 # splunk-init mounts this directory's scripts and SA-S4R/default/s4r_mcp_tools.json.
 # Compose sets SPLUNK_MCP_ENV_LOADED=1 so the registrar does not look for a host .env.
 #
-# Required env: SPLUNK_PASSWORD.
-# SPLUNK_MCP_PASSWORD is required on first user creation and when FORCE_SPLUNK_MCP_PASSWORD=1.
+# Required env: SPLUNK_ADMIN_PASSWORD.
+# SPLUNK_SPLUNKER_PASSWORD is required on first user creation and when FORCE_SPLUNK_SPLUNKER_PASSWORD=1.
 # REST host, port, and account names: scripts/splunk-api-env.sh.
 # compose.yml sets SPLUNK_HOST=so1. localhost inside splunk-init is that container.
-# FORCE_SPLUNK_MCP_PASSWORD (0; 1|true|yes forces password reset).
+# FORCE_SPLUNK_SPLUNKER_PASSWORD (0; 1|true|yes forces password reset).
 #
 # Out of scope: claude_logs index or file monitors — see docs/poc/CONFIGURATION.md.
 # Full variable table and flows: docs/poc/CONFIGURATION.md#appendix-setup-splunksh
@@ -28,11 +28,11 @@ _here=$(cd "${_here}" && pwd)
 . "${_here}/splunk-api-env.sh"
 splunk_api_env
 
-: "${SPLUNK_PASSWORD:?SPLUNK_PASSWORD must be set}"
+: "${SPLUNK_ADMIN_PASSWORD:?SPLUNK_ADMIN_PASSWORD must be set}"
 SPLUNK_URL="https://${SPLUNK_HOST}:${SPLUNK_PORT}"
 
-: "${SPLUNK_MCP_PASSWORD:=}"
-FORCE_SPLUNK_MCP_PASSWORD="${FORCE_SPLUNK_MCP_PASSWORD:-0}"
+: "${SPLUNK_SPLUNKER_PASSWORD:=}"
+FORCE_SPLUNK_SPLUNKER_PASSWORD="${FORCE_SPLUNK_SPLUNKER_PASSWORD:-0}"
 
 LAST_BODY_FILE=""
 
@@ -42,7 +42,7 @@ is_truthy() {
   return 1
 }
 
-# curl with SPLUNK_REST_USER:SPLUNK_PASSWORD; prints body on 2xx/3xx, else stderr unless AUTH_CURL_QUIET=1.
+# curl with SPLUNK_REST_USER:SPLUNK_ADMIN_PASSWORD; prints body on 2xx/3xx, else stderr unless AUTH_CURL_QUIET=1.
 auth_curl() { # $@ = curl args excluding auth
   tmp_body="$(mktemp)"
   quiet="${AUTH_CURL_QUIET:-0}"
@@ -53,7 +53,7 @@ auth_curl() { # $@ = curl args excluding auth
     esac
   done
 
-  if code="$(curl -k --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" -u "${SPLUNK_REST_USER}:${SPLUNK_PASSWORD}" -sS -o "${tmp_body}" -w "%{http_code}" "$@")"; then
+  if code="$(curl -k --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" -u "${SPLUNK_REST_USER}:${SPLUNK_ADMIN_PASSWORD}" -sS -o "${tmp_body}" -w "%{http_code}" "$@")"; then
     :
   else
     code="000"
@@ -252,30 +252,30 @@ AUTH_CURL_QUIET=1 auth_curl "${USER_URL}?output_mode=json" >/dev/null && user_ex
 cleanup_last_body
 
 set -- -d "roles=user" -d "roles=mcp_user" -d "locked-out=false"
-[ "${user_exists}" = "0" ] && [ -z "${SPLUNK_MCP_PASSWORD}" ] && {
-  echo "❌ SPLUNK_MCP_PASSWORD must be set to create the MCP user '${SPLUNK_MCP_USER}'." >&2
+[ "${user_exists}" = "0" ] && [ -z "${SPLUNK_SPLUNKER_PASSWORD}" ] && {
+  echo "❌ SPLUNK_SPLUNKER_PASSWORD must be set to create the MCP user '${SPLUNK_MCP_USER}'." >&2
   exit 1
 }
 
-if is_truthy "${FORCE_SPLUNK_MCP_PASSWORD}"; then
-  [ -n "${SPLUNK_MCP_PASSWORD}" ] || {
-    echo "❌ FORCE_SPLUNK_MCP_PASSWORD is set but SPLUNK_MCP_PASSWORD is empty." >&2
+if is_truthy "${FORCE_SPLUNK_SPLUNKER_PASSWORD}"; then
+  [ -n "${SPLUNK_SPLUNKER_PASSWORD}" ] || {
+    echo "❌ FORCE_SPLUNK_SPLUNKER_PASSWORD is set but SPLUNK_SPLUNKER_PASSWORD is empty." >&2
     exit 1
   }
-  set -- --data-urlencode "password=${SPLUNK_MCP_PASSWORD}" "$@"
+  set -- --data-urlencode "password=${SPLUNK_SPLUNKER_PASSWORD}" "$@"
 fi
 
 if [ "${user_exists}" = "1" ]; then
   user_ok_msg="✅ Updated user ${SPLUNK_MCP_USER}"
-  is_truthy "${FORCE_SPLUNK_MCP_PASSWORD}" && user_ok_msg="${user_ok_msg} (password + roles)"
-  ! is_truthy "${FORCE_SPLUNK_MCP_PASSWORD}" && user_ok_msg="${user_ok_msg} (roles)"
+  is_truthy "${FORCE_SPLUNK_SPLUNKER_PASSWORD}" && user_ok_msg="${user_ok_msg} (password + roles)"
+  ! is_truthy "${FORCE_SPLUNK_SPLUNKER_PASSWORD}" && user_ok_msg="${user_ok_msg} (roles)"
   must auth_curl -X POST "${USER_URL}" "$@" \
     -H "Content-Type: application/x-www-form-urlencoded" >/dev/null
   echo "${user_ok_msg}"
 fi
 if [ "${user_exists}" = "0" ]; then
   must auth_curl -X POST "${SPLUNK_URL}/services/authentication/users" \
-    --data-urlencode "name=${SPLUNK_MCP_USER}" --data-urlencode "password=${SPLUNK_MCP_PASSWORD}" "$@" \
+    --data-urlencode "name=${SPLUNK_MCP_USER}" --data-urlencode "password=${SPLUNK_SPLUNKER_PASSWORD}" "$@" \
     -H "Content-Type: application/x-www-form-urlencoded" >/dev/null
   echo "✅ Created user ${SPLUNK_MCP_USER} (roles user + mcp_user)"
 fi
@@ -288,6 +288,6 @@ echo "Registering SA-S4R MCP tools..."
 echo "✅ Setup complete!"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  MCP user: ${SPLUNK_MCP_USER}"
-echo "  MCP user password: <provided via SPLUNK_MCP_PASSWORD>"
+echo "  ${SPLUNK_MCP_USER} password: <provided via SPLUNK_SPLUNKER_PASSWORD>"
 echo "  MCP token: <mint via scripts/mint-mcp-token.sh; client configs only>"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

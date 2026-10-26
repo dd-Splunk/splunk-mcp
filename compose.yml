@@ -7,7 +7,8 @@ services:
     environment:
       SPLUNK_GENERAL_TERMS: --accept-sgt-current-at-splunk-com
       SPLUNK_START_ARGS: --accept-license
-      SPLUNK_PASSWORD: ${SPLUNK_PASSWORD:-}
+      # The splunk/splunk image reads the admin password from SPLUNK_PASSWORD.
+      SPLUNK_PASSWORD: ${SPLUNK_ADMIN_PASSWORD:-}
       # Splunkbase: set SPLUNKBASE_USER / SPLUNKBASE_PASS in project .env (see .env.example)
       SPLUNKBASE_USERNAME: ${SPLUNKBASE_USER:-}
       SPLUNKBASE_PASSWORD: ${SPLUNKBASE_PASS:-}
@@ -49,9 +50,11 @@ services:
       - ./scripts/register-s4r-mcp-tools.sh:/opt/splunk-init/scripts/register-s4r-mcp-tools.sh:ro
       - ./SA-S4R/default/s4r_mcp_tools.json:/opt/splunk-init/SA-S4R/default/s4r_mcp_tools.json:ro
     environment:
-      SPLUNK_PASSWORD: ${SPLUNK_PASSWORD:-}
-      # Required: password for the MCP execution user (splunker by default).
-      SPLUNK_MCP_PASSWORD: ${SPLUNK_MCP_PASSWORD:-}
+      SPLUNK_ADMIN_PASSWORD: ${SPLUNK_ADMIN_PASSWORD:-}
+      # Required: password of the Splunk user splunker (the MCP execution user).
+      SPLUNK_SPLUNKER_PASSWORD: ${SPLUNK_SPLUNKER_PASSWORD:-}
+      # 1 resets splunker's password to SPLUNK_SPLUNKER_PASSWORD (default: set only on create).
+      FORCE_SPLUNK_SPLUNKER_PASSWORD: ${FORCE_SPLUNK_SPLUNKER_PASSWORD:-0}
       SPLUNK_HOST: so1
       # Password is already in the environment; skip the host .env lookup.
       SPLUNK_MCP_ENV_LOADED: "1"

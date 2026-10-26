@@ -23,7 +23,7 @@ Usage: $(basename "$0") <enable|disable|status>
   disable  POST disabled=true (default infrastructure-failure mode) and reload Eventgen
   status   Print whether the attack stanza is enabled
 
-Uses Splunk config REST (https://localhost:8089). Requires SPLUNK_PASSWORD
+Uses Splunk config REST (https://localhost:8089). Requires SPLUNK_ADMIN_PASSWORD
 from ${ENV_OUT}. Splunk stores the override in
 SA-S4R/local/eventgen.conf; this script does not edit that file.
 If the Eventgen reload fails, follow the printed hint (make restart, or make up
@@ -40,7 +40,7 @@ require_jq() {
 
 require_splunk_env() {
   splunk_api_env
-  : "${SPLUNK_PASSWORD:?SPLUNK_PASSWORD must be set}"
+  : "${SPLUNK_ADMIN_PASSWORD:?SPLUNK_ADMIN_PASSWORD must be set}"
   SPLUNK_URL="https://${SPLUNK_HOST}:${SPLUNK_PORT}"
   CONFIG_URL="${SPLUNK_URL}/servicesNS/nobody/SA-S4R/configs/conf-eventgen/${STANZA_NAME}"
   DISABLED_URL="${SPLUNK_URL}/servicesNS/nobody/SA-S4R/properties/eventgen/${STANZA_NAME}/disabled?output_mode=json"
@@ -52,7 +52,7 @@ require_splunk_env() {
 splunk_curl() {
   local tmp http_code
   tmp="$(mktemp)"
-  if ! http_code="$(curl -sk --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" -u "${SPLUNK_REST_USER}:${SPLUNK_PASSWORD}" \
+  if ! http_code="$(curl -sk --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" -u "${SPLUNK_REST_USER}:${SPLUNK_ADMIN_PASSWORD}" \
     -sS -o "${tmp}" -w "%{http_code}" "$@")"; then
     rm -f "${tmp}"
     echo "error: Splunk REST request failed" >&2
@@ -124,7 +124,7 @@ eventgen_action() { # $1 = disable|enable; prints the HTTP status (000 on connec
   local url="${SPLUNK_URL}/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default/$1"
   local code
   code="$(curl -sk --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" \
-    -u "${SPLUNK_REST_USER}:${SPLUNK_PASSWORD}" \
+    -u "${SPLUNK_REST_USER}:${SPLUNK_ADMIN_PASSWORD}" \
     -sS -o /dev/null -w "%{http_code}" -X POST "${url}")" || code="000"
   printf '%s' "${code}"
 }

@@ -26,7 +26,7 @@ See [CONFIGURATION.md](CONFIGURATION.md#cursor-cloud-bootstrap) and [AGENTS.md](
 
 **Symptom:** `make up` succeeded in Cursor Cloud, but you do not know the Splunk Web admin password.
 
-**Cause:** **`scripts/cloud-bootstrap.sh`** creates **`SPLUNK_PASSWORD`** and **`SPLUNK_MCP_PASSWORD`** in the gitignored local **`.env`** when they were not already set. They are intentionally not printed in logs.
+**Cause:** **`scripts/cloud-bootstrap.sh`** creates **`SPLUNK_ADMIN_PASSWORD`** and **`SPLUNK_SPLUNKER_PASSWORD`** in the gitignored local **`.env`** when they were not already set. They are intentionally not printed in logs.
 
 **Use locally without printing secrets:**
 
@@ -34,11 +34,11 @@ See [CONFIGURATION.md](CONFIGURATION.md#cursor-cloud-bootstrap) and [AGENTS.md](
 set -a
 . ./.env
 set +a
-curl -sk -u "admin:${SPLUNK_PASSWORD}" \
+curl -sk -u "admin:${SPLUNK_ADMIN_PASSWORD}" \
   "https://localhost:8089/services/server/info?output_mode=json" >/dev/null
 ```
 
-For Splunk Web, log in as **admin** with **`SPLUNK_PASSWORD`** from `.env`. To rotate generated passwords, run **`./scripts/cloud-bootstrap.sh --force-env --wipe`** before **`make up`**; do not commit or paste `.env`.
+For Splunk Web, log in as **admin** with **`SPLUNK_ADMIN_PASSWORD`** from `.env`. To rotate generated passwords, run **`./scripts/cloud-bootstrap.sh --force-env --wipe`** before **`make up`**; do not commit or paste `.env`.
 
 ### KVStore status `failed` / MCP token mint fails
 
@@ -190,9 +190,9 @@ make down && make clean && make up
 
 ### Environment & Configuration Issues
 
-#### Issue: `.env` missing or `SPLUNK_PASSWORD` not set
+#### Issue: `.env` missing or `SPLUNK_ADMIN_PASSWORD` not set
 
-**Error**: `need .env or SPLUNK_PASSWORD` or Compose reports an empty password.
+**Error**: `need .env or SPLUNK_ADMIN_PASSWORD` or Compose reports an empty password.
 
 **Solution**:
 
@@ -201,13 +201,26 @@ cp .env.example .env
 chmod 600 .env
 ```
 
-Fill `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, and `SPLUNK_MCP_PASSWORD`. Do not commit `.env`. Then `make up`.
+Fill `SPLUNK_ADMIN_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, and `SPLUNK_SPLUNKER_PASSWORD`. Do not commit `.env`. Then `make up`.
+
+#### Issue: `SPLUNK_PASSWORD was renamed to SPLUNK_ADMIN_PASSWORD`
+
+**Cause**: `.env` (or the environment) still uses the old names. `SPLUNK_PASSWORD` is now `SPLUNK_ADMIN_PASSWORD`, and `SPLUNK_MCP_PASSWORD` is now `SPLUNK_SPLUNKER_PASSWORD`.
+
+**Solution**: rename the keys in place; values are unchanged:
+
+```bash
+sed -i '' -e 's/^SPLUNK_PASSWORD=/SPLUNK_ADMIN_PASSWORD=/' \
+  -e 's/^SPLUNK_MCP_PASSWORD=/SPLUNK_SPLUNKER_PASSWORD=/' .env   # macOS; drop '' on Linux
+```
+
+`FORCE_SPLUNK_MCP_PASSWORD` is likewise now `FORCE_SPLUNK_SPLUNKER_PASSWORD`.
 
 ---
 
 #### Issue: Splunk logs show `Invalid Splunkbase credentials` / ansible inventory errors
 
-**Cause**: The **`so1`** container was created with **empty** `SPLUNKBASE_USER` / `SPLUNKBASE_PASS` (and often `SPLUNK_PASSWORD`). That happens if you run **`docker compose up -d`** without a populated **`.env`**—Compose substitutes blank strings, and Splunk’s entrypoint refuses Splunkbase downloads.
+**Cause**: The **`so1`** container was created with **empty** `SPLUNKBASE_USER` / `SPLUNKBASE_PASS` (and often `SPLUNK_ADMIN_PASSWORD`). That happens if you run **`docker compose up -d`** without a populated **`.env`**—Compose substitutes blank strings, and Splunk’s entrypoint refuses Splunkbase downloads.
 
 **Fix**:
 
@@ -274,7 +287,7 @@ On a stack that already finished init without `splunker`, re-run **`docker start
 
 ```bash
 # Check installed apps
-curl -k -u "admin:${SPLUNK_PASSWORD}" https://localhost:8089/services/appserver/apps \
+curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" https://localhost:8089/services/appserver/apps \
   | grep -i "mcp\|model"
 
 # If not found, check download URL in compose.yml:
@@ -318,7 +331,7 @@ make up
 **Verify** (after manual install):
 
 ```bash
-curl -k -u "admin:${SPLUNK_PASSWORD}" "https://localhost:8089/servicesNS/admin/Splunk_ML_Toolkit/mltk/aicommander_metadata?output_mode=json" | head -c 400
+curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" "https://localhost:8089/servicesNS/admin/Splunk_ML_Toolkit/mltk/aicommander_metadata?output_mode=json" | head -c 400
 ```
 
 If apps still do not install, use the same Splunkbase credential and volume reinit steps as in **Issue: Splunk MCP app not installed** above.
@@ -366,7 +379,7 @@ curl -k https://localhost:8089/services/server/info
 cat .env | grep SPLUNK
 
 # Test with correct credentials
-curl -k -u admin:$SPLUNK_PASSWORD https://localhost:8089/services/server/info
+curl -k -u admin:$SPLUNK_ADMIN_PASSWORD https://localhost:8089/services/server/info
 
 # If credentials wrong:
 # 1. Update .env manually
@@ -566,18 +579,18 @@ Dashboard, NK threat mode, and parallel agent issues: **[s4r/TROUBLESHOOTING.md]
 
 **Cause**: Splunk locks local accounts after repeated failed login attempts. Common PoC triggers:
 
-1. **`SPLUNK_MCP_PASSWORD` drift** — password in `.env` no longer matches Splunk (setup only sets password on **create** or when **`FORCE_SPLUNK_MCP_PASSWORD=1`**).
+1. **`SPLUNK_SPLUNKER_PASSWORD` drift** — password in `.env` no longer matches Splunk (setup only sets password on **create** or when **`FORCE_SPLUNK_SPLUNKER_PASSWORD=1`**).
 2. **Parallel subagents using REST fallback** — several workers attempted `-u splunker:…` via Splunk REST when MCP was unavailable; wrong or stale password locks the account quickly. **Agents must use Splunk MCP only** — prefer **`SA-S4R_*`** when it matches, else **`splunk_run_query`** (see `.cursor/agents/s4r-*.md`).
 3. **Manual REST probes** with an incorrect password.
 
 **Fix (immediate — unlock)**:
 
 ```bash
-# From repo root; requires SPLUNK_PASSWORD (admin) in .env
+# From repo root; requires SPLUNK_ADMIN_PASSWORD (admin) in .env
 set -a
 . ./.env
 set +a
-curl -sk -u "admin:${SPLUNK_PASSWORD}" -X POST \
+curl -sk -u "admin:${SPLUNK_ADMIN_PASSWORD}" -X POST \
   "https://localhost:8089/services/authentication/users/splunker" \
   -d "locked-out=false" \
   -H "Content-Type: application/x-www-form-urlencoded"
@@ -592,7 +605,7 @@ docker compose run --rm splunk-init   # or: make up
 **Fix (password out of sync)**:
 
 ```bash
-FORCE_SPLUNK_MCP_PASSWORD=1 make up
+FORCE_SPLUNK_SPLUNKER_PASSWORD=1 make up
 ```
 
 **Verify**:
@@ -600,11 +613,11 @@ FORCE_SPLUNK_MCP_PASSWORD=1 make up
 ```bash
 make verify-mcp-remote MCP_VERIFY_CLIENT=all   # config + tools/list
 # Optional: confirm splunker basic auth
-curl -sk -u "splunker:${SPLUNK_MCP_PASSWORD}" \
+curl -sk -u "splunker:${SPLUNK_SPLUNKER_PASSWORD}" \
   "https://localhost:8089/services/authentication/current-context?output_mode=json"
 ```
 
-**Prevention**: Workshop agents and subagents must use **Splunk MCP only** (prefer **`SA-S4R_*`**, else **`splunk_run_query`**) — never REST basic auth as `splunker`. Prefer **`make verify-mcp-remote MCP_VERIFY_CLIENT=all`** before delegating four teams. Keep **`SPLUNK_MCP_PASSWORD`** aligned with `.env`; use **`FORCE_SPLUNK_MCP_PASSWORD=1`** after rotating the password. Parallel agent limits: [s4r/TROUBLESHOOTING.md](../s4r/TROUBLESHOOTING.md).
+**Prevention**: Workshop agents and subagents must use **Splunk MCP only** (prefer **`SA-S4R_*`**, else **`splunk_run_query`**) — never REST basic auth as `splunker`. Prefer **`make verify-mcp-remote MCP_VERIFY_CLIENT=all`** before delegating four teams. Keep **`SPLUNK_SPLUNKER_PASSWORD`** aligned with `.env`; use **`FORCE_SPLUNK_SPLUNKER_PASSWORD=1`** after rotating the password. Parallel agent limits: [s4r/TROUBLESHOOTING.md](../s4r/TROUBLESHOOTING.md).
 
 ---
 
@@ -648,9 +661,9 @@ make status                  # Check containers
 make logs | tail -20         # Check for errors
 
 # Manual verification:
-curl -k -u "admin:${SPLUNK_PASSWORD}" https://localhost:8089/services/server/info
-curl -k -u "admin:${SPLUNK_PASSWORD}" https://localhost:8089/services/authentication/users/splunker
-curl -k -u "admin:${SPLUNK_PASSWORD}" https://localhost:8089/services/authorization/roles/mcp_user
+curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" https://localhost:8089/services/server/info
+curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" https://localhost:8089/services/authentication/users/splunker
+curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" https://localhost:8089/services/authorization/roles/mcp_user
 
 # Verify Claude config:
 cat ~/Library/Application\ Support/Claude/claude_desktop_config.json | jq '.mcpServers'
@@ -702,11 +715,11 @@ ls -la ~/Library/Logs/Claude/
 docker exec so1 ls -la /var/log/claude_logs
 
 # Check if index was created
-curl -k -u "admin:${SPLUNK_PASSWORD}" \
+curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" \
   https://localhost:8089/services/data/indexes/claude_logs
 
 # View Splunk monitor input config
-curl -k -u "admin:${SPLUNK_PASSWORD}" \
+curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" \
   https://localhost:8089/services/data/indexes/claude_logs
 #### Issue: Claude logs stopped being indexed
 
@@ -716,7 +729,7 @@ curl -k -u "admin:${SPLUNK_PASSWORD}" \
 
 ```bash
 # Check monitor status
-curl -k -u "admin:${SPLUNK_PASSWORD}" "https://localhost:8089/services/data/inputs/monitor"
+curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" "https://localhost:8089/services/data/inputs/monitor"
 
 # Verify Claude app is running
 log stream --predicate 'process == "Claude"' --level debug | head -20
