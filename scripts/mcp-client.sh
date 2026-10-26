@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Update or verify Splunk MCP client configs (Claude Desktop, Claude Code, Cursor, Goose).
+# Update or verify Splunk MCP client configs (Claude Desktop, Claude Code, Cursor).
 #
 # Usage:
-#   ./scripts/mcp-client.sh update <claude|claude-code|cursor|goose>
-#   ./scripts/mcp-client.sh update-all [claude claude-code cursor goose ...]
-#   ./scripts/mcp-client.sh park <claude|claude-code|cursor|goose|all>
-#   ./scripts/mcp-client.sh verify <claude|claude-code|cursor|goose|all>
-#   ./scripts/mcp-client.sh write-shape [claude claude-code cursor goose ...]  # fixture token, no Splunk
-#   ./scripts/mcp-client.sh verify-config <claude|claude-code|cursor|goose|all>
+#   ./scripts/mcp-client.sh update <claude|claude-code|cursor>
+#   ./scripts/mcp-client.sh update-all [claude claude-code cursor ...]
+#   ./scripts/mcp-client.sh park <claude|claude-code|cursor|all>
+#   ./scripts/mcp-client.sh verify <claude|claude-code|cursor|all>
+#   ./scripts/mcp-client.sh write-shape [claude claude-code cursor ...]  # fixture token, no Splunk
+#   ./scripts/mcp-client.sh verify-config <claude|claude-code|cursor|all>
 #
-# Env: CURSOR_MCP_JSON, CLAUDE_MCP_JSON, CLAUDE_CODE_MCP_JSON, GOOSE_MCP_YAML, SPLUNK_MCP_ENDPOINT,
+# Env: CURSOR_MCP_JSON, CLAUDE_MCP_JSON, CLAUDE_CODE_MCP_JSON, SPLUNK_MCP_ENDPOINT,
 #      SPLUNK_MCP_TLS_INSECURE, MCP_REMOTE_PACKAGE, MCP_SHAPE_TOKEN
 
 set -euo pipefail
@@ -17,26 +17,26 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-readonly VALID_CLIENTS="claude claude-code cursor goose"
+readonly VALID_CLIENTS="claude claude-code cursor"
 
 usage() {
   cat <<EOF
 Usage:
-  $(basename "$0") update <claude|claude-code|cursor|goose>
-  $(basename "$0") update-all [claude claude-code cursor goose ...]  # one mint, write all listed clients
-  $(basename "$0") park <claude|claude-code|cursor|goose|all>        # remove splunk-mcp-server (no secrets)
-  $(basename "$0") verify <claude|claude-code|cursor|goose|all>
-  $(basename "$0") write-shape [claude claude-code cursor goose ...]  # fixture token; no mint / Docker
-  $(basename "$0") verify-config <claude|claude-code|cursor|goose|all>
+  $(basename "$0") update <claude|claude-code|cursor>
+  $(basename "$0") update-all [claude claude-code cursor ...]  # one mint, write all listed clients
+  $(basename "$0") park <claude|claude-code|cursor|all>        # remove splunk-mcp-server (no secrets)
+  $(basename "$0") verify <claude|claude-code|cursor|all>
+  $(basename "$0") write-shape [claude claude-code cursor ...]  # fixture token; no mint / Docker
+  $(basename "$0") verify-config <claude|claude-code|cursor|all>
 
 All clients use npx mcp-remote to https://localhost:8089/services/mcp with a minted bearer token
 (stored only in client config files, not in this repo).
 
 park prevents auto-reconnect with stale tokens during stack boot (make down calls this).
-update-all mints once and updates every listed client (default: cursor goose claude claude-code).
+update-all mints once and updates every listed client (default: cursor claude claude-code).
 
 verify runs client config checks (all: configured clients only), then an end-to-end npx mcp-remote stdio tools/list handshake.
-write-shape / verify-config check JSON/YAML shape only (MCP_SHAPE_TOKEN fixture; no Splunk).
+write-shape / verify-config check JSON shape only (MCP_SHAPE_TOKEN fixture; no Splunk).
 EOF
   exit "${1:-0}"
 }
@@ -167,42 +167,6 @@ update_cursor() {
   echo "Restart Cursor or reload MCP servers."
 }
 
-apply_goose_splunk_mcp() {
-  local token="$1"
-  local endpoint header tls_insecure file npx_cmd wrapper
-  endpoint=$(splunk_mcp_endpoint)
-  npx_cmd="$(npx_command)"
-  header="Authorization: Bearer ${token}"
-  tls_insecure="${SPLUNK_MCP_TLS_INSECURE:-1}"
-  wrapper="${ROOT}/scripts/mcp-remote-splunk.sh"
-  [[ -x "$wrapper" ]] || die "missing executable wrapper: $wrapper"
-  file="$(client_config_path goose)"
-  mkdir -p "$(dirname "$file")"
-  python3 "$ROOT/scripts/goose-mcp-yaml.py" upsert \
-    "$file" "$endpoint" "$header" "$tls_insecure" "$wrapper" "$npx_cmd" \
-    || die "could not write Goose YAML (pip3 install pyyaml; Homebrew: python3 -m pip install --user --break-system-packages pyyaml)"
-  restrict_client_config_mode "$file"
-  echo "Updated Goose: $file ($wrapper → $endpoint)"
-}
-
-update_goose() {
-  local token
-  token="$(mint_mcp_token)" || die "could not mint MCP token"
-  apply_goose_splunk_mcp "$token"
-  echo "Bearer token stored in Goose config only (not in this repo)."
-  echo "Restart Goose for changes to take effect."
-}
-
-remove_goose_splunk_mcp() {
-  local file
-  file="$(client_config_path goose)"
-  [[ -f "$file" ]] || return 0
-  python3 "$ROOT/scripts/goose-mcp-yaml.py" remove "$file" \
-    || die "could not park Goose YAML (pip3 install pyyaml; Homebrew: python3 -m pip install --user --break-system-packages pyyaml)"
-  restrict_client_config_mode "$file"
-  echo "Parked Goose: removed splunk-mcp-server from $file"
-}
-
 park_json_mcp_remote() {
   local file="$1" label="$2"
   [[ -f "$file" ]] || return 0
@@ -222,7 +186,6 @@ park_client() {
     claude) park_json_mcp_remote "$(client_config_path claude)" "Claude Desktop" ;;
     claude-code) park_json_mcp_remote "$(client_config_path claude-code)" "Claude Code" ;;
     cursor) park_json_mcp_remote "$(client_config_path cursor)" "Cursor" ;;
-    goose) remove_goose_splunk_mcp ;;
   esac
 }
 
@@ -234,7 +197,7 @@ cmd_park() {
         park_client "$c"
       done
       ;;
-    claude | claude-code | cursor | goose)
+    claude | claude-code | cursor)
       valid_client "$target" || die "unknown client '$target' (use: $VALID_CLIENTS or all)"
       park_client "$target"
       ;;
@@ -249,7 +212,7 @@ cmd_update_all() {
   local client token endpoint npx_cmd
 
   if [[ $# -eq 0 ]]; then
-    clients=(cursor goose claude claude-code)
+    clients=(cursor claude claude-code)
   else
     clients=("$@")
   fi
@@ -274,9 +237,6 @@ cmd_update_all() {
       cursor)
         update_json_mcp_remote "$(client_config_path cursor)" "Cursor" "$token"
         ;;
-      goose)
-        apply_goose_splunk_mcp "$token"
-        ;;
     esac
   done
 
@@ -288,9 +248,6 @@ cmd_update_all() {
   if [[ " ${clients[*]} " == *" claude "* ]]; then
     echo "Restart Claude Desktop (Cmd+Q) for changes to take effect."
   fi
-  if [[ " ${clients[*]} " == *" goose "* ]]; then
-    echo "Restart Goose for changes to take effect."
-  fi
   if [[ " ${clients[*]} " == *" claude-code "* ]]; then
     echo "Start a new Claude Code session (or run /mcp) and approve the project server splunk-mcp-server."
   fi
@@ -301,7 +258,6 @@ client_config_path() {
     claude) printf '%s' "${CLAUDE_MCP_JSON:-${HOME}/Library/Application Support/Claude/claude_desktop_config.json}" ;;
     claude-code) printf '%s' "${CLAUDE_CODE_MCP_JSON:-$ROOT/.mcp.json}" ;;
     cursor) printf '%s' "${CURSOR_MCP_JSON:-$ROOT/.cursor/mcp.json}" ;;
-    goose) printf '%s' "${GOOSE_MCP_YAML:-${HOME}/.config/goose/config.yaml}" ;;
   esac
 }
 
@@ -317,14 +273,9 @@ verify_client_config() {
       jq -e '.mcpServers["splunk-mcp-server"].command | test("npx$")' "$path" >/dev/null \
         || die "$client splunk-mcp-server should use npx (run: make update-mcp-client MCP_CLIENT=$client)"
       # Writer pins MCP_REMOTE_PACKAGE (mcp-remote@x.y.z). jq index() is exact, so
-      # accept mcp-remote or mcp-remote@* — not mcp-remote-splunk.sh.
+      # accept mcp-remote or mcp-remote@*.
       jq -e '.mcpServers["splunk-mcp-server"].args | map(tostring) | any(test("^mcp-remote(@|$)"))' "$path" >/dev/null \
         || die "$client splunk-mcp-server should use mcp-remote (run: make update-mcp-client MCP_CLIENT=$client)"
-      ;;
-    goose)
-      [[ -f "$path" ]] || die "goose config missing: $path (run: make update-mcp-client MCP_CLIENT=$client)"
-      python3 "$ROOT/scripts/goose-mcp-yaml.py" verify "$path" \
-        || die "goose config check failed for $path (install PyYAML; make update-mcp-client MCP_CLIENT=goose)"
       ;;
   esac
   echo "OK: $client config contains splunk-mcp-server ($path)"
@@ -461,7 +412,6 @@ cmd_update() {
     claude) update_claude ;;
     claude-code) update_claude_code ;;
     cursor) update_cursor ;;
-    goose) update_goose ;;
   esac
 }
 
@@ -484,7 +434,6 @@ write_client_shape() {
     claude) update_json_mcp_remote "$(client_config_path claude)" "Claude Desktop" "$token" ;;
     claude-code) update_json_mcp_remote "$(client_config_path claude-code)" "Claude Code" "$token" ;;
     cursor) update_json_mcp_remote "$(client_config_path cursor)" "Cursor" "$token" ;;
-    goose) apply_goose_splunk_mcp "$token" ;;
     *) die "unknown client '$client' (use: $VALID_CLIENTS)" ;;
   esac
 }
@@ -492,7 +441,7 @@ write_client_shape() {
 cmd_write_shape() {
   local clients=() client token
   if [[ $# -eq 0 ]]; then
-    clients=(cursor goose claude claude-code)
+    clients=(cursor claude claude-code)
   else
     clients=("$@")
   fi
@@ -509,15 +458,12 @@ cmd_write_shape() {
   done
 }
 
-# True when the client config has a splunk-mcp-server entry (Goose: cheap grep; full check in verify).
+# True when the client config has a splunk-mcp-server entry.
 client_configured() {
   local path
   path=$(client_config_path "$1")
   [[ -f "$path" ]] || return 1
-  case "$1" in
-    goose) grep -q 'splunk-mcp-server' "$path" ;;
-    *) jq -e '.mcpServers["splunk-mcp-server"]' "$path" >/dev/null 2>&1 ;;
-  esac
+  jq -e '.mcpServers["splunk-mcp-server"]' "$path" >/dev/null 2>&1
 }
 
 cmd_verify_config() {
@@ -535,7 +481,7 @@ cmd_verify_config() {
       done
       [[ "$found" == 1 ]] || die "no client config has splunk-mcp-server (run: make update-mcp-clients)"
       ;;
-    claude | claude-code | cursor | goose)
+    claude | claude-code | cursor)
       verify_client_config "$client"
       ;;
     *)

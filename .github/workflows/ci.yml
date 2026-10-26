@@ -43,6 +43,4 @@ jobs:
           pre-commit run --all-files
 
       - name: Unit tests (no Docker)
-        run: |
-          python3 -m pip install pyyaml
-          make test
+        run: make test

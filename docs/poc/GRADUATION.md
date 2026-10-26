@@ -41,7 +41,7 @@ This document does **not** change product behavior. It lists gaps, costs, and de
 | **Secrets** | Every user needs Splunkbase credentials; org may need a **shared lab account** policy. CI smoke needs **GitHub Actions secrets** (never in git). |
 | **Time** | Cold `make up` is often **20–45 minutes** (image, Splunkbase downloads, init). Unattended users need explicit expectations. |
 | **Support** | More clones → more `splunk-init` / MCP / Splunkbase tickets unless runbooks and ownership are clear. |
-| **Platform** | Today **Cursor-first** on boot (`MCP_UPDATE_ON_BOOT=cursor`). Claude/Goose need extra steps unless defaults change. |
+| **Platform** | Today **Cursor-first** on boot (`MCP_UPDATE_ON_BOOT=cursor`). Claude needs extra steps unless defaults change. |
 | **Workshop assets** | Dashboard and Lab 4 `platform` extraction still live in **`SA-S4R/local/`** (mostly gitignored). Unattended workshop may require a **packaged `.spl`** or more tracked `local/` assets. |
 | **CI** | Full stack smoke in GitHub is **slow, flaky, and secret-heavy**. Deferred by choice; see [CI smoke (deferred)](#ci-smoke-deferred). |
 | **Licensing** | Splunk Enterprise trial/license and Splunkbase terms remain **operator responsibility**; graduation does not remove legal review for wider distribution. |
@@ -140,7 +140,7 @@ These reduce the gap versus a greenfield PoC:
 
 1. **Splunkbase credentials** — every operator needs a valid account; downloads fail without it.
 2. **Cold start time** — unattended users may assume `make up` is “a few minutes.”
-3. **Cursor-first boot** — Claude Desktop, Claude Code, and Goose need explicit `make update-mcp-client` or `MCP_UPDATE_ON_BOOT="cursor goose claude claude-code"`.
+3. **Cursor-first boot** — Claude Desktop and Claude Code need explicit `make update-mcp-client` or `MCP_UPDATE_ON_BOOT="cursor claude claude-code"`.
 4. **Workshop dashboard** — still built in **`SA-S4R/local/`**; not in git except README.
 5. **No formal “supported matrix”** — Windows/WSL/Linux ambiguity creates support load.
 6. **No recorded external dry run** — graduation is a claim until F1 is done.
@@ -186,7 +186,7 @@ You can stop at **Phase 1** and still call the repo “graduated” for internal
 
 1. **Audience:** Internal SE only, or customers/partners cloning the repo?
 2. **Workshop:** Search + MCP agents only, or **dashboard-required**?
-3. **Clients:** Cursor-only supported, or must Claude/Goose work out of the box on `make up`?
+3. **Clients:** Cursor-only supported, or must Claude work out of the box on `make up`?
 4. **Secrets:** Personal Splunkbase OK, or require org lab account?
 5. **Support:** Who owns tickets when `splunk-init` fails on someone else’s laptop?
 6. **CI:** Is lint enough until workshop season, or is broken `main` unacceptable for a week?

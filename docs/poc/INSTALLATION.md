@@ -29,7 +29,6 @@
 | `make`, `bash` | `Makefile` workflows | `make --version` |
 | `curl`, `jq` | Scripts / REST | `curl --version`, `jq --version` |
 | Node/npm | `npx mcp-remote` for MCP clients | `node --version`, `npx --version` |
-| Python 3 + PyYAML | Goose config (`make update-mcp-client MCP_CLIENT=goose`) | `python3 --version`; `python3 -c "import yaml"` (`pip3 install pyyaml`; Homebrew PEP 668: `python3 -m pip install --user --break-system-packages pyyaml`) |
 
 Optional: **Git** to clone; an editor (e.g. VS Code) to edit `.env` (from **`.env.example`**) and `compose.yml`.
 
@@ -108,7 +107,7 @@ make up
 
 This runs **`docker compose up -d`** using **`.env`** (or exported variables when that file is absent). It starts **`so1`**, runs **`splunk-init`** after Splunk is healthy, then mints an MCP token and updates client configs (**`MCP_UPDATE_ON_BOOT`**, default **`cursor`**), then registers SA-S4R MCP tools.
 
-After **`splunk-init`** exits, **`scripts/mcp-client.sh update-all`** writes client configs pointing at **`https://localhost:8089/services/mcp`**. For every client on boot: `make up MCP_UPDATE_ON_BOOT="cursor goose claude claude-code"`.
+After **`splunk-init`** exits, **`scripts/mcp-client.sh update-all`** writes client configs pointing at **`https://localhost:8089/services/mcp`**. For every client on boot: `make up MCP_UPDATE_ON_BOOT="cursor claude claude-code"`.
 
 Secret file details: [CONFIGURATION.md](CONFIGURATION.md#configenv-and-env).
 
@@ -138,8 +137,7 @@ After `make up` completes:
 | Client | Action |
 | ------ | ------ |
 | **Cursor** (default) | **`make up`** updates **`.cursor/mcp.json`** (`MCP_UPDATE_ON_BOOT=cursor`). Restart Cursor or reload MCP servers. |
-| **Claude Desktop** (macOS) | Run **`make update-mcp-client MCP_CLIENT=claude`** or **`make up MCP_UPDATE_ON_BOOT="cursor goose claude"`**. Quit Claude fully (**Cmd+Q**), then reopen. Config: `~/Library/Application Support/Claude/claude_desktop_config.json`. |
-| **Goose** | Run **`make update-mcp-client MCP_CLIENT=goose`** or include **`goose`** in **`MCP_UPDATE_ON_BOOT`**. Restart Goose. |
+| **Claude Desktop** (macOS) | Run **`make update-mcp-client MCP_CLIENT=claude`** or **`make up MCP_UPDATE_ON_BOOT="cursor claude"`**. Quit Claude fully (**Cmd+Q**), then reopen. Config: `~/Library/Application Support/Claude/claude_desktop_config.json`. |
 | **Claude Code** | Run **`make update-mcp-client MCP_CLIENT=claude-code`** or include **`claude-code`** in **`MCP_UPDATE_ON_BOOT`**. Writes gitignored **`.mcp.json`** at the repo root; start a new Claude Code session in the repo and approve **splunk-mcp-server** (or check with **`/mcp`**). |
 
 Shell smoke test for the default Cursor path:
