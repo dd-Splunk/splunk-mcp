@@ -322,6 +322,8 @@ make up
 
 `make up` starts the exited **`splunk-init`** container again. Init installs **`jq`** itself. See [MCP-TOOLS.md](../s4r/MCP-TOOLS.md).
 
+On a fresh install the KV Store can take minutes to start. Registration waits up to 5 minutes for **`/services/kvstore/status`** to report `ready`. If **`docker logs splunk-init`** shows `KV Store not ready after 300s`, run **`make up`** again. If it shows status `failed`, see [KVStore status `failed`](#kvstore-status-failed--mcp-token-mint-fails).
+
 ---
 
 #### Issue: Splunk AI Toolkit / Connection Management (out of scope)
