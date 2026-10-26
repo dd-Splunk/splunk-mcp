@@ -7,7 +7,7 @@ This repo is a **local proof-of-concept**: **Splunk Enterprise** in Docker, **Sp
 ## Demo success path (do this in order)
 
 1. **Prereqs on the laptop:** Docker Desktop (or equivalent) with enough RAM (prefer **8 GB+** free for Splunk), **Node** / **npm** (for `npx mcp-remote`), `make`, `bash`, `curl`, `jq`. For **Goose**, also **Python 3** and **PyYAML** (`pip3 install pyyaml`; Homebrew PEP 668: `python3 -m pip install --user --break-system-packages pyyaml`).
-2. **Secrets:** `cp .env.example .env`, fill `SPLUNK_ADMIN_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, `SPLUNK_SPLUNKER_PASSWORD`, then `chmod 600 .env`. Image and timezone stay in tracked `config.env`. Never commit `.env`.
+2. **Secrets:** `cp .env.example .env`, fill `SPLUNK_ADMIN_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, `SPLUNK_SPLUNKER_PASSWORD`, then `chmod 600 .env`. On macOS, `make env` builds it from keychain items `S4R-demo` + `splunkbase` instead ([CONFIGURATION.md](CONFIGURATION.md#env-from-the-macos-keychain)). Image and timezone stay in tracked `config.env`. Never commit `.env`.
 3. **Network:** The host must reach **splunkbase.splunk.com** (HTTPS) and your container registry (e.g. Docker Hub). VPN/firewall/proxy often blocks corporate demos—test ahead.
 4. **Start:** `make up` from the repo root. First cold start is often **several minutes** (image pull, Splunk, Splunkbase app downloads, **`splunk-init`**). For a live meeting, warm the stack **before** the call or the day before.
 5. **Wait for green:** `make status` until it prints **Splunk is ready ✓** (or run **`make demo-prep`** — Splunkbase pins + status + MCP verify + warm-stack reminder).

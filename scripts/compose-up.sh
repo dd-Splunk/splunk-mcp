@@ -11,6 +11,11 @@ cd "$ROOT"
 ENV_OUT="${ENV_OUT:-.env}"
 DC="${DC:-docker compose}"
 
+# macOS: build a missing .env from the keychain (scripts/env-from-keychain.sh).
+if [[ ! -f "$ENV_OUT" && -z "${SPLUNK_ADMIN_PASSWORD:-}" ]] && command -v security >/dev/null 2>&1; then
+  ./scripts/env-from-keychain.sh || echo "Keychain fallback failed; see the error above." >&2
+fi
+
 # shellcheck source=scripts/with-splunk-env.sh
 source "${ROOT}/scripts/with-splunk-env.sh"
 # shellcheck source=scripts/load-config-env.sh
