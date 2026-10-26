@@ -451,6 +451,12 @@ make verify-mcp-remote MCP_VERIFY_CLIENT=claude-code
 
 Start a new Claude Code session in the repo, approve **splunk-mcp-server**, and check **`/mcp`**.
 
+#### Issue: MCP client stops working after `make up` or `make update-mcp-clients`
+
+**Cause**: `update-all` revokes superseded tokens. A client session that was already running keeps the old (now revoked) token in its `mcp-remote` process, and `make verify-mcp-remote` reports `token revoked or expired`.
+
+**Solution**: reload MCP servers in Cursor, run **`/mcp`** (or start a new session) in Claude Code, or restart Claude Desktop. If a config was edited by hand, run **`make update-mcp-clients`**.
+
 #### Issue: Claude Desktop cannot connect to Splunk
 
 **Error**: "MCP server connection failed" or timeout

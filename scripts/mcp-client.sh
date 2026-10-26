@@ -209,7 +209,7 @@ cmd_park() {
 
 cmd_update_all() {
   local clients=()
-  local client token endpoint npx_cmd
+  local client token endpoint npx_cmd pruned
 
   if [[ $# -eq 0 ]]; then
     clients=(cursor claude claude-code)
@@ -220,6 +220,14 @@ cmd_update_all() {
   command -v jq >/dev/null 2>&1 || die "jq required (brew install jq)"
   for client in "${clients[@]}"; do
     valid_client "$client" || die "unknown client '$client' (use: $VALID_CLIENTS)"
+  done
+
+  # Pruning below invalidates every older token, so refresh any other client that
+  # already holds one instead of leaving it with a dead token.
+  for client in $VALID_CLIENTS; do
+    if [[ " ${clients[*]} " != *" $client "* ]] && client_configured "$client"; then
+      clients+=("$client")
+    fi
   done
 
   endpoint=$(splunk_mcp_endpoint)
@@ -242,6 +250,9 @@ cmd_update_all() {
 
   echo "Minted one token; updated: ${clients[*]} ($npx_cmd mcp-remote → $endpoint)"
   echo "Bearer token stored in client configs only (not in this repo)."
+  pruned="$(./scripts/prune-mcp-tokens.sh)" \
+    && echo "Revoked $pruned superseded MCP token(s)." \
+    || echo "Warning: could not revoke superseded MCP tokens (they stay valid until they expire)." >&2
   if [[ " ${clients[*]} " == *" cursor "* ]]; then
     echo "Reload MCP servers in Cursor (or restart Cursor)."
   fi
@@ -295,7 +306,7 @@ verify_splunk_mcp() {
     -H 'Content-Type: application/json' \
     -H 'Accept: application/json' \
     --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' >"$tmp" 2>&1; then
-    die "Splunk MCP request failed: $endpoint"
+    die "Splunk MCP request failed: $endpoint (token revoked or expired? run: make update-mcp-clients)"
   fi
   if ! jq -e '.jsonrpc=="2.0" and (.result.tools|type=="array")' "$tmp" >/dev/null 2>&1; then
     die "Splunk MCP returned unexpected response: $endpoint"
@@ -415,12 +426,37 @@ cmd_update() {
   esac
 }
 
+# Bearer token stored in a client config (empty when absent).
+client_token() {
+  local path
+  path=$(client_config_path "$1")
+  [[ -f "$path" ]] || return 0
+  jq -r '.mcpServers["splunk-mcp-server"].args // []
+    | map(tostring | select(startswith("Authorization: Bearer "))) | first // ""
+    | sub("^Authorization: Bearer "; "")' "$path" 2>/dev/null || true
+}
+
+# Checks the token each configured client actually holds (no new token is minted).
 cmd_verify() {
-  local client="${1:?}" token
-  cmd_verify_config "$client"
-  token="$(mint_mcp_token)" || die "could not mint MCP token for verify"
-  verify_splunk_mcp "$token"
-  verify_mcp_remote_stdio "$token"
+  local target="${1:?}" c token seen=" "
+  local targets=()
+  cmd_verify_config "$target"
+  if [[ "$target" == all ]]; then
+    for c in $VALID_CLIENTS; do
+      client_configured "$c" && targets+=("$c")
+    done
+  else
+    targets=("$target")
+  fi
+  for c in "${targets[@]}"; do
+    token="$(client_token "$c")"
+    [[ -n "$token" ]] || die "$c config has no bearer token (run: make update-mcp-client MCP_CLIENT=$c)"
+    [[ "$seen" != *" $token "* ]] || continue
+    seen+="$token "
+    echo "Checking the token in the $c config…"
+    verify_splunk_mcp "$token"
+    verify_mcp_remote_stdio "$token"
+  done
 }
 
 shape_token() {

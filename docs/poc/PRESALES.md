@@ -13,7 +13,7 @@ This repo is a **local proof-of-concept**: **Splunk Enterprise** in Docker, **Sp
 5. **Wait for green:** `make status` until it prints **Splunk is ready ✓** (or run **`make demo-prep`** — Splunkbase pins + status + MCP verify + warm-stack reminder).
 6. **Cursor (recommended):** **`make up`** writes **`.cursor/mcp.json`** (default client); restart Cursor or reload MCP servers. Confirm Splunk/MCP tools in the tool list and run a **read-only** tool (e.g. a small search).
 7. **Sanity check from the shell:** `make verify-mcp-remote` or **`make demo-prep`** (Splunkbase pins, client configs, Splunk MCP `tools/list`).
-8. **Claude (if used):** run **`make update-mcp-clients`** or **`make up MCP_UPDATE_ON_BOOT="cursor claude"`**; **quit Claude fully (Cmd+Q)** and reopen.
+8. **Claude (if used):** run **`make update-mcp-clients`** or **`make up MCP_UPDATE_ON_BOOT="cursor claude-code claude"`**; **quit Claude fully (Cmd+Q)** and reopen.
 
 If anything fails, go straight to [TROUBLESHOOTING.md](TROUBLESHOOTING.md) (Splunkbase auth, ports, token timeout, MCP 401).
 
@@ -162,8 +162,8 @@ For customer **Splunk Cloud** demos, use Splunk product documentation (e.g. [Abo
 
 | Client | What to do |
 | ------ | ---------- |
-| **Cursor** | **`make up`** updates Cursor by default (`MCP_UPDATE_ON_BOOT=cursor`); restart Cursor or reload MCP. **Use this for most SE demos.** |
-| **Claude Desktop (macOS)** | **`make update-mcp-client MCP_CLIENT=claude`** or **`make up MCP_UPDATE_ON_BOOT="cursor claude"`**; user must **quit Claude fully** and reopen. |
+| **Cursor** | **`make up`** updates Cursor (and Claude Code) by default (`MCP_UPDATE_ON_BOOT="cursor claude-code"`); restart Cursor or reload MCP. **Use this for most SE demos.** |
+| **Claude Desktop (macOS)** | **`make update-mcp-client MCP_CLIENT=claude`** or **`make up MCP_UPDATE_ON_BOOT="cursor claude-code claude"`**; user must **quit Claude fully** and reopen. |
 | **Claude Code** | **`make update-mcp-client MCP_CLIENT=claude-code`** writes gitignored **`.mcp.json`** at the repo root; start a new Claude Code session in the repo and approve **splunk-mcp-server**. |
 
 Shell smoke test: **`make verify-mcp-remote`** (all clients) or **`MCP_VERIFY_CLIENT=cursor`** for one.
