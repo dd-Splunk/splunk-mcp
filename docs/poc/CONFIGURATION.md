@@ -244,10 +244,10 @@ make verify
 
 | File | Source | Notes |
 | ---- | ------ | ----- |
-| `.env` | Splunkbase values from the environment. Admin and MCP passwords are reused when set, otherwise generated | Gitignored. Existing file is preserved unless **`--force-env`** is used. Use it locally for Splunk Web admin login; never paste or commit it. |
+| `.env` | Splunkbase values from the environment. Admin and splunker passwords are reused when set, otherwise generated | Gitignored. Existing file is preserved unless **`--force-env`** is used. Use it locally for Splunk Web admin login; never paste or commit it. |
 | `docker-compose.override.yml` | Generated every run | Gitignored. Binds the ext4 mount as `so1-var`; for Splunk 10.x, also binds the fake cgroup tree. |
 
-`--wipe` resets Splunk data and Compose volumes but does not recreate `.env` unless paired with **`--force-env`**. Use **`--force-env`** intentionally when rotating generated admin or MCP passwords.
+`--wipe` resets Splunk data and Compose volumes but does not recreate `.env` unless paired with **`--force-env`**. Use **`--force-env`** intentionally when rotating generated admin or splunker passwords.
 
 | Flag / env | Purpose |
 | ---------- | ------- |
