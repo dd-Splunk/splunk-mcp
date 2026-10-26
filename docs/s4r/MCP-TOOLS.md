@@ -141,7 +141,7 @@ make up
 
 That starts the exited **`splunk-init`** container again. **`make down && make up`** is the full restart.
 
-The product API authenticates with a bearer token for a user that has **`mcp_tool_admin`**. This local PoC posts as **`admin`** with basic auth (`SPLUNK_PASSWORD`) to `/services/mcp_tools`. Runtime tool **execution** uses the **`splunker`** bearer token on `/services/mcp`. Do not commit either secret.
+The product API authenticates with a bearer token for a user that has **`mcp_tool_admin`**. This local PoC posts as **`admin`** with basic auth (`SPLUNK_ADMIN_PASSWORD`) to `/services/mcp_tools`. Runtime tool **execution** uses the **`splunker`** bearer token on `/services/mcp`. Do not commit either secret.
 
 ## Security
 

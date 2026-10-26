@@ -69,7 +69,7 @@ wait_for_mcp_token() {
   port="${SPLUNK_PORT}"
   rest_user="${SPLUNK_REST_USER}"
   mcp_user="${SPLUNK_MCP_USER}"
-  : "${SPLUNK_PASSWORD:?SPLUNK_PASSWORD must be set}"
+  : "${SPLUNK_ADMIN_PASSWORD:?SPLUNK_ADMIN_PASSWORD must be set}"
 
   command -v jq >/dev/null 2>&1 || {
     echo "Error: jq required to parse mcp_token response" >&2
@@ -84,7 +84,7 @@ wait_for_mcp_token() {
 
   while [[ "$n" -le "$attempts" ]]; do
     # Last line is the HTTP status (000 when the connection fails or times out).
-    response="$(curl -k -s -u "${rest_user}:${SPLUNK_PASSWORD}" \
+    response="$(curl -k -s -u "${rest_user}:${SPLUNK_ADMIN_PASSWORD}" \
       --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" \
       -G --data-urlencode "username=${mcp_user}" -d output_mode=json \
       -w '\n%{http_code}' "$url" 2>/dev/null || true)"
@@ -94,7 +94,7 @@ wait_for_mcp_token() {
     # warming-up app. Retrying would only burn the full wait.
     if [[ "$code" == "401" ]]; then
       echo "Error: Splunk rejected ${rest_user} credentials (HTTP 401) at https://${host}:${port}." >&2
-      echo "  Check SPLUNK_PASSWORD in ${ENV_OUT} matches the running so1 admin password." >&2
+      echo "  Check SPLUNK_ADMIN_PASSWORD in ${ENV_OUT} matches the running so1 admin password." >&2
       return 1
     fi
     token="$(parse_mcp_token_body "$body")"

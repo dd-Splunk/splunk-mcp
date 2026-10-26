@@ -10,7 +10,7 @@
 redact_compose_secrets() {
   local line indent key val
   while IFS= read -r line || [[ -n "$line" ]]; do
-    if [[ "$line" =~ ^([[:space:]]*)(SPLUNK_PASSWORD|SPLUNKBASE_USERNAME|SPLUNKBASE_PASSWORD|SPLUNK_MCP_PASSWORD):[[:space:]]*(.*)$ ]]; then
+    if [[ "$line" =~ ^([[:space:]]*)(SPLUNK_PASSWORD|SPLUNK_ADMIN_PASSWORD|SPLUNKBASE_USERNAME|SPLUNKBASE_PASSWORD|SPLUNK_SPLUNKER_PASSWORD):[[:space:]]*(.*)$ ]]; then
       indent="${BASH_REMATCH[1]}"
       key="${BASH_REMATCH[2]}"
       val="${BASH_REMATCH[3]}"
@@ -45,12 +45,12 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   with_splunk_env "$@"
   load_config_env
 
-  if [[ -z "${SPLUNK_PASSWORD:-}" || -z "${SPLUNKBASE_USER:-}" || -z "${SPLUNKBASE_PASS:-}" || -z "${SPLUNK_MCP_PASSWORD:-}" ]]; then
-    echo "Error: SPLUNK_PASSWORD, SPLUNKBASE_USER, SPLUNKBASE_PASS, and SPLUNK_MCP_PASSWORD must be non-empty." >&2
+  if [[ -z "${SPLUNK_ADMIN_PASSWORD:-}" || -z "${SPLUNKBASE_USER:-}" || -z "${SPLUNKBASE_PASS:-}" || -z "${SPLUNK_SPLUNKER_PASSWORD:-}" ]]; then
+    echo "Error: SPLUNK_ADMIN_PASSWORD, SPLUNKBASE_USER, SPLUNKBASE_PASS, and SPLUNK_SPLUNKER_PASSWORD must be non-empty." >&2
     echo "Set them in ${ENV_OUT} (see .env.example) or export them." >&2
     exit 1
   fi
 
-  echo "Resolved compose.yml. SPLUNK_PASSWORD, SPLUNKBASE_USERNAME, SPLUNKBASE_PASSWORD, and SPLUNK_MCP_PASSWORD are shown as <set>." >&2
+  echo "Resolved compose.yml. SPLUNK_PASSWORD, SPLUNK_ADMIN_PASSWORD, SPLUNKBASE_USERNAME, SPLUNKBASE_PASSWORD, and SPLUNK_SPLUNKER_PASSWORD are shown as <set>." >&2
   sh -c "$DC config" | redact_compose_secrets
 fi

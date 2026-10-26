@@ -7,7 +7,7 @@ This repo is a **local proof-of-concept**: **Splunk Enterprise** in Docker, **Sp
 ## Demo success path (do this in order)
 
 1. **Prereqs on the laptop:** Docker Desktop (or equivalent) with enough RAM (prefer **8 GB+** free for Splunk), **Node** / **npm** (for `npx mcp-remote`), `make`, `bash`, `curl`, `jq`. For **Goose**, also **Python 3** and **PyYAML** (`pip3 install pyyaml`; Homebrew PEP 668: `python3 -m pip install --user --break-system-packages pyyaml`).
-2. **Secrets:** `cp .env.example .env`, fill `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, `SPLUNK_MCP_PASSWORD`, then `chmod 600 .env`. Image and timezone stay in tracked `config.env`. Never commit `.env`.
+2. **Secrets:** `cp .env.example .env`, fill `SPLUNK_ADMIN_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, `SPLUNK_SPLUNKER_PASSWORD`, then `chmod 600 .env`. Image and timezone stay in tracked `config.env`. Never commit `.env`.
 3. **Network:** The host must reach **splunkbase.splunk.com** (HTTPS) and your container registry (e.g. Docker Hub). VPN/firewall/proxy often blocks corporate demos—test ahead.
 4. **Start:** `make up` from the repo root. First cold start is often **several minutes** (image pull, Splunk, Splunkbase app downloads, **`splunk-init`**). For a live meeting, warm the stack **before** the call or the day before.
 5. **Wait for green:** `make status` until it prints **Splunk is ready ✓** (or run **`make demo-prep`** — Splunkbase pins + status + MCP verify + warm-stack reminder).
@@ -47,7 +47,7 @@ Env details: [CONFIGURATION.md](CONFIGURATION.md#configenv-and-env). Long-form i
 
 ## Secrets
 
-Copy **`.env.example` → `.env`** and set plain values for `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, and `SPLUNK_MCP_PASSWORD`. Then `make up`. **Never commit `.env`.** Image and timezone: **`config.env`**.
+Copy **`.env.example` → `.env`** and set plain values for `SPLUNK_ADMIN_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, and `SPLUNK_SPLUNKER_PASSWORD`. Then `make up`. **Never commit `.env`.** Image and timezone: **`config.env`**.
 
 `make up` sources **`.env`**. Compose auto-loads it. CI can export the same four variables when the file is absent. Cursor Cloud bootstrap writes `.env` from `SPLUNKBASE_USER` / `SPLUNKBASE_PASS` and generates the other two passwords when they are unset.
 
@@ -62,8 +62,8 @@ See [CONFIGURATION.md](CONFIGURATION.md#configenv-and-env).
 
 | Identity | Role |
 | -------- | ---- |
-| **admin** | Splunk Web and REST in bootstrap; password = `SPLUNK_PASSWORD` |
-| **splunker** | Least-privilege user for MCP (role `mcp_user`, capability `mcp_tool_execute`); password provided as `SPLUNK_MCP_PASSWORD` |
+| **admin** | Splunk Web and REST in bootstrap; password = `SPLUNK_ADMIN_PASSWORD` |
+| **splunker** | Least-privilege user for MCP (role `mcp_user`, capability `mcp_tool_execute`); password provided as `SPLUNK_SPLUNKER_PASSWORD` |
 | **Bearer token** | Minted by `scripts/mint-mcp-token.sh` after **`splunk-init`**; stored only in client config files (not the repo) |
 
 ## Splunkbase and network (non-negotiable)
@@ -139,7 +139,7 @@ For customer **Splunk Cloud** demos, use Splunk product documentation (e.g. [Abo
 | ----- | --- |
 | Docker running; **8 GB+** RAM free if possible | Splunk + downloads |
 | Splunkbase user/password working in browser | Same creds as in `.env` |
-| Complete `.env` (`chmod 600`) | `make up` must see non-empty `SPLUNK_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS` |
+| Complete `.env` (`chmod 600`) | `make up` must see non-empty `SPLUNK_ADMIN_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS` |
 | `node` / `npx` available | MCP clients spawn `npx mcp-remote` |
 | You ran **`make up`** early or have warm volumes | Cold start is multi-minute |
 | **Cursor:** `make up` writes **`.cursor/mcp.json`**; restart or reload MCP after `make up` | Primary demo client |
