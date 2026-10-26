@@ -153,9 +153,9 @@ Changing the keychain password does not change a running stack: Splunk reads the
 | `config` | Print `docker compose config` after the same secret and `config.env` load as `up`. `SPLUNK_ADMIN_PASSWORD`, Splunkbase user/password, and `SPLUNK_SPLUNKER_PASSWORD` are shown as `<set>` |
 | `down` | `scripts/mcp-client.sh park all` (no secrets), then `docker compose down`. `config.env` must be present so Compose can read `SPLUNK_IMAGE` and `TZ` |
 | `park-mcp-clients` | `scripts/mcp-client.sh park all` — remove `splunk-mcp-server` from client configs |
-| `update-mcp-clients` | `scripts/mcp-client.sh update-all` for cursor, goose, claude (one mint) |
-| `update-mcp-client` | One client: `MCP_CLIENT=claude\|cursor\|goose` |
-| `verify-mcp-remote` | `scripts/mcp-client.sh verify` — client config + direct `tools/list` + **`npx mcp-remote` stdio** e2e (`MCP_VERIFY_CLIENT=all` by default) |
+| `update-mcp-clients` | `scripts/mcp-client.sh update-all` for cursor, goose, claude, claude-code (one mint) |
+| `update-mcp-client` | One client: `MCP_CLIENT=claude\|claude-code\|cursor\|goose` |
+| `verify-mcp-remote` | `scripts/mcp-client.sh verify` — client config + direct `tools/list` + **`npx mcp-remote` stdio** e2e (`MCP_VERIFY_CLIENT=all` by default; `all` skips clients without a `splunk-mcp-server` entry and fails only if none has one) |
 | `verify` | Runs `status`, then `verify-mcp-remote` |
 | `test` | Docker-free: MCP client JSON/YAML shape (`write-shape` / `verify-config` / `park`) plus SA-S4R mode/payload unit tests |
 | `check-splunkbase-pins` | Compare `compose.yml` `SPLUNK_APPS_URL` pins to Splunkbase `api/v1/app/<id>/release/` (no secrets). **MISSING** = next `make up` can 404. **`STRICT=1`** exits 1 on MISSING |
@@ -222,6 +222,14 @@ Do not store Cloud MCP bearer tokens in **`.env`** — that file is for **stack 
 - Same **2.0** `npx mcp-remote` entry as Claude (**`make update-mcp-client MCP_CLIENT=cursor`**); endpoint **`https://localhost:8089/services/mcp`** only.
 - Example shape: **`.cursor/mcp.json.example`** (see Splunk doc link in Claude section above).
 - **Cloud-synced workspaces (OneDrive, iCloud, Dropbox):** gitignore does **not** stop the sync client from uploading **`.cursor/mcp.json`**. Prefer a workspace that is not cloud-synced, or set **`CURSOR_MCP_JSON`** to a path outside the synced tree. `chmod 600` only limits local UNIX sharing; the file can still leave the machine via sync.
+
+## Claude Code configuration
+
+- Default output: **`.mcp.json`** at the repo root (Claude Code project scope; override with `CLAUDE_CODE_MCP_JSON`). Gitignored, **`chmod 600`** after each update or park.
+- Same **2.0** `npx mcp-remote` entry as Cursor (**`make update-mcp-client MCP_CLIENT=claude-code`**); endpoint **`https://localhost:8089/services/mcp`** only. **`make down`** parks it like the other clients.
+- Claude Code reads project servers when a session starts in the repo and asks you to approve **splunk-mcp-server** once. Check with **`/mcp`**.
+- **`~/.claude.json`** is not written: Claude Code rewrites that file while it runs.
+- Same cloud-sync caveat as **`.cursor/mcp.json`** above.
 
 ## Goose configuration
 

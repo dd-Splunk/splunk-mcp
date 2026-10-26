@@ -165,6 +165,7 @@ For customer **Splunk Cloud** demos, use Splunk product documentation (e.g. [Abo
 | **Cursor** | **`make up`** updates Cursor by default (`MCP_UPDATE_ON_BOOT=cursor`); restart Cursor or reload MCP. **Use this for most SE demos.** |
 | **Claude Desktop (macOS)** | **`make update-mcp-client MCP_CLIENT=claude`** or **`make up MCP_UPDATE_ON_BOOT="cursor goose claude"`**; user must **quit Claude fully** and reopen. |
 | **Goose** | **`make update-mcp-client MCP_CLIENT=goose`** or include in **`MCP_UPDATE_ON_BOOT`**; restart Goose. |
+| **Claude Code** | **`make update-mcp-client MCP_CLIENT=claude-code`** writes gitignored **`.mcp.json`** at the repo root; start a new Claude Code session in the repo and approve **splunk-mcp-server**. |
 
 Shell smoke test: **`make verify-mcp-remote`** (all clients) or **`MCP_VERIFY_CLIENT=cursor`** for one.
 

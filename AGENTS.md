@@ -5,7 +5,7 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`. H
 ## What this repo is
 
 - **Purpose**: local PoC that runs **Splunk Enterprise** in Docker and exposes **Splunk MCP Server** on `https://localhost:8089/services/mcp`.
-- **Client bridge**: **Claude Desktop**, **Cursor**, and **Goose** use **`npx mcp-remote`** to `https://localhost:8089/services/mcp` (token minted at `make update-mcp-client` after **`splunk-init`** completes; stored only in client config, not the repo). See `make update-mcp-clients` or `make update-mcp-client MCP_CLIENT=…`. **SE / presales**: **`docs/poc/PRESALES.md`**.
+- **Client bridge**: **Claude Desktop**, **Claude Code**, **Cursor**, and **Goose** use **`npx mcp-remote`** to `https://localhost:8089/services/mcp` (token minted at `make update-mcp-client` after **`splunk-init`** completes; stored only in client config, not the repo). See `make update-mcp-clients` or `make update-mcp-client MCP_CLIENT=…`. **SE / presales**: **`docs/poc/PRESALES.md`**.
 - **Sample app**: **`SA-S4R`** (UI label **Splunk4Rookies**) — installed from the GitHub **`latest`** **`SA-S4R.spl`** (Eventgen traffic, lookups). Workshop hub: **`docs/s4r/README.md`**. SPL runbook: **`docs/s4r/SPL-CATALOG.md`**. Data: **`docs/s4r/SA-S4R-APP.md`**. Dashboard build spec: **`docs/s4r/DASHBOARD.md`**. Agents: **`docs/s4r/AGENTS.md`** + **`.cursor/agents/`**.
 
 ## Scope (in / out)
@@ -23,6 +23,7 @@ Do not add Cloud MCP testing, endpoints, or secrets-handling paths to this repo 
 - **Never commit secrets**:
   - `.env` (admin password, Splunkbase creds, splunker password; `chmod 600`; start from tracked **`.env.example`**)
   - `.cursor/mcp.json` if it contains a live bearer token (expected after `make update-mcp-client MCP_CLIENT=cursor`; **`chmod 600`**, still OneDrive-synced if the clone lives under a cloud folder)
+  - `.mcp.json` (Claude Code project config) if it contains a live bearer token (expected after `make update-mcp-client MCP_CLIENT=claude-code`; gitignored, **`chmod 600`**, still OneDrive-synced like `.cursor/mcp.json`)
   - `~/.config/goose/config.yaml` if it contains a live bearer token (expected after `make update-mcp-client MCP_CLIENT=goose`; **`chmod 600`**)
 - **Do not paste tokens/passwords** into issues, PRs, or logs.
 - **Keep changes idempotent**: `make up` / `splunk-init` should be safe to run repeatedly.
@@ -50,10 +51,10 @@ Splunk REST bootstrap (see **`docs/poc/CONFIGURATION.md` § Appendix: setup-splu
 
 ## Client configuration scripts
 
-- **`scripts/mcp-client.sh update <claude\|cursor\|goose>`** — single client (mints one token)
-- **`scripts/mcp-client.sh update-all [clients…]`** — one mint, write all listed clients (default: cursor goose claude); used by **`make update-mcp-clients`** and **`make up`** (**`MCP_UPDATE_ON_BOOT`**, default **`cursor`**)
+- **`scripts/mcp-client.sh update <claude\|claude-code\|cursor\|goose>`** — single client (mints one token)
+- **`scripts/mcp-client.sh update-all [clients…]`** — one mint, write all listed clients (default: cursor goose claude claude-code); used by **`make update-mcp-clients`** and **`make up`** (**`MCP_UPDATE_ON_BOOT`**, default **`cursor`**)
 - **`scripts/mcp-client.sh park <client\|all>`** — remove **`splunk-mcp-server`** from client configs (no secrets); **`make down`** calls this automatically
-- **`scripts/mcp-client.sh verify <client\|all>`** — config check + Splunk MCP `tools/list` (`make verify-mcp-remote` defaults to **`all`**)
+- **`scripts/mcp-client.sh verify <client\|all>`** — config check + Splunk MCP `tools/list` (`make verify-mcp-remote` defaults to **`all`**, which skips clients without a **`splunk-mcp-server`** entry)
 - **Goose:** **`scripts/goose-mcp-yaml.py`** load/dumps **`~/.config/goose/config.yaml`** (needs **PyYAML**: `pip3 install pyyaml`)
 - **Client configs** store the **absolute path** to **`npx`** (GUI apps often lack Homebrew on `PATH`). Override at update time: **`MCP_NPX_COMMAND=/full/path/to/npx`**.
 
@@ -87,7 +88,7 @@ Workshop agent **roles** remain in **`.cursor/agents/`** (not skills). Do not du
 
 - **`ENV_OUT`**: secret file to source (default **`.env`**)
 - **`DC`**: docker compose command
-- **`MCP_CLIENT`**, **`MCP_VERIFY_CLIENT`**, **`MCP_UPDATE_ON_BOOT`**: single-client update/verify (default **`cursor`** / **`all`**); boot-time client list for **`make up`** (default **`cursor`**; set to **`cursor goose claude`** for all)
+- **`MCP_CLIENT`**, **`MCP_VERIFY_CLIENT`**, **`MCP_UPDATE_ON_BOOT`**: single-client update/verify (default **`cursor`** / **`all`**); boot-time client list for **`make up`** (default **`cursor`**; set to **`cursor goose claude claude-code`** for all)
 - **`SPLUNK_MCP_ENDPOINT`**, **`SPLUNK_MCP_TLS_INSECURE`**, **`MCP_NPX_COMMAND`**, **`MCP_REMOTE_PACKAGE`** (default `mcp-remote@0.8.3`): see **`docs/poc/CONFIGURATION.md`**
 - **`SA-S4R_*` MCP tools** (preferred for workshop mode): **`SA-S4R_query_nk_demo_state`**, **`SA-S4R_apply_nk_demo_state`**, etc. — **`docs/s4r/MCP-TOOLS.md`**
 - **`s4r-attack-nk-enable`** / **`s4r-attack-nk-disable`** / **`s4r-attack-nk-status`**: shell fallback via Splunk config REST (reloads Eventgen; on reload failure follow the printed hint: **`make restart`**, or **`make up`** if Eventgen was left disabled) — **`docs/s4r/SA-S4R-APP.md`**

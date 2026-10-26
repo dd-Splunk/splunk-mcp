@@ -413,6 +413,19 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 node some-script.js
 
 ### Claude Desktop Integration Issues
 
+#### Issue: Claude Code does not show Splunk tools
+
+**Cause**: `.mcp.json` missing or parked (`make down` parks it), the session started before it was written, or the project server was not approved.
+
+**Solution**:
+
+```bash
+make update-mcp-client MCP_CLIENT=claude-code
+make verify-mcp-remote MCP_VERIFY_CLIENT=claude-code
+```
+
+Start a new Claude Code session in the repo, approve **splunk-mcp-server**, and check **`/mcp`**.
+
 #### Issue: Claude Desktop cannot connect to Splunk
 
 **Error**: "MCP server connection failed" or timeout
