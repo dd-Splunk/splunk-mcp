@@ -75,7 +75,7 @@ type=api  →  GET/POST /s4r_workshop_mode
                    →  eventgen.conf  [attack.nk.purchase.sample]
 ```
 
-This repo (Cursor / Claude / Goose):
+This repo (Cursor / Claude):
 
 ```text
 npx mcp-remote  +  encrypted bearer token (splunker)

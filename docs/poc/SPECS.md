@@ -49,11 +49,10 @@ Splunk AI Toolkit (2890) and Python for Scientific Computing (2882) are **out of
 
 ## MCP clients
 
-Supported: **Cursor**, **Claude Desktop**, **Goose** (via **`npx mcp-remote`** → **`/services/mcp`**). **Mistral (Vibe)** uses the same pattern when configured.
+Supported: **Cursor**, **Claude Desktop**, **Claude Code** (via **`npx mcp-remote`** → **`/services/mcp`**). **Mistral (Vibe)** uses the same pattern when configured.
 
 - Tokens minted by **`scripts/mint-mcp-token.sh`** after **`splunk-init`**; written only to client configs
 - Dev TLS: optional **`NODE_TLS_REJECT_UNAUTHORIZED=0`** when **`SPLUNK_MCP_TLS_INSECURE=1`**
-- **Goose:** client config uses **`envs`** (not `env`) for TLS-related env vars
 
 Details: [CONFIGURATION.md](CONFIGURATION.md), [ARCHITECTURE.md](ARCHITECTURE.md).
 

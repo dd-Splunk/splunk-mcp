@@ -29,7 +29,7 @@ Docker-free (MCP config shape + SA-S4R mode parse):
 make test
 ```
 
-Needs **jq**, **npx**, **Python 3**, and **PyYAML**. Full stack:
+Needs **jq**, **npx**, and **Python 3**. Full stack:
 
 ```bash
 make down

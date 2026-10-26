@@ -95,7 +95,7 @@ Runs after `so1` is **healthy**. Uses Alpine, installs `curl`, `jq`, and `bash`,
 - **`scripts/wait-splunk-init.sh`** — blocks until the **`splunk-init`** container exits `0` (`compose-up.sh` runs this after `docker compose up`).
 - **`scripts/register-s4r-mcp-tools.sh`** — called by **`setup-splunk.sh`** inside **`splunk-init`**: waits up to 5 minutes for the KV Store to be ready, `POST /services/mcp_tools` for **SA-S4R**, then enable each tool.
 - **`scripts/mint-mcp-token.sh`** — after init: waits for Splunk API, polls **`mcp_token`**, prints encrypted token to stdout.
-- **`make update-mcp-client`** writes the token into Claude / Cursor / Goose configs only.
+- **`make update-mcp-client`** writes the token into Claude / Cursor configs only.
 
 ### Network and volumes
 
@@ -153,8 +153,8 @@ Changing the keychain password does not change a running stack: Splunk reads the
 | `config` | Print `docker compose config` after the same secret and `config.env` load as `up`. `SPLUNK_ADMIN_PASSWORD`, Splunkbase user/password, and `SPLUNK_SPLUNKER_PASSWORD` are shown as `<set>` |
 | `down` | `scripts/mcp-client.sh park all` (no secrets), then `docker compose down`. `config.env` must be present so Compose can read `SPLUNK_IMAGE` and `TZ` |
 | `park-mcp-clients` | `scripts/mcp-client.sh park all` — remove `splunk-mcp-server` from client configs |
-| `update-mcp-clients` | `scripts/mcp-client.sh update-all` for cursor, goose, claude, claude-code (one mint) |
-| `update-mcp-client` | One client: `MCP_CLIENT=claude\|claude-code\|cursor\|goose` |
+| `update-mcp-clients` | `scripts/mcp-client.sh update-all` for cursor, claude, claude-code (one mint) |
+| `update-mcp-client` | One client: `MCP_CLIENT=claude\|claude-code\|cursor` |
 | `verify-mcp-remote` | `scripts/mcp-client.sh verify` — client config + direct `tools/list` + **`npx mcp-remote` stdio** e2e (`MCP_VERIFY_CLIENT=all` by default; `all` skips clients without a `splunk-mcp-server` entry and fails only if none has one) |
 | `verify` | Runs `status`, then `verify-mcp-remote` |
 | `test` | Docker-free: MCP client JSON/YAML shape (`write-shape` / `verify-config` / `park`) plus SA-S4R mode/payload unit tests |
@@ -198,7 +198,7 @@ Official references (product documentation; URLs say “cloud-platform” but ap
 
 | Aspect | Detail |
 | ------ | ------ |
-| **When** | Local Enterprise Docker PoC, workshops, Claude Desktop, Goose, or any client using **`npx mcp-remote`** |
+| **When** | Local Enterprise Docker PoC, workshops, Claude Desktop, Claude Code, Cursor, or any client using **`npx mcp-remote`** |
 | **How** | Mint encrypted token (MCP app UI or **`scripts/mint-mcp-token.sh`** → `mcp_token` REST); client sends **`Authorization: Bearer <token>`** |
 | **Automation** | **`make update-mcp-clients`** writes token into client configs only (not git) |
 | **Splunk side** | User needs **`mcp_tool_execute`**; token mint via admin REST uses MCP app **`mcp_token`** endpoint |
@@ -231,29 +231,19 @@ Do not store Cloud MCP bearer tokens in **`.env`** — that file is for **stack 
 - **`~/.claude.json`** is not written: Claude Code rewrites that file while it runs.
 - Same cloud-sync caveat as **`.cursor/mcp.json`** above.
 
-## Goose configuration
-
-- Path: **`~/.config/goose/config.yaml`** (Unix/Linux and macOS).
-- Same Splunk MCP Server **2.0** token pattern as Claude/Cursor: endpoint **`https://localhost:8089/services/mcp`**, encrypted bearer token via **`scripts/mcp-remote-splunk.sh`** wrapper (not raw `npx` in `cmd`).
-- Goose uses **extensions** with `type: stdio` (different YAML shape from Claude’s `mcpServers`).
-- `scripts/mcp-client.sh update goose` adds or updates the `splunk-mcp-server` extension entry via **`scripts/mcp-remote-splunk.sh`** (sets `NODE_TLS_REJECT_UNAUTHORIZED` in-process; Goose Desktop may not forward `envs` reliably). **`chmod 600`** on **`config.yaml`** after each update or park.
-- TLS dev override also uses Goose’s **`envs`** and **`env_keys`** (not `env`), e.g. `NODE_TLS_REJECT_UNAUTHORIZED=0` when **`SPLUNK_MCP_TLS_INSECURE=1`**.
-- Idempotent: **`scripts/goose-mcp-yaml.py`** load/dumps the YAML mapping (PyYAML). It repairs the first-run invalid shape `extensions: {}` followed by an indented mapping. Do not regex-splice YAML.
-- Requires **Python 3** and **PyYAML**. Install with `pip3 install pyyaml`. On Homebrew Python (PEP 668 *externally-managed-environment*): `python3 -m pip install --user --break-system-packages pyyaml`.
-
 ## Environment overrides (optional)
 
 | Variable | Used by | Purpose |
 | -------- | ------- | ------- |
 | `SPLUNK_MCP_ENDPOINT` | `mcp-client.sh` | Splunk MCP URL for `mcp-remote` (default `https://localhost:8089/services/mcp`) |
-| `SPLUNK_MCP_TLS_INSECURE` | `mcp-client.sh` | If `1` (default), add `NODE_TLS_REJECT_UNAUTHORIZED=0` to Claude/Cursor config and Goose `envs` / wrapper (dev/self-signed only) |
-| `MCP_REMOTE_PACKAGE` | `mcp-client.sh`, `mcp-remote-splunk.sh` | npm package for `npx` (default `mcp-remote@0.8.3`) |
+| `SPLUNK_MCP_TLS_INSECURE` | `mcp-client.sh` | If `1` (default), add `NODE_TLS_REJECT_UNAUTHORIZED=0` to the Claude/Cursor config `env` (dev/self-signed only) |
+| `MCP_REMOTE_PACKAGE` | `mcp-client.sh` | npm package for `npx` (default `mcp-remote@0.8.3`) |
 | `MCP_NPX_COMMAND` | `mcp-client.sh` | Absolute path to `npx` when GUI apps lack Node on `PATH` |
 | `CURSOR_MCP_JSON` | `mcp-client.sh` (cursor) | Output path |
 | `CLAUDE_MCP_JSON` | `mcp-client.sh` (claude) | Output path (default macOS Claude Desktop config) |
-| `GOOSE_MCP_YAML` | `mcp-client.sh` (goose) | Output path (default `~/.config/goose/config.yaml`) |
+| `CLAUDE_CODE_MCP_JSON` | `mcp-client.sh` (claude-code) | Output path (default `.mcp.json` at the repo root) |
 | `MCP_SHAPE_TOKEN` | `mcp-client.sh write-shape` | Fixture token for Docker-free shape tests (not a live Splunk token) |
-| `MCP_CLIENT` | `update-mcp-client` | `claude`, `cursor`, or `goose` |
+| `MCP_CLIENT` | `update-mcp-client` | `claude`, `claude-code`, or `cursor` |
 | `MCP_VERIFY_CLIENT` | `verify-mcp-remote` | `all` (default), or one client |
 
 ## Cursor Cloud bootstrap

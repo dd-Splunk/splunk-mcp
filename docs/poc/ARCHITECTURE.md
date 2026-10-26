@@ -6,7 +6,7 @@ This repository packages a **repeatable local environment** for:
 
 1. Running **Splunk Enterprise** in Docker with the **Splunk MCP Server** application from Splunkbase.
 2. Provisioning a dedicated Splunk user suitable for MCP tool execution.
-3. Wiring **Claude Desktop**, **Claude Code**, **Cursor**, and **Goose** via **`npx mcp-remote`** (encrypted bearer token in client config only).
+3. Wiring **Claude Desktop**, **Claude Code**, and **Cursor** via **`npx mcp-remote`** (encrypted bearer token in client config only).
 
 It is a **proof-of-concept**: fast iteration on Splunk + LLM tooling, not a production deployment template.
 
@@ -26,7 +26,7 @@ You need valid **Splunkbase** credentials in **`.env`** (or the process environm
 
 ## Client connections
 
-Per [Splunk MCP Server 2.0](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/connecting-to-the-mcp-server-and-settings) (product docs; this repo implements **local Enterprise** only), **Claude**, **Cursor**, and **Goose** use **`npx mcp-remote`** (Goose via **`scripts/mcp-remote-splunk.sh`**) to **`https://localhost:8089/services/mcp`** with an **encrypted** bearer token (`make update-mcp-clients` or **`make up`** with **`MCP_UPDATE_ON_BOOT`**). **Splunk Cloud** MCP is **out of scope** — see [README.md](README.md#scope).
+Per [Splunk MCP Server 2.0](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/connecting-to-the-mcp-server-and-settings) (product docs; this repo implements **local Enterprise** only), **Claude** and **Cursor** use **`npx mcp-remote`** to **`https://localhost:8089/services/mcp`** with an **encrypted** bearer token (`make update-mcp-clients` or **`make up`** with **`MCP_UPDATE_ON_BOOT`**). **Splunk Cloud** MCP is **out of scope** — see [README.md](README.md#scope).
 
 ## Secrets flow
 
@@ -294,7 +294,7 @@ Claude Desktop
 - Enables SA-Eventgen default modinput (**required**; init fails if missing or still disabled)
 - Dependencies: `curl`, `jq` (installed in `splunk-init`)
 
-Host **Claude** / **Cursor** / **Goose** configs are updated by **`scripts/mcp-client.sh`** via **`make update-mcp-clients`** or **`make up`** (`MCP_UPDATE_ON_BOOT`, default **`cursor`**), not by this script. Goose uses **`envs`** for TLS overrides (see **`docs/poc/CONFIGURATION.md`**).
+Host **Claude** / **Cursor** configs are updated by **`scripts/mcp-client.sh`** via **`make update-mcp-clients`** or **`make up`** (`MCP_UPDATE_ON_BOOT`, default **`cursor`**), not by this script. TLS overrides are described in **`docs/poc/CONFIGURATION.md`**.
 
 ### Makefile
 

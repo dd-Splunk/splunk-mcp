@@ -7,7 +7,7 @@ DC ?= docker compose
 ENV_OUT ?= .env
 MCP_CLIENT ?= cursor
 MCP_VERIFY_CLIENT ?= all
-MCP_CLIENTS := cursor goose claude claude-code
+MCP_CLIENTS := cursor claude claude-code
 MCP_UPDATE_ON_BOOT ?= cursor
 
 include config.env
@@ -103,10 +103,10 @@ status: ## Container status and Splunk API probe
 	if [[ "$$init_rc" -ne 0 ]]; then exit "$$init_rc"; fi; \
 	exit "$$splunk_rc"
 
-update-mcp-clients: ## Update Claude, Cursor, and Goose (one mint, all clients)
+update-mcp-clients: ## Update Claude and Cursor (one mint, all clients)
 	@./scripts/mcp-client.sh update-all $(MCP_CLIENTS)
 
-update-mcp-client: ## Update one client (MCP_CLIENT=claude|claude-code|cursor|goose)
+update-mcp-client: ## Update one client (MCP_CLIENT=claude|claude-code|cursor)
 	@./scripts/mcp-client.sh update "$(MCP_CLIENT)"
 
 verify-mcp-remote: ## Verify client configs + Splunk MCP (MCP_VERIFY_CLIENT=all|…)
