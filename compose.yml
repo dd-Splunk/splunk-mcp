@@ -22,7 +22,7 @@ services:
       # SA-S4R is this repo's package from the moving GitHub Release `latest`
       # (package-s4r.yml). The image downloads SPLUNK_APPS_URL only on the first
       # start of an empty so1-etc volume.
-      SPLUNK_APPS_URL: https://splunkbase.splunk.com/app/1924/release/8.2.2/download/,https://splunkbase.splunk.com/app/4353/release/1.8.26/download/,https://splunkbase.splunk.com/app/7931/release/2.0.0/download/,https://splunkbase.splunk.com/app/7245/release/2.3.3/download/,https://github.com/dd-Splunk/splunk-mcp/releases/download/latest/SA-S4R.spl
+      SPLUNK_APPS_URL: https://splunkbase.splunk.com/app/1924/release/8.2.2/download/,https://splunkbase.splunk.com/app/4353/release/1.8.26/download/,https://splunkbase.splunk.com/app/7931/release/2.1.0/download/,https://splunkbase.splunk.com/app/7245/release/2.3.6/download/,https://github.com/dd-Splunk/splunk-mcp/releases/download/latest/SA-S4R.spl
       TZ: ${TZ:?set TZ in config.env}
     volumes:
       - so1-var:/opt/splunk/var

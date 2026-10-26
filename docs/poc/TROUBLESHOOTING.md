@@ -265,6 +265,8 @@ make down && make up
 
 #### Issue: `mcp_token` wait never finishes / `splunker` missing
 
+**Also seen with**: `still waiting …: Unknown resource ''. Valid resources: key-pair, tokens` — the minting script predates Splunk MCP Server 2.1 (old endpoint `/servicesNS/…/mcp_token`). Update the repo; **`scripts/mint-mcp-token.sh`** must use `/services/mcp_token/key-pair` and `/services/mcp_token/tokens`.
+
 **Error**: `make up` hangs on `Waiting for Splunk MCP Server mcp_token endpoint…`
 
 **Cause**: `splunk-init` exited 0 but never created role **`mcp_user`** / user **`splunker`**. Classic log line: `This user doesn't have permissions to assign capability=s4r_workshop_control` — Splunk rejects the whole role POST when that capability is unknown (wrong `authorize.conf` stanza or app not loaded yet).
@@ -276,6 +278,29 @@ make down && make up
 ```
 
 On a stack that already finished init without `splunker`, re-run **`docker start splunk-init`** after pulling the fix, or wait for the next **`make up`**.
+
+---
+
+#### Issue: MCP encryption key expired or needs rotation
+
+**Symptom**: every MCP client gets HTTP 401 at once, or `make update-mcp-clients` fails with *encryption key has expired; rotate it before creating tokens*. The key pair that encrypts all MCP tokens is valid for 180 days by default and tokens cannot outlive it.
+
+**Solution** (admin REST, local PoC; the app refuses to delete the key while any token is active):
+
+```bash
+# Replace <pw> with the admin password; check status first
+curl -ks -u admin:<pw> https://localhost:8089/services/mcp_token/key-pair
+# Disable every token, then delete the key
+for id in $(curl -ks -u admin:<pw> "https://localhost:8089/services/mcp_token/tokens?scope=all&output_mode=json" | jq -r '.tokens[].token_id'); do
+  curl -ks -u admin:<pw> -X PUT -H 'Content-Type: application/json' -d '{"disabled": true}' \
+    "https://localhost:8089/services/mcp_token/tokens/$id"
+done
+curl -ks -u admin:<pw> -X DELETE https://localhost:8089/services/mcp_token/key-pair
+# Recreate the key and mint fresh tokens for the clients
+make update-mcp-clients
+```
+
+`scripts/mint-mcp-token.sh` recreates the key pair automatically when none exists.
 
 ---
 

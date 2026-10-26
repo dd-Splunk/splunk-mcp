@@ -6,8 +6,8 @@
 | ------ | --- | -------------- |
 | 1924 | SA-Eventgen (sample data / Eventgen modinput) | 8.2.2 |
 | 4353 | Config Explorer (optional UI utility) | 1.8.26 (Splunkbase lists Splunk up to 10.4; runs on 10.6 but not declared) |
-| 7931 | Splunk MCP Server (required for `/services/mcp`) | 2.0.0 |
-| 7245 | Splunk AI Assistant | 2.3.3 |
+| 7931 | Splunk MCP Server (required for `/services/mcp`) | 2.1.0 (token API changed in 2.1; see [Encrypted bearer token](#encrypted-bearer-token-this-repo)) |
+| 7245 | Splunk AI Assistant | 2.3.6 |
 | — | SA-S4R (this repo) | GitHub Release [`latest`](https://github.com/dd-Splunk/splunk-mcp/releases/download/latest/SA-S4R.spl) |
 
 Check current Splunkbase releases: `https://splunkbase.splunk.com/api/v1/app/<id>/release/` (first entry is latest). Update the `/release/VERSION/` segment in **`compose.yml`** when bumping.
@@ -94,8 +94,12 @@ Runs after `so1` is **healthy**. Uses Alpine, installs `curl`, `jq`, and `bash`,
 
 - **`scripts/wait-splunk-init.sh`** — blocks until the **`splunk-init`** container exits `0` (`compose-up.sh` runs this after `docker compose up`).
 - **`scripts/register-s4r-mcp-tools.sh`** — called by **`setup-splunk.sh`** inside **`splunk-init`**: waits up to 5 minutes for the KV Store to be ready, `POST /services/mcp_tools` for **SA-S4R**, then enable each tool.
-- **`scripts/mint-mcp-token.sh`** — after init: waits for Splunk API, polls **`mcp_token`**, prints encrypted token to stdout.
+- **`scripts/mint-mcp-token.sh`** — after init: waits for Splunk API, creates the MCP encryption key pair if missing (`POST /services/mcp_token/key-pair`, 201 or 409), then mints a token for **`splunker`** (`POST /services/mcp_token/tokens`) and prints it to stdout.
 - **`make update-mcp-client`** writes the token into Claude / Cursor configs only.
+
+### Alert tools added in MCP Server 2.1
+
+`splunk_find_silent_alerts`, `splunk_get_alert_action_status`, and `splunk_get_fired_alert_results` are registered for **`splunker`**. The first two read **`_audit`** and **`_internal`**, which are restricted to admin roles by design, so they return errors for `splunker` (`splunk_find_silent_alerts` says *"The _audit index is required … It is disabled"* although the index is enabled). That is expected; this repo does not grant `splunker` access to them. `splunk_get_fired_alert_results` needs retained search-job results for the given `sid`.
 
 ### Network and volumes
 
@@ -199,10 +203,10 @@ Official references (product documentation; URLs say “cloud-platform” but ap
 | Aspect | Detail |
 | ------ | ------ |
 | **When** | Local Enterprise Docker PoC, workshops, Claude Desktop, Claude Code, Cursor, or any client using **`npx mcp-remote`** |
-| **How** | Mint encrypted token (MCP app UI or **`scripts/mint-mcp-token.sh`** → `mcp_token` REST); client sends **`Authorization: Bearer <token>`** |
+| **How** | Mint encrypted token (MCP app UI or **`scripts/mint-mcp-token.sh`** → `/services/mcp_token/tokens` REST); client sends **`Authorization: Bearer <token>`** |
 | **Automation** | **`make update-mcp-clients`** writes token into client configs only (not git) |
-| **Splunk side** | User needs **`mcp_tool_execute`**; token mint via admin REST uses MCP app **`mcp_token`** endpoint |
-| **Security** | Encrypted tokens work **only** for MCP (not general Splunk REST); rotate via MCP app; **Invalidate Keys** revokes all encrypted tokens |
+| **Splunk side** | User needs **`mcp_tool_execute`**; **`admin`** mints on behalf of **`splunker`** (needs **`mcp_tool_admin`**, which `admin` has), so **`splunker`** needs no token-management capability |
+| **Security** | Encrypted tokens work **only** for MCP (not general Splunk REST). All tokens are encrypted with one administrator-managed **key pair** (180-day validity by default, 365 max); a token never outlives its key. Plaintext and previous-key tokens are rejected. Rotation: [TROUBLESHOOTING.md § MCP encryption key expired](TROUBLESHOOTING.md#issue-mcp-encryption-key-expired-or-needs-rotation) |
 
 Client shape matches Splunk’s 2.0 sample: **`npx mcp-remote`**, streamable HTTP endpoint, bearer header. For self-signed localhost certs, server **`ssl_verify=false`** (setup script) plus client **`NODE_TLS_REJECT_UNAUTHORIZED=0`** when **`SPLUNK_MCP_TLS_INSECURE=1`**.
 
@@ -212,7 +216,7 @@ Do not store Cloud MCP bearer tokens in **`.env`** — that file is for **stack 
 
 - Path: **`~/Library/Application Support/Claude/claude_desktop_config.json`** (macOS).
 - Matches Splunk MCP Server **2.0** [client configuration](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/connecting-to-the-mcp-server-and-settings): **`npx mcp-remote`**, endpoint **`https://localhost:8089/services/mcp`**, **`Authorization: Bearer`** with an **encrypted** token.
-- `make update-mcp-client MCP_CLIENT=claude` mints the token via **`scripts/mint-mcp-token.sh`** (Splunk app `mcp_token` REST). Splunk must be up. Token is stored **only** in Claude’s config, not in this repo. The file is **`chmod 600`** after each update or park.
+- `make update-mcp-client MCP_CLIENT=claude` mints the token via **`scripts/mint-mcp-token.sh`** (Splunk app `/services/mcp_token/tokens` REST). Splunk must be up. Token is stored **only** in Claude’s config, not in this repo. The file is **`chmod 600`** after each update or park.
 - **`NODE_TLS_REJECT_UNAUTHORIZED=0`** is written when **`SPLUNK_MCP_TLS_INSECURE`** is `1` (default for this PoC; self-signed Splunk only). Set **`SPLUNK_MCP_TLS_INSECURE=0`** to omit `env` if using proper TLS.
 - Uses **`jq`**; backs up invalid JSON with a timestamped file.
 
