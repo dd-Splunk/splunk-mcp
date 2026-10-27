@@ -88,7 +88,7 @@ wait_for_mcp_token() {
   while [[ "$n" -le "$attempts" ]]; do
     if [[ "$key_ready" -eq 0 ]]; then
       # Last line is the HTTP status (000 when the connection fails or times out).
-      response="$(curl -k -s -u "${rest_user}:${SPLUNK_ADMIN_PASSWORD}" \
+      response="$(splunk_curl -k -s \
         --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" \
         -X POST -d output_mode=json -w '\n%{http_code}' "${base}/key-pair" 2>/dev/null || true)"
       code="${response##*$'\n'}"
@@ -109,7 +109,7 @@ wait_for_mcp_token() {
     fi
 
     if [[ "$key_ready" -eq 1 ]]; then
-      response="$(curl -k -s -u "${rest_user}:${SPLUNK_ADMIN_PASSWORD}" \
+      response="$(splunk_curl -k -s \
         --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" \
         -X POST --data-urlencode "username=${mcp_user}" -d output_mode=json \
         -w '\n%{http_code}' "${base}/tokens" 2>/dev/null || true)"

@@ -10,9 +10,15 @@ All Splunk REST API calls require authentication. Choose one method:
 
 #### Method 1: Basic Auth (Admin)
 
+Load the admin password and the **`splunk_curl`** helper once per shell, from the repo root:
+
 ```bash
-curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" https://localhost:8089/services/server/info
+set -a; . ./.env; set +a
+. scripts/splunk-api-env.sh
+splunk_curl -k https://localhost:8089/services/server/info
 ```
+
+**`splunk_curl`** hands the credentials to curl as a config on a file descriptor. Avoid **`curl -u "admin:${SPLUNK_ADMIN_PASSWORD}"`**: any local user can read process arguments with **`ps`**. Plain **`curl -u admin`** (no password) prompts for it, which is also safe. Later admin examples on this page use **`splunk_curl`**.
 
 #### Method 2: Splunk MCP (encrypted bearer token)
 
@@ -155,7 +161,7 @@ curl -kfsS -X POST "https://localhost:8089/services/mcp" \
 ### Example 3: Direct SPL via basic auth (recommended for “direct SPL” tests)
 
 ```bash
-curl -k -u "splunker:${SPLUNK_SPLUNKER_PASSWORD}" \
+curl -k -u splunker \
   "https://localhost:8089/services/search/jobs?output_mode=json" \
   -d 'search=index=main | stats values(sourcetype) AS Sourcetype'
 ```
@@ -295,7 +301,7 @@ log stream --predicate 'process == "Claude"' --level debug
 Many endpoints support JSON responses with `output_mode=json` parameter:
 
 ```bash
-curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" \
+splunk_curl -k \
   "https://localhost:8089/services/server/info?output_mode=json"
 ```
 
@@ -306,7 +312,7 @@ curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" \
 **Search all Claude logs:**
 
 ```bash
-curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" \
+splunk_curl -k \
   "https://localhost:8089/services/search/jobs" \
   -d "search=index=claude_logs" \
   -d "output_mode=json"
@@ -329,7 +335,7 @@ index=claude_logs earliest=-1h | tail 20
 **Get claude_logs index stats:**
 
 ```bash
-curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" \
+splunk_curl -k \
   "https://localhost:8089/services/data/indexes/claude_logs"
 ```
 
@@ -338,26 +344,26 @@ curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" \
 ### Enable Verbose Output
 
 ```bash
-curl -v -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" https://localhost:8089/services/server/info
+splunk_curl -v -k https://localhost:8089/services/server/info
 ```
 
 ### Check Request/Response Headers
 
 ```bash
-curl -i -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" https://localhost:8089/services/server/info
+splunk_curl -i -k https://localhost:8089/services/server/info
 ```
 
 ### Use jq for JSON Parsing
 
 ```bash
-curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" \
+splunk_curl -k \
   "https://localhost:8089/services/server/info?output_mode=json" | jq .
 ```
 
 ### Save Response to File
 
 ```bash
-curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" https://localhost:8089/services/server/info > response.xml
+splunk_curl -k https://localhost:8089/services/server/info > response.xml
 ```
 
 ## Advanced Topics
@@ -382,11 +388,11 @@ Create and manage alerts that can be triggered by MCP commands.
 
 Add these to `.bashrc` or `.zshrc`:
 
-Avoid aliases that embed passwords or tokens. Prefer functions that read secrets from your shell environment:
+Avoid aliases that embed passwords or tokens. Prefer functions that read secrets from your shell environment and pass them through **`splunk_curl`** (source **`scripts/splunk-api-env.sh`** in the same rc file, with an absolute path):
 
 ```bash
 splunk_info() {
-  curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD:?Set SPLUNK_ADMIN_PASSWORD first}" \
+  splunk_curl -k \
     "https://localhost:8089/services/server/info?output_mode=json"
 }
 ```

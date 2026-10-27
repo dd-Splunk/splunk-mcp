@@ -73,6 +73,12 @@ Confirm validity dates, key size (RSA ≥2048 or modern EC curves), and signatur
 - **`.cursor/mcp.json` and `.mcp.json` are gitignored** but this clone often lives under **OneDrive** (or similar). They no longer contain the token, and the header file sits outside the repo so sync does not copy it off-box. Configs written before **`--header-file`** still carry the token inline: run **`make update-mcp-clients`** to migrate them (**`verify-config`** rejects them). Do not paste the token into chat or issues.
 - Clients start **`mcp-remote --header-file <path>`**, so the token is not in any process’s arguments (on macOS, any local user can read those with **`ps`**). **`make verify-mcp-remote`** reads the same file (**`curl -H @file`**). Splunk’s 2.0 sample passes the token with **`--header`**; this repo deliberately does not.
 
+## Admin password in REST calls
+
+- Every script that calls Splunk REST as **`admin`** (**`setup-splunk.sh`**, **`register-s4r-mcp-tools.sh`**, **`mint-mcp-token.sh`**, **`prune-mcp-tokens.sh`**, **`toggle-s4r-attack-nk.sh`**, **`mcp-auth-failures.sh`**) goes through **`splunk_curl`** in **`scripts/splunk-api-env.sh`**. It writes **`user = "admin:<password>"`** to a curl config on fd 3 (**`curl -K /dev/fd/3`**) with shell builtins only, so the password is in no process’s arguments. **`curl -u admin:<password>`** would expose it to **`ps`** for the whole request. On Linux hosts this includes **`splunk-init`**, whose processes are visible from the host.
+- **`setup-splunk.sh`** sends the **`splunker`** password on curl’s stdin (**`--data-urlencode password@-`**) for the same reason.
+- **`make test`** (**`tests/splunk-curl.sh`**) fails if a script passes **`SPLUNK_ADMIN_PASSWORD`** to **`curl -u`** again. Doc examples use **`splunk_curl`**, or a bare **`curl -u admin`** that prompts for the password.
+
 ## Logging and privacy
 
 - Optional **Claude log** ingestion (if enabled) is sensitive—restrict Splunk access and disk permissions.
