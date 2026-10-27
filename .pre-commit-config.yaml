@@ -4,7 +4,7 @@
 # Mirrors .github/workflows/ci.yml (CI installs shellcheck via apt).
 repos:
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.24.2
+    rev: v8.30.1
     hooks:
       - id: gitleaks
 
