@@ -17,7 +17,9 @@ if [[ "${1:-}" == "--detail" ]]; then
   DETAIL=1
 fi
 
-SUMMARY_SPL='index=_internal sourcetype=*mcp_monitoring_dashboard* ((event_type IN (tool_call_complete, tool_call_error)) OR event_type IN (auth_failure, auth_invalid_audience, auth_token_decode_error)) | eval is_tool_call=if(match(event_type, "^tool_call_"), 1, 0), is_auth_fail=1-is_tool_call | stats sum(is_tool_call) AS tool_calls sum(is_auth_fail) AS failed_auths'
+# count(), not sum(): with no matching events, stats sum() returns no row at all (an empty
+# export, indistinguishable from a failed search), while stats count() returns 0,0.
+SUMMARY_SPL='index=_internal sourcetype=*mcp_monitoring_dashboard* ((event_type IN (tool_call_complete, tool_call_error)) OR event_type IN (auth_failure, auth_invalid_audience, auth_token_decode_error)) | stats count(eval(match(event_type, "^tool_call_"))) AS tool_calls count(eval(NOT match(event_type, "^tool_call_"))) AS failed_auths'
 
 DETAIL_SPL='index=_internal sourcetype=mcp_monitoring_dashboard event_type IN (auth_failure, auth_invalid_audience, auth_token_decode_error) | table _time source_ip error_message username | sort _time'
 
