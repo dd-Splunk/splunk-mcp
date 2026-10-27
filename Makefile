@@ -106,7 +106,7 @@ status: ## Container status and Splunk API probe
 update-mcp-clients: ## Update Claude and Cursor (one mint, all clients)
 	@./scripts/mcp-client.sh update-all $(MCP_CLIENTS)
 
-update-mcp-client: ## Update one client (MCP_CLIENT=claude|claude-code|cursor)
+update-mcp-client: ## Add/refresh one client; refreshes other configured clients (MCP_CLIENT=claude|claude-code|cursor)
 	@./scripts/mcp-client.sh update "$(MCP_CLIENT)"
 
 verify-mcp-remote: ## Verify client configs + Splunk MCP (MCP_VERIFY_CLIENT=all|…)

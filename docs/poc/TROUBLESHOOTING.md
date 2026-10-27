@@ -470,7 +470,8 @@ Start a new Claude Code session in the repo, approve **splunk-mcp-server**, and 
    ```bash
    cat ~/Library/Application\ Support/Claude/claude_desktop_config.json
    # Should contain npx mcp-remote → https://localhost:8089/services/mcp
-   # and Authorization: Bearer <encrypted token>
+   # and --header-file ~/.config/splunk-mcp/headers (mode 600, holds the token)
+   ls -l ~/.config/splunk-mcp/headers
    ```
 
 2. **Restart Claude Desktop**:

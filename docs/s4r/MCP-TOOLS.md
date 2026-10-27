@@ -131,7 +131,7 @@ All paths are under **`SA-S4R/`** unless noted. MCP/tool packaging lives in **`d
    - `POST https://so1:8089/services/mcp_tools` with `s4r_mcp_tools.json` (batch replace for `external_app_id=SA-S4R`)
    - For each tool: enable `tool_id=SA-S4R:SA-S4R_<name>` with `override: true` (non-2xx **fails init**)
    - `POST …/configs/conf-savedsearches/_reload` so new saved-search stanzas are visible without **`make restart`** (non-2xx **fails init**)
-3. After init exits **0**, **`make update-mcp-clients`** mints a bearer token into client config (not the repo).
+3. After init exits **0**, **`make update-mcp-clients`** mints a bearer token into the mode-600 header file that client configs reference (not the repo).
 
 Re-register after editing tool JSON or saved searches:
 
