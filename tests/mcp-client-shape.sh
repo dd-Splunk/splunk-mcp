@@ -7,6 +7,9 @@ cd "$ROOT"
 
 die() { echo "FAIL: $*" >&2; exit 1; }
 
+# GNU stat first: on Linux, stat -f is filesystem status and succeeds with the wrong output.
+file_mode() { stat -c %a "$1" 2>/dev/null || stat -f %Lp "$1"; }
+
 command -v jq >/dev/null 2>&1 || die "jq required"
 command -v npx >/dev/null 2>&1 || die "npx required"
 
@@ -37,7 +40,7 @@ jq -e --arg f "${SPLUNK_MCP_HEADER_FILE}" '.mcpServers["splunk-mcp-server"].args
   "${CURSOR_MCP_JSON}" >/dev/null || die "cursor args missing --header-file ${SPLUNK_MCP_HEADER_FILE}"
 for f in "${CURSOR_MCP_JSON}" "${CLAUDE_MCP_JSON}" "${CLAUDE_CODE_MCP_JSON}"; do
   grep -q "${MCP_SHAPE_TOKEN}" "$f" && die "token written into client config $f"
-  [[ "$(stat -f %Lp "$f" 2>/dev/null || stat -c %a "$f")" == 600 ]] || die "client config $f is not mode 600"
+  [[ "$(file_mode "$f")" == 600 ]] || die "client config $f is not mode 600"
 done
 jq -e '.mcpServers["splunk-mcp-server"].env.NODE_TLS_REJECT_UNAUTHORIZED == "0"' \
   "${CURSOR_MCP_JSON}" >/dev/null || die "cursor missing TLS env"
@@ -48,8 +51,7 @@ jq -e '.mcpServers["splunk-mcp-server"].args | map(tostring) | any(test("^https:
   "${CLAUDE_CODE_MCP_JSON}" >/dev/null || die "claude-code missing local MCP endpoint"
 
 # The token lives only in the header file: owner-only, one Authorization line.
-[[ "$(stat -f %Lp "${SPLUNK_MCP_HEADER_FILE}" 2>/dev/null || stat -c %a "${SPLUNK_MCP_HEADER_FILE}")" == 600 ]] \
-  || die "header file is not mode 600"
+[[ "$(file_mode "${SPLUNK_MCP_HEADER_FILE}")" == 600 ]] || die "header file is not mode 600"
 grep -qx "Authorization: Bearer ${MCP_SHAPE_TOKEN}" "${SPLUNK_MCP_HEADER_FILE}" \
   || die "header file missing Authorization line"
 
