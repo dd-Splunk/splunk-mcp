@@ -49,10 +49,10 @@ require_splunk_env() {
 # Prints the response body, then a final line with the HTTP status.
 # Connection failures return 1. Callers must split the last line off the body
 # (the request runs in a subshell under command substitution).
-splunk_curl() {
+rest_request() {
   local tmp http_code
   tmp="$(mktemp)"
-  if ! http_code="$(curl -sk --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" -u "${SPLUNK_REST_USER}:${SPLUNK_ADMIN_PASSWORD}" \
+  if ! http_code="$(splunk_curl -sk --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" \
     -sS -o "${tmp}" -w "%{http_code}" "$@")"; then
     rm -f "${tmp}"
     echo "error: Splunk REST request failed" >&2
@@ -103,7 +103,7 @@ is_disabled_value() {
 
 fetch_disabled() {
   local response
-  response="$(splunk_curl "${DISABLED_URL}")" || exit 1
+  response="$(rest_request "${DISABLED_URL}")" || exit 1
   split_response "${response}"
   case "${CURL_HTTP_CODE}" in
     2??) ;;
@@ -123,8 +123,7 @@ fetch_disabled() {
 eventgen_action() { # $1 = disable|enable; prints the HTTP status (000 on connection failure)
   local url="${SPLUNK_URL}/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default/$1"
   local code
-  code="$(curl -sk --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" \
-    -u "${SPLUNK_REST_USER}:${SPLUNK_ADMIN_PASSWORD}" \
+  code="$(splunk_curl -sk --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" \
     -sS -o /dev/null -w "%{http_code}" -X POST "${url}")" || code="000"
   printf '%s' "${code}"
 }
@@ -152,7 +151,7 @@ reload_eventgen() {
 set_disabled() {
   local value="$1" response
   fetch_disabled >/dev/null
-  response="$(splunk_curl -X POST "${CONFIG_URL}" \
+  response="$(rest_request -X POST "${CONFIG_URL}" \
     --data-urlencode "disabled=${value}" \
     -d "output_mode=json")" || exit 1
   split_response "${response}"

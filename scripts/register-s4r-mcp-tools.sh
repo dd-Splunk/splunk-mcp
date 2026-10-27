@@ -19,7 +19,7 @@ source "${ROOT}/scripts/splunk-api-env.sh"
 wait_for_kvstore() {
   local waited=0 max_wait=300 status=""
   while [ "${waited}" -lt "${max_wait}" ]; do
-    status="$(curl -sSk --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" -u "${SPLUNK_REST_USER}:${SPLUNK_ADMIN_PASSWORD}" \
+    status="$(splunk_curl -sSk --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" \
       "${SPLUNK_URL}/services/kvstore/status?output_mode=json" 2>/dev/null \
       | jq -r '.entry[0].content.current.status // empty' 2>/dev/null || true)"
     case "${status}" in
@@ -68,7 +68,7 @@ register_s4r_mcp_tools() {
   http_code=""
   body=""
   while [ "${attempt}" -lt "${max_attempts}" ]; do
-    response="$(curl -sSk --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" -u "${SPLUNK_REST_USER}:${SPLUNK_ADMIN_PASSWORD}" \
+    response="$(splunk_curl -sSk --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" \
       -X POST "${SPLUNK_URL}/services/mcp_tools" \
       -H "Content-Type: application/json" \
       --data-binary "@${TOOLS_JSON}" \
@@ -113,7 +113,7 @@ register_s4r_mcp_tools() {
     [[ -n "${tool_name}" ]] || continue
     mcp_name="SA-S4R_${tool_name}"
     tool_id="SA-S4R:${mcp_name}"
-    enable_response="$(curl -sSk --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" -u "${SPLUNK_REST_USER}:${SPLUNK_ADMIN_PASSWORD}" \
+    enable_response="$(splunk_curl -sSk --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" \
       -X POST "${SPLUNK_URL}/services/mcp_tools" \
       -H "Content-Type: application/json" \
       -d "{\"tool_id\": \"${tool_id}\", \"tool_name\": \"${mcp_name}\", \"enabled\": true, \"override\": true}" \
@@ -133,7 +133,7 @@ register_s4r_mcp_tools() {
   fi
 
   # Pick up new/updated savedsearches.conf stanzas without a full restart.
-  reload_code="$(curl -sSk --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" -u "${SPLUNK_REST_USER}:${SPLUNK_ADMIN_PASSWORD}" \
+  reload_code="$(splunk_curl -sSk --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" \
     -o /dev/null -w "%{http_code}" \
     -X POST "${SPLUNK_URL}/servicesNS/nobody/SA-S4R/configs/conf-savedsearches/_reload" \
     -d output_mode=json)"

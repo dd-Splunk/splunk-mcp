@@ -25,6 +25,7 @@ Do not add Cloud MCP testing, endpoints, or secrets-handling paths to this repo 
   - `.cursor/mcp.json` and `.mcp.json` (Claude Code project config): gitignored and **`chmod 600`**. Current configs hold only the header-file path, but configs written before **`--header-file`** carry the token inline; **`make update-mcp-clients`** migrates them
   - The header file (**`~/.config/splunk-mcp/headers`**) holds the live bearer token; it lives outside the repo so a cloud-synced clone does not upload it
 - **Do not paste tokens/passwords** into issues, PRs, or logs.
+- **Keep secrets out of process arguments** (any local user can read them with `ps`): admin REST calls use **`splunk_curl`** from **`scripts/splunk-api-env.sh`**, never `curl -u admin:…`; MCP clients use **`mcp-remote --header-file`**. **`make test`** catches `curl -u` with **`SPLUNK_ADMIN_PASSWORD`**.
 - **Keep changes idempotent**: `make up` / `splunk-init` should be safe to run repeatedly.
 
 ## How the stack boots
@@ -78,7 +79,7 @@ Workshop agent **roles** remain in **`.cursor/agents/`** (not skills). Do not du
 | Docker-free tests? | `make test` — MCP config shape + SA-S4R mode/payload parse (no Splunk) |
 | Pre-demo / both checks? | `make demo-prep` (Splunkbase pins + status + verify + warm-stack reminder) or `make verify` (status then verify only) |
 | Init failed? | `docker logs splunk-init` (see **`docs/poc/TROUBLESHOOTING.md`**) |
-| Eventgen modinput? | `curl -k -u admin:<password> "https://localhost:8089/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default?output_mode=json"` |
+| Eventgen modinput? | `curl -k -u admin "https://localhost:8089/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default?output_mode=json"` |
 | S4R workshop mode? | **`SA-S4R_query_nk_demo_state`** (MCP) or `make s4r-attack-nk-status` (shell) — infrastructure (default) vs NK threat; see **`docs/s4r/SA-S4R-APP.md`** · **`docs/s4r/MCP-TOOLS.md`** |
 | S4R agentic demo? | **`demo-slides/s4r-demo-slides.md`** (Marp — `make marp-preview`); script **`demo-slides/S4R-DEMO.md`**; build notes **`demo-slides/README.md`** |
 

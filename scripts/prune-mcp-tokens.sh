@@ -38,7 +38,7 @@ prune_tokens() {
   }
   base="https://${SPLUNK_HOST}:${SPLUNK_PORT}/services/mcp_token/tokens"
 
-  listing="$(curl -ksf -u "${SPLUNK_REST_USER}:${SPLUNK_ADMIN_PASSWORD}" \
+  listing="$(splunk_curl -ksf \
     --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" \
     -G --data-urlencode output_mode=json --data-urlencode scope=all \
     --data-urlencode "owner_username=${SPLUNK_MCP_USER}" "$base")" \
@@ -58,7 +58,7 @@ prune_tokens() {
     if [[ "$dry_run" == 1 ]]; then
       echo "would delete token ${id:0:8}…" >&2
     else
-      curl -ksf -o /dev/null -X DELETE -u "${SPLUNK_REST_USER}:${SPLUNK_ADMIN_PASSWORD}" \
+      splunk_curl -ksf -o /dev/null -X DELETE \
         --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" \
         "${base}/${id}" \
         || {

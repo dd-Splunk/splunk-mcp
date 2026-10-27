@@ -5,6 +5,15 @@
 | Stack (Docker, MCP, init) | This file |
 | Splunk4Rookies workshop | [s4r/TROUBLESHOOTING.md](../s4r/TROUBLESHOOTING.md) |
 
+Admin REST examples below use **`splunk_curl`** from **`scripts/splunk-api-env.sh`**. It passes the admin password to curl through a config on a file descriptor, so it does not show in **`ps`** the way **`curl -u admin:…`** does. Load it once per shell from the repo root:
+
+```bash
+set -a; . ./.env; set +a
+. scripts/splunk-api-env.sh
+```
+
+Examples with plain **`curl -u <user>`** prompt for the password instead.
+
 ## Cursor Cloud (Docker-in-Docker)
 
 ### Bootstrap before `make up`
@@ -34,7 +43,8 @@ See [CONFIGURATION.md](CONFIGURATION.md#cursor-cloud-bootstrap) and [AGENTS.md](
 set -a
 . ./.env
 set +a
-curl -sk -u "admin:${SPLUNK_ADMIN_PASSWORD}" \
+. scripts/splunk-api-env.sh
+splunk_curl -sk \
   "https://localhost:8089/services/server/info?output_mode=json" >/dev/null
 ```
 
@@ -288,14 +298,14 @@ On a stack that already finished init without `splunker`, re-run **`docker start
 **Solution** (admin REST, local PoC; the app refuses to delete the key while any token is active):
 
 ```bash
-# Replace <pw> with the admin password; check status first
-curl -ks -u admin:<pw> https://localhost:8089/services/mcp_token/key-pair
+# Load splunk_curl first (top of this page); check status first
+splunk_curl -ks https://localhost:8089/services/mcp_token/key-pair
 # Disable every token, then delete the key
-for id in $(curl -ks -u admin:<pw> "https://localhost:8089/services/mcp_token/tokens?scope=all&output_mode=json" | jq -r '.tokens[].token_id'); do
-  curl -ks -u admin:<pw> -X PUT -H 'Content-Type: application/json' -d '{"disabled": true}' \
+for id in $(splunk_curl -ks "https://localhost:8089/services/mcp_token/tokens?scope=all&output_mode=json" | jq -r '.tokens[].token_id'); do
+  splunk_curl -ks -X PUT -H 'Content-Type: application/json' -d '{"disabled": true}' \
     "https://localhost:8089/services/mcp_token/tokens/$id"
 done
-curl -ks -u admin:<pw> -X DELETE https://localhost:8089/services/mcp_token/key-pair
+splunk_curl -ks -X DELETE https://localhost:8089/services/mcp_token/key-pair
 # Recreate the key and mint fresh tokens for the clients
 make update-mcp-clients
 ```
@@ -314,7 +324,7 @@ make update-mcp-clients
 
 ```bash
 # Check installed apps
-curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" https://localhost:8089/services/appserver/apps \
+splunk_curl -k https://localhost:8089/services/appserver/apps \
   | grep -i "mcp\|model"
 
 # If not found, check download URL in compose.yml:
@@ -360,7 +370,7 @@ On a fresh install the KV Store can take minutes to start. Registration waits up
 **Verify** (after manual install):
 
 ```bash
-curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" "https://localhost:8089/servicesNS/admin/Splunk_ML_Toolkit/mltk/aicommander_metadata?output_mode=json" | head -c 400
+splunk_curl -k "https://localhost:8089/servicesNS/admin/Splunk_ML_Toolkit/mltk/aicommander_metadata?output_mode=json" | head -c 400
 ```
 
 If apps still do not install, use the same Splunkbase credential and volume reinit steps as in **Issue: Splunk MCP app not installed** above.
@@ -408,7 +418,7 @@ curl -k https://localhost:8089/services/server/info
 cat .env | grep SPLUNK
 
 # Test with correct credentials
-curl -k -u admin:$SPLUNK_ADMIN_PASSWORD https://localhost:8089/services/server/info
+splunk_curl -k https://localhost:8089/services/server/info
 
 # If credentials wrong:
 # 1. Update .env manually
@@ -599,7 +609,7 @@ Dashboard, NK threat mode, and parallel agent issues: **[s4r/TROUBLESHOOTING.md]
 set -a
 . ./.env
 set +a
-curl -sk -u "admin:${SPLUNK_ADMIN_PASSWORD}" -X POST \
+splunk_curl -sk -X POST \
   "https://localhost:8089/services/authentication/users/splunker" \
   -d "locked-out=false" \
   -H "Content-Type: application/x-www-form-urlencoded"
@@ -622,7 +632,7 @@ FORCE_SPLUNK_SPLUNKER_PASSWORD=1 make up
 ```bash
 make verify-mcp-remote MCP_VERIFY_CLIENT=all   # config + tools/list
 # Optional: confirm splunker basic auth
-curl -sk -u "splunker:${SPLUNK_SPLUNKER_PASSWORD}" \
+curl -sk -u splunker \
   "https://localhost:8089/services/authentication/current-context?output_mode=json"
 ```
 
@@ -670,9 +680,9 @@ make status                  # Check containers
 make logs | tail -20         # Check for errors
 
 # Manual verification:
-curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" https://localhost:8089/services/server/info
-curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" https://localhost:8089/services/authentication/users/splunker
-curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" https://localhost:8089/services/authorization/roles/mcp_user
+splunk_curl -k https://localhost:8089/services/server/info
+splunk_curl -k https://localhost:8089/services/authentication/users/splunker
+splunk_curl -k https://localhost:8089/services/authorization/roles/mcp_user
 
 # Verify Claude config:
 cat ~/Library/Application\ Support/Claude/claude_desktop_config.json | jq '.mcpServers'
@@ -724,11 +734,11 @@ ls -la ~/Library/Logs/Claude/
 docker exec so1 ls -la /var/log/claude_logs
 
 # Check if index was created
-curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" \
+splunk_curl -k \
   https://localhost:8089/services/data/indexes/claude_logs
 
 # View Splunk monitor input config
-curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" \
+splunk_curl -k \
   https://localhost:8089/services/data/indexes/claude_logs
 #### Issue: Claude logs stopped being indexed
 
@@ -738,7 +748,7 @@ curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" \
 
 ```bash
 # Check monitor status
-curl -k -u "admin:${SPLUNK_ADMIN_PASSWORD}" "https://localhost:8089/services/data/inputs/monitor"
+splunk_curl -k "https://localhost:8089/services/data/inputs/monitor"
 
 # Verify Claude app is running
 log stream --predicate 'process == "Claude"' --level debug | head -20

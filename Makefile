@@ -148,11 +148,12 @@ s4r-attack-nk-disable: ## Disable NK purchase-attack Eventgen stanza via Splunk 
 s4r-attack-nk-status: ## Show whether NK attack Eventgen stanza is enabled
 	@./scripts/toggle-s4r-attack-nk.sh status
 
-test: ## Docker-free tests: MCP config shape, secret loader, token mint, keychain .env, SA-S4R mode parse
+test: ## Docker-free tests: MCP config shape, secret loader, token mint, admin curl auth, keychain .env, SA-S4R mode parse
 	@./tests/mcp-client-shape.sh
 	@./tests/with-splunk-env.sh
 	@./tests/mint-mcp-token.sh
 	@./tests/prune-mcp-tokens.sh
+	@./tests/splunk-curl.sh
 	@./tests/env-from-keychain.sh
 	@python3 -m unittest discover -s tests -p 'test_*.py' -v
 
