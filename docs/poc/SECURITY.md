@@ -18,7 +18,7 @@ We will acknowledge reports as quickly as practicable for a community PoC.
 
 ## Scope
 
-This document applies to the workspace **development PoC** context: single host, Docker, localhost URLs, and AI clients using **`npx mcp-remote`** to Splunk’s MCP endpoint with bearer tokens in client config only.
+This document applies to the workspace **development PoC** context: single host, Docker, localhost URLs, and AI clients using **`npx mcp-remote`** to Splunk’s MCP endpoint with the bearer token in a mode-600 header file.
 
 ## Credential handling
 
@@ -68,10 +68,10 @@ Confirm validity dates, key size (RSA ≥2048 or modern EC curves), and signatur
 ## Token lifecycle
 
 - Splunk MCP Server 2.1 encrypts every token with one administrator-managed key pair (created by **`scripts/mint-mcp-token.sh`** on first mint). Tokens expire no later than the key (default 180 days). Deleting the key invalidates every token; it is refused while any token is still active.
-- Each mint creates a token that stays valid for months. **`update-all`** (**`make up`**, **`make update-mcp-clients`**) rewrites every configured client with the new token, then **`scripts/prune-mcp-tokens.sh`** revokes all older **`mcp`** tokens of the MCP user. A single-client **`make update-mcp-client`** does not revoke anything, because other clients may still use an older token. **`make verify-mcp-remote`** checks the token already in each config and mints none.
-- Re-run **`make update-mcp-client`** to rotate tokens in client configs. Those update and park paths **`chmod 600`** the Claude Desktop, Claude Code, and Cursor files that hold the bearer token.
-- **`.cursor/mcp.json` and `.mcp.json` are gitignored** but this clone often lives under **OneDrive** (or similar). Sync can copy the token off-box. Use **`CURSOR_MCP_JSON`** / **`CLAUDE_CODE_MCP_JSON`** outside the synced tree, or pause sync for that file. Do not paste the token into chat or issues.
-- Claude Desktop, Claude Code, and Cursor still pass **`Authorization: Bearer …`** to **`mcp-remote`** as **`--header`**. That matches the Splunk MCP 2.0 client shape. Treat the token as visible to local process listing. `chmod 600` on the config file does not hide argv.
+- Each mint creates a token that stays valid for months. **`update-all`** (**`make up`**, **`make update-mcp-clients`**) rewrites every configured client with the new token, then **`scripts/prune-mcp-tokens.sh`** revokes all older **`mcp`** tokens of the MCP user. A single-client **`make update-mcp-client`** does the same: all clients share the header file, so every configured client moves to the new token before older ones are revoked. **`make verify-mcp-remote`** checks the token already in each config and mints none.
+- Re-run **`make update-mcp-clients`** to rotate. The token is written only to the header file (**`SPLUNK_MCP_HEADER_FILE`**, default **`~/.config/splunk-mcp/headers`**): directory 700, file 600, replaced atomically. **`make down`** (**`park all`**) deletes it. Client configs hold only its path and are still **`chmod 600`** after each update or park.
+- **`.cursor/mcp.json` and `.mcp.json` are gitignored** but this clone often lives under **OneDrive** (or similar). They no longer contain the token, and the header file sits outside the repo so sync does not copy it off-box. Configs written before **`--header-file`** still carry the token inline: run **`make update-mcp-clients`** to migrate them (**`verify-config`** rejects them). Do not paste the token into chat or issues.
+- Clients start **`mcp-remote --header-file <path>`**, so the token is not in any process’s arguments (on macOS, any local user can read those with **`ps`**). **`make verify-mcp-remote`** reads the same file (**`curl -H @file`**). Splunk’s 2.0 sample passes the token with **`--header`**; this repo deliberately does not.
 
 ## Logging and privacy
 

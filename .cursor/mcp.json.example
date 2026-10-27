@@ -3,10 +3,10 @@
     "splunk-mcp-server": {
       "args": [
         "-y",
-        "mcp-remote",
+        "mcp-remote@0.15.2",
         "https://localhost:8089/services/mcp",
-        "--header",
-        "Authorization: Bearer REPLACE_AFTER_make_update-mcp-client"
+        "--header-file",
+        "/Users/REPLACE_ME/.config/splunk-mcp/headers"
       ],
       "command": "npx",
       "env": {

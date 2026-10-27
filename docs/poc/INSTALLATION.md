@@ -105,7 +105,7 @@ Network and ports:
 make up
 ```
 
-This runs **`docker compose up -d`** using **`.env`** (or exported variables when that file is absent). It starts **`so1`**, runs **`splunk-init`** after Splunk is healthy, then mints an MCP token and updates client configs (**`MCP_UPDATE_ON_BOOT`**, default **`cursor claude-code`**), then registers SA-S4R MCP tools.
+This runs **`docker compose up -d`** using **`.env`** (or exported variables when that file is absent). It starts **`so1`**, runs **`splunk-init`** after Splunk is healthy, then mints an MCP token into the header file (**`~/.config/splunk-mcp/headers`**) and updates client configs (**`MCP_UPDATE_ON_BOOT`**, default **`cursor claude-code`**), then registers SA-S4R MCP tools.
 
 After **`splunk-init`** exits, **`scripts/mcp-client.sh update-all`** writes client configs pointing at **`https://localhost:8089/services/mcp`**. To include Claude Desktop on boot: `make up MCP_UPDATE_ON_BOOT="cursor claude-code claude"`.
 

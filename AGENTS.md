@@ -5,7 +5,7 @@ Repo-specific guidance for AI agents and contributors working in `splunk-mcp`. H
 ## What this repo is
 
 - **Purpose**: local PoC that runs **Splunk Enterprise** in Docker and exposes **Splunk MCP Server** on `https://localhost:8089/services/mcp`.
-- **Client bridge**: **Claude Desktop**, **Claude Code**, and **Cursor** use **`npx mcp-remote`** to `https://localhost:8089/services/mcp` (token minted at `make update-mcp-client` after **`splunk-init`** completes; stored only in client config, not the repo). See `make update-mcp-clients` or `make update-mcp-client MCP_CLIENT=…`. **SE / presales**: **`docs/poc/PRESALES.md`**.
+- **Client bridge**: **Claude Desktop**, **Claude Code**, and **Cursor** use **`npx mcp-remote`** to `https://localhost:8089/services/mcp` (token minted at `make update-mcp-client` after **`splunk-init`** completes; stored only in the mode-600 header file **`~/.config/splunk-mcp/headers`**, which client configs pass to **`mcp-remote --header-file`**). See `make update-mcp-clients` or `make update-mcp-client MCP_CLIENT=…`. **SE / presales**: **`docs/poc/PRESALES.md`**.
 - **Sample app**: **`SA-S4R`** (UI label **Splunk4Rookies**) — installed from the GitHub **`latest`** **`SA-S4R.spl`** (Eventgen traffic, lookups). Workshop hub: **`docs/s4r/README.md`**. SPL runbook: **`docs/s4r/SPL-CATALOG.md`**. Data: **`docs/s4r/SA-S4R-APP.md`**. Dashboard build spec: **`docs/s4r/DASHBOARD.md`**. Agents: **`docs/s4r/AGENTS.md`** + **`.cursor/agents/`**.
 
 ## Scope (in / out)
@@ -22,18 +22,18 @@ Do not add Cloud MCP testing, endpoints, or secrets-handling paths to this repo 
 
 - **Never commit secrets**:
   - `.env` (admin password, Splunkbase creds, splunker password; `chmod 600`; start from tracked **`.env.example`**)
-  - `.cursor/mcp.json` if it contains a live bearer token (expected after `make update-mcp-client MCP_CLIENT=cursor`; **`chmod 600`**, still OneDrive-synced if the clone lives under a cloud folder)
-  - `.mcp.json` (Claude Code project config) if it contains a live bearer token (expected after `make update-mcp-client MCP_CLIENT=claude-code`; gitignored, **`chmod 600`**, still OneDrive-synced like `.cursor/mcp.json`)
+  - `.cursor/mcp.json` and `.mcp.json` (Claude Code project config): gitignored and **`chmod 600`**. Current configs hold only the header-file path, but configs written before **`--header-file`** carry the token inline; **`make update-mcp-clients`** migrates them
+  - The header file (**`~/.config/splunk-mcp/headers`**) holds the live bearer token; it lives outside the repo so a cloud-synced clone does not upload it
 - **Do not paste tokens/passwords** into issues, PRs, or logs.
 - **Keep changes idempotent**: `make up` / `splunk-init` should be safe to run repeatedly.
 
 ## How the stack boots
 
-- **`make up`**: runs **`scripts/compose-up.sh`** → **`docker compose up -d`** with secrets from gitignored **`.env`**, or from the process environment when that file is absent. After **`splunk-init`** exits **0**, **`make update-mcp-clients`** (via **`update-all`**, default **`MCP_UPDATE_ON_BOOT="cursor claude-code"`**) mints one token into client configs and revokes the superseded ones. Workshop MCP tools are registered inside **`splunk-init`**. See **`Makefile`** for exact behavior.
+- **`make up`**: runs **`scripts/compose-up.sh`** → **`docker compose up -d`** with secrets from gitignored **`.env`**, or from the process environment when that file is absent. After **`splunk-init`** exits **0**, **`make update-mcp-clients`** (via **`update-all`**, default **`MCP_UPDATE_ON_BOOT="cursor claude-code"`**) mints one token into the header file, points client configs at it, and revokes the superseded ones. Workshop MCP tools are registered inside **`splunk-init`**. See **`Makefile`** for exact behavior.
 - **`compose-up.sh`** requires non-empty **`SPLUNK_ADMIN_PASSWORD`**, **`SPLUNKBASE_USER`**, **`SPLUNKBASE_PASS`**, and **`SPLUNK_SPLUNKER_PASSWORD`**, then **`scripts/wait-splunk-init.sh`** blocks until **`splunk-init`** exits **0**.
 - **`make down`**, **`make clean`**: **`scripts/mcp-client.sh park all`** first (removes **`splunk-mcp-server`** from client configs so Cursor does not reconnect with stale tokens during boot); then **`docker compose down`**. No project secrets required for park/down.
 - **`make logs`**, **`make restart`**, **`make status`**: plain **`docker`** / **`docker compose`** only—no project secrets required.
-- Bearer tokens from **`make update-mcp-clients`** are written only to client configs, not the repo.
+- Bearer tokens from **`make update-mcp-clients`** are written only to the header file (**`SPLUNK_MCP_HEADER_FILE`**, default **`~/.config/splunk-mcp/headers`**, mode 600), not to client configs or the repo. **`make down`** deletes it.
 - **Secrets:** gitignored **`.env`** from **`.env.example`** (Compose auto-loads it). On macOS, **`make env`** (**`scripts/env-from-keychain.sh`**) builds it from keychain items **`S4R-demo`** + **`splunkbase`**; **`make up`** does that when `.env` is missing. CI can export the same four variables instead. Image and timezone are tracked in **`config.env`**, not in `.env`.
 - **`splunk-init`** runs **`scripts/setup-splunk.sh`** after **`so1`** is healthy.
 
@@ -50,10 +50,10 @@ Splunk REST bootstrap (see **`docs/poc/CONFIGURATION.md` § Appendix: setup-splu
 
 ## Client configuration scripts
 
-- **`scripts/mcp-client.sh update <claude\|claude-code\|cursor>`** — single client (mints one token)
+- **`scripts/mcp-client.sh update <claude\|claude-code\|cursor>`** — add or refresh one client; same as **`update-all <client>`** (mints one token, refreshes every other configured client, revokes older tokens)
 - **`scripts/mcp-client.sh update-all [clients…]`** — one mint, write all listed clients (default: cursor claude claude-code); used by **`make update-mcp-clients`** and **`make up`** (**`MCP_UPDATE_ON_BOOT`**, default **`cursor claude-code`**); also refreshes any other configured client, then revokes superseded tokens via **`scripts/prune-mcp-tokens.sh`**
-- **`scripts/mcp-client.sh park <client\|all>`** — remove **`splunk-mcp-server`** from client configs (no secrets); **`make down`** calls this automatically
-- **`scripts/mcp-client.sh verify <client\|all>`** — config check + Splunk MCP `tools/list` using the token each client config holds (no new mint; `make verify-mcp-remote` defaults to **`all`**, which skips clients without a **`splunk-mcp-server`** entry)
+- **`scripts/mcp-client.sh park <client\|all>`** — remove **`splunk-mcp-server`** from client configs (no secrets); **`park all`** also deletes the header file; **`make down`** calls this automatically
+- **`scripts/mcp-client.sh verify <client\|all>`** — config check + Splunk MCP `tools/list` using the header file each client config points at (no new mint; `make verify-mcp-remote` defaults to **`all`**, which skips clients without a **`splunk-mcp-server`** entry)
 - **Client configs** store the **absolute path** to **`npx`** (GUI apps often lack Homebrew on `PATH`). Override at update time: **`MCP_NPX_COMMAND=/full/path/to/npx`**.
 
 ## Cursor skills (project)
@@ -87,7 +87,7 @@ Workshop agent **roles** remain in **`.cursor/agents/`** (not skills). Do not du
 - **`ENV_OUT`**: secret file to source (default **`.env`**)
 - **`DC`**: docker compose command
 - **`MCP_CLIENT`**, **`MCP_VERIFY_CLIENT`**, **`MCP_UPDATE_ON_BOOT`**: single-client update/verify (default **`cursor`** / **`all`**); boot-time client list for **`make up`** (default **`cursor claude-code`**; add **`claude`** for Claude Desktop)
-- **`SPLUNK_MCP_ENDPOINT`**, **`SPLUNK_MCP_TLS_INSECURE`**, **`MCP_NPX_COMMAND`**, **`MCP_REMOTE_PACKAGE`** (default `mcp-remote@0.8.3`): see **`docs/poc/CONFIGURATION.md`**
+- **`SPLUNK_MCP_ENDPOINT`**, **`SPLUNK_MCP_TLS_INSECURE`**, **`MCP_NPX_COMMAND`**, **`SPLUNK_MCP_HEADER_FILE`**, **`MCP_REMOTE_PACKAGE`** (default `mcp-remote@0.15.2`): see **`docs/poc/CONFIGURATION.md`**
 - **`SA-S4R_*` MCP tools** (preferred for workshop mode): **`SA-S4R_query_nk_demo_state`**, **`SA-S4R_apply_nk_demo_state`**, etc. — **`docs/s4r/MCP-TOOLS.md`**
 - **`s4r-attack-nk-enable`** / **`s4r-attack-nk-disable`** / **`s4r-attack-nk-status`**: shell fallback via Splunk config REST (reloads Eventgen; on reload failure follow the printed hint: **`make restart`**, or **`make up`** if Eventgen was left disabled) — **`docs/s4r/SA-S4R-APP.md`**
 - Editing **`s4r_mcp_tools.json`**: **`make up`** starts the exited **`splunk-init`** container again and re-registers tools. A full **`make down && make up`** is fine too.
