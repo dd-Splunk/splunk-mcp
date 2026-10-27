@@ -156,6 +156,7 @@ Deck follows **three steps** plus a **MCP architecture** primer ([MCP Server 2.0
 | Theme not applied / wrong colors | Theme name must be `splunk` in front matter **and** `/* @theme splunk */` in CSS; restart Marp preview |
 | *Theme "splunk" is not recognized by Marp for VS Code* | Register `./demo-slides/splunk.css` via `markdown.marp.themes` (see `.vscode/settings.json`); reload the window. Marp CLI does not need this. |
 | Mermaid shows as text | `html: true` in front matter and `.marprc.yml`; use `<pre class="mermaid">`; hard-refresh browser |
+| Mermaid label boxes are too small | Keep Mermaid rendered via the deck script (`mermaid.render` after `document.fonts.ready`). If a node uses a custom font, set the same font in both its Mermaid `classDef` and `splunk.css` so Mermaid measures and displays labels consistently. |
 | `marp -s` fails | Pass a **directory** (`make marp-serve`), not a file |
 | Diagram clipped on S4 | Full-width diagram slides cap SVG at 520px height; only grows when diagram is the last element |
 | VS Code preview ≠ browser | Prefer `make marp-html` + browser for Mermaid; or `make marp-serve` |
