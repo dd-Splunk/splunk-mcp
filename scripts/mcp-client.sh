@@ -9,10 +9,15 @@
 #   ./scripts/mcp-client.sh write-shape [claude claude-code cursor ...]  # fixture token, no Splunk
 #   ./scripts/mcp-client.sh verify-config <claude|claude-code|cursor|all>
 #
+# The bearer token lives only in SPLUNK_MCP_HEADER_FILE (mode 600). Client configs pass
+# mcp-remote --header-file <path>, so the token never appears in process arguments.
+#
 # Env: CURSOR_MCP_JSON, CLAUDE_MCP_JSON, CLAUDE_CODE_MCP_JSON, SPLUNK_MCP_ENDPOINT,
-#      SPLUNK_MCP_TLS_INSECURE, MCP_REMOTE_PACKAGE, MCP_SHAPE_TOKEN
+#      SPLUNK_MCP_HEADER_FILE, SPLUNK_MCP_TLS_INSECURE, MCP_REMOTE_PACKAGE, MCP_SHAPE_TOKEN
 
 set -euo pipefail
+# Every file this script writes (header file, client configs, .tmp, backups) is owner-only.
+umask 077
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
@@ -29,11 +34,14 @@ Usage:
   $(basename "$0") write-shape [claude claude-code cursor ...]  # fixture token; no mint / Docker
   $(basename "$0") verify-config <claude|claude-code|cursor|all>
 
-All clients use npx mcp-remote to https://localhost:8089/services/mcp with a minted bearer token
-(stored only in client config files, not in this repo).
+All clients use npx mcp-remote to https://localhost:8089/services/mcp with a minted bearer token.
+The token is stored only in the header file ($(header_file_path)); client configs reference it
+with --header-file, so it is not in this repo and not in process arguments.
 
 park prevents auto-reconnect with stale tokens during stack boot (make down calls this).
-update-all mints once and updates every listed client (default: cursor claude claude-code).
+park all also deletes the header file.
+update and update-all mint once, write the header file, and update the listed clients plus any
+other configured client (update-all default: cursor claude claude-code), then revoke older tokens.
 
 verify runs client config checks (all: configured clients only), then an end-to-end npx mcp-remote stdio tools/list handshake.
 write-shape / verify-config check JSON shape only (MCP_SHAPE_TOKEN fixture; no Splunk).
@@ -46,7 +54,8 @@ die() {
   exit 1
 }
 
-# Bearer tokens live in these files. Tighten mode after every write (update or park).
+# Configs hold only the header-file path now, but older ones held the token inline. Keep them
+# owner-only after every write (update or park).
 restrict_client_config_mode() {
   local file="$1"
   [[ -f "$file" ]] || return 0
@@ -77,7 +86,26 @@ npx_command() {
 }
 
 mcp_remote_spec() {
-  printf '%s' "${MCP_REMOTE_PACKAGE:-mcp-remote@0.8.3}"
+  printf '%s' "${MCP_REMOTE_PACKAGE:-mcp-remote@0.15.2}"
+}
+
+# Outside the repo so the token is not synced with a cloud-folder clone.
+header_file_path() {
+  printf '%s' "${SPLUNK_MCP_HEADER_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/splunk-mcp/headers}"
+}
+
+# Atomically replace the header file with the new token (umask 077 makes the dir 700, the file 600).
+# printf is a builtin, so the token is never an exec argument.
+write_header_file() {
+  local token="$1" file tmp
+  [[ -n "$token" && "$token" != *[[:space:]]* ]] || die "refusing to write an empty or multi-line token"
+  file="$(header_file_path)"
+  mkdir -p "$(dirname "$file")"
+  tmp="$(mktemp "${file}.XXXXXX")"
+  printf '# Written by scripts/mcp-client.sh. Splunk MCP bearer token; do not share.\nAuthorization: Bearer %s\n' \
+    "$token" >"$tmp"
+  chmod 600 "$tmp"
+  mv "$tmp" "$file"
 }
 
 merge_json_mcp_server() {
@@ -94,20 +122,20 @@ merge_json_mcp_server() {
   fi
 }
 
-# Splunk MCP Server 2.0 client shape: npx mcp-remote + encrypted bearer token
+# Splunk MCP Server 2.x client shape: npx mcp-remote + encrypted bearer token from the header file
 mcp_servers_block_mcp_remote_jq() {
-  local endpoint="$1" token="$2" npx_cmd="$3"
+  local endpoint="$1" header_file="$2" npx_cmd="$3"
   local tls_insecure="${SPLUNK_MCP_TLS_INSECURE:-1}"
   local mcp_remote
   mcp_remote="$(mcp_remote_spec)"
   jq -n \
     --arg endpoint "$endpoint" \
-    --arg token "$token" \
+    --arg header_file "$header_file" \
     --arg npx_cmd "$npx_cmd" \
     --arg mcp_remote "$mcp_remote" \
     --arg tls_insecure "$tls_insecure" \
     '{
-      args: ["-y", $mcp_remote, $endpoint, "--header", ("Authorization: Bearer " + $token)],
+      args: ["-y", $mcp_remote, $endpoint, "--header-file", $header_file],
       command: $npx_cmd
     }
     | if ($tls_insecure == "1" or $tls_insecure == "true" or $tls_insecure == "yes") then
@@ -119,17 +147,23 @@ mint_mcp_token() {
   ./scripts/mint-mcp-token.sh
 }
 
+client_label() {
+  case "$1" in
+    claude) printf '%s' "Claude Desktop" ;;
+    claude-code) printf '%s' "Claude Code" ;;
+    cursor) printf '%s' "Cursor" ;;
+  esac
+}
+
+# Point the client at the header file. The config itself holds no token.
 update_json_mcp_remote() {
-  local file="$1" label="$2" token="${3:-}"
+  local file="$1" label="$2"
   command -v jq >/dev/null 2>&1 || die "jq required for $label (brew install jq)"
   local endpoint block current npx_cmd
   endpoint=$(splunk_mcp_endpoint)
   npx_cmd="$(npx_command)"
-  if [[ -z "$token" ]]; then
-    token="$(mint_mcp_token)" || die "could not mint MCP token (is Splunk up? secrets in .env?)"
-  fi
   mkdir -p "$(dirname "$file")"
-  block=$(mcp_servers_block_mcp_remote_jq "$endpoint" "$token" "$npx_cmd")
+  block=$(mcp_servers_block_mcp_remote_jq "$endpoint" "$(header_file_path)" "$npx_cmd")
   if [[ -f "$file" ]] && current=$(cat "$file") && echo "$current" | jq empty 2>/dev/null; then
     if ! updated=$(echo "$current" | jq \
       --argjson splunk_mcp "$block" \
@@ -143,28 +177,6 @@ update_json_mcp_remote() {
   fi
   restrict_client_config_mode "$file"
   echo "Updated $label: $file ($npx_cmd mcp-remote → $endpoint)"
-  echo "Bearer token stored in client config only (not in this repo)."
-}
-
-update_claude() {
-  update_json_mcp_remote \
-    "$(client_config_path claude)" \
-    "Claude Desktop"
-  echo "Restart Claude Desktop (Cmd+Q) for changes to take effect."
-}
-
-update_claude_code() {
-  update_json_mcp_remote \
-    "$(client_config_path claude-code)" \
-    "Claude Code"
-  echo "Start a new Claude Code session (or run /mcp) and approve the project server splunk-mcp-server."
-}
-
-update_cursor() {
-  update_json_mcp_remote \
-    "$(client_config_path cursor)" \
-    "Cursor"
-  echo "Restart Cursor or reload MCP servers."
 }
 
 park_json_mcp_remote() {
@@ -181,21 +193,22 @@ park_json_mcp_remote() {
 }
 
 park_client() {
-  local client="$1"
-  case "$client" in
-    claude) park_json_mcp_remote "$(client_config_path claude)" "Claude Desktop" ;;
-    claude-code) park_json_mcp_remote "$(client_config_path claude-code)" "Claude Code" ;;
-    cursor) park_json_mcp_remote "$(client_config_path cursor)" "Cursor" ;;
-  esac
+  park_json_mcp_remote "$(client_config_path "$1")" "$(client_label "$1")"
 }
 
 cmd_park() {
-  local target="${1:-all}"
+  local target="${1:-all}" header_file
   case "$target" in
     all)
       for c in $VALID_CLIENTS; do
         park_client "$c"
       done
+      # No client points at the token any more, so do not leave it on disk.
+      header_file="$(header_file_path)"
+      if [[ -f "$header_file" ]]; then
+        rm -f "$header_file"
+        echo "Removed MCP header file $header_file"
+      fi
       ;;
     claude | claude-code | cursor)
       valid_client "$target" || die "unknown client '$target' (use: $VALID_CLIENTS or all)"
@@ -222,8 +235,8 @@ cmd_update_all() {
     valid_client "$client" || die "unknown client '$client' (use: $VALID_CLIENTS)"
   done
 
-  # Pruning below invalidates every older token, so refresh any other client that
-  # already holds one instead of leaving it with a dead token.
+  # Pruning below invalidates every older token, so refresh any other configured
+  # client too (this also moves configs with an inline token to the header file).
   for client in $VALID_CLIENTS; do
     if [[ " ${clients[*]} " != *" $client "* ]] && client_configured "$client"; then
       clients+=("$client")
@@ -233,23 +246,14 @@ cmd_update_all() {
   endpoint=$(splunk_mcp_endpoint)
   npx_cmd="$(npx_command)"
   token="$(mint_mcp_token)" || die "could not mint MCP token (is Splunk up? secrets in .env?)"
+  write_header_file "$token"
 
   for client in "${clients[@]}"; do
-    case "$client" in
-      claude)
-        update_json_mcp_remote "$(client_config_path claude)" "Claude Desktop" "$token"
-        ;;
-      claude-code)
-        update_json_mcp_remote "$(client_config_path claude-code)" "Claude Code" "$token"
-        ;;
-      cursor)
-        update_json_mcp_remote "$(client_config_path cursor)" "Cursor" "$token"
-        ;;
-    esac
+    update_json_mcp_remote "$(client_config_path "$client")" "$(client_label "$client")"
   done
 
   echo "Minted one token; updated: ${clients[*]} ($npx_cmd mcp-remote → $endpoint)"
-  echo "Bearer token stored in client configs only (not in this repo)."
+  echo "Bearer token stored only in $(header_file_path) (mode 600; not in client configs or this repo)."
   pruned="$(./scripts/prune-mcp-tokens.sh)" \
     && echo "Revoked $pruned superseded MCP token(s)." \
     || echo "Warning: could not revoke superseded MCP tokens (they stay valid until they expire)." >&2
@@ -274,7 +278,7 @@ client_config_path() {
 
 verify_client_config() {
   local client="$1"
-  local path
+  local path header_file
   path=$(client_config_path "$client")
   case "$client" in
     claude | claude-code | cursor)
@@ -287,13 +291,25 @@ verify_client_config() {
       # accept mcp-remote or mcp-remote@*.
       jq -e '.mcpServers["splunk-mcp-server"].args | map(tostring) | any(test("^mcp-remote(@|$)"))' "$path" >/dev/null \
         || die "$client splunk-mcp-server should use mcp-remote (run: make update-mcp-client MCP_CLIENT=$client)"
+      # Older configs passed the token inline with --header, where any local user sees it in ps.
+      if jq -e '.mcpServers["splunk-mcp-server"].args | map(tostring) | any(test("^Authorization:"; "i"))' \
+        "$path" >/dev/null; then
+        die "$client config passes the bearer token on the command line (run: make update-mcp-clients)"
+      fi
+      header_file="$(client_header_file "$client")"
+      [[ -n "$header_file" ]] \
+        || die "$client splunk-mcp-server has no --header-file (run: make update-mcp-client MCP_CLIENT=$client)"
+      [[ -r "$header_file" ]] \
+        || die "$client header file missing: $header_file (run: make update-mcp-client MCP_CLIENT=$client)"
       ;;
   esac
   echo "OK: $client config contains splunk-mcp-server ($path)"
 }
 
+# Header file holds "Authorization: Bearer <token>"; curl reads it with -H @file, so the
+# token is not in curl's arguments.
 verify_splunk_mcp() {
-  local token="${1:?}"
+  local header_file="${1:?}"
   local endpoint tmp
   endpoint=$(splunk_mcp_endpoint)
   tmp=$(mktemp)
@@ -302,7 +318,7 @@ verify_splunk_mcp() {
   trap cleanup RETURN
 
   if ! curl -kfsS --connect-timeout 10 --max-time 60 -X POST "$endpoint" \
-    -H "Authorization: Bearer ${token}" \
+    -H "@${header_file}" \
     -H 'Content-Type: application/json' \
     -H 'Accept: application/json' \
     --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' >"$tmp" 2>&1; then
@@ -316,7 +332,7 @@ verify_splunk_mcp() {
 
 # Same path clients use: stdio → npx mcp-remote → HTTPS /services/mcp
 verify_mcp_remote_stdio() {
-  local token="${1:?}"
+  local header_file="${1:?}"
   local endpoint npx_cmd tls_insecure mcp_remote
   endpoint=$(splunk_mcp_endpoint)
   npx_cmd="$(npx_command)"
@@ -324,7 +340,7 @@ verify_mcp_remote_stdio() {
   tls_insecure="${SPLUNK_MCP_TLS_INSECURE:-1}"
   MCP_NPX_COMMAND="$npx_cmd" SPLUNK_MCP_ENDPOINT="$endpoint" SPLUNK_MCP_TLS_INSECURE="$tls_insecure" \
     MCP_REMOTE_PACKAGE="$mcp_remote" \
-    python3 - "$token" <<'PY' || die "mcp-remote stdio tools/list failed (see errors above)"
+    python3 - "$header_file" <<'PY' || die "mcp-remote stdio tools/list failed (see errors above)"
 import json
 import os
 import select
@@ -332,12 +348,11 @@ import subprocess
 import sys
 import time
 
-token = sys.argv[1]
+header_file = sys.argv[1]
 npx_cmd = os.environ["MCP_NPX_COMMAND"]
 endpoint = os.environ["SPLUNK_MCP_ENDPOINT"]
-mcp_remote = os.environ.get("MCP_REMOTE_PACKAGE", "mcp-remote@0.8.3")
+mcp_remote = os.environ.get("MCP_REMOTE_PACKAGE", "mcp-remote@0.15.2")
 tls_insecure = os.environ.get("SPLUNK_MCP_TLS_INSECURE", "1")
-header = f"Authorization: Bearer {token}"
 
 env = os.environ.copy()
 if tls_insecure.lower() in ("1", "true", "yes"):
@@ -346,7 +361,7 @@ else:
     env.pop("NODE_TLS_REJECT_UNAUTHORIZED", None)
 
 proc = subprocess.Popen(
-    [npx_cmd, "-y", mcp_remote, endpoint, "--header", header],
+    [npx_cmd, "-y", mcp_remote, endpoint, "--header-file", header_file],
     stdin=subprocess.PIPE,
     stdout=subprocess.PIPE,
     stderr=subprocess.PIPE,
@@ -416,29 +431,27 @@ PY
   echo "OK: npx mcp-remote stdio tools/list ($npx_cmd → $endpoint)."
 }
 
+# One client is never updated alone: the header file is shared, and pruning revokes
+# the old token, so every configured client moves to the new token together.
 cmd_update() {
   local client="${1:?}"
   valid_client "$client" || die "unknown client '$client' (use: $VALID_CLIENTS)"
-  case "$client" in
-    claude) update_claude ;;
-    claude-code) update_claude_code ;;
-    cursor) update_cursor ;;
-  esac
+  cmd_update_all "$client"
 }
 
-# Bearer token stored in a client config (empty when absent).
-client_token() {
+# --header-file path in a client config (empty when absent).
+client_header_file() {
   local path
   path=$(client_config_path "$1")
   [[ -f "$path" ]] || return 0
-  jq -r '.mcpServers["splunk-mcp-server"].args // []
-    | map(tostring | select(startswith("Authorization: Bearer "))) | first // ""
-    | sub("^Authorization: Bearer "; "")' "$path" 2>/dev/null || true
+  jq -r '.mcpServers["splunk-mcp-server"].args // [] | map(tostring)
+    | (index("--header-file")) as $i
+    | if $i == null then "" else (.[$i + 1] // "") end' "$path" 2>/dev/null || true
 }
 
-# Checks the token each configured client actually holds (no new token is minted).
+# Checks the token each configured client actually uses (no new token is minted).
 cmd_verify() {
-  local target="${1:?}" c token seen=" "
+  local target="${1:?}" c header_file seen=" "
   local targets=()
   cmd_verify_config "$target"
   if [[ "$target" == all ]]; then
@@ -449,13 +462,12 @@ cmd_verify() {
     targets=("$target")
   fi
   for c in "${targets[@]}"; do
-    token="$(client_token "$c")"
-    [[ -n "$token" ]] || die "$c config has no bearer token (run: make update-mcp-client MCP_CLIENT=$c)"
-    [[ "$seen" != *" $token "* ]] || continue
-    seen+="$token "
-    echo "Checking the token in the $c config…"
-    verify_splunk_mcp "$token"
-    verify_mcp_remote_stdio "$token"
+    header_file="$(client_header_file "$c")"
+    [[ "$seen" != *" $header_file "* ]] || continue
+    seen+="$header_file "
+    echo "Checking the token in $header_file ($c)…"
+    verify_splunk_mcp "$header_file"
+    verify_mcp_remote_stdio "$header_file"
   done
 }
 
@@ -464,18 +476,8 @@ shape_token() {
   printf '%s' "${MCP_SHAPE_TOKEN:-shape-test-placeholder}"
 }
 
-write_client_shape() {
-  local client="$1" token="$2"
-  case "$client" in
-    claude) update_json_mcp_remote "$(client_config_path claude)" "Claude Desktop" "$token" ;;
-    claude-code) update_json_mcp_remote "$(client_config_path claude-code)" "Claude Code" "$token" ;;
-    cursor) update_json_mcp_remote "$(client_config_path cursor)" "Cursor" "$token" ;;
-    *) die "unknown client '$client' (use: $VALID_CLIENTS)" ;;
-  esac
-}
-
 cmd_write_shape() {
-  local clients=() client token
+  local clients=() client
   if [[ $# -eq 0 ]]; then
     clients=(cursor claude claude-code)
   else
@@ -485,9 +487,9 @@ cmd_write_shape() {
   for client in "${clients[@]}"; do
     valid_client "$client" || die "unknown client '$client' (use: $VALID_CLIENTS)"
   done
-  token="$(shape_token)"
+  write_header_file "$(shape_token)"
   for client in "${clients[@]}"; do
-    write_client_shape "$client" "$token"
+    update_json_mcp_remote "$(client_config_path "$client")" "$(client_label "$client")"
   done
   for client in "${clients[@]}"; do
     verify_client_config "$client"

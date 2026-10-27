@@ -25,7 +25,7 @@ Use this when changing the Splunk Enterprise image, Splunkbase app pins, or the 
    - Keep the comments beside **`SPLUNK_APPS_URL`** current so troubleshooting can map a failed URL back to an app.
    - Keep the pin table in this section in sync with `compose.yml`.
 3. **`mcp-remote`**
-   - Change **`MCP_REMOTE_PACKAGE`** only when a client-side bridge update is needed; the Makefile default is the repo-wide default.
+   - Change **`MCP_REMOTE_PACKAGE`** only when a client-side bridge update is needed; the default in **`scripts/mcp-client.sh`** is the repo-wide default. The version must support **`--header-file`**.
    - Re-run **`make update-mcp-client MCP_CLIENT=<client>`** after changing the package so client configs pick up the new spec.
 4. **Verification**
    - Start from a clean or compatible volume set, then run **`make up`** and **`make verify`**.
@@ -96,7 +96,7 @@ Runs after `so1` is **healthy**. Uses Alpine, installs `curl`, `jq`, and `bash`,
 - **`scripts/register-s4r-mcp-tools.sh`** — called by **`setup-splunk.sh`** inside **`splunk-init`**: waits up to 5 minutes for the KV Store to be ready, `POST /services/mcp_tools` for **SA-S4R**, then enable each tool.
 - **`scripts/mint-mcp-token.sh`** — after init: waits for Splunk API, creates the MCP encryption key pair if missing (`POST /services/mcp_token/key-pair`, 201 or 409), then mints a token for **`splunker`** (`POST /services/mcp_token/tokens`) and prints it to stdout.
 - **`scripts/prune-mcp-tokens.sh`** — after `update-all`: deletes every older active token of the MCP user from the MCP Server token registry (`GET`/`DELETE /services/mcp_token/tokens`), keeping the newest (`--dry-run` lists them). Prints the number deleted.
-- **`make update-mcp-client`** writes the token into Claude / Cursor configs only.
+- **`make update-mcp-client`** writes the token into the header file only; client configs reference it.
 
 ### Alert tools added in MCP Server 2.1
 
@@ -204,29 +204,29 @@ Official references (product documentation; URLs say “cloud-platform” but ap
 | Aspect | Detail |
 | ------ | ------ |
 | **When** | Local Enterprise Docker PoC, workshops, Claude Desktop, Claude Code, Cursor, or any client using **`npx mcp-remote`** |
-| **How** | Mint encrypted token (MCP app UI or **`scripts/mint-mcp-token.sh`** → `/services/mcp_token/tokens` REST); client sends **`Authorization: Bearer <token>`** |
-| **Automation** | **`make update-mcp-clients`** writes token into client configs only (not git) |
+| **How** | Mint encrypted token (MCP app UI or **`scripts/mint-mcp-token.sh`** → `/services/mcp_token/tokens` REST); client sends **`Authorization: Bearer <token>`**, read by **`mcp-remote --header-file`** |
+| **Automation** | **`make update-mcp-clients`** writes the token into the header file (**`SPLUNK_MCP_HEADER_FILE`**, default **`~/.config/splunk-mcp/headers`**, mode 600) and points client configs at it. The token is not in client configs, process arguments, or git |
 | **Splunk side** | User needs **`mcp_tool_execute`**; **`admin`** mints on behalf of **`splunker`** (needs **`mcp_tool_admin`**, which `admin` has), so **`splunker`** needs no token-management capability |
 | **Security** | Encrypted tokens work **only** for MCP (not general Splunk REST). All tokens are encrypted with one administrator-managed **key pair** (180-day validity by default, 365 max); a token never outlives its key. Plaintext and previous-key tokens are rejected. Rotation: [TROUBLESHOOTING.md § MCP encryption key expired](TROUBLESHOOTING.md#issue-mcp-encryption-key-expired-or-needs-rotation) |
 
-Client shape matches Splunk’s 2.0 sample: **`npx mcp-remote`**, streamable HTTP endpoint, bearer header. For self-signed localhost certs, server **`ssl_verify=false`** (setup script) plus client **`NODE_TLS_REJECT_UNAUTHORIZED=0`** when **`SPLUNK_MCP_TLS_INSECURE=1`**.
+Client shape follows Splunk’s 2.0 sample (**`npx mcp-remote`**, streamable HTTP endpoint, bearer header), except the header comes from **`--header-file`** rather than **`--header`**. Process arguments are visible to every local user, so a token passed with **`--header`** would show up in **`ps`**. For self-signed localhost certs, server **`ssl_verify=false`** (setup script) plus client **`NODE_TLS_REJECT_UNAUTHORIZED=0`** when **`SPLUNK_MCP_TLS_INSECURE=1`**.
 
-Do not store Cloud MCP bearer tokens in **`.env`** — that file is for **stack boot** secrets only (`SPLUNK_ADMIN_PASSWORD`, Splunkbase, `SPLUNK_SPLUNKER_PASSWORD`). MCP runtime tokens belong in client config (**.cursor/mcp.json**), minted by **`make update-mcp-clients`**.
+Do not store Cloud MCP bearer tokens in **`.env`** — that file is for **stack boot** secrets only (`SPLUNK_ADMIN_PASSWORD`, Splunkbase, `SPLUNK_SPLUNKER_PASSWORD`). MCP runtime tokens belong in the header file, minted by **`make update-mcp-clients`**.
 
 ## Claude Desktop configuration
 
 - Path: **`~/Library/Application Support/Claude/claude_desktop_config.json`** (macOS).
-- Matches Splunk MCP Server **2.0** [client configuration](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/connecting-to-the-mcp-server-and-settings): **`npx mcp-remote`**, endpoint **`https://localhost:8089/services/mcp`**, **`Authorization: Bearer`** with an **encrypted** token.
-- `make update-mcp-client MCP_CLIENT=claude` mints the token via **`scripts/mint-mcp-token.sh`** (Splunk app `/services/mcp_token/tokens` REST). Splunk must be up. Token is stored **only** in Claude’s config, not in this repo. The file is **`chmod 600`** after each update or park.
+- Matches Splunk MCP Server **2.0** [client configuration](https://help.splunk.com/en/splunk-cloud-platform/mcp-server-for-splunk-platform/2.0/connecting-to-the-mcp-server-and-settings): **`npx mcp-remote`**, endpoint **`https://localhost:8089/services/mcp`**, **`Authorization: Bearer`** with an **encrypted** token (via **`--header-file`**).
+- `make update-mcp-client MCP_CLIENT=claude` mints the token via **`scripts/mint-mcp-token.sh`** (Splunk app `/services/mcp_token/tokens` REST). Splunk must be up. The token is stored **only** in the header file; Claude’s config holds its path. Both are **`chmod 600`**. **`update-mcp-client`** also refreshes any other configured client, because the header file is shared and older tokens are revoked.
 - **`NODE_TLS_REJECT_UNAUTHORIZED=0`** is written when **`SPLUNK_MCP_TLS_INSECURE`** is `1` (default for this PoC; self-signed Splunk only). Set **`SPLUNK_MCP_TLS_INSECURE=0`** to omit `env` if using proper TLS.
 - Uses **`jq`**; backs up invalid JSON with a timestamped file.
 
 ## Cursor configuration
 
-- Default output: **`.cursor/mcp.json`** (override with `CURSOR_MCP_JSON`; gitignored if it contains a live token). **`chmod 600`** after each update or park.
+- Default output: **`.cursor/mcp.json`** (override with `CURSOR_MCP_JSON`; gitignored). **`chmod 600`** after each update or park.
 - Same **2.0** `npx mcp-remote` entry as Claude (**`make update-mcp-client MCP_CLIENT=cursor`**); endpoint **`https://localhost:8089/services/mcp`** only.
 - Example shape: **`.cursor/mcp.json.example`** (see Splunk doc link in Claude section above).
-- **Cloud-synced workspaces (OneDrive, iCloud, Dropbox):** gitignore does **not** stop the sync client from uploading **`.cursor/mcp.json`**. Prefer a workspace that is not cloud-synced, or set **`CURSOR_MCP_JSON`** to a path outside the synced tree. `chmod 600` only limits local UNIX sharing; the file can still leave the machine via sync.
+- **Cloud-synced workspaces (OneDrive, iCloud, Dropbox):** gitignore does **not** stop the sync client from uploading **`.cursor/mcp.json`**. It holds only the header-file path, and the header file lives outside the repo, so the token does not sync. Do not set **`SPLUNK_MCP_HEADER_FILE`** inside a synced folder.
 
 ## Claude Code configuration
 
@@ -242,7 +242,8 @@ Do not store Cloud MCP bearer tokens in **`.env`** — that file is for **stack 
 | -------- | ------- | ------- |
 | `SPLUNK_MCP_ENDPOINT` | `mcp-client.sh` | Splunk MCP URL for `mcp-remote` (default `https://localhost:8089/services/mcp`) |
 | `SPLUNK_MCP_TLS_INSECURE` | `mcp-client.sh` | If `1` (default), add `NODE_TLS_REJECT_UNAUTHORIZED=0` to the Claude/Cursor config `env` (dev/self-signed only) |
-| `MCP_REMOTE_PACKAGE` | `mcp-client.sh` | npm package for `npx` (default `mcp-remote@0.8.3`) |
+| `MCP_REMOTE_PACKAGE` | `mcp-client.sh` | npm package for `npx` (default `mcp-remote@0.15.2`; needs `--header-file`) |
+| `SPLUNK_MCP_HEADER_FILE` | `mcp-client.sh` | Header file holding the bearer token (default `~/.config/splunk-mcp/headers`, or `$XDG_CONFIG_HOME/splunk-mcp/headers`; mode 600) |
 | `MCP_NPX_COMMAND` | `mcp-client.sh` | Absolute path to `npx` when GUI apps lack Node on `PATH` |
 | `CURSOR_MCP_JSON` | `mcp-client.sh` (cursor) | Output path |
 | `CLAUDE_MCP_JSON` | `mcp-client.sh` (claude) | Output path (default macOS Claude Desktop config) |

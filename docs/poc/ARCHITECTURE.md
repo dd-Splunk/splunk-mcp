@@ -6,7 +6,7 @@ This repository packages a **repeatable local environment** for:
 
 1. Running **Splunk Enterprise** in Docker with the **Splunk MCP Server** application from Splunkbase.
 2. Provisioning a dedicated Splunk user suitable for MCP tool execution.
-3. Wiring **Claude Desktop**, **Claude Code**, and **Cursor** via **`npx mcp-remote`** (encrypted bearer token in client config only).
+3. Wiring **Claude Desktop**, **Claude Code**, and **Cursor** via **`npx mcp-remote`** (encrypted bearer token in a mode-600 header file, passed with **`--header-file`**).
 
 It is a **proof-of-concept**: fast iteration on Splunk + LLM tooling, not a production deployment template.
 
@@ -16,7 +16,7 @@ The [Model Context Protocol](https://modelcontextprotocol.io/) lets a client (Cl
 
 - Installing dependencies (Splunkbase downloads at container start).
 - Post-start configuration (SSL verify flag for dev, user/role/token).
-- MCP client configuration with encrypted bearer tokens (client files only, not committed).
+- MCP client configuration pointing at a mode-600 header file that holds the encrypted bearer token (outside the repo, not committed).
 
 ## Splunkbase applications
 
@@ -32,7 +32,7 @@ Per [Splunk MCP Server 2.0](https://help.splunk.com/en/splunk-cloud-platform/mcp
 
 1. Copy **`.env.example`** to gitignored **`.env`** and fill the four required secrets. Non-secret settings are in tracked **`config.env`**.
 2. **`make up`** sources **`.env`** when it exists. CI can export the same variables instead.
-3. **Clients:** tokens minted by **`scripts/mint-mcp-token.sh`** after **`splunk-init`**; stored only in client configs.
+3. **Clients:** tokens minted by **`scripts/mint-mcp-token.sh`** after **`splunk-init`**; stored only in the header file **`~/.config/splunk-mcp/headers`** (mode 600). Client configs hold its path, so the token is not in process arguments.
 
 ## Sample data (SA-S4R)
 
@@ -124,10 +124,10 @@ make up
   │        ├─ Create user: splunker
   │        └─ register-s4r-mcp-tools (wait for KV Store, POST /services/mcp_tools for SA-S4R)
   └─ host (after splunk-init exits 0)
-     └─ update-all (MCP_UPDATE_ON_BOOT; mint token into client configs, revoke older tokens)
+     └─ update-all (MCP_UPDATE_ON_BOOT; mint token into header file, point client configs at it, revoke older tokens)
 ```
 
-**Shutdown:** `make down` runs **`mcp-client.sh park all`** first (removes `splunk-mcp-server` from client configs) so clients do not reconnect with stale tokens during the next boot.
+**Shutdown:** `make down` runs **`mcp-client.sh park all`** first (removes `splunk-mcp-server` from client configs and deletes the header file) so clients do not reconnect with stale tokens during the next boot.
 
 ### End-to-end sequence
 
@@ -183,7 +183,7 @@ sequenceDiagram
     Make->>DC: wait-splunk-init.sh until exit 0
     Make->>MC: update-all cursor
     MC->>SO1: ensure MCP key pair (201/409), mint token for splunker
-    MC->>Cur: write bearer token (mode 600)
+    MC->>Cur: write header file with bearer token (mode 600) and point config at it
     end
 
     rect rgba(128,128,128,0.08)
@@ -193,7 +193,7 @@ sequenceDiagram
     Op->>Make: make verify-mcp-remote
     Make->>MCP: tools/list direct
     Make->>Rem: tools/list via stdio
-    Rem->>MCP: tools/list with bearer token
+    Rem->>MCP: tools/list with bearer token from --header-file
     MCP-->>Op: tool list incl. 5 SA-S4R_*
     end
 
@@ -229,7 +229,7 @@ sequenceDiagram
 1. **Container to Container**: Network isolation via bridge network
 2. **API Authentication**:
    - Admin operations: Username/password (admin user)
-   - MCP operations: Bearer token from `scripts/mint-mcp-token.sh` in client config
+   - MCP operations: Bearer token from `scripts/mint-mcp-token.sh` in the header file the client config points at
 3. **Transport Security**: HTTPS with self-signed certificates (localhost only)
 4. **Credential Management**: gitignored `.env` (or exported variables in CI)
 
@@ -266,15 +266,15 @@ Claude Desktop
       │
       ├─ Reads: ~/Library/Application Support/Claude/claude_desktop_config.json (macOS)
       │
-      └─ Spawns: npx mcp-remote → https://localhost:8089/services/mcp + encrypted bearer token
+      └─ Spawns: npx mcp-remote → https://localhost:8089/services/mcp --header-file <path to encrypted bearer token>
 ```
 
 ### Token Management
 
 - **Generation**: After **`splunk-init`** exits, the host runs **`scripts/mint-mcp-token.sh`** (admin REST → Splunk MCP Server **`/services/mcp_token`**: create the encryption key pair if missing, then a token for **`splunker`**). **`setup-splunk.sh` does not mint tokens.**
-- **Storage**: Client config files only (not the repo).
+- **Storage**: Header file only (`SPLUNK_MCP_HEADER_FILE`, default `~/.config/splunk-mcp/headers`, mode 600). Client configs hold its path; neither is in the repo.
 - **Expiry**: Splunk MCP Server 2.1 caps every token at the encryption key's validity (key default 180 days, max 365). When the key expires, **all** tokens stop working until the key is rotated (see **`docs/poc/TROUBLESHOOTING.md`**).
-- **Renewal**: Re-run `make update-mcp-client` to mint a new token.
+- **Renewal**: Re-run `make update-mcp-clients` to mint a new token; every configured client picks it up from the header file.
 
 ## Configuration Files
 
@@ -316,11 +316,11 @@ Host **Claude** / **Cursor** configs are updated by **`scripts/mcp-client.sh`** 
 1. splunk-init waits for healthcheck to pass
 2. Runs setup-splunk.sh (roles, MCP user, Eventgen, SA-S4R tool registration — no token mint)
 3. splunk-init container exits (`restart: "no"`)
-4. Host runs `update-all` (`MCP_UPDATE_ON_BOOT`) → mints a bearer token into client configs and revokes superseded tokens
+4. Host runs `update-all` (`MCP_UPDATE_ON_BOOT`) → mints a bearer token into the header file, points client configs at it, and revokes superseded tokens
 
 ### MCP Operation
 
-1. Client spawns **`npx mcp-remote`** with streamable HTTP to `/services/mcp` and an encrypted bearer token
+1. Client spawns **`npx mcp-remote`** with streamable HTTP to `/services/mcp`; it reads the encrypted bearer token from the header file
 2. Splunk MCP Server processes the request
 3. Built-in tools (`splunk_*`, `saia_*`) and **app tools** (`SA-S4R_*`) execute as **`splunker`**
 4. Response is returned to the client
