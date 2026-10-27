@@ -361,7 +361,7 @@ flowchart TD
 
 ### REST interactions
 
-The script uses **basic auth** on every `auth_curl` call: `-u "admin:${SPLUNK_ADMIN_PASSWORD}"` with `curl -k`.
+The script uses **basic auth** on every `auth_curl` call: **`splunk_curl -k`** (**`scripts/splunk-api-env.sh`**) passes `admin:${SPLUNK_ADMIN_PASSWORD}` to curl as a `-K` config on fd 3, never as `-u`, so the password is not in process arguments. The `splunker` password reaches curl on stdin (`--data-urlencode password@-`).
 
 | Step | Method | Path (relative to `https://HOST:PORT`) | Notes |
 | ---- | ------ | ---------------------------------------- | ----- |

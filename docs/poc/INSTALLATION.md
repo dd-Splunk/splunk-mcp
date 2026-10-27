@@ -127,7 +127,7 @@ make status    # splunk-init line + "Splunk is ready ✓"; exits non-zero if ini
 REST smoke test (replace `<password>`):
 
 ```bash
-curl -k -u "admin:<password>" https://localhost:8089/services/server/info
+curl -k -u admin https://localhost:8089/services/server/info
 ```
 
 ## MCP clients

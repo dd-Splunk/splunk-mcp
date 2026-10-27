@@ -53,7 +53,7 @@ auth_curl() { # $@ = curl args excluding auth
     esac
   done
 
-  if code="$(curl -k --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" -u "${SPLUNK_REST_USER}:${SPLUNK_ADMIN_PASSWORD}" -sS -o "${tmp_body}" -w "%{http_code}" "$@")"; then
+  if code="$(splunk_curl -k --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" -sS -o "${tmp_body}" -w "%{http_code}" "$@")"; then
     :
   else
     code="000"
@@ -262,20 +262,23 @@ if is_truthy "${FORCE_SPLUNK_SPLUNKER_PASSWORD}"; then
     echo "❌ FORCE_SPLUNK_SPLUNKER_PASSWORD is set but SPLUNK_SPLUNKER_PASSWORD is empty." >&2
     exit 1
   }
-  set -- --data-urlencode "password=${SPLUNK_SPLUNKER_PASSWORD}" "$@"
 fi
 
+# The splunker password reaches curl on stdin (password@-), never as an argument.
+# printf is a builtin, so it is not an exec argument either. Exactly one password@- per
+# request: a second one would read the drained stdin and send an empty password.
 if [ "${user_exists}" = "1" ]; then
+  is_truthy "${FORCE_SPLUNK_SPLUNKER_PASSWORD}" && set -- --data-urlencode "password@-" "$@"
   user_ok_msg="✅ Updated user ${SPLUNK_MCP_USER}"
   is_truthy "${FORCE_SPLUNK_SPLUNKER_PASSWORD}" && user_ok_msg="${user_ok_msg} (password + roles)"
   ! is_truthy "${FORCE_SPLUNK_SPLUNKER_PASSWORD}" && user_ok_msg="${user_ok_msg} (roles)"
-  must auth_curl -X POST "${USER_URL}" "$@" \
+  printf '%s' "${SPLUNK_SPLUNKER_PASSWORD}" | must auth_curl -X POST "${USER_URL}" "$@" \
     -H "Content-Type: application/x-www-form-urlencoded" >/dev/null
   echo "${user_ok_msg}"
 fi
 if [ "${user_exists}" = "0" ]; then
-  must auth_curl -X POST "${SPLUNK_URL}/services/authentication/users" \
-    --data-urlencode "name=${SPLUNK_MCP_USER}" --data-urlencode "password=${SPLUNK_SPLUNKER_PASSWORD}" "$@" \
+  printf '%s' "${SPLUNK_SPLUNKER_PASSWORD}" | must auth_curl -X POST "${SPLUNK_URL}/services/authentication/users" \
+    --data-urlencode "name=${SPLUNK_MCP_USER}" --data-urlencode "password@-" "$@" \
     -H "Content-Type: application/x-www-form-urlencoded" >/dev/null
   echo "✅ Created user ${SPLUNK_MCP_USER} (roles user + mcp_user)"
 fi
