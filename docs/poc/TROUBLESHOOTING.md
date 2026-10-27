@@ -593,8 +593,8 @@ Dashboard, NK threat mode, and parallel agent issues: **[s4r/TROUBLESHOOTING.md]
 
 - REST basic auth as `splunker` returns HTTP **500**: *"For security reasons, your account has been locked out"*
 - `GET .../authentication/users/splunker?output_mode=json` shows **`"locked-out": true`**
-- **`make verify-mcp-remote MCP_VERIFY_CLIENT=cursor`** may still pass while Splunk REST is locked (direct `tools/list` uses admin token mint; stdio `mcp-remote` path is also exercised)
-- **MCP bearer token** (`tools/list`, `splunk_run_query`) may still work — token mint uses **`admin`**, not `splunker` password
+- **`make verify-mcp-remote MCP_VERIFY_CLIENT=cursor`** may still pass while Splunk REST is locked (it reuses the bearer token in the header file, for both the direct `tools/list` and the stdio `mcp-remote` path)
+- **MCP bearer token** (`tools/list`, `splunk_run_query`) may still work — it does not use the `splunker` password, and minting authenticates as **`admin`**
 
 **Cause**: Splunk locks local accounts after repeated failed login attempts. Common PoC triggers:
 
