@@ -59,7 +59,7 @@ Check mode: **`SA-S4R_query_nk_demo_state`**. Agentic analysis: [AGENTS.md](../s
 
 ### 2. Splunk Initialization Container (splunk-init)
 
-- **Image**: `alpine:latest` (installs `curl` and `jq` at container start)
+- **Image**: `alpine:3.21` (installs `curl`, `jq`, and `bash` at container start)
 - **Purpose**: Runs initialization setup script after Splunk is healthy
 - **Dependency**: Waits for `so1` service to be healthy
 - **Restart Policy**: No (runs once and stops)
@@ -120,7 +120,7 @@ make up
   │  └─ splunk-init (waits for so1 healthy)
   │     └─ setup-splunk.sh
   │        ├─ Enable Eventgen modinput (required; init fails if still disabled)
-  │        ├─ Create/update role: mcp_user (mcp_tool_execute, s4r_workshop_control)
+  │        ├─ Create/update role: mcp_user (mcp_tool_execute, s4r_workshop_control, srchJobsQuota=5)
   │        ├─ Create user: splunker
   │        └─ register-s4r-mcp-tools (wait for KV Store, POST /services/mcp_tools for SA-S4R)
   └─ host (after splunk-init exits 0)
@@ -143,7 +143,7 @@ sequenceDiagram
     participant SO1 as so1 (Splunk)
     participant Init as splunk-init (setup-splunk.sh)
     participant MC as mcp-client.sh
-    participant Cur as .cursor/mcp.json
+    participant Cur as client configs (.cursor/mcp.json, .mcp.json)
     participant Rem as npx mcp-remote
     participant MCP as MCP Server /services/mcp
     participant S4R as SA-S4R s4r_workshop_mode
@@ -172,7 +172,7 @@ sequenceDiagram
     DC->>Init: start (depends_on so1 healthy)
     Init->>SO1: enable Eventgen modinput and verify disabled=0
     Init->>SO1: MCP Server ssl_verify=false
-    Init->>SO1: role mcp_user + mcp_tool_execute + s4r_workshop_control
+    Init->>SO1: role mcp_user + mcp_tool_execute + s4r_workshop_control, srchJobsQuota=5
     Init->>SO1: user splunker with roles user + mcp_user
     loop every 5s, up to 300s
         Init->>SO1: GET /services/kvstore/status
@@ -181,9 +181,10 @@ sequenceDiagram
     Init->>SO1: enable each SA-S4R_* tool and reload saved searches
     Init-->>DC: exit 0
     Make->>DC: wait-splunk-init.sh until exit 0
-    Make->>MC: update-all cursor
+    Make->>MC: update-all cursor claude-code
     MC->>SO1: ensure MCP key pair (201/409), mint token for splunker
-    MC->>Cur: write header file with bearer token (mode 600) and point config at it
+    MC->>Cur: write header file with bearer token (mode 600) and point configs at it
+    MC->>SO1: revoke superseded MCP tokens (prune-mcp-tokens.sh)
     end
 
     rect rgba(128,128,128,0.08)
@@ -191,7 +192,7 @@ sequenceDiagram
     Op->>Make: make status
     Make->>SO1: splunk-init exit code + API ready
     Op->>Make: make verify-mcp-remote
-    Make->>MCP: tools/list direct
+    Make->>MCP: tools/list direct, token from the header file (no mint)
     Make->>Rem: tools/list via stdio
     Rem->>MCP: tools/list with bearer token from --header-file
     MCP-->>Op: tool list incl. 5 SA-S4R_*
@@ -237,10 +238,10 @@ sequenceDiagram
 
 | User | Role(s) | Auth | Scope | Expiry |
 | ---- | ------- | ---- | ----- | ------ |
-| `splunker` | `user`, `mcp_user` (holds `mcp_tool_execute` capability) | Bearer token (MCP) | MCP (PoC) | Per Splunk MCP / token policy |
+| `splunker` | `user`, `mcp_user` (holds `mcp_tool_execute` and `s4r_workshop_control`) | Bearer token (MCP) | MCP (PoC) | Per Splunk MCP / token policy |
 | `admin` | Built-in | Password | Full admin | N/A |
 
-The setup script assigns Splunk role **`mcp_user`** and ensures capability **`mcp_tool_execute`** is present on that role. It does **not** grant **`admin`** to the MCP user (add manually in Splunk only if you accept the risk).
+The setup script assigns Splunk role **`mcp_user`** with capabilities **`mcp_tool_execute`** and **`s4r_workshop_control`** (init fails if either grant fails) and **`srchJobsQuota=5`**, so parallel S4R agents do not queue. It does **not** grant **`admin`** to the MCP user (add manually in Splunk only if you accept the risk).
 
 ### Environment variables
 
@@ -287,12 +288,13 @@ Claude Desktop
 
 ### setup-splunk.sh
 
-- Creates or updates Splunk role **`mcp_user`** with capability **`mcp_tool_execute`**
+- Creates or updates Splunk role **`mcp_user`** with capabilities **`mcp_tool_execute`** and **`s4r_workshop_control`** (after an SA-S4R reload) and **`srchJobsQuota=5`**
 - Creates **`splunker`** with roles **`user`** + **`mcp_user`**
 - Uses `SPLUNK_SPLUNKER_PASSWORD` (env) for the MCP user (no password written to disk)
 - REST host, port, and account names come from `scripts/splunk-api-env.sh` (`localhost`, `8089`, `admin`, `splunker` unless already set)
 - Enables SA-Eventgen default modinput (**required**; init fails if missing or still disabled)
-- Dependencies: `curl`, `jq` (installed in `splunk-init`)
+- Registers SA-S4R MCP tools via **`scripts/register-s4r-mcp-tools.sh`** before init exits
+- Dependencies: `curl`, `jq`, `bash` (installed in `splunk-init`)
 
 Host **Claude** / **Cursor** configs are updated by **`scripts/mcp-client.sh`** via **`make update-mcp-clients`** or **`make up`** (`MCP_UPDATE_ON_BOOT`, default **`cursor claude-code`**), not by this script. TLS overrides are described in **`docs/poc/CONFIGURATION.md`**.
 
