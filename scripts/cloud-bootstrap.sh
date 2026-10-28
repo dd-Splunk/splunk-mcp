@@ -30,7 +30,7 @@ CONFIG_ENV="${CONFIG_ENV:-config.env}"
 if [[ -z "${SPLUNK_IMAGE:-}" && -f "$CONFIG_ENV" ]]; then
   SPLUNK_IMAGE="$(sed -n 's/^SPLUNK_IMAGE=//p' "$CONFIG_ENV" | head -n 1)"
 fi
-SPLUNK_IMAGE="${SPLUNK_IMAGE:-splunk/splunk:10.6.0}"
+SPLUNK_IMAGE="${SPLUNK_IMAGE:-splunk/splunk:10.6.1}"
 CLOUD_SPLUNKDB_IMG="${CLOUD_SPLUNKDB_IMG:-/splunkdb.img}"
 CLOUD_SPLUNKDB_MOUNT="${CLOUD_SPLUNKDB_MOUNT:-/mnt/splunkdb}"
 CLOUD_SPLUNKDB_SIZE="${CLOUD_SPLUNKDB_SIZE:-25G}"
