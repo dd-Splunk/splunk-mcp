@@ -276,7 +276,7 @@ make verify
 | Flag / env | Purpose |
 | ---------- | ------- |
 | `--wipe` | Reformat ext4 Splunk data + `docker compose down -v` (use when changing Splunk major versions) |
-| `--image IMAGE` / `SPLUNK_IMAGE` | Default `splunk/splunk:10.6.0` |
+| `--image IMAGE` / `SPLUNK_IMAGE` | Default `splunk/splunk:10.6.1` |
 | `--force-env` | Recreate gitignored `.env` |
 | `SPLUNKBASE_USER` / `SPLUNKBASE_PASS` | Required in the environment when creating `.env` |
 | `CLOUD_SPLUNKDB_MOUNT` | Default `/mnt/splunkdb` (bind-mounted as `so1-var`) |

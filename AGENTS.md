@@ -138,7 +138,7 @@ This section is for cloud agents running in the Cursor Cloud VM (Docker-in-Docke
 
 **Options:** `--wipe` reformats the ext4 Splunk data mount and removes Compose volumes (required when changing Splunk major versions — otherwise KVStore can stay `failed`). `--image splunk/splunk:9.3.2` skips the fake-cgroup workaround. `--force-env` recreates gitignored `.env`. See `./scripts/cloud-bootstrap.sh --help`.
 
-The script writes gitignored **`docker-compose.override.yml`** (ext4 bind mount for `so1-var`; fake cgroup mount for Splunk **10.x**) and **`.env`** (generated admin/splunker passwords + Splunkbase creds from secrets). Default image: **`splunk/splunk:10.6.0`**.
+The script writes gitignored **`docker-compose.override.yml`** (ext4 bind mount for `so1-var`; fake cgroup mount for Splunk **10.x**) and **`.env`** (generated admin/splunker passwords + Splunkbase creds from secrets). Default image: **`splunk/splunk:10.6.1`**.
 
 ### What the bootstrap script does
 
