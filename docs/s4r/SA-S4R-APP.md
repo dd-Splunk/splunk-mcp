@@ -148,10 +148,12 @@ The **Buttercup Enterprises** workshop tab and Dashboard Studio view live under 
 | `src` | alias of `clientip` |
 | `http_method`, `http_referrer`, `http_user_agent` (also `user_agent`), `bytes_out` | aliases of `method`, `referer`, `useragent`, `bytes` |
 | `http_referrer_domain`, `http_user_agent_length` | eval from `referer`, `useragent` |
-| `site`, `dest`, `url_domain` | constant `www.buttercupenterprises.com` (the sample has no Host header) |
-| `url`, `url_length` | eval: `http://www.buttercupenterprises.com` + `uri` |
+| `dest`, `site`, `url_domain` | aliases of `host` |
+| `url`, `url_length` | eval: `http://` + `host` + `uri` |
 | `vendor_product` | constant `Buttercup Enterprises Web Shop` |
 | `status`, `uri_path`, `uri_query`, `bytes`, `user` | already extracted by the stock sourcetype |
+
+**Host.** Eventgen ignores its own `host` setting with the default modinput output (its spec limits it to `splunkstream` and `syslogout`), so every event would carry `host=127.0.0.1`. **`transforms.conf`** therefore sets `host` to `www.buttercupenterprises.com` at index time, and **`props.conf`** applies it only to the three S4R sample sources (`product.screen.sample`, `cart.do.sample`, `attack.nk.purchase.sample`), never to other `access_combined` data. `host` is a real indexed field, so `tstats ... where host=...` works. Changing it needs a Splunk restart, and events indexed earlier keep their old host.
 
 **Known deviation:** `action` stays the cart verb (`view`, `addtocart`, `purchase`, `remove`, `changequantity`) because the workshop searches filter on it. `Web.action` therefore holds those verbs instead of CIM values such as `allowed` and `blocked`. `product_id` is a custom field, not part of the model.
 
