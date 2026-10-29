@@ -2,7 +2,7 @@
 
 **Single source of truth** for workshop SPL (Labs 3–7). Aligned with the **Splunk4Rookies Lab Guide (Apr 2026)** cheat-sheet searches. Prefer **`SA-S4R_*`** when a workshop tool matches; otherwise agents run these queries via **`splunk_run_query`** — never Splunk REST or shell `curl`. Dashboards use the same queries — see [DASHBOARD.md](DASHBOARD.md) for layout and visualization only. Workshop hub: [README.md](README.md).
 
-**Lab guide:** [Splunk4Rookies - Lab Guide - Apr 2026.pdf](Splunk4Rookies%20-%20Lab%20Guide%20-%20Apr%202026.pdf)
+**Lab guide:** [Splunk4Rookies Lab Guide (latest)](https://splk.it/S4R-Lab-Guide) (this catalog follows its Apr 2026 edition)
 
 **Educational model:** Splunk holds data → **this file** is the runbook → **agents** are stakeholder roles → **MCP** executes searches under `splunker` guardrails.
 
@@ -393,7 +393,7 @@ index=main sourcetype=access_combined action=purchase
 
 ## See also
 
-- [Splunk4Rookies - Lab Guide - Apr 2026.pdf](Splunk4Rookies%20-%20Lab%20Guide%20-%20Apr%202026.pdf) — workshop cheat-sheet SPL (Exercises 3–7)
+- [Splunk4Rookies Lab Guide (latest)](https://splk.it/S4R-Lab-Guide) — workshop cheat-sheet SPL (Exercises 3–7)
 - [AGENTS.md](AGENTS.md) — architecture, delegation, demo script
 - [SA-S4R-APP.md](SA-S4R-APP.md) — Eventgen, NK toggle, troubleshooting
 - [MCP-TOOLS.md](MCP-TOOLS.md) — SA-S4R MCP tools (`SA-S4R_*`)
