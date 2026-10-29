@@ -157,7 +157,7 @@ The Splunk MCP endpoint is a **JSON-RPC `POST`** handler at `/services/mcp` (not
 
 ### Example 1: Create role + user (admin basic auth)
 
-What `scripts/setup-splunk.sh` does, step by step (`make up` runs it for you). `s4r_user` exists only once SA-S4R 1.1.1+ is installed, and `s4r_workshop_control` only once SA-S4R has loaded, so run this after the app is in place. The admin password goes through `splunk_curl` and the `splunker` password through stdin, so neither shows up in `ps`.
+What `scripts/setup-splunk.sh` does, step by step (`make up` runs it for you). `s4r_user` exists only once SA-S4R 2.0.0+ is installed, and `s4r_workshop_control` only once SA-S4R has loaded, so run this after the app is in place. The admin password goes through `splunk_curl` and the `splunker` password through stdin, so neither shows up in `ps`.
 
 ```bash
 #!/bin/bash
