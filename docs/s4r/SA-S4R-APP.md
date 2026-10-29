@@ -23,10 +23,12 @@ SA-S4R/                         # tracked in git
 │   ├── authorize.conf          # capability s4r_workshop_control
 │   ├── data/ui/nav/default.xml   # barebones nav (Search, Dashboards, Alerts, …)
 │   ├── eventgen.conf           # Eventgen definitions (baseline + optional attack stanza)
-│   ├── props.conf              # action, product_id, uid, JSESSIONID (platform → local/props.conf)
+│   ├── eventtypes.conf         # s4r_web_access (access_combined), tagged web in tags.conf
+│   ├── props.conf              # action, product_id, uid, JSESSIONID, CIM Web aliases (platform → local/props.conf)
 │   ├── restmap.conf            # /s4r_workshop_mode for API MCP tools
 │   ├── savedsearches.conf      # Governed SPL backing SPL MCP tools
 │   ├── s4r_mcp_tools.json      # Batch-replace payload for POST /services/mcp_tools
+│   ├── tags.conf               # web tag → CIM Web data model
 │   └── transforms.conf         # product_codes lookup (file: lookups/product_codes.csv)
 ├── lookups/
 │   └── product_codes.csv       # Demo lookup for Lab 5
@@ -136,6 +138,30 @@ The **Buttercup Enterprises** workshop tab and Dashboard Studio view live under 
 ## Field extractions and lookup
 
 **`default/props.conf`** extracts `action`, `product_id`, `uid`, and `JSESSIONID` from the request line so workshop SPL such as `action=purchase` works without manual field extraction.
+
+### CIM Web mapping
+
+**`default/props.conf`**, **`eventtypes.conf`** and **`tags.conf`** map `access_combined` to the CIM **Web** data model. The CIM app (Splunkbase 1621, pinned in **`compose.yml`**) provides the model, and **`default.meta`** exports the eventtype and tag to `system` so it can see them. The app ships the mapping but no acceleration.
+
+| Web field | Source |
+| --------- | ------ |
+| `src` | alias of `clientip` |
+| `http_method`, `http_referrer`, `http_user_agent` (also `user_agent`), `bytes_out` | aliases of `method`, `referer`, `useragent`, `bytes` |
+| `http_referrer_domain`, `http_user_agent_length` | eval from `referer`, `useragent` |
+| `dest`, `site`, `url_domain` | aliases of `host` |
+| `url`, `url_length` | eval: `http://` + `host` + `uri` |
+| `vendor_product` | constant `Buttercup Enterprises Web Shop` |
+| `status`, `uri_path`, `uri_query`, `bytes`, `user` | already extracted by the stock sourcetype |
+
+**Host.** Eventgen ignores its own `host` setting with the default modinput output (its spec limits it to `splunkstream` and `syslogout`), so every event would carry `host=127.0.0.1`. **`transforms.conf`** therefore sets `host` to `www.buttercupenterprises.com` at index time, and **`props.conf`** applies it only to the three S4R sample sources (`product.screen.sample`, `cart.do.sample`, `attack.nk.purchase.sample`), never to other `access_combined` data. `host` is a real indexed field, so `tstats ... where host=...` works. Changing it needs a Splunk restart, and events indexed earlier keep their old host.
+
+**Known deviation:** `action` stays the cart verb (`view`, `addtocart`, `purchase`, `remove`, `changequantity`) because the workshop searches filter on it. `Web.action` therefore holds those verbs instead of CIM values such as `allowed` and `blocked`. `product_id` is a custom field, not part of the model.
+
+Query it with:
+
+```spl
+| tstats count from datamodel=Web where Web.status>=400 by Web.src, Web.status
+```
 
 **`platform`** (Lab 4) belongs in the installed app’s **`local/props.conf`** — see [Workshop objects in `local/`](#workshop-objects-in-local). Agents/MCP still use inline `rex` per [SPL-CATALOG.md](SPL-CATALOG.md).
 
