@@ -14,7 +14,7 @@ Do not paste secrets. Do not `make up` / `make clean` / change NK mode unless th
 ## Run (in order)
 
 1. `make demo-prep` — Splunkbase pins first (so a 404 pin is visible even if the stack is down), then status + `verify-mcp-remote`.
-   - Pins **MISSING**: next `make up` can 404 (so1 unhealthy; ansible `Error downloading … Not Found`). FIX: bump only `/release/VERSION/` in `compose.yml` to Splunkbase default ([CONFIGURATION.md](docs/poc/CONFIGURATION.md) § Version bump). Then `make down && make up` if the user asked to recover boot.
+   - Pins **MISSING**: next `make up` can 404 (so1 unhealthy; ansible `Error downloading … Not Found`). FIX: bump only `/release/VERSION/` in `compose.yml` to Splunkbase default ([CONFIGURATION.md](../../../docs/poc/CONFIGURATION.md) § Version bump). Then `make down && make up` if the user asked to recover boot.
    - Pins **STALE**: GO for today if Splunk is ready; note an optional bump before the next reboot.
    - Pins **OK** / **SKIP** (offline): continue.
    - If status is init failed / so1 not healthy: `docker logs so1 --tail 80` and look for that download 404. Do not wait out `splunk-init` “still running” while so1 is restart-looping.
@@ -52,4 +52,4 @@ Cold `make up` after `make clean` takes several minutes.
 
 **Entry points:** `https://localhost:8000` · `https://localhost:8089/services/mcp` · `make marp-preview`
 
-**Docs:** [docs/s4r/MCP-TOOLS.md](docs/s4r/MCP-TOOLS.md) · [docs/poc/TROUBLESHOOTING.md](docs/poc/TROUBLESHOOTING.md) · [docs/poc/CONFIGURATION.md](docs/poc/CONFIGURATION.md)
+**Docs:** [docs/s4r/MCP-TOOLS.md](../../../docs/s4r/MCP-TOOLS.md) · [docs/poc/TROUBLESHOOTING.md](../../../docs/poc/TROUBLESHOOTING.md) · [docs/poc/CONFIGURATION.md](../../../docs/poc/CONFIGURATION.md)

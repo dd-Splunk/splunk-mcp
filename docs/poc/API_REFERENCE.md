@@ -157,23 +157,27 @@ The Splunk MCP endpoint is a **JSON-RPC `POST`** handler at `/services/mcp` (not
 
 ### Example 1: Create role + user (admin basic auth)
 
+What `scripts/setup-splunk.sh` does, step by step (`make up` runs it for you). `s4r_user` exists only once SA-S4R 1.1.1+ is installed, and `s4r_workshop_control` only once SA-S4R has loaded, so run this after the app is in place. The admin password goes through `splunk_curl` and the `splunker` password through stdin, so neither shows up in `ps`.
+
 ```bash
 #!/bin/bash
 set -euo pipefail
 
-HOST="localhost:8089"
-ADMIN_USER="admin"
 : "${SPLUNK_ADMIN_PASSWORD:?Set SPLUNK_ADMIN_PASSWORD first}"
 : "${SPLUNK_SPLUNKER_PASSWORD:?Set SPLUNK_SPLUNKER_PASSWORD first}"
+. scripts/splunk-api-env.sh   # from the repo root; defines splunk_curl
+HOST="https://localhost:8089"
 
-# Create role (matches setup-splunk.sh)
-curl -k -X POST https://$HOST/services/authorization/roles \
-  -u "$ADMIN_USER:$SPLUNK_ADMIN_PASSWORD" -d "name=mcp_user" -d "capabilities=mcp_tool_execute"
+# MCP execution role: tool access, workshop mode control, parallel searches for four agents
+splunk_curl -k -X POST "$HOST/services/authorization/roles" -d "name=mcp_user" \
+  -d "capabilities=mcp_tool_execute" -d "srchJobsQuota=5"
+splunk_curl -k -X POST "$HOST/services/authorization/roles/mcp_user" \
+  -d "capabilities=mcp_tool_execute" -d "capabilities=s4r_workshop_control" -d "srchJobsQuota=5"
 
-# Create user
-curl -k -X POST https://$HOST/services/authentication/users \
-  -u "$ADMIN_USER:$SPLUNK_ADMIN_PASSWORD" \
-  -d "name=splunker" -d "password=$SPLUNK_SPLUNKER_PASSWORD" -d "roles=user" -d "roles=mcp_user"
+# MCP user: s4r_user is the role the SA-S4R_* tools are limited to (defined by SA-S4R, no capability of its own)
+printf '%s' "$SPLUNK_SPLUNKER_PASSWORD" | splunk_curl -k -X POST "$HOST/services/authentication/users" \
+  --data-urlencode "name=splunker" --data-urlencode "password@-" \
+  -d "roles=user" -d "roles=mcp_user" -d "roles=s4r_user"
 ```
 
 ### Example 2: List MCP tools (Splunk MCP Server)

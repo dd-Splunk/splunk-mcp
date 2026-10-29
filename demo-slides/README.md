@@ -118,11 +118,11 @@ Deck follows **three steps** plus a **MCP architecture** primer ([MCP Server 2.0
 | 8 | Apps as MCP tools | Existing apps → AI tools; SPL vs API; `POST /services/mcp_tools` |
 | 9 | Splunk MCP architecture | `diagram-split`; native / Splunkbase / private `SA-S4R_*` |
 | 10 | How it works | `diagram`; app files → MCP registration |
-| 11 | Custom tool registration | `compact`; batch replace, enable, `s4r_mcp_tools.json` |
+| 11 | Custom tool registration | `compact`; batch replace, enable, restrict to `s4r_user`, `s4r_mcp_tools.json` |
 | 12 | SA-S4R workshop tools | `compact`; five `SA-S4R_*` tools |
 | 13 | Step 2 — Ask business questions without SPL | `lead` section divider |
 | 14 | Step 2 — Business questions in plain English | Example prompts |
-| 15 | Splunk MCP guardrails | `diagram-split`; `SA-S4R_*` workshop tools |
+| 15 | Splunk MCP guardrails | `diagram-split`; identity table with `s4r_user`; `SA-S4R_*` workshop tools |
 | 16 | Step 2 — Live demo prompt | `compact`; two-column Business + Security asks |
 | 17 | Step 3 — Agentic orchestration for specialists | `lead` section divider |
 | 18 | The challenge | |

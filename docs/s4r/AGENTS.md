@@ -2,7 +2,7 @@
 
 Agent roles for the **Splunk4Rookies** attendee workshop (Apr 2026 deck) and this repo’s **`SA-S4R`** dataset. One **Splunk Power User** orchestrator delegates to four specialist agents; each maps to a dashboard panel in Labs 3–7.
 
-**Related docs:** [SPL-CATALOG.md](SPL-CATALOG.md) (**SPL runbook**), [DASHBOARD.md](DASHBOARD.md) (dashboard layout), [SA-S4R-APP.md](SA-S4R-APP.md) (Eventgen data; **`default/` vs `local/`**), [README.md](README.md) (workshop hub), [`.cursor/agents/`](../.cursor/agents/) (role prompts for Cursor).
+**Related docs:** [SPL-CATALOG.md](SPL-CATALOG.md) (**SPL runbook**), [DASHBOARD.md](DASHBOARD.md) (dashboard layout), [SA-S4R-APP.md](SA-S4R-APP.md) (Eventgen data; **`default/` vs `local/`**), [README.md](README.md) (workshop hub), [`.cursor/agents/`](../../.cursor/agents/) (role prompts for Cursor).
 
 **Splunk app rule:** workshop dashboards, nav, and field extractions live in the installed app’s **`local/`** (see [SA-S4R-APP.md § Workshop objects](SA-S4R-APP.md#workshop-objects-in-local)). **Never** save them to **`default/`** in Splunk Web or git.
 
@@ -42,8 +42,8 @@ Stakeholder question
 | ----- | ------- | ---- |
 | Data | Synthetic workshop traffic | [SA-S4R-APP.md](SA-S4R-APP.md) |
 | Runbook | SPL, fields, lookups | **[SPL-CATALOG.md](SPL-CATALOG.md)** |
-| Roles | How each team thinks and reports | [`.cursor/agents/`](../.cursor/agents/) |
-| Tools | LLM calls Splunk, not chat memory | Splunk MCP · [API_REFERENCE.md](API_REFERENCE.md) |
+| Roles | How each team thinks and reports | [`.cursor/agents/`](../../.cursor/agents/) |
+| Tools | LLM calls Splunk, not chat memory | Splunk MCP · [API_REFERENCE.md](../poc/API_REFERENCE.md) |
 | Orchestration | One answer from many teams | `s4r-power-user.md` · this doc |
 
 ## Scenario
@@ -56,7 +56,7 @@ Eventgen in **`SA-S4R`** emits workshop-shaped Apache access logs. Lookup **`pro
 
 **Mission:** Understand the ask, delegate to specialist(s), run searches via Splunk MCP using the **SPL catalog**, synthesize one business-facing insight.
 
-**Prompt file:** [`.cursor/agents/s4r-power-user.md`](../.cursor/agents/s4r-power-user.md)
+**Prompt file:** [`.cursor/agents/s4r-power-user.md`](../../.cursor/agents/s4r-power-user.md)
 
 | Topic | Delegate to | Catalog § |
 | ----- | ----------- | --------- |
@@ -77,11 +77,11 @@ Eventgen in **`SA-S4R`** emits workshop-shaped Apache access logs. Lookup **`pro
 
 | Agent | Lab | Ask | Prompt | Catalog § |
 | ----- | --- | --- | ------ | --------- |
-| IT Ops | 3 | Success vs failure over time | [s4r-it-ops.md](../.cursor/agents/s4r-it-ops.md) | [§ IT Ops](SPL-CATALOG.md#-it-ops-lab-3) |
-| DevOps | 4 | OS mix, failing browsers, client vs server | [s4r-devops.md](../.cursor/agents/s4r-devops.md) | [§ DevOps](SPL-CATALOG.md#-devops-lab-4) |
-| Business Analytics | 5 | Lost revenue from failed purchases | [s4r-business-analytics.md](../.cursor/agents/s4r-business-analytics.md) | [§ Business Analytics](SPL-CATALOG.md#-business-analytics-lab-5) |
-| Security & Fraud | 6 | Activity by geography | [s4r-security-fraud.md](../.cursor/agents/s4r-security-fraud.md) | [§ Security & Fraud](SPL-CATALOG.md#-security--fraud-lab-6) |
-| Power User | 7 | Unified insight + dashboard | [s4r-power-user.md](../.cursor/agents/s4r-power-user.md) | [§ Power User](SPL-CATALOG.md#-power-user-lab-7) |
+| IT Ops | 3 | Success vs failure over time | [s4r-it-ops.md](../../.cursor/agents/s4r-it-ops.md) | [§ IT Ops](SPL-CATALOG.md#-it-ops-lab-3) |
+| DevOps | 4 | OS mix, failing browsers, client vs server | [s4r-devops.md](../../.cursor/agents/s4r-devops.md) | [§ DevOps](SPL-CATALOG.md#-devops-lab-4) |
+| Business Analytics | 5 | Lost revenue from failed purchases | [s4r-business-analytics.md](../../.cursor/agents/s4r-business-analytics.md) | [§ Business Analytics](SPL-CATALOG.md#-business-analytics-lab-5) |
+| Security & Fraud | 6 | Activity by geography | [s4r-security-fraud.md](../../.cursor/agents/s4r-security-fraud.md) | [§ Security & Fraud](SPL-CATALOG.md#-security--fraud-lab-6) |
+| Power User | 7 | Unified insight + dashboard | [s4r-power-user.md](../../.cursor/agents/s4r-power-user.md) | [§ Power User](SPL-CATALOG.md#-power-user-lab-7) |
 
 Escalation rules live in each agent file (not duplicated here).
 
@@ -102,23 +102,23 @@ Full SPL: [SPL-CATALOG.md](SPL-CATALOG.md).
 ## Using agents in Cursor
 
 1. Enable **splunk-mcp-server** in `.cursor/mcp.json` (`make up` / `make update-mcp-client MCP_CLIENT=cursor`).
-2. Buttercup / S4R questions: act as **Power User** ([`.cursor/agents/s4r-power-user.md`](../.cursor/agents/s4r-power-user.md)). A local `.cursor/rules/s4r-buttercup-agents.mdc` is gitignored.
+2. Buttercup / S4R questions: act as **Power User** ([`.cursor/agents/s4r-power-user.md`](../../.cursor/agents/s4r-power-user.md)). A local `.cursor/rules/s4r-buttercup-agents.mdc` is gitignored.
 3. **Read `docs/s4r/SPL-CATALOG.md`** for SPL; agents for roles and output format.
-4. Heavy parallel work: **Task** subagents — prompt must include *“Prefer SA-S4R_* when it matches; else catalog SPL via splunk_run_query. Never REST/curl.”* See [`.cursor/agents/README.md`](../.cursor/agents/README.md).
+4. Heavy parallel work: **Task** subagents — prompt must include *“Prefer SA-S4R_* when it matches; else catalog SPL via splunk_run_query. Never REST/curl.”* See [`.cursor/agents/README.md`](../../.cursor/agents/README.md).
 5. Confirm data: `make status`, then catalog **Quick data check**.
 6. Presales: `make demo-prep`.
 
 ### Model configuration
 
-**Power User** uses **`claude-sonnet-5-5-high`**; specialists use **`grok-4.7-high-fast`** so parallel workers stay fast while the orchestrator handles synthesis. Table, upgrade paths, and Cursor caveats: [`.cursor/agents/README.md` § Model configuration](../.cursor/agents/README.md#model-configuration).
+**Power User** uses **`claude-sonnet-5-5-high`**; specialists use **`grok-4.7-high-fast`** so parallel workers stay fast while the orchestrator handles synthesis. Table, upgrade paths, and Cursor caveats: [`.cursor/agents/README.md` § Model configuration](../../.cursor/agents/README.md#model-configuration).
 
 ### Foreground / background (`is_background`)
 
-Specialists run as **background** subagents (`is_background: true`); **Power User** stays **foreground**. The Power User **waits for all** team summaries before synthesizing. Details: [`.cursor/agents/README.md` § Foreground / background](../.cursor/agents/README.md#foreground--background-configuration).
+Specialists run as **background** subagents (`is_background: true`); **Power User** stays **foreground**. The Power User **waits for all** team summaries before synthesizing. Details: [`.cursor/agents/README.md` § Foreground / background](../../.cursor/agents/README.md#foreground--background-configuration).
 
 ### Parallel delegation and search concurrency
 
-When all four specialists run at once, each searches as **`splunker`** (`SA-S4R_*` or `splunk_run_query`). The PoC grants **`mcp_user`** with **`srchJobsQuota=5`** — four parallel historical searches should usually succeed; if not, retry after a few seconds, stagger teams, or run sequentially for live demos. See [`.cursor/agents/README.md` § Parallel delegation](../.cursor/agents/README.md#parallel-delegation-four-teams) and [TROUBLESHOOTING.md § Parallel agent searches](TROUBLESHOOTING.md#issue-parallel-agent-searches-hit-splunker-concurrency-limit).
+When all four specialists run at once, each searches as **`splunker`** (`SA-S4R_*` or `splunk_run_query`). The PoC grants **`mcp_user`** with **`srchJobsQuota=5`** — four parallel historical searches succeed (measured: with 7 at once, 5 ran and 2 queued, all finished; `splunker` also holds `s4r_user` with a lower quota of 3, and the higher one applies); if not, retry after a few seconds, stagger teams, or run sequentially for live demos. See [`.cursor/agents/README.md` § Parallel delegation](../../.cursor/agents/README.md#parallel-delegation-four-teams) and [TROUBLESHOOTING.md § Parallel agent searches](TROUBLESHOOTING.md#parallel-agent-searches-hit-splunker-concurrency-limit).
 
 **Copy-paste prompt (Demo 1):**
 
@@ -156,7 +156,7 @@ Quick beats:
 | 5. Threat ask | *“Infrastructure or active threat?”* (last 15m) | Security § + Workshop modes |
 | 6. Dashboard | [DASHBOARD.md](DASHBOARD.md) | Panels = catalog sections |
 
-Also: [PRESALES.md](PRESALES.md#optional-agentic-buttercup-demo-splunk4rookies).
+Also: [PRESALES.md](../poc/PRESALES.md#optional-agentic-buttercup-demo-splunk4rookies).
 
 ## Example delegation
 
@@ -193,4 +193,4 @@ Also: [PRESALES.md](PRESALES.md#optional-agentic-buttercup-demo-splunk4rookies).
 - [SPL-CATALOG.md](SPL-CATALOG.md) — **canonical SPL**
 - Splunk4Rookies attendee deck (Apr 2026) — Labs 3–7
 - [SA-S4R-APP.md](SA-S4R-APP.md)
-- [API_REFERENCE.md](API_REFERENCE.md)
+- [API_REFERENCE.md](../poc/API_REFERENCE.md)

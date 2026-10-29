@@ -163,7 +163,7 @@ Changing the keychain password does not change a running stack: Splunk reads the
 | `update-mcp-client` | One client: `MCP_CLIENT=claude\|claude-code\|cursor` |
 | `verify-mcp-remote` | `scripts/mcp-client.sh verify` — client config + direct `tools/list` + **`npx mcp-remote` stdio** e2e (`MCP_VERIFY_CLIENT=all` by default; `all` skips clients without a `splunk-mcp-server` entry and fails only if none has one) |
 | `verify` | Runs `status`, then `verify-mcp-remote` |
-| `test` | Docker-free: MCP client JSON/YAML shape (`write-shape` / `verify-config` / `park`) plus SA-S4R mode/payload unit tests |
+| `test` | Docker-free: MCP client JSON/YAML shape (`write-shape` / `verify-config` / `park`), secret loader, token mint and prune, admin curl auth, MCP auth stats, SA-S4R mode/payload unit tests, CIM Web mapping, `s4r_user` role and tool policy (`tests/*.sh`, `tests/test_s4r_mode.py`) |
 | `check-splunkbase-pins` | Compare `compose.yml` `SPLUNK_APPS_URL` pins to Splunkbase `api/v1/app/<id>/release/` (no secrets). **MISSING** = next `make up` can 404. **`STRICT=1`** exits 1 on MISSING |
 | `demo-prep` | Runs **`check-splunkbase-pins`**, then `status`, then `verify-mcp-remote`, and prints the live-demo warm-stack reminder. Cursor **`/demo-prep`** also runs S4R mode + **`mcp-auth-failures`** |
 | `mcp-auth-failures` | Admin `_internal` MCP auth/tool stats (last 30m). Needs `.env` or `SPLUNK_ADMIN_PASSWORD` in the environment. **`DETAIL=1`** prints raw failures. Not visible to `splunker` MCP |

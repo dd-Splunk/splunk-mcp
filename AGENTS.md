@@ -44,7 +44,7 @@ Splunk REST bootstrap (see **`docs/poc/CONFIGURATION.md` § Appendix: setup-splu
 
 - MCP dev: **`ssl_verify=false`** on the Splunk MCP Server app (local dev only).
 - **SA-Eventgen**: enables the default modular input (**required**). **`splunk-init` fails** if the app is missing or the modinput stays disabled.
-- **Identity**: Splunk role **`mcp_user`** with capabilities **`mcp_tool_execute`** and **`s4r_workshop_control`**; user **`splunker`** with roles **`user`** + **`mcp_user`**. REST calls use **`admin`**. Host, port, and those account names are the defaults in **`scripts/splunk-api-env.sh`**. **`compose.yml`** sets **`SPLUNK_HOST=so1`** on **`splunk-init`** only.
+- **Identity**: Splunk role **`mcp_user`** with capabilities **`mcp_tool_execute`** and **`s4r_workshop_control`**; user **`splunker`** with roles **`user`** + **`mcp_user`** + **`s4r_user`**. **`s4r_user`** is defined by SA-S4R (no capability of its own, skipped with a warning if the installed app lacks it), and **`scripts/register-s4r-mcp-tools.sh`** limits the five **`SA-S4R_*`** tools to it with Tool Role Policies, so other **`mcp_user`** holders do not see them. REST calls use **`admin`**. Host, port, and those account names are the defaults in **`scripts/splunk-api-env.sh`**. **`compose.yml`** sets **`SPLUNK_HOST=so1`** on **`splunk-init`** only.
 - **Password**: the `splunker` password is provided via **`SPLUNK_SPLUNKER_PASSWORD`** (env).
 
 **Not** in this script: MCP token minting (**`scripts/mint-mcp-token.sh`**, after init) or **`claude_logs`** index/file monitors. SA-S4R MCP tool registration **is** in this script: it runs **`scripts/register-s4r-mcp-tools.sh`** before exiting. Optional ingestion: enable the bind mount in **`compose.yml`**, create the index and monitor in Splunk—**`docs/poc/CONFIGURATION.md`**.
@@ -76,7 +76,7 @@ Workshop agent **roles** remain in **`.cursor/agents/`** (not skills). Do not du
 | Stack healthy? | `make status` — **`splunk-init`** line + **Splunk is ready ✓**; exits non-zero if init failed or Splunk is running but API not ready (exits **0** when stack is stopped) |
 | Image, timezone, and secrets loaded? | `make config` — resolved `compose.yml`; password and Splunkbase values print as `<set>` |
 | MCP client path OK? | `make verify-mcp-remote` (all clients) or `make verify-mcp-remote MCP_VERIFY_CLIENT=cursor` |
-| Docker-free tests? | `make test` — MCP config shape + SA-S4R mode/payload parse (no Splunk) |
+| Docker-free tests? | `make test` — MCP config shape, secret loader, token mint and prune, admin curl auth, MCP auth stats, SA-S4R mode parse, CIM Web mapping, `s4r_user` role and tool policy (no Splunk) |
 | Pre-demo / both checks? | `make demo-prep` (Splunkbase pins + status + verify + warm-stack reminder) or `make verify` (status then verify only) |
 | Init failed? | `docker logs splunk-init` (see **`docs/poc/TROUBLESHOOTING.md`**) |
 | Eventgen modinput? | `curl -k -u admin "https://localhost:8089/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default?output_mode=json"` |
@@ -96,6 +96,7 @@ Workshop agent **roles** remain in **`.cursor/agents/`** (not skills). Do not du
 ## Common failure modes
 
 - **“User lacks required mcp_tool_execute capability”** — Role **`mcp_user`** missing the capability. Re-run setup or POST **`capabilities=mcp_tool_execute`** to **`/services/authorization/roles/mcp_user`** (see **`scripts/setup-splunk.sh`**).
+- **`SA-S4R_*` tools missing from `tools/list`, or HTTP 403 “Role not permitted for this tool”** — The user lacks role **`s4r_user`**, which the tools are limited to (Tool Role Policies; `admin` bypasses them). Add the role to the user. If **`splunker`** itself lost the tools, `docker logs splunk-init` for “Role s4r_user not found” (SA-S4R older than 1.1.1 in an existing volume): **`make clean-y && make up`**.
 - **`splunk-init` exited non-zero** — **`make status`** prints **`FAILED (exit N)`**; Splunk may still be up but roles/token/MCP setup incomplete. **`docker logs splunk-init`**, then **`make down && make up`** or fix env and re-run init.
 - **`so1` unhealthy / `Errno 30` on SA-S4R** — The app is installed from the GitHub **`.spl`**, not a bind mount. Do not add a **`:ro`** bind of the app tree; Splunk **chowns** that path. Recover with **`./scripts/compose-up.sh`** (or **`make up`**). Bare **`docker compose up`** without **`.env`** blanks Splunkbase creds. Details: **`docs/poc/TROUBLESHOOTING.md`**.
 - **`mcp_token` “Unknown resource” / mint hangs** — The Splunk MCP Server app is 2.1+ (token API moved to **`/services/mcp_token/tokens`** and **`/key-pair`**) but the checked-out scripts are older, or the key pair expired. **`docs/poc/TROUBLESHOOTING.md`**.

@@ -10,7 +10,7 @@
 | ----- | ---- |
 | Data / Eventgen | [SA-S4R-APP.md](SA-S4R-APP.md) |
 | **SPL (this doc)** | `docs/s4r/SPL-CATALOG.md` |
-| Agent roles | [`.cursor/agents/`](../.cursor/agents/) |
+| Agent roles | [`.cursor/agents/`](../../.cursor/agents/) |
 | Orchestration | [AGENTS.md](AGENTS.md) · `s4r-power-user.md` |
 
 ---
@@ -30,6 +30,8 @@ index=main sourcetype=access_combined
 | Cart `action` values | `view`, `addtocart`, `purchase`, `remove`, `changequantity` |
 | Extracted fields | `action`, `product_id`, `uid`, `JSESSIONID` (`SA-S4R/default/props.conf`) |
 | Geo IP field | `clientip` (confirm casing in Search) |
+| Host | `host=www.buttercupenterprises.com` on every S4R event (set at index time; Eventgen's own `host` setting has no effect with modinput output) |
+| CIM Web model | Events are tagged `web` and mapped to the CIM `Web` data model, for example `\| tstats count from datamodel=Web by Web.dest, Web.status` ([SA-S4R-APP.md § CIM Web mapping](SA-S4R-APP.md#cim-web-mapping)). `Web.action` holds the cart verb, not `allowed` or `blocked` |
 | Success | `status` 2xx |
 | Failure (workshop) | `status>=400` |
 | Failed purchase | `action=purchase` AND `status>=400` |
@@ -66,6 +68,8 @@ Workshop **`platform`** extraction for saved dashboard panels: add to the instal
 | rex field=useragent "\((?<platform>Linux; Android [0-9.]+|Macintosh; Intel Mac OS X [0-9_]+|Windows|iPhone; CPU iPhone OS [0-9_]+)"
 | eval platform=if(isnull(platform),"Other",platform)
 ```
+
+In **threat mode** the scripted clients (`curl`, `python-requests`, `NK-Scanner`) have no matching platform and land in **`Other`**, which then fails about 93% of purchases. That is attack traffic, not a platform problem: report it separately, or add `NOT clientip="175.45.*"` before the `rex` when the question is about real platforms.
 
 ### Quick data check
 
@@ -262,6 +266,18 @@ index=main sourcetype=access_combined
 | search Country!="United States"
 | geostats count by City
 ```
+
+### International vs US failure rate
+
+```spl
+index=main sourcetype=access_combined action=purchase
+| iplocation clientip
+| eval region=if(Country="United States","US","International")
+| stats count AS purchases count(eval(status>=400)) AS failed by region
+| eval fail_pct=round(100*failed/purchases,1)
+```
+
+**Threat mode:** the `175.45.*` attack range counts as International and skews the comparison (measured 61% vs 42%). Add `NOT clientip="175.45.*"` to the base search to compare regular customers (about 40% in both, no real difference), and report the attack range as its own line.
 
 ### Drill-down — errors by city
 

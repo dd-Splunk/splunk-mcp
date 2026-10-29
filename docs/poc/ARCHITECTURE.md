@@ -20,7 +20,7 @@ The [Model Context Protocol](https://modelcontextprotocol.io/) lets a client (Cl
 
 ## Splunkbase applications
 
-`compose.yml` sets `SPLUNK_APPS_URL` to a comma-separated list of package download URLs. Installed from Splunkbase: **SA-Eventgen** (1924), **Config Explorer** (4353), **Splunk MCP Server** (7931), and **Splunk AI Assistant** (7245). **SA-S4R** is installed from this repo’s GitHub Release **`latest`** (`SA-S4R.spl`). Pin details and the full table live in [CONFIGURATION.md](CONFIGURATION.md#composeyml).
+`compose.yml` sets `SPLUNK_APPS_URL` to a comma-separated list of package download URLs. Installed from Splunkbase: **SA-Eventgen** (1924), **Config Explorer** (4353), **Splunk MCP Server** (7931), **Splunk AI Assistant** (7245), and the **Splunk Common Information Model** (1621, provides the `Web` data model SA-S4R maps to). **SA-S4R** is installed from this repo’s GitHub Release **`latest`** (`SA-S4R.spl`). Pin details and the full table live in [CONFIGURATION.md](CONFIGURATION.md#composeyml).
 
 You need valid **Splunkbase** credentials in **`.env`** (or the process environment): **`SPLUNKBASE_USER`** and **`SPLUNKBASE_PASS`**.
 
@@ -203,7 +203,7 @@ sequenceDiagram
     Note over Op,EG: Workshop tool calls as splunker
     Op->>Rem: tools/call SA-S4R_query_nk_demo_state
     Rem->>MCP: tools/call
-    MCP->>S4R: GET (needs mcp_tool_execute)
+    MCP->>S4R: GET (needs mcp_tool_execute and role s4r_user)
     S4R-->>Op: mode infrastructure
     Op->>Rem: tools/call SA-S4R_apply_nk_demo_state mode=threat
     Rem->>MCP: tools/call
@@ -239,7 +239,7 @@ sequenceDiagram
 
 | User | Role(s) | Auth | Scope | Expiry |
 | ---- | ------- | ---- | ----- | ------ |
-| `splunker` | `user`, `mcp_user` (holds `mcp_tool_execute` and `s4r_workshop_control`) | Bearer token (MCP) | MCP (PoC) | Per Splunk MCP / token policy |
+| `splunker` | `user`, `mcp_user` (holds `mcp_tool_execute` and `s4r_workshop_control`), `s4r_user` (allowed role of the `SA-S4R_*` tools) | Bearer token (MCP) | MCP (PoC) | Per Splunk MCP / token policy |
 | `admin` | Built-in | Password | Full admin | N/A |
 
 The setup script assigns Splunk role **`mcp_user`** with capabilities **`mcp_tool_execute`** and **`s4r_workshop_control`** (init fails if either grant fails) and **`srchJobsQuota=5`**, so parallel S4R agents do not queue. It does **not** grant **`admin`** to the MCP user (add manually in Splunk only if you accept the risk).
@@ -290,7 +290,8 @@ Claude Desktop
 ### setup-splunk.sh
 
 - Creates or updates Splunk role **`mcp_user`** with capabilities **`mcp_tool_execute`** and **`s4r_workshop_control`** (after an SA-S4R reload) and **`srchJobsQuota=5`**
-- Creates **`splunker`** with roles **`user`** + **`mcp_user`**
+- Creates **`splunker`** with roles **`user`** + **`mcp_user`** + **`s4r_user`** (`s4r_user` comes from SA-S4R 1.1.1+; left out with a warning if the app lacks it)
+- Via **`register-s4r-mcp-tools.sh`**: limits the five **`SA-S4R_*`** tools to **`s4r_user`** with Tool Role Policies, when the role exists and `splunker` holds it
 - Uses `SPLUNK_SPLUNKER_PASSWORD` (env) for the MCP user (no password written to disk)
 - REST host, port, and account names come from `scripts/splunk-api-env.sh` (`localhost`, `8089`, `admin`, `splunker` unless already set)
 - Enables SA-Eventgen default modinput (**required**; init fails if missing or still disabled)

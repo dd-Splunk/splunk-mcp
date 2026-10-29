@@ -348,12 +348,18 @@ make up
 
 **Cause**: **`splunk-init`** registers the tools and then exits. A stack that booted before that step, or an init that failed the `POST /services/mcp_tools` call, leaves them off `tools/list`.
 
+**Cause 2: the user lacks role `s4r_user`.** The five tools are limited to that role (Tool Role Policies). A user without it sees no `SA-S4R_*` tools in `tools/list` and gets HTTP 403 `Role not permitted for this tool` on a call, while the generic Splunk tools still work. `admin` bypasses the policies. Check with `GET /services/authentication/users/<name>` and `GET /services/mcp_tool_roles`.
+
+**Cause 3: `splunker` lost the tools after init.** `docker logs splunk-init` shows `Role s4r_user not found` when the installed SA-S4R is older than 1.1.1 (an existing `so1-etc` volume keeps the app it first installed). Init then leaves the role and the policies out, so the tools stay open. A `Restricted 5 SA-S4R MCP tools` line means the policies were applied.
+
 **Solution**:
 
 ```bash
 docker logs splunk-init
 make up
 ```
+
+For cause 2, add `s4r_user` to the user's roles. For cause 3, `make clean-y && make up` installs the current app.
 
 `make up` starts the exited **`splunk-init`** container again. Init installs **`jq`** itself. See [MCP-TOOLS.md](../s4r/MCP-TOOLS.md).
 
