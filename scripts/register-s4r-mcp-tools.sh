@@ -58,7 +58,7 @@ restrict_s4r_mcp_tools() {
     "${SPLUNK_URL}/services/authorization/roles/${role}?output_mode=json" -w "\n%{http_code}" || true)"
   code="${response##*$'\n'}"
   if [[ ! "${code}" =~ ^2 ]]; then
-    echo "⚠️  Role ${role} not found (SA-S4R older than 1.1.1?). SA-S4R tools stay open; make clean-y && make up installs the current app." >&2
+    echo "⚠️  Role ${role} not found (SA-S4R older than 2.0.0?). SA-S4R tools stay open; make clean-y && make up installs the current app." >&2
     return 0
   fi
 

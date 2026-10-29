@@ -290,7 +290,7 @@ Claude Desktop
 ### setup-splunk.sh
 
 - Creates or updates Splunk role **`mcp_user`** with capabilities **`mcp_tool_execute`** and **`s4r_workshop_control`** (after an SA-S4R reload) and **`srchJobsQuota=5`**
-- Creates **`splunker`** with roles **`user`** + **`mcp_user`** + **`s4r_user`** (`s4r_user` comes from SA-S4R 1.1.1+; left out with a warning if the app lacks it)
+- Creates **`splunker`** with roles **`user`** + **`mcp_user`** + **`s4r_user`** (`s4r_user` comes from SA-S4R 2.0.0+; left out with a warning if the app lacks it)
 - Via **`register-s4r-mcp-tools.sh`**: limits the five **`SA-S4R_*`** tools to **`s4r_user`** with Tool Role Policies, when the role exists and `splunker` holds it
 - Uses `SPLUNK_SPLUNKER_PASSWORD` (env) for the MCP user (no password written to disk)
 - REST host, port, and account names come from `scripts/splunk-api-env.sh` (`localhost`, `8089`, `admin`, `splunker` unless already set)

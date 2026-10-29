@@ -350,7 +350,7 @@ make up
 
 **Cause 2: the user lacks role `s4r_user`.** The five tools are limited to that role (Tool Role Policies). A user without it sees no `SA-S4R_*` tools in `tools/list` and gets HTTP 403 `Role not permitted for this tool` on a call, while the generic Splunk tools still work. `admin` bypasses the policies. Check with `GET /services/authentication/users/<name>` and `GET /services/mcp_tool_roles`.
 
-**Cause 3: `splunker` lost the tools after init.** `docker logs splunk-init` shows `Role s4r_user not found` when the installed SA-S4R is older than 1.1.1 (an existing `so1-etc` volume keeps the app it first installed). Init then leaves the role and the policies out, so the tools stay open. A `Restricted 5 SA-S4R MCP tools` line means the policies were applied.
+**Cause 3: `splunker` lost the tools after init.** `docker logs splunk-init` shows `Role s4r_user not found` when the installed SA-S4R is older than 2.0.0 (an existing `so1-etc` volume keeps the app it first installed). Init then leaves the role and the policies out, so the tools stay open. A `Restricted 5 SA-S4R MCP tools` line means the policies were applied.
 
 **Solution**:
 

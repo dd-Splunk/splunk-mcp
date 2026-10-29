@@ -244,7 +244,7 @@ fi
 cleanup_last_body
 
 # --- 4. MCP user (splunker) ---
-# s4r_user is defined by SA-S4R authorize.conf (1.1.1+). An older app kept in an existing so1-etc
+# s4r_user is defined by SA-S4R authorize.conf (2.0.0+). An older app kept in an existing so1-etc
 # volume lacks it, and Splunk rejects an unknown role, so skip it then instead of failing init.
 s4r_role_ok=0
 n=0
@@ -267,7 +267,7 @@ if [ "${s4r_role_ok}" = "1" ]; then
   user_roles="user + mcp_user + s4r_user"
   set -- -d "roles=s4r_user" "$@"
 else
-  echo "⚠️  Role s4r_user not found (SA-S4R older than 1.1.1?). Not assigning it; make clean-y && make up installs the current app."
+  echo "⚠️  Role s4r_user not found (SA-S4R older than 2.0.0?). Not assigning it; make clean-y && make up installs the current app."
 fi
 echo "🧑 Ensuring Splunk user '${SPLUNK_MCP_USER}' exists with roles ${user_roles}..."
 
