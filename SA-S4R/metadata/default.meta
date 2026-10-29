@@ -25,3 +25,9 @@ export = system
 
 [tools]
 export = system
+
+[eventtypes]
+export = system
+
+[tags]
+export = system
