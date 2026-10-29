@@ -185,7 +185,7 @@ Summary of what runs **inside** `splunk-init` with `SPLUNK_HOST=so1`:
 1. Enables the **SA-Eventgen** default modular input (**required**; init **exits 1** if the app is missing or the input stays disabled).
 2. Sets MCP server `ssl_verify=false` via REST (dev convenience).
 3. Ensures Splunk role **`mcp_user`** exists with capability **`mcp_tool_execute`** and **`srchJobsQuota=5`** (parallel S4R agent headroom).
-4. Creates or updates user **`splunker`** with roles **`user`** + **`mcp_user`**, and clears **`locked-out`** (idempotent unlock on every init).
+4. Creates or updates user **`splunker`** with roles **`user`** + **`mcp_user`** + **`s4r_user`**, and clears **`locked-out`** (idempotent unlock on every init). **`s4r_user`** is defined by SA-S4R 1.1.1+. If the installed app is older and lacks it, init warns and leaves it out instead of failing.
 5. Registers SA-S4R MCP tools from `s4r_mcp_tools.json` (`POST /services/mcp_tools`, enable, saved-search reload). Init **exits 1** if that fails.
 6. Uses `SPLUNK_SPLUNKER_PASSWORD` from env; this repo does not write passwords to disk.
 
@@ -369,7 +369,7 @@ The script uses **basic auth** on every `auth_curl` call: **`splunk_curl -k`** (
 | Eventgen | POST | `/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default/enable` | Fallback: same URL with `disabled=0` |
 | MCP TLS dev | POST | `/servicesNS/nobody/Splunk_MCP_Server/configs/conf-mcp/server` | Body: `ssl_verify=false` |
 | Role | GET/POST | `/services/authorization/roles/mcp_user` | Body: `capabilities=mcp_tool_execute`, `capabilities=s4r_workshop_control`, `srchJobsQuota=5` |
-| User | POST | `/services/authentication/users` or `.../users/splunker` | Bodies: `roles=user`, `roles=mcp_user`, `locked-out=false` |
+| User | POST | `/services/authentication/users` or `.../users/splunker` | Bodies: `roles=user`, `roles=mcp_user`, `roles=s4r_user` (only when the role exists), `locked-out=false` |
 
 ### Helper functions
 
