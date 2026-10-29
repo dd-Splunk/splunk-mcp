@@ -20,7 +20,7 @@ SA-S4R/                         # tracked in git
 │   └── s4r_workshop_mode.py    # REST handler: infrastructure vs NK threat mode
 ├── default/
 │   ├── app.conf                # id, label, version, launcher metadata
-│   ├── authorize.conf          # capability s4r_workshop_control
+│   ├── authorize.conf          # capability s4r_workshop_control, role s4r_user
 │   ├── data/ui/nav/default.xml   # barebones nav (Search, Dashboards, Alerts, …)
 │   ├── eventgen.conf           # Eventgen definitions (baseline + optional attack stanza)
 │   ├── eventtypes.conf         # s4r_web_access (access_combined), tagged web in tags.conf
