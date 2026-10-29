@@ -173,7 +173,7 @@ sequenceDiagram
     Init->>SO1: enable Eventgen modinput and verify disabled=0
     Init->>SO1: MCP Server ssl_verify=false
     Init->>SO1: role mcp_user + mcp_tool_execute + s4r_workshop_control, srchJobsQuota=5
-    Init->>SO1: user splunker with roles user + mcp_user
+    Init->>SO1: user splunker with roles user + mcp_user + s4r_user (skipped if SA-S4R lacks the role)
     loop every 5s, up to 300s
         Init->>SO1: GET /services/kvstore/status
     end

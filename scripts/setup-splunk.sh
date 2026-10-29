@@ -5,7 +5,7 @@
 #   1. Enable SA-Eventgen modinput_eventgen://default (required; init fails if still disabled)
 #   2. Splunk MCP Server: ssl_verify=false (local dev only; uses curl -k)
 #   3. Role mcp_user with mcp_tool_execute and s4r_workshop_control (both required; the latter after SA-S4R load)
-#   4. User splunker: roles user + mcp_user
+#   4. User splunker: roles user + mcp_user + s4r_user (s4r_user comes from SA-S4R; skipped if the app lacks it)
 #   5. SA-S4R MCP tools: register-s4r-mcp-tools.sh (batch replace, enable, saved-search reload)
 #
 # splunk-init mounts this directory's scripts and SA-S4R/default/s4r_mcp_tools.json.
@@ -244,14 +244,38 @@ fi
 cleanup_last_body
 
 # --- 4. MCP user (splunker) ---
-echo "🧑 Ensuring Splunk user '${SPLUNK_MCP_USER}' exists with roles user + mcp_user..."
+# s4r_user is defined by SA-S4R authorize.conf (1.1.1+). An older app kept in an existing so1-etc
+# volume lacks it, and Splunk rejects an unknown role, so skip it then instead of failing init.
+s4r_role_ok=0
+n=0
+while [ "$n" -lt 5 ]; do
+  if AUTH_CURL_QUIET=1 auth_curl "${SPLUNK_URL}/services/authorization/roles/s4r_user?output_mode=json" >/dev/null; then
+    s4r_role_ok=1
+    break
+  fi
+  cleanup_last_body
+  n=$((n + 1))
+  sleep 2
+  AUTH_CURL_QUIET=1 auth_curl -X POST "${SPLUNK_URL}/services/authentication/providers/services/_reload" >/dev/null || true
+  cleanup_last_body
+done
+cleanup_last_body
+
+user_roles="user + mcp_user"
+set -- -d "roles=user" -d "roles=mcp_user" -d "locked-out=false"
+if [ "${s4r_role_ok}" = "1" ]; then
+  user_roles="user + mcp_user + s4r_user"
+  set -- -d "roles=s4r_user" "$@"
+else
+  echo "⚠️  Role s4r_user not found (SA-S4R older than 1.1.1?). Not assigning it; make clean-y && make up installs the current app."
+fi
+echo "🧑 Ensuring Splunk user '${SPLUNK_MCP_USER}' exists with roles ${user_roles}..."
 
 USER_URL="${SPLUNK_URL}/services/authentication/users/${SPLUNK_MCP_USER}"
 user_exists=0
 AUTH_CURL_QUIET=1 auth_curl "${USER_URL}?output_mode=json" >/dev/null && user_exists=1
 cleanup_last_body
 
-set -- -d "roles=user" -d "roles=mcp_user" -d "locked-out=false"
 [ "${user_exists}" = "0" ] && [ -z "${SPLUNK_SPLUNKER_PASSWORD}" ] && {
   echo "❌ SPLUNK_SPLUNKER_PASSWORD must be set to create the MCP user '${SPLUNK_MCP_USER}'." >&2
   exit 1
@@ -280,7 +304,7 @@ if [ "${user_exists}" = "0" ]; then
   printf '%s' "${SPLUNK_SPLUNKER_PASSWORD}" | must auth_curl -X POST "${SPLUNK_URL}/services/authentication/users" \
     --data-urlencode "name=${SPLUNK_MCP_USER}" --data-urlencode "password@-" "$@" \
     -H "Content-Type: application/x-www-form-urlencoded" >/dev/null
-  echo "✅ Created user ${SPLUNK_MCP_USER} (roles user + mcp_user)"
+  echo "✅ Created user ${SPLUNK_MCP_USER} (roles ${user_roles})"
 fi
 cleanup_last_body
 
