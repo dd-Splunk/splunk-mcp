@@ -8,7 +8,6 @@
 | 4353 | Config Explorer (optional UI utility) | 1.8.26 (Splunkbase lists Splunk up to 10.4; runs on 10.6 but not declared) |
 | 7931 | Splunk MCP Server (required for `/services/mcp`) | 2.1.0 (token API changed in 2.1; see [Encrypted bearer token](#encrypted-bearer-token-this-repo)) |
 | 7245 | Splunk AI Assistant | 2.3.6 |
-| 1621 | Splunk Common Information Model (provides the `Web` data model for SA-S4R) | 8.8.0 |
 | — | SA-S4R (this repo) | GitHub Release [`latest`](https://github.com/dd-Splunk/splunk-mcp/releases/download/latest/SA-S4R.spl) |
 
 Check current Splunkbase releases: `https://splunkbase.splunk.com/api/v1/app/<id>/release/` (first entry is latest). Update the `/release/VERSION/` segment in **`compose.yml`** when bumping.

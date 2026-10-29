@@ -28,7 +28,7 @@ SA-S4R/                         # tracked in git
 │   ├── restmap.conf            # /s4r_workshop_mode for API MCP tools
 │   ├── savedsearches.conf      # Governed SPL backing SPL MCP tools
 │   ├── s4r_mcp_tools.json      # Batch-replace payload for POST /services/mcp_tools
-│   ├── tags.conf               # web tag → CIM Web data model
+│   ├── tags.conf               # web tag (CIM Web)
 │   └── transforms.conf         # product_codes lookup (file: lookups/product_codes.csv)
 ├── lookups/
 │   └── product_codes.csv       # Demo lookup for Lab 5
@@ -65,7 +65,7 @@ Splunk apps split **shipped baseline** (`default/`) from **instance-specific ove
 **Rules (Splunk and this repo):**
 
 1. **Splunk Web, Settings → Knowledge, nav editor, field extractor, Dashboard Studio saves** — must land under **`SA-S4R/local/`** only. **Never** save customizations into **`default/`** (Splunk will overwrite shipped objects on upgrade/reinstall).
-2. **Agents and contributors** — do not add workshop dashboards, nav tabs, or Lab 4 field extractions under **`SA-S4R/default/`** in git. **Exceptions** (maintainer-owned in **`default/`**): MCP packaging (`savedsearches.conf` for tool backing, `s4r_mcp_tools.json`, REST handler) — [MCP-TOOLS.md](MCP-TOOLS.md) — and the sourcetype baseline: field extractions, the CIM Web mapping (`props.conf`, `eventtypes.conf`, `tags.conf`), the host transform and the `s4r_user` role. Workshop UI setup is in [Workshop objects in `local/`](#workshop-objects-in-local) and [DASHBOARD.md](DASHBOARD.md).
+2. **Agents and contributors** — do not add workshop dashboards, nav tabs, or Lab 4 field extractions under **`SA-S4R/default/`** in git. **Exceptions** (maintainer-owned in **`default/`**): MCP packaging (`savedsearches.conf` for tool backing, `s4r_mcp_tools.json`, REST handler) — [MCP-TOOLS.md](MCP-TOOLS.md) — and the sourcetype baseline: field extractions, the CIM-compliant field names and `web` tag (`props.conf`, `eventtypes.conf`, `tags.conf`), the Eventgen host and rate, and the `s4r_user` role. Workshop UI setup is in [Workshop objects in `local/`](#workshop-objects-in-local) and [DASHBOARD.md](DASHBOARD.md).
 3. **Packaging** — **`package-s4r.yml`** excludes **`local/`** (entire directory) so instance-specific content is not published in **`SA-S4R.spl`**. Git ignores **`SA-S4R/local/**`** (see **`.gitignore`**).
 4. **Install** — Compose does not bind-mount the app tree. The package lands in **`so1-etc`**. Workshop UI and Eventgen overrides still belong in that installed app’s **`local/`**.
 
@@ -139,9 +139,9 @@ The **Buttercup Enterprises** workshop tab and Dashboard Studio view live under 
 
 **`default/props.conf`** extracts `action`, `product_id`, `uid`, and `JSESSIONID` from the request line so workshop SPL such as `action=purchase` works without manual field extraction.
 
-### CIM Web mapping
+### CIM-compliant fields (CIM Web)
 
-**`default/props.conf`**, **`eventtypes.conf`** and **`tags.conf`** map `access_combined` to the CIM **Web** data model. The CIM app (Splunkbase 1621, pinned in **`compose.yml`**) provides the model, and **`default.meta`** exports the eventtype and tag to `system` so it can see them. The app ships the mapping but no acceleration.
+**`default/props.conf`**, **`eventtypes.conf`** and **`tags.conf`** give `access_combined` the field names and the `web` tag of the CIM **Web** data model, so any Splunk with the Splunk Common Information Model app (Splunkbase 1621) can use the data as is, and **`default.meta`** exports the eventtype and tag to `system` for that. **This repo does not install the CIM app**: the workshop does not need it, and the S4R searches use plain SPL. Install it yourself if you want the CIM `Web` model or CIM-based apps.
 
 | Web field | Source |
 | --------- | ------ |
@@ -153,15 +153,11 @@ The **Buttercup Enterprises** workshop tab and Dashboard Studio view live under 
 | `vendor_product` | constant `Buttercup Enterprises Web Shop` |
 | `status`, `uri_path`, `uri_query`, `bytes`, `user` | already extracted by the stock sourcetype |
 
-**Host.** Eventgen ignores its own `host` setting with the default modinput output (its spec limits it to `splunkstream` and `syslogout`), so every event would carry `host=127.0.0.1`. **`transforms.conf`** therefore sets `host` to `www.buttercupenterprises.com` at index time, and **`props.conf`** applies it only to the three S4R sample sources (`product.screen.sample`, `cart.do.sample`, `attack.nk.purchase.sample`), never to other `access_combined` data. `host` is a real indexed field, so `tstats ... where host=...` works. Changing it needs a Splunk restart, and events indexed earlier keep their old host.
+**Host.** **`eventgen.conf`** sets `host = www.buttercupenterprises.com` in `[global]`, so every sample stanza (including the attack stream) inherits it and events no longer carry Eventgen's own `127.0.0.1`. `host` is a real indexed field, so `tstats ... where host=...` works, and `dest`, `site` and `url_domain` are aliases of it. Events indexed before a change keep their old host.
 
-**Known deviation:** `action` stays the cart verb (`view`, `addtocart`, `purchase`, `remove`, `changequantity`) because the workshop searches filter on it. `Web.action` therefore holds those verbs instead of CIM values such as `allowed` and `blocked`. `product_id` is a custom field, not part of the model.
+**Known deviation:** `action` stays the cart verb (`view`, `addtocart`, `purchase`, `remove`, `changequantity`) because the workshop searches filter on it. With the CIM app installed, `Web.action` would hold those verbs instead of CIM values such as `allowed` and `blocked`. `product_id` is a custom field, not part of CIM.
 
-Query it with:
-
-```spl
-| tstats count from datamodel=Web where Web.status>=400 by Web.src, Web.status
-```
+With the CIM app installed, `| tstats count from datamodel=Web by Web.dest, Web.status` works on this data.
 
 **`platform`** (Lab 4) belongs in the installed app’s **`local/props.conf`** — see [Workshop objects in `local/`](#workshop-objects-in-local). Agents/MCP still use inline `rex` per [SPL-CATALOG.md](SPL-CATALOG.md).
 
@@ -187,7 +183,8 @@ The stanza **`[product_codes]`** in **`default/transforms.conf`** points at the 
 **Splunk Web:** save all knowledge objects, nav changes, field extractions, and dashboards under **`local/`** only — never **`default/`** (see **`default/` vs `local/`** above).
 
 - Edit **`samples/action.txt`**, **`status.txt`**, or **`useragent.txt`** to change categorical choices.
-- Tune **`interval`**, **`count`**, and **`randomizeCount`** per stanza in `eventgen.conf`.
+- Tune **`interval`**, **`count`**, and **`randomizeCount`** per stanza in `eventgen.conf`. Each stanza emits `count` events every `interval` seconds: the default is one batch every 10 s, so about 300 events/min for the baseline (`product.screen` 34 + `cart.do` 16 per batch) and about 150 events/min more while the attack stream is on.
+- After editing `eventgen.conf` by hand on a running stack, run `POST /servicesNS/nobody/SA-S4R/configs/conf-eventgen/_reload`, then disable and enable the `SA-Eventgen` modinput. Copying the file alone is not enough, because splunkd keeps the old config in memory.
 - Adjust the **`product.screen`** / **`cart.do`** ratio via each stanza’s **`count`**.
 
 ### Workshop modes: infrastructure vs NK attack

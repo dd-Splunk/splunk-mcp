@@ -30,8 +30,8 @@ index=main sourcetype=access_combined
 | Cart `action` values | `view`, `addtocart`, `purchase`, `remove`, `changequantity` |
 | Extracted fields | `action`, `product_id`, `uid`, `JSESSIONID` (`SA-S4R/default/props.conf`) |
 | Geo IP field | `clientip` (confirm casing in Search) |
-| Host | `host=www.buttercupenterprises.com` on every S4R event (set at index time; Eventgen's own `host` setting has no effect with modinput output) |
-| CIM Web model | Events are tagged `web` and mapped to the CIM `Web` data model, for example `\| tstats count from datamodel=Web by Web.dest, Web.status` ([SA-S4R-APP.md § CIM Web mapping](SA-S4R-APP.md#cim-web-mapping)). `Web.action` holds the cart verb, not `allowed` or `blocked` |
+| Host | `host=www.buttercupenterprises.com` on every S4R event (set in `eventgen.conf` `[global]`) |
+| CIM fields | Field names and the `web` tag follow CIM Web (`src`, `dest`, `status`, `http_method`, …); the CIM app is not installed ([SA-S4R-APP.md § CIM-compliant fields](SA-S4R-APP.md#cim-compliant-fields-cim-web)) |
 | Success | `status` 2xx |
 | Failure (workshop) | `status>=400` |
 | Failed purchase | `action=purchase` AND `status>=400` |
