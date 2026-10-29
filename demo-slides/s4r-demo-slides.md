@@ -245,6 +245,7 @@ Managing custom tools: batch replace does not enable. Enable is a second POST. S
 | ---- | ---- | ------ |
 | Batch replace | `POST /services/mcp_tools` | `external_app_id=SA-S4R`, five tools |
 | Enable | same endpoint, `enabled: true` | `SA-S4R:SA-S4R_<name>` |
+| Restrict | `POST /services/mcp_tool_roles` | role `s4r_user` only |
 | Run | `/services/mcp` | saved search or `s4r_workshop_mode` |
 
 **Tool ID** after enable: `SA-S4R:SA-S4R_<name>` · distinct `query_*` vs `apply_*` for collision checks.
@@ -252,7 +253,7 @@ Managing custom tools: batch replace does not enable. Enable is a second POST. S
 Detail: `docs/s4r/MCP-TOOLS.md`
 
 <!--
-Create leaves tools disabled. This PoC enables with override true so tools/list shows SA-S4R_*.
+Create leaves tools disabled. This PoC enables with override true so tools/list shows SA-S4R_*. Then each tool gets a Tool Role Policy limiting it to role s4r_user, which splunker holds: other MCP users do not see the tools and get HTTP 403 if they call them.
 -->
 
 ---
@@ -328,7 +329,8 @@ sequenceDiagram
 
 | Identity | Purpose |
 | -------- | ------- |
-| `splunker` | MCP searches (`mcp_tool_execute`) |
+| `splunker` | MCP searches (`mcp_tool_execute`), holds `s4r_user` |
+| `s4r_user` | Only role that sees the `SA-S4R_*` tools |
 | Bearer token | Client auth — not in git |
 | `splunk_run_query` | Ad-hoc catalog SPL |
 | `SA-S4R_*` | Governed workshop tools (KPIs, geo, NK mode) |
@@ -337,7 +339,7 @@ sequenceDiagram
 </div>
 
 <!--
-Read-only demo discipline; token minted at make up. Cursor spawns npx mcp-remote over HTTPS as splunker, not admin. Steps 2 and 3 both use this bridge — Step 3 adds agent roles on top.
+Read-only demo discipline; token minted at make up. The SA-S4R_* tools are limited to role s4r_user (Tool Role Policies), so another MCP user would not even see them. Cursor spawns npx mcp-remote over HTTPS as splunker, not admin. Steps 2 and 3 both use this bridge — Step 3 adds agent roles on top.
 -->
 
 ---

@@ -57,6 +57,8 @@ Search not executed: ... role-based concurrency limit of historical searches for
 has been reached (usage=3, quota=3)
 ```
 
+**Measured** on Splunk 10.6.1 with `splunker` holding `user`, `mcp_user` (quota 5) and `s4r_user` (quota 3): 7 simultaneous searches gave 5 running and 2 queued, and all 7 finished, so the highest role quota (5) applies and extra searches wait instead of failing. The error below shows up when that is not the case, for example when `splunker` lost `mcp_user`.
+
 **Cause**: All specialists run SPL as **`splunker`**. The PoC sets **`srchJobsQuota=5`** on **`mcp_user`**, but the built-in **`user`** role may still cap concurrent historical searches lower on some builds — four parallel background workers can exceed the effective quota.
 
 **Solution**:

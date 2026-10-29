@@ -116,7 +116,7 @@ Product contract: [About MCP Server for Splunk platform](https://help.splunk.com
 
 **Slide 10 — How it works:** `s4r_mcp_tools.json` → batch replace → enable → `/services/mcp`. Saved searches and the REST handler are what enabled tools run.
 
-**Slide 11 — Custom tool registration:** Batch replace, enable (`SA-S4R:SA-S4R_<name>`), run. `inputSchema` in the JSON is the argument schema.
+**Slide 11 — Custom tool registration:** Batch replace, enable (`SA-S4R:SA-S4R_<name>`), restrict to role `s4r_user` (Tool Role Policies), run. `inputSchema` in the JSON is the argument schema.
 
 **Slide 12 — SA-S4R workshop tools:** five tools (two API for NK mode, three SPL for KPIs / geo / NK validate).
 
@@ -132,7 +132,7 @@ Product contract: [About MCP Server for Splunk platform](https://help.splunk.com
 
 **Slide 14:** Example business prompts (*Is my website losing money?*, checkout funnel, merchandising).
 
-**Slide 15:** Splunk MCP sequence diagram + identity table (`splunker`, bearer token, `splunk_run_query`, **`SA-S4R_*`** workshop tools).
+**Slide 15:** Splunk MCP sequence diagram + identity table (`splunker`, `s4r_user`, bearer token, `splunk_run_query`, **`SA-S4R_*`** workshop tools). *Optional point:* the `SA-S4R_*` tools are limited to role `s4r_user`; a user without it sees no S4R tools and gets HTTP 403.
 
 **Slide 16 — Live demo prompt** (two columns on-screen):
 

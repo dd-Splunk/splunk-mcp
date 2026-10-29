@@ -86,7 +86,7 @@ Wait for all four summaries; synthesize one executive answer (Power User templat
 
 ### Splunk search concurrency
 
-Four parallel specialists each search as **`splunker`** (`SA-S4R_*` or `splunk_run_query`). The PoC sets **`srchJobsQuota=5`** on role **`mcp_user`** (which **`splunker`** inherits). If a fourth search still fails, you may be hitting the built-in **`user`** role cap — error example:
+Four parallel specialists each search as **`splunker`** (`SA-S4R_*` or `splunk_run_query`). The PoC sets **`srchJobsQuota=5`** on role **`mcp_user`** (which **`splunker`** inherits; its other roles, `user` and `s4r_user`, have lower quotas, and Splunk applies the highest). Measured: 7 simultaneous searches gave 5 running and 2 queued, all finished. If a fourth search still fails, you may be hitting the built-in **`user`** role cap — error example:
 
 `role-based concurrency limit of historical searches for user "splunker" has been reached (usage=N, quota=N)`
 

@@ -58,7 +58,7 @@ Confirm validity dates, key size (RSA ≥2048 or modern EC curves), and signatur
 
 ## Splunk roles and least privilege
 
-**`scripts/setup-splunk.sh`** does **not** grant **`admin`** to **`splunker`**. Do not add **`admin`** to MCP-capable accounts outside tightly controlled dev scenarios.
+**`scripts/setup-splunk.sh`** does **not** grant **`admin`** to **`splunker`**. The **`SA-S4R_*`** tools are limited to role **`s4r_user`** with Tool Role Policies, so an extra MCP user does not get them by default (roles with **`mcp_tool_admin`** bypass the policies). Do not add **`admin`** to MCP-capable accounts outside tightly controlled dev scenarios.
 
 ## Bind mounts
 

@@ -23,7 +23,7 @@ Source of truth when docs disagree with code: [docs/README.md](../README.md#sour
 
 ## Local test loop
 
-Docker-free (MCP config shape + SA-S4R mode parse):
+Docker-free (MCP config shape, secrets, tokens, SA-S4R mode parse, CIM Web mapping, role and tool policy; see `tests/`):
 
 ```bash
 make test

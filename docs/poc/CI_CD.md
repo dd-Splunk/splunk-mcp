@@ -22,7 +22,7 @@ Automation in this repo is intentionally small: it supports a **local PoC** stac
 
 - **gitleaks** on the full git history (**.gitleaks.toml** allowlists PoC placeholders)
 - **pre-commit** (**.pre-commit-config.yaml**): **gitleaks** on tracked files, **shellcheck** on **`scripts/*.sh`** and **`tests/*.sh`**, **markdownlint-cli2** on project Markdown (via **`.markdownlint-cli2.jsonc`**)
-- **`make test`**: MCP client JSON shape (no Splunk) and SA-S4R mode/payload unit tests (**jq** + **npx**)
+- **`make test`**: Docker-free tests (no Splunk): MCP client JSON shape, secret loader, token mint and prune, admin curl auth, MCP auth stats, SA-S4R mode/payload parse, CIM Web mapping, `s4r_user` role and tool policy (**jq** + **npx**)
 
 **Permissions**
 
