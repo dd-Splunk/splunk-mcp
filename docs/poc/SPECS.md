@@ -36,6 +36,7 @@ MCP user must **not** be `admin`. The **`ai`** SPL command is available to all u
 - SA-Eventgen (1924)
 - Config Explorer (4353)
 - Splunk AI Assistant (7245)
+- Splunk Common Information Model (1621, `Web` data model for SA-S4R)
 
 Splunk AI Toolkit (2890) and Python for Scientific Computing (2882) are **out of scope** unless installed manually.
 

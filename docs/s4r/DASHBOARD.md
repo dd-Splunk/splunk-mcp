@@ -1,6 +1,6 @@
 # Splunk4Rookies dashboard prompt
 
-Use this document as the **dashboard layout spec** (visualization, layout, acceptance) for the Buttercup Enterprises workshop in **Splunk4Rookies** (`SA-S4R`). **Canonical SPL** lives in [SPL-CATALOG.md](SPL-CATALOG.md). Data and Eventgen: [SA-S4R-APP.md](SA-S4R-APP.md). Agentic setup: [AGENTS.md](AGENTS.md) and [`.cursor/agents/`](../.cursor/agents/). Workshop hub: [README.md](README.md).
+Use this document as the **dashboard layout spec** (visualization, layout, acceptance) for the Buttercup Enterprises workshop in **Splunk4Rookies** (`SA-S4R`). **Canonical SPL** lives in [SPL-CATALOG.md](SPL-CATALOG.md). Data and Eventgen: [SA-S4R-APP.md](SA-S4R-APP.md). Agentic setup: [AGENTS.md](AGENTS.md) and [`.cursor/agents/`](../../.cursor/agents/). Workshop hub: [README.md](README.md).
 
 ## Scenario
 
