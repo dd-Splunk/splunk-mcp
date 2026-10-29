@@ -239,7 +239,7 @@ The header file holds one line, `Authorization: Bearer <YOUR_ENCRYPTED_TOKEN>` (
 Splunk MCP Server **2.0** lets an app register tools without a standalone MCP server ([custom tools](https://help.splunk.com/en/splunk-enterprise/mcp-server-for-splunk-platform/2.0/managing-custom-tools-in-splunk-mcp-server)). This PoC:
 
 - **Executes** tools as **`splunker`** on `POST /services/mcp` (JSON-RPC `tools/call`)
-- **Registers** them as **admin** during **`splunk-init`** on `POST /services/mcp_tools` (batch replace from `SA-S4R/default/s4r_mcp_tools.json`)
+- **Registers** them as **admin** during **`splunk-init`** on `POST /services/mcp_tools` (batch replace from `SA-S4R/default/s4r_mcp_tools.json`), then limits each tool to role `s4r_user` with `POST /services/mcp_tool_roles` (Tool Role Policies)
 
 Do not put admin passwords or bearer tokens in the JSON payload or in git. Implementation, definitions, and file map: [MCP-TOOLS.md](../s4r/MCP-TOOLS.md).
 

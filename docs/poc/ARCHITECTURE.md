@@ -179,6 +179,7 @@ sequenceDiagram
     end
     Init->>SO1: POST /services/mcp_tools (batch replace, 5 tools)
     Init->>SO1: enable each SA-S4R_* tool and reload saved searches
+    Init->>SO1: POST /services/mcp_tool_roles (limit the 5 tools to s4r_user)
     Init-->>DC: exit 0
     Make->>DC: wait-splunk-init.sh until exit 0
     Make->>MC: update-all cursor claude-code
