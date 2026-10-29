@@ -3,6 +3,9 @@
 # splunk-init runs this at the end of setup-splunk.sh. After a JSON edit, make up
 # starts the exited init container again. Host-only run still loads secrets via
 # scripts/with-splunk-env.sh (.env or the process environment).
+#
+# After registering, the tools are limited to role S4R_TOOL_ROLE (default s4r_user) with Tool Role
+# Policies. Set S4R_TOOL_ROLE= (empty) to leave them open to every mcp_tool_execute user.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -38,6 +41,55 @@ wait_for_kvstore() {
   done
   echo "error: KV Store not ready after ${max_wait}s (last status: ${status:-unknown}); re-run make up" >&2
   exit 1
+}
+
+# Limit the SA-S4R_* tools to one role (Tool Role Policies, POST /services/mcp_tool_roles). The role
+# must exist and the MCP user must hold it: otherwise the tools would vanish for the user the
+# clients run as (an older SA-S4R in an existing so1-etc volume has no s4r_user role). Not fatal;
+# the tools then stay open, as before. Re-running replaces each policy, so it is idempotent.
+restrict_s4r_mcp_tools() {
+  local role="${S4R_TOOL_ROLE-s4r_user}" response code body holders tool_name failed=0 total=0
+  if [[ -z "${role}" ]]; then
+    echo "   S4R_TOOL_ROLE is empty: SA-S4R tools stay open to every mcp_tool_execute user"
+    return 0
+  fi
+
+  response="$(splunk_curl -sSk --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" \
+    "${SPLUNK_URL}/services/authorization/roles/${role}?output_mode=json" -w "\n%{http_code}" || true)"
+  code="${response##*$'\n'}"
+  if [[ ! "${code}" =~ ^2 ]]; then
+    echo "⚠️  Role ${role} not found (SA-S4R older than 1.1.1?). SA-S4R tools stay open; make clean-y && make up installs the current app." >&2
+    return 0
+  fi
+
+  response="$(splunk_curl -sSk --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" \
+    "${SPLUNK_URL}/services/authentication/users/${SPLUNK_MCP_USER}?output_mode=json" -w "\n%{http_code}" || true)"
+  code="${response##*$'\n'}"
+  body="${response%$'\n'*}"
+  holders="$(jq -r --arg r "${role}" '.entry[0].content.roles // [] | index($r) // empty' <<<"${body}" 2>/dev/null || true)"
+  if [[ ! "${code}" =~ ^2 || -z "${holders}" ]]; then
+    echo "⚠️  ${SPLUNK_MCP_USER} does not hold role ${role}; not restricting SA-S4R tools (they would disappear for it)." >&2
+    return 0
+  fi
+
+  while IFS= read -r tool_name; do
+    [[ -n "${tool_name}" ]] || continue
+    total=$((total + 1))
+    response="$(splunk_curl -sSk --connect-timeout "${SPLUNK_CURL_CONNECT_TIMEOUT}" --max-time "${SPLUNK_CURL_MAX_TIME}" \
+      -X POST "${SPLUNK_URL}/services/mcp_tool_roles" \
+      -H "Content-Type: application/json" \
+      -d "{\"tool_id\": \"SA-S4R:SA-S4R_${tool_name}\", \"roles\": [\"${role}\"]}" \
+      -w "\n%{http_code}" || true)"
+    code="${response##*$'\n'}"
+    if [[ ! "${code}" =~ ^2 ]]; then
+      echo "⚠️  Could not restrict SA-S4R_${tool_name} to ${role} (HTTP ${code}); it stays open" >&2
+      failed=$((failed + 1))
+    fi
+  done < <(jq -r '.tools[].name' "${TOOLS_JSON}")
+
+  if [[ "${failed}" -eq 0 ]]; then
+    echo "✅ Restricted ${total} SA-S4R MCP tools to role ${role}"
+  fi
 }
 
 register_s4r_mcp_tools() {
@@ -143,6 +195,8 @@ register_s4r_mcp_tools() {
     echo "error: saved-search reload returned HTTP ${reload_code}; MCP saved-search tools may 404 until this succeeds (make restart)" >&2
     exit 1
   fi
+
+  restrict_s4r_mcp_tools
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
