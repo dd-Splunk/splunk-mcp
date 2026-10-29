@@ -17,13 +17,12 @@ services:
       #   app/4353  = Config Explorer (optional UI utility)
       #   app/7931  = Splunk MCP Server (required for /services/mcp)
       #   app/7245  = Splunk AI Assistant (SPL / saia_* MCP tools)
-      #   app/1621  = Splunk Common Information Model (Web data model for SA-S4R)
       # If a download fails (404, etc.), replace the /release/VERSION/ segment with a current
       # release for that app from https://splunkbase.splunk.com/app/<id> .
       # SA-S4R is this repo's package from the moving GitHub Release `latest`
       # (package-s4r.yml). The image downloads SPLUNK_APPS_URL only on the first
       # start of an empty so1-etc volume.
-      SPLUNK_APPS_URL: https://splunkbase.splunk.com/app/1924/release/8.2.2/download/,https://splunkbase.splunk.com/app/4353/release/1.8.26/download/,https://splunkbase.splunk.com/app/7931/release/2.1.0/download/,https://splunkbase.splunk.com/app/7245/release/2.3.6/download/,https://splunkbase.splunk.com/app/1621/release/8.8.0/download/,https://github.com/dd-Splunk/splunk-mcp/releases/download/latest/SA-S4R.spl
+      SPLUNK_APPS_URL: https://splunkbase.splunk.com/app/1924/release/8.2.2/download/,https://splunkbase.splunk.com/app/4353/release/1.8.26/download/,https://splunkbase.splunk.com/app/7931/release/2.1.0/download/,https://splunkbase.splunk.com/app/7245/release/2.3.6/download/,https://github.com/dd-Splunk/splunk-mcp/releases/download/latest/SA-S4R.spl
       TZ: ${TZ:?set TZ in config.env}
     volumes:
       - so1-var:/opt/splunk/var

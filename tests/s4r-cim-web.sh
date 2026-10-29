@@ -28,15 +28,16 @@ grep -q '^EXTRACT-action = ' "${APP}/default/props.conf" || die "props.conf lost
 if grep -Eq '^EVAL-(dest|site|url_domain) = ' "${APP}/default/props.conf"; then
   die "props.conf hard-codes dest, site or url_domain; they come from host"
 fi
-# Eventgen ignores `host` with modinput output, so host is set at index time for each sample source
-grep -Eq '^FORMAT = host::www\.buttercupenterprises\.com$' "${APP}/default/transforms.conf" \
-  || die "transforms.conf does not set the shop host"
-while IFS= read -r src; do
-  awk -v s="[source::${src}]" '$0 == s {f=1; next} /^\[/ {f=0} f && /^TRANSFORMS-s4r_host = s4r_set_host$/ {ok=1} END {exit !ok}' \
-    "${APP}/default/props.conf" || die "props.conf does not set host for source ${src}"
-done < <(sed -n 's/^\[\(.*\.sample\)\]$/\1/p' "${APP}/default/eventgen.conf")
+# host comes from Eventgen ([global] reaches every sample stanza), so no index-time override is needed
+grep -Eq '^host = www\.buttercupenterprises\.com$' "${APP}/default/eventgen.conf" \
+  || die "eventgen.conf [global] does not set the shop host"
+awk '$0 == "[global]" {f=1; next} /^\[/ {f=0} f && /^host = /{ok=1} END {exit !ok}' "${APP}/default/eventgen.conf" \
+  || die "host is not set in eventgen.conf [global]"
+if grep -q 's4r_set_host' "${APP}/default/props.conf" "${APP}/default/transforms.conf"; then
+  die "the index-time host override is back; set host in eventgen.conf instead"
+fi
 
-# the tag that puts the events in the Web data model, and the exports that let Splunk_SA_CIM see it
+# the tag that marks the events as CIM Web, and the exports that let a CIM install see it
 grep -Eq '^search = .*sourcetype=access_combined' "${APP}/default/eventtypes.conf" \
   || die "eventtypes.conf does not match access_combined"
 etype="$(sed -n 's/^\[\(s4r_[a-z_]*\)\]$/\1/p' "${APP}/default/eventtypes.conf" | head -1)"
@@ -48,8 +49,9 @@ for stanza in eventtypes tags; do
     "${APP}/metadata/default.meta" || die "default.meta does not export ${stanza} to system"
 done
 
-# the Web data model ships in the CIM app, so compose must install it
-grep -Eq 'SPLUNK_APPS_URL:.*splunkbase\.splunk\.com/app/1621/release/[0-9.]+/download/' compose.yml \
-  || die "compose.yml does not install the Splunk CIM app (Splunkbase 1621)"
+# this repo does not install the CIM app: the mapping stays, the Splunkbase pin must not come back
+if grep -Eq 'splunkbase\.splunk\.com/app/1621/' compose.yml; then
+  die "compose.yml installs the CIM app (Splunkbase 1621); the S4R stack does not need it"
+fi
 
-echo "OK: SA-S4R maps access_combined to CIM Web and compose installs the CIM app"
+echo "OK: SA-S4R keeps CIM Web field names and the web tag, and the stack does not install the CIM app"
