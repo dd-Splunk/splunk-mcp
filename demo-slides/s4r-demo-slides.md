@@ -565,9 +565,9 @@ flowchart TB
 
 | Team | Finding | Severity |
 | ------ | --------- | -------- |
-| IT Ops | 503/404 dominate | Critical |
+| IT Ops | 503/404 dominate | High |
 | DevOps | Roughly flat ~40% (34–43%) | High, escalate IT Ops |
-| Business Analytics | Revenue lost via lookup (hundreds of $) | Critical |
+| Business Analytics | Revenue lost via lookup (hundreds of $) | High |
 | Security | No geo concentration (~1 failure per city) | Low |
 
 **Root-cause hypothesis:** Server-side failure, not fraud
