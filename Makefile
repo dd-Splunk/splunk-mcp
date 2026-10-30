@@ -117,7 +117,7 @@ check-splunkbase-pins: ## Compare compose.yml Splunkbase pins to current default
 
 demo-prep: ## Pre-demo check: Splunkbase pins + status + MCP verify + warm-stack reminder
 	@echo "=== Splunk MCP demo prep ==="
-	@echo "Tip: warm the stack before a live meeting — cold 'make up' can take many minutes."
+	@echo "Tip: warm the stack before a live meeting — cold 'make up' can take many minutes, and Eventgen needs ~10 more minutes (~300 events/min) for the numbers to settle."
 	@echo ""
 	@$(MAKE) check-splunkbase-pins
 	@echo ""

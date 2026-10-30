@@ -66,6 +66,8 @@ Data generation and workshop modes: `docs/s4r/SA-S4R-APP.md`. Orchestration desi
 **Dashboard panels:** IT Ops ✓/✗ · DevOps ✓/✗ · Business ✓/✗ · Security ✓/✗
 ```
 
+**Severity scale (use only these):** **high** = money or checkout is being lost now, **med** = degraded but not losing money, **low** = nothing to act on.
+
 ## Guardrails
 
 - **Delegation:** User says delegate → four Task subagents (parallel). Parent agent runs **synthesis only**, not team SPL.
