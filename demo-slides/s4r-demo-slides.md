@@ -371,10 +371,11 @@ Watch: **`SA-S4R_geo_failed_purchases`**
 </div>
 </div>
 
-**Expected (infrastructure):** Yes — high purchase failure; lost revenue from failed checkouts.
+**Expected (infrastructure):** Yes — about 40% of purchases fail; lost revenue from failed checkouts (hundreds of dollars after ~10 min).
 
 <!--
 Default data mode = infrastructure (~40% 503/404 everywhere). This is the lightweight path before introducing the orchestrator in Step 3.
+Pace: Eventgen writes ~300 events/min, so numbers are small. Measured after 10 min: ~3,000 events, ~150 purchases of which ~43% fail, ~$1,400 lost. Read the ratios, not exact amounts; an answer from a stack that is only a few minutes old is noisier.
 -->
 
 ---
@@ -565,14 +566,15 @@ flowchart TB
 | Team | Finding | Severity |
 | ------ | --------- | -------- |
 | IT Ops | 503/404 dominate | Critical |
-| DevOps | Flat ~40% all platforms | High, escalate IT Ops |
-| Business Analytics | Revenue lost via lookup | Critical |
-| Security | No geo concentration | Low |
+| DevOps | Roughly flat ~40% (34–43%) | High, escalate IT Ops |
+| Business Analytics | Revenue lost via lookup (hundreds of $) | Critical |
+| Security | No geo concentration (~1 failure per city) | Low |
 
 **Root-cause hypothesis:** Server-side failure, not fraud
 
 <!--
 Numbers come from live MCP — do not read fixed amounts from slides. Step 2 gave one answer; Step 3 shows how each team contributed.
+At ~300 events/min the splits are small samples: platforms are flat within noise (34–43% on 140–930 events each), failed purchases land on ~50 different cities (about 1 each), so per-city rates mean nothing. That is the point: no geo concentration, no platform outlier, so the cause is server-side.
 -->
 
 ---
@@ -600,6 +602,7 @@ Step 2: ask directly. Step 3: prefix with As Buttercup Power User and delegate t
 
 <!--
 Use case 5 / Demo 2: make s4r-attack-nk-enable before ask. Attendees can swap questions without changing agents or runbook.
+In threat mode the 175.45.* attack range skews two of these answers: international vs US reads ~85% vs ~40% with it and ~40% vs ~40% without it, and the scripted clients show up as a 94%-failing Other platform. Exclude NK (or report it separately) when the question is about regular customers.
 -->
 
 ---
@@ -618,10 +621,10 @@ Watch: **`SA-S4R_apply_nk_demo_state`** (`threat`) → **`SA-S4R_validate_nk_att
 
 > *As Buttercup Power User: is the money loss due to bad infrastructure or an active threat? Delegate to all four teams. Use the last 15 minutes.*
 
-**Expected:** Security leads on NK geo; IT Ops still sees 503/404 from baseline.
+**Expected:** Security leads on NK geo; IT Ops still sees 503/404 from baseline. Ask 2–5 min after enabling: by ~5 min `175.45.*` is ~90% of failed purchases (~95% of lost revenue).
 
 <!--
-Verdict: mixed — infrastructure still broken, but Security has a lead. Cleanup after demo: SA-S4R_apply_nk_demo_state (infrastructure) or make s4r-attack-nk-disable.
+Verdict: mixed — infrastructure still broken, but Security has a lead. Timing at ~300 events/min (attack adds ~150/min, all purchases, ~94% failing): after ~2 min the validate tool already lists the Pyongyang IPs; after ~5 min measured 427 of 486 failed purchases and $33.9K of $35.4K lost came from 175.45.*. Ask too late and the 15-minute window is nearly all attack, so the baseline story (503/404) fades — keep the ask in the 2–5 minute range. Cleanup after demo: SA-S4R_apply_nk_demo_state (infrastructure) or make s4r-attack-nk-disable.
 -->
 
 ---
@@ -659,7 +662,7 @@ make s4r-attack-nk-status    # expect: disabled (or SA-S4R_query_nk_demo_state �
 | MCP in Cursor | Restart Cursor; Splunk MCP tools visible |
 | Data flowing | `index=main sourcetype=access_combined \| head 5` |
 
-**Warm stack:** start Splunk before the session (`make up` can take many minutes).
+**Warm stack:** start Splunk at least 10 min before the session — Eventgen writes ~300 events/min, and ~3,000 events make the percentages settle.
 
 ---
 
@@ -704,7 +707,7 @@ make s4r-attack-nk-status    # expect: disabled (or SA-S4R_query_nk_demo_state �
 | ------- | ---------------- |
 | MCP tools missing | `make update-mcp-client MCP_CLIENT=cursor`; restart Cursor |
 | No events | `make status`; `docker logs splunk-init` |
-| NK mode no signal | `SA-S4R_query_nk_demo_state` / validate NK; search **last 15m** |
+| NK mode no signal | `SA-S4R_query_nk_demo_state` / validate NK; wait ≥2 min (attack ≈ 150 events/min); search **last 15m** |
 | Concurrency limit | Wait; run one team at a time |
 | Token / 401 | `make up` or `make update-mcp-client MCP_CLIENT=cursor` |
 

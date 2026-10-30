@@ -26,7 +26,16 @@ make s4r-attack-nk-status         # expect: disabled (infrastructure mode)
 | Data flowing | Search: `index=main sourcetype=access_combined \| head 5` |
 | Tabs pre-open | `docs/s4r/SPL-CATALOG.md`, `.cursor/agents/s4r-power-user.md`, `.cursor/agents/s4r-it-ops.md`, `.cursor/mcp.json` |
 
-**Warm stack:** Cold `make up` can take many minutes — start Splunk before the session.
+**Warm stack:** Cold `make up` can take many minutes — start Splunk before the session, and give Eventgen at least 10 more minutes: it writes ~300 events/min (~150 more while the attack runs), and about 3,000 events make the percentages settle.
+
+**Data pace (what to expect at ~300 events/min):**
+
+| After | Default mode |
+| ----- | ------------ |
+| ~5 min | ~1,500 events, ~75 purchases: usable, but noisy |
+| ~10 min | ~3,000 events, ~150 purchases, ~43% failing, ~$1,400 lost; platforms 34–43%; failed purchases on ~50 cities (about 1 each) |
+
+Threat mode adds ~150 attack events/min (all purchases, ~94% failing): the validate tool lists the Pyongyang IPs after ~2 min, and by ~5 min `175.45.*` is ~90% of failed purchases and ~95% of lost revenue. Ask the Demo 2 question 2–5 min after enabling: later, the 15-minute window is nearly all attack and the 503/404 baseline fades.
 
 **After threat segment:** `make s4r-attack-nk-disable` to restore default mode.
 
@@ -321,11 +330,13 @@ Optional: `make verify-mcp-remote MCP_VERIFY_CLIENT=cursor` in terminal (fast).
 
 > *Start the North Korean attack simulation for the Buttercup workshop.*
 
-Wait ~2 min; optional **`SA-S4R_validate_nk_attack_traffic`**. Then Step 3 Demo 2 prompt (**last 15 minutes**).
+Wait ~2 min; optional **`SA-S4R_validate_nk_attack_traffic`** (lists the Pyongyang IPs by then). Then Step 3 Demo 2 prompt (**last 15 minutes**), ideally within 5 min of enabling.
 
 **Terminal fallback:** `make s4r-attack-nk-enable` (see Slide 27).
 
 **Narrate:** *“Security should surface North Korea on failed purchases (`SA-S4R_geo_failed_purchases` / validate NK tool); DevOps should see scripted user agents; IT Ops still sees 503 from baseline traffic.”*
+
+**Expect:** `175.45.*` is the dominant source of failed purchases and lost revenue (~90% and ~95% by ~5 min), scripted user agents fail ~94%, real platforms stay flat, and IT Ops still reports 503/404 as background.
 
 **Say:** *“Verdict: mixed — infrastructure still broken, but Security has a lead for investigation.”*
 
@@ -364,7 +375,7 @@ On-screen table: **deck slide 32**. Expanded detail below for presenters.
 | ------- | ---------------- |
 | MCP tools missing | `make update-mcp-client MCP_CLIENT=cursor`; restart Cursor |
 | No events | `make status`; `docker logs splunk-init` |
-| NK mode no signal | **`SA-S4R_query_nk_demo_state`**; **`SA-S4R_validate_nk_attack_traffic`**; `make restart`; search **last 15m** |
+| NK mode no signal | **`SA-S4R_query_nk_demo_state`**; **`SA-S4R_validate_nk_attack_traffic`**; wait ≥2 min (attack ≈ 150 events/min); `make restart`; search **last 15m** |
 | Concurrency limit | Wait; run one team at a time |
 | Token / 401 | `make up` or `make update-mcp-client MCP_CLIENT=cursor` |
 
