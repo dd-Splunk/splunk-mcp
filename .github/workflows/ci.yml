@@ -33,6 +33,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: .gitleaks.toml
+          # Keep in step with the gitleaks rev in .pre-commit-config.yaml; the action's
+          # default (8.24.x) ignores [[allowlists]] in .gitleaks.toml.
+          GITLEAKS_VERSION: "8.30.1"
 
       - name: pre-commit
         run: |
