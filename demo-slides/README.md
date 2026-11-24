@@ -41,7 +41,8 @@ footer: '![w:46](https://www.splunk.com/.../logo-splunk-corp-rgb-w-web.svg)'
 
 - **`theme: splunk`** — must match `/* @theme splunk */` in `splunk.css`.
 - **`html: true`** — required for Mermaid client-side rendering, `<br>`, `<span class="splunk-orange">`, and layout `<div>`s.
-- **`footer`** — Splunk “a Cisco company” white logo (lower center via CSS); PoC disclaimer appended in `splunk.css`.
+- **`footer`** — “Splunk by Cisco” white logo (`logo-splunk-by-cisco-w.svg`, lower center via CSS, 100px wide); PoC disclaimer appended in `splunk.css`. Sized to stay clear of the last content line on dense slides (e.g. S2).
+- **“Splunk by Cisco” logo** — the same white variant sits on the title slide and the Thank You slide (`.brand-logo`, 200px). The `-w` SVG is transparent, so it needs no panel on the dark theme.
 
 ## Mermaid diagrams
 

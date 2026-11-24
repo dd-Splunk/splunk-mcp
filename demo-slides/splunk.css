@@ -117,6 +117,19 @@ section.lead h2 {
     font-weight: normal;
 }
 
+/* "Splunk by Cisco" logo on the title and closing slides.
+   The -w variant is white on transparent, so it needs no panel on the dark theme. */
+.brand-logo {
+    margin: 0.5em auto 0;
+    line-height: 0;
+}
+
+.brand-logo img {
+    display: block;
+    width: 200px;
+    height: auto;
+}
+
 section.lead .align-left {
     align-self: flex-start;
     text-align: left;
@@ -143,6 +156,12 @@ footer {
 
 footer img {
     vertical-align: middle;
+}
+
+/* Footer logo: "Splunk by Cisco" white variant, sized to clear the last content line on dense slides */
+footer img[src*="logo-splunk-by-cisco-w"] {
+    width: 100px;
+    height: auto;
 }
 
 footer::after {

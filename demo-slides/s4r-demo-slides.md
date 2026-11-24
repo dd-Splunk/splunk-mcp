@@ -3,7 +3,7 @@ marp: true
 theme: splunk
 paginate: true
 html: true
-footer: '![w:46](https://www.splunk.com/content/dam/splunk2/en_us/images/icon-library/footer/logo-splunk-corp-rgb-w-web.svg)'
+footer: '![w:100](https://www.splunk.com/content/dam/splunk2/en_us/images/logos/logo-splunk-by-cisco-w.svg)'
 ---
 
 <script type="module">
@@ -45,11 +45,11 @@ footer: '![w:46](https://www.splunk.com/content/dam/splunk2/en_us/images/icon-li
 
 # Splunk4Rookies<br>From dashboards to agentic analysis
 
-<br>
-
 Buttercup Enterprises workshop PoC · one dataset · three ways to use Splunk MCP
 
 Live data via **Splunk MCP** — not pasted into the model
+
+<div class="brand-logo"><img src="https://www.splunk.com/content/dam/splunk2/en_us/images/logos/logo-splunk-by-cisco-w.svg" alt="Splunk by Cisco" /></div>
 
 ---
 
@@ -646,6 +646,8 @@ Verdict: mixed — infrastructure still broken, but Security has a lead. Timing 
 <!-- _class: lead lead-hero -->
 
 # Thank You
+
+<div class="brand-logo"><img src="https://www.splunk.com/content/dam/splunk2/en_us/images/logos/logo-splunk-by-cisco-w.svg" alt="Splunk by Cisco" /></div>
 
 ---
 
