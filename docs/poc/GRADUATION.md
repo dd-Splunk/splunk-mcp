@@ -14,7 +14,7 @@ This document does **not** change product behavior. It lists gaps, costs, and de
 
 | Term | Meaning |
 | ---- | ------- |
-| **Current state (PoC)** | SE runs the stack on their machine; warm-up, secrets, and MCP reload are operator habits. CI checks **lint only** (no Splunk in GitHub Actions). |
+| **Current state (PoC)** | SE runs the stack on their machine; warm-up, secrets, and MCP reload are operator habits. CI runs lint and Docker-free **`make test`** (no Splunk in GitHub Actions). |
 | **Graduated** | A new user follows **only** published docs + `make verify` and reaches a working Splunk + MCP + SA-S4R stack **without DMs to the maintainer**. |
 | **Mature** | Graduated **plus** automated regression signal when boot/MCP breaks (e.g. optional CI smoke), release tags, and a named support path. |
 
@@ -142,7 +142,7 @@ These reduce the gap versus a greenfield PoC:
 2. **Cold start time** — unattended users may assume `make up` is “a few minutes.”
 3. **Boot clients** — only Cursor and Claude Code are written on `make up`. Claude Desktop needs explicit `make update-mcp-client` or `MCP_UPDATE_ON_BOOT="cursor claude claude-code"`.
 4. **Workshop dashboard** — still built in **`SA-S4R/local/`**; not in git except README.
-5. **No formal “supported matrix”** — Windows/WSL/Linux ambiguity creates support load.
+5. **Best-effort Windows** — [INSTALLATION.md](INSTALLATION.md#supported-platforms) lists Windows + WSL2 as best effort (client config paths may need manual fixes), which still creates support load.
 6. **No recorded external dry run** — graduation is a claim until F1 is done.
 
 ---

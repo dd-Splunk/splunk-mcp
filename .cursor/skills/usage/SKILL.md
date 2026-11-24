@@ -26,12 +26,12 @@ Endpoints: https://localhost:8000 · https://localhost:8089/services/mcp
 | Losing money / checkout KPIs? | `SA-S4R_summarize_purchase_health` | read, **24h** |
 | Where are failed purchases? | `SA-S4R_geo_failed_purchases` | read, **24h**; pair with validate for NK |
 
-Else: `splunk_run_query` + [docs/s4r/SPL-CATALOG.md](docs/s4r/SPL-CATALOG.md). Shell fallback: `make s4r-attack-nk-*` (REST; on reload failure follow the printed hint). Missing tools: `make up` (re-runs `splunk-init`), reload MCP.
+Else: `splunk_run_query` + [docs/s4r/SPL-CATALOG.md](../../../docs/s4r/SPL-CATALOG.md). Shell fallback: `make s4r-attack-nk-*` (REST; on reload failure follow the printed hint). Missing tools: `make up` (re-runs `splunk-init`), reload MCP.
 
 ### Stack
 | Command | Notes |
 | ------- | ----- |
-| `make up` | Boot → mint (default cursor) → register S4R tools |
+| `make up` | Boot; `splunk-init` registers S4R tools; one mint for cursor + claude-code (`MCP_UPDATE_ON_BOOT`) |
 | `make down` | Park `splunk-mcp-server`, then stop |
 | `make status` / `make verify` | Health; MCP `tools/list` |
 | `make config` | Resolved `compose.yml`; secrets print as `<set>` |
@@ -41,5 +41,5 @@ Else: `splunk_run_query` + [docs/s4r/SPL-CATALOG.md](docs/s4r/SPL-CATALOG.md). S
 After `make up`: reload **splunk-mcp-server** in Cursor Settings → MCP.
 Agents: `.cursor/agents/s4r-*.md` · slides: `make marp-preview`
 Secrets: gitignored `.env` · image/TZ: `config.env`
-Docs: [docs/s4r/MCP-TOOLS.md](docs/s4r/MCP-TOOLS.md) · [AGENTS.md](AGENTS.md)
+Docs: [docs/s4r/MCP-TOOLS.md](../../../docs/s4r/MCP-TOOLS.md) · [AGENTS.md](../../../AGENTS.md)
 ```

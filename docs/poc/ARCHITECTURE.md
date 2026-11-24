@@ -59,7 +59,7 @@ Check mode: **`SA-S4R_query_nk_demo_state`**. Agentic analysis: [AGENTS.md](../s
 
 ### 2. Splunk Initialization Container (splunk-init)
 
-- **Image**: `alpine:3.21` (installs `curl`, `jq`, and `bash` at container start)
+- **Image**: `alpine:3.24` (installs `curl`, `jq`, and `bash` at container start)
 - **Purpose**: Runs initialization setup script after Splunk is healthy
 - **Dependency**: Waits for `so1` service to be healthy
 - **Restart Policy**: No (runs once and stops)
@@ -292,7 +292,7 @@ Claude Desktop
 - Creates or updates Splunk role **`mcp_user`** with capabilities **`mcp_tool_execute`** and **`s4r_workshop_control`** (after an SA-S4R reload) and **`srchJobsQuota=5`**
 - Creates **`splunker`** with roles **`user`** + **`mcp_user`** + **`s4r_user`** (`s4r_user` comes from SA-S4R 2.0.0+; left out with a warning if the app lacks it)
 - Via **`register-s4r-mcp-tools.sh`**: limits the five **`SA-S4R_*`** tools to **`s4r_user`** with Tool Role Policies, when the role exists and `splunker` holds it
-- Uses `SPLUNK_SPLUNKER_PASSWORD` (env) for the MCP user (no password written to disk)
+- Uses `SPLUNK_SPLUNKER_PASSWORD` (env) for the MCP user; the init container writes no password to disk
 - REST host, port, and account names come from `scripts/splunk-api-env.sh` (`localhost`, `8089`, `admin`, `splunker` unless already set)
 - Enables SA-Eventgen default modinput (**required**; init fails if missing or still disabled)
 - Registers SA-S4R MCP tools via **`scripts/register-s4r-mcp-tools.sh`** before init exits

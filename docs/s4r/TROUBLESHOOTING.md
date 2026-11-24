@@ -22,7 +22,7 @@ See [SA-S4R-APP.md § `default/` vs `local/`](SA-S4R-APP.md#default-vs-local-spl
 
 **Solution**:
 
-1. **MCP path:** **`SA-S4R_query_nk_demo_state`** — expect `enabled: true` for threat mode. **`SA-S4R_validate_nk_attack_traffic`** (last 15m) after 1–2 min.
+1. **MCP path:** **`SA-S4R_query_nk_demo_state`** — expect `mode: threat` (`disabled: false`). **`SA-S4R_validate_nk_attack_traffic`** (last 15m) after 1–2 min.
 2. **Shell path:**
 
 ```bash

@@ -357,13 +357,12 @@ Wait ~2 min; optional **`SA-S4R_validate_nk_attack_traffic`** (lists the Pyongya
 | Time | Action |
 | ---- | ------ |
 | 0:00 | Slides 1–3 (three paths + scenario) |
-| 0:02 | Slides 4–6 (Step 1 dashboard) — brief or skip if audience did workshop |
-| 0:04 | Slide 16 — Step 2 business question live (skip architecture 7–12) |
-| 0:07 | Slides 17–21 + Step 3 Demo 1 prompt |
-| 0:14 | Slide 21 + Step 3 Demo 2 **or** skip Demo 2 if low on time |
-| 0:19 | Slides 28–29 takeaways + thank you |
+| 0:01 | Slides 4–6 (Step 1 dashboard) — brief or skip if audience did workshop |
+| 0:02 | Slide 16 — Step 2 business question live (skip architecture 7–12) |
+| 0:04 | Slides 17–21 + Step 3 Demo 1 prompt |
+| 0:09 | Slides 28–29 takeaways + thank you |
 
-Skip: `make verify-mcp-remote` live, Step 1 live build, second terminal restart.
+Skip: Demo 2 (threat mode needs 2–5 min after enabling), `make verify-mcp-remote` live, Step 1 live build, second terminal restart.
 
 ---
 
@@ -375,7 +374,7 @@ On-screen table: **deck slide 32**. Expanded detail below for presenters.
 | ------- | ---------------- |
 | MCP tools missing | `make update-mcp-client MCP_CLIENT=cursor`; restart Cursor |
 | No events | `make status`; `docker logs splunk-init` |
-| NK mode no signal | **`SA-S4R_query_nk_demo_state`**; **`SA-S4R_validate_nk_attack_traffic`**; wait ≥2 min (attack ≈ 150 events/min); `make restart`; search **last 15m** |
+| NK mode no signal | **`SA-S4R_query_nk_demo_state`**; **`SA-S4R_validate_nk_attack_traffic`**; wait ≥2 min (attack ≈ 150 events/min); search **last 15m**. If apply returned 503, follow its `hint`: `make restart` when disable failed, `make up` when enable left Eventgen disabled |
 | Concurrency limit | Wait; run one team at a time |
 | Token / 401 | `make up` or `make update-mcp-client MCP_CLIENT=cursor` |
 
@@ -424,7 +423,7 @@ Synthesize one executive answer with the Power User template.
 
 ```text
 As Buttercup Power User: is the money loss bad infrastructure or an active threat?
-Check SA-S4R_query_nk_demo_state (fallback: make s4r-attack-nk-status). Delegate to all four teams.
+Check SA-S4R_query_nk_demo_state. Delegate to all four teams.
 Use docs/s4r/SPL-CATALOG.md including § Workshop modes. Prefer SA-S4R_* when it matches; else catalog SPL via splunk_run_query. Never REST or curl. Time range: last 15 minutes.
 Synthesize with clear verdict and recommended actions.
 ```
@@ -479,7 +478,7 @@ Synthesize with a go/no-go on international marketing spend.
 
 ```text
 As Buttercup Power User: is the revenue impact from an active attack, or from a broken checkout service?
-Check SA-S4R_query_nk_demo_state (fallback: make s4r-attack-nk-status). Delegate to all four teams. Read docs/s4r/SPL-CATALOG.md including § Workshop modes. MCP only. Last 15 minutes.
+Check SA-S4R_query_nk_demo_state. Delegate to all four teams. Read docs/s4r/SPL-CATALOG.md including § Workshop modes. MCP only. Last 15 minutes.
 Synthesize who to mobilize first — Security vs Engineering.
 ```
 

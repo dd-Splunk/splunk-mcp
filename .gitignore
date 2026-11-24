@@ -17,7 +17,7 @@ scripts/local/
 .AppleDouble
 .LSOverride
 
-# Docker volumes (data stored in named volumes)
+# Machine-local Compose override (written by scripts/cloud-bootstrap.sh)
 docker-compose.override.yml
 
 # Claude Code project MCP config — written by make update-mcp-client MCP_CLIENT=claude-code with a live token.
@@ -28,9 +28,11 @@ docker-compose.override.yml
 **/.cursor/rules/*
 !**/.cursor/agents/**
 
-# Node dependencies for local build contexts
-# Cursor / Windsurf local rules (any path in repo)
+# Windsurf local rules (any path in repo)
 **/.windsurf/rules/
+
+# Python bytecode (tests import SA-S4R/bin modules)
+__pycache__/
 
 # Editor directories
 .vscode/*
