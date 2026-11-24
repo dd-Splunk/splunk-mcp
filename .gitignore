@@ -53,3 +53,20 @@ SA-S4R/local/**
 *.lic
 **/metadata/local.meta
 
+
+# Certificates and key material
+*.pem
+*.key
+*.crt
+*.cer
+*.der
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.csr
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+*.p8
