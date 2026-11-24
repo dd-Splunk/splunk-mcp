@@ -51,6 +51,31 @@ make test
 
 Requires **shellcheck** and **Node/npx** (markdownlint); pre-commit also runs **gitleaks**. See [CI_CD.md](CI_CD.md).
 
+## Commit identity
+
+GitHub can block pushes that expose a private email address. The push then fails with:
+
+```text
+remote: error: GH007: Your push would publish a private email address.
+ ! [remote rejected] <branch> -> <branch> (push declined due to email privacy restrictions)
+```
+
+Commit with your GitHub **noreply** address instead. It has the form `<id>+<login>@users.noreply.github.com`; both values are listed at <https://github.com/settings/emails>. Set it once per clone, before the first commit:
+
+```bash
+git config user.email "<id>+<login>@users.noreply.github.com"   # repo-local; leaves your global email alone
+git log -1 --format=%ae                                         # check before pushing
+```
+
+If a commit was already made with the wrong email, rewrite it and push again:
+
+```bash
+git commit --amend --no-edit --reset-author                     # last commit only
+git rebase -r <base> --exec 'git commit --amend --no-edit --reset-author'   # several commits
+```
+
+Do not clear **Block command line pushes that expose my email** in GitHub settings to get past the error; that setting is what keeps the address private.
+
 ## Extending the stack
 
 - **Optional log ingest:** uncomment Claude bind mount in `compose.yml`; create index + monitor in Splunk ([CONFIGURATION.md](CONFIGURATION.md) — not automated in `setup-splunk.sh`).
