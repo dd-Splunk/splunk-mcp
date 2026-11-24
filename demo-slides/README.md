@@ -35,7 +35,7 @@ marp: true
 theme: splunk
 paginate: true
 html: true
-footer: '![w:46](https://www.splunk.com/.../logo-splunk-corp-rgb-w-web.svg)'
+footer: '![w:100](https://www.splunk.com/.../logo-splunk-by-cisco-w.svg)'
 ---
 ```
 

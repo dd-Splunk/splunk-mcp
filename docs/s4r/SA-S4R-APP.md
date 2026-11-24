@@ -17,6 +17,7 @@ SA-S4R/                         # tracked in git
 ├── appserver/static/
 │   └── Buttercup_Background.jpg  # Dashboard background for the local/ workshop view
 ├── bin/
+│   ├── s4r_eventgen_mode.py    # Eventgen stanza read/parse helpers (imported by the handler)
 │   └── s4r_workshop_mode.py    # REST handler: infrastructure vs NK threat mode
 ├── default/
 │   ├── app.conf                # id, label, version, launcher metadata
@@ -107,7 +108,7 @@ Configuration lives in **`default/eventgen.conf`**. Two **baseline** stanzas emi
 
 Optional third stanza for the **active threat** workshop storyline ( **`disabled = true`** by default):
 
-- **`attack.nk.purchase.sample`** — purchase-only cart events from a small **North Korea** IP pool (`175.45.176.0/22`), auth/denial status codes (`401`/`403`), suspicious user agents (`python-requests`, `curl`, `NK-Scanner`), skewed to **`CM-1`** (ManHawk costume). Requires matching template **`samples/attack.nk.purchase.sample`** (same basename as the stanza). Higher **`count`** (25 vs 16) so NK traffic dominates failed-purchase geo panels when enabled.
+- **`attack.nk.purchase.sample`** — purchase-only cart events from a small **North Korea** IP pool (`175.45.176.0/22`), mostly client-error status codes (`400`–`403`, with occasional `200`), suspicious user agents (`python-requests`, `curl`, `NK-Scanner`), skewed to **`CM-1`** (ManHawk costume). Requires matching template **`samples/attack.nk.purchase.sample`** (same basename as the stanza). Higher **`count`** (25 vs 16) so NK traffic dominates failed-purchase geo panels when enabled.
 
 Cart **`action`** values (`action.txt`): `view`, `addtocart`, `purchase`, `remove`, `changequantity`.
 

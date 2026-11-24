@@ -4,28 +4,24 @@ title = "splunk-mcp gitleaks"
 [extend]
 useDefault = true
 
+# Each allowlist below requires the rule, the path, and the line regex to all match, and
+# exists only to keep full-history scans clean.
+
+# Older docs/poc/API_REFERENCE.md showed curl -u with a shell variable expansion, not a
+# literal password. The current file uses splunk_curl instead.
 [[allowlists]]
-description = "Tracked templates and documented example credentials (not live secrets)"
+description = "Shell-variable admin credentials in a historical API_REFERENCE curl example"
+condition = "AND"
+targetRules = ["curl-auth-user"]
 paths = [
-  '''(?i)\.cursor/mcp\.json\.example$''',
-  '''(?i)\.env\.example$''',
-  '''(?i)docs/poc/API_REFERENCE\.md$''',
-  '''(?i)docs/poc/TROUBLESHOOTING\.md$''',
-  '''(?i)docs/poc/INSTALLATION\.md$''',
+  '''^docs/poc/API_REFERENCE\.md$''',
 ]
-
+regexTarget = "line"
 regexes = [
-  '''REPLACE_AFTER_make_update-cursor-config''',
-  '''REPLACE_AFTER_make_update-mcp-client''',
-  '''your_password_here''',
-  '''your_splunker_password''',
-  '''(?i)password=changeme''',
-  '''(?i)password=newpassword''',
-  '''ADMIN_PASS="password"''',
+  '''curl -k -u "admin:\$\{SPLUNK_(ADMIN_)?PASSWORD:\?Set SPLUNK_(ADMIN_)?PASSWORD first\}"''',
 ]
 
-# The entries below match only lines in files removed from the tree; they keep full-history
-# scans clean. Each one requires the rule, the path, and the line regex to all match.
+# The entries below match only lines in files removed from the tree.
 
 # Old update-cursor-config.sh and docs/INSTALLATION.md showed sample curl commands with the
 # placeholders admin:PASSWORD and admin:<password>, not real credentials.

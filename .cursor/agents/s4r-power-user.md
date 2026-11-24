@@ -28,7 +28,7 @@ Data generation and workshop modes: `docs/s4r/SA-S4R-APP.md`. Orchestration desi
 
 1. Clarify the stakeholder question and time range.
 2. Confirm data exists (`splunk_get_metadata` or catalog **Quick data check**).
-3. For infrastructure-vs-threat asks: call **`SA-S4R_query_nk_demo_state`** (fallback: `make s4r-attack-nk-status`); if threat mode, narrow to **last 15m**.
+3. For infrastructure-vs-threat asks: call **`SA-S4R_query_nk_demo_state`** (if MCP is down, report it and let the user run `make s4r-attack-nk-status`); if threat mode, narrow to **last 15m**.
 4. To start or stop the NK attack storyline **only when the user explicitly asks**: **`SA-S4R_apply_nk_demo_state`** with `mode` `threat` or `infrastructure` (not `make`).
 5. **Delegate (mandatory when user asks):** If the user says **delegate**, **all four teams**, or spans multiple specialists, **MUST** launch **four Task subagents in parallel** — one each for IT Ops, DevOps, Business Analytics, Security & Fraud. **Never** run team catalog SPL in this orchestrator thread.
 6. Each Task prompt: read `.cursor/agents/s4r-[team].md` + `docs/s4r/SPL-CATALOG.md` § [team]; **MCP query routing** (prefer **`SA-S4R_*`**, else `splunk_run_query` — no REST/curl); return that team's summary only. Specialists are **background** subagents — launch in parallel without blocking on each one.

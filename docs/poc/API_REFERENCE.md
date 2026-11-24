@@ -47,6 +47,7 @@ Content-Type: application/x-www-form-urlencoded
 
 name=mcp_user
 capabilities=mcp_tool_execute
+srchJobsQuota=5
 ```
 
 ##### List Roles
@@ -66,7 +67,11 @@ GET /services/authorization/roles/mcp_user
 ```bash
 POST /services/authorization/roles/mcp_user
 capabilities=mcp_tool_execute
+capabilities=s4r_workshop_control
+srchJobsQuota=5
 ```
+
+`s4r_workshop_control` is defined by SA-S4R, so init grants it after reloading the app.
 
 #### 2. Users Management
 
@@ -78,10 +83,13 @@ Content-Type: application/x-www-form-urlencoded
 
 name=splunker
 password=${SPLUNK_SPLUNKER_PASSWORD}
+roles=s4r_user
 roles=user
 roles=mcp_user
-tz=Europe/Brussels
+locked-out=false
 ```
+
+Init leaves out `roles=s4r_user` with a warning when the installed SA-S4R predates 2.0.0.
 
 ##### List Users
 

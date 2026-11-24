@@ -20,13 +20,13 @@ Provide a self-contained local Splunk environment that demonstrates:
 | User | Role | Use |
 | ---- | ---- | --- |
 | `admin` | `admin` | Bootstrap REST only |
-| `splunker` (default) | `user` + `mcp_user` | MCP execution; **`mcp_user`** must include **`mcp_tool_execute`** |
+| `splunker` (default) | `user` + `mcp_user` + `s4r_user` | MCP execution; **`mcp_user`** must include **`mcp_tool_execute`** and **`s4r_workshop_control`** (`srchJobsQuota=5`); **`s4r_user`** (defined by SA-S4R) unlocks the five **`SA-S4R_*`** tools |
 
 MCP user must **not** be `admin`. The **`ai`** SPL command is available to all users and must not require special role/capability.
 
 ## Secrets
 
-- No secrets in git; no secrets written to repo files during normal operation
+- No secrets in git. Passwords live only in gitignored **`.env`** (mode 600) or the process environment; the MCP token only in the mode-600 header file outside the repo
 - Load secrets from gitignored **`.env`** or from the process environment
 - Secrets must not be echoed to logs
 
@@ -49,7 +49,7 @@ Splunk AI Toolkit (2890) and Python for Scientific Computing (2882) are **out of
 
 ## MCP clients
 
-Supported: **Cursor**, **Claude Desktop**, **Claude Code** (via **`npx mcp-remote`** → **`/services/mcp`**). **Mistral (Vibe)** uses the same pattern when configured.
+Supported: **Cursor**, **Claude Desktop**, **Claude Code** (via **`npx mcp-remote`** → **`/services/mcp`**).
 
 - Tokens minted by **`scripts/mint-mcp-token.sh`** after **`splunk-init`**; written only to a mode-600 header file that client configs reference with **`--header-file`**
 - Dev TLS: optional **`NODE_TLS_REJECT_UNAUTHORIZED=0`** when **`SPLUNK_MCP_TLS_INSECURE=1`**

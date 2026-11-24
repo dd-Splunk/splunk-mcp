@@ -9,6 +9,13 @@ Automation in this repo is intentionally small: it supports a **local PoC** stac
 | [.github/workflows/ci.yml](../../.github/workflows/ci.yml) | Secret scanning, shell/Markdown lint, Docker-free `make test` |
 | [.github/workflows/package-s4r.yml](../../.github/workflows/package-s4r.yml) | Build **SA-S4R** as `SA-S4R.spl`, upload a CI artifact, publish a **moving `latest` GitHub Release** |
 
+Repository settings files:
+
+| File | Purpose |
+| ---- | ------- |
+| [.github/dependabot.yml](../../.github/dependabot.yml) | Weekly update PRs (label `dependencies`) for GitHub Actions, Compose images in `compose.yml`, and pre-commit hook revs. The Splunk image comes from `config.env` and Splunkbase pins are download URLs, so Dependabot does not bump either; use **`make check-splunkbase-pins`**. |
+| [.github/CODEOWNERS](../../.github/CODEOWNERS) | Requests review from **@dd-Splunk** on every PR |
+
 ---
 
 ## `ci.yml` (CI)
@@ -20,7 +27,7 @@ Automation in this repo is intentionally small: it supports a **local PoC** stac
 
 **What it runs**
 
-- **gitleaks** on the full git history (**.gitleaks.toml** allowlists PoC placeholders)
+- **gitleaks** on the full git history (**.gitleaks.toml** extends the default rules and allowlists a few placeholder lines that exist only in older commits). The action pins **`GITLEAKS_VERSION`** to the **`rev`** in **`.pre-commit-config.yaml`** (8.30.1); the action's default ignores `[[allowlists]]`.
 - **pre-commit** (**.pre-commit-config.yaml**): **gitleaks** on tracked files, **shellcheck** on **`scripts/*.sh`** and **`tests/*.sh`**, **markdownlint-cli2** on project Markdown (via **`.markdownlint-cli2.jsonc`**)
 - **`make test`**: Docker-free tests (no Splunk): MCP client JSON shape, secret loader, token mint and prune, admin curl auth, MCP auth stats, SA-S4R mode/payload parse, CIM Web mapping, `s4r_user` role and tool policy (**jq** + **npx**)
 
@@ -33,7 +40,7 @@ Automation in this repo is intentionally small: it supports a **local PoC** stac
 - Does **not** build Docker images, start Splunk, run integration tests, or validate MCP connectivity.
 - **Does** run Docker-free unit tests (`make test`).
 - Does **not** package Splunk apps or publish releases.
-- Match CI locally: `pip install pre-commit && pre-commit install`, then **`pre-commit run --all-files`** and **`make test`** before pushing (requires **shellcheck** on PATH, **Node/npx**, and **jq**). CI installs **shellcheck** and **jq** via **apt**; on macOS use **`brew install shellcheck`**. Optional full-history scan: **`brew install gitleaks && gitleaks detect --source . --config .gitleaks.toml`**.
+- Match CI locally: `pip install pre-commit && pre-commit install`, then **`pre-commit run --all-files`** and **`make test`** before pushing (requires **shellcheck** on PATH, **Node/npx**, and **jq**). CI installs **shellcheck** and **jq** via **apt**; on macOS use **`brew install shellcheck`**. Optional full-history scan: **`brew install gitleaks && gitleaks git . --config .gitleaks.toml`**.
 
 ---
 

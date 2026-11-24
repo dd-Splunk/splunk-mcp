@@ -88,7 +88,7 @@ Runs after `so1` is **healthy**. Uses Alpine, installs `curl`, `jq`, and `bash`,
 
 - `scripts/setup-splunk.sh`, `scripts/splunk-api-env.sh`, `scripts/with-splunk-env.sh`, `scripts/register-s4r-mcp-tools.sh`
 - `SA-S4R/default/s4r_mcp_tools.json` (batch-replace payload)
-- No host secrets mount (this repo does not write tokens/passwords to disk). `compose.yml` passes `SPLUNK_ADMIN_PASSWORD`, `SPLUNK_SPLUNKER_PASSWORD`, `FORCE_SPLUNK_SPLUNKER_PASSWORD` (default `0`), `SPLUNK_HOST=so1`, and `SPLUNK_MCP_ENV_LOADED=1`. Port **8089**, REST user **`admin`**, and MCP user **`splunker`** are defaults in `scripts/splunk-api-env.sh`.
+- No host secrets mount (secrets arrive as environment variables only). `compose.yml` passes `SPLUNK_ADMIN_PASSWORD`, `SPLUNK_SPLUNKER_PASSWORD`, `FORCE_SPLUNK_SPLUNKER_PASSWORD` (default `0`), `SPLUNK_HOST=so1`, and `SPLUNK_MCP_ENV_LOADED=1`. Port **8089**, REST user **`admin`**, and MCP user **`splunker`** are defaults in `scripts/splunk-api-env.sh`.
 
 ### MCP token minting (host)
 
@@ -183,10 +183,10 @@ Summary of what runs **inside** `splunk-init` with `SPLUNK_HOST=so1`:
 
 1. Enables the **SA-Eventgen** default modular input (**required**; init **exits 1** if the app is missing or the input stays disabled).
 2. Sets MCP server `ssl_verify=false` via REST (dev convenience).
-3. Ensures Splunk role **`mcp_user`** exists with capability **`mcp_tool_execute`** and **`srchJobsQuota=5`** (parallel S4R agent headroom).
+3. Ensures Splunk role **`mcp_user`** exists with capability **`mcp_tool_execute`** and **`srchJobsQuota=5`** (parallel S4R agent headroom), then grants **`s4r_workshop_control`** after reloading SA-S4R (init fails if it cannot).
 4. Creates or updates user **`splunker`** with roles **`user`** + **`mcp_user`** + **`s4r_user`**, and clears **`locked-out`** (idempotent unlock on every init). **`s4r_user`** is defined by SA-S4R 2.0.0+. If the installed app is older and lacks it, init warns and leaves it out instead of failing.
 5. Registers SA-S4R MCP tools from `s4r_mcp_tools.json` (`POST /services/mcp_tools`, enable, saved-search reload). Init **exits 1** if that fails.
-6. Uses `SPLUNK_SPLUNKER_PASSWORD` from env; this repo does not write passwords to disk.
+6. Uses `SPLUNK_SPLUNKER_PASSWORD` from env; the init container writes no password to disk.
 
 **Full reference** (REST tables, diagrams, idempotency): [Appendix: setup-splunk.sh](#appendix-setup-splunksh).
 

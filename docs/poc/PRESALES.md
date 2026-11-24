@@ -35,7 +35,7 @@ node --version   # for npx mcp-remote
 
 ```bash
 cp .env.example .env       # plain values; chmod 600; never commit
-make up                    # several minutes on cold start; mints MCP token (default: cursor) + registers S4R tools
+make up                    # several minutes on cold start; splunk-init registers S4R tools, then one MCP token for cursor + claude-code
 make demo-prep             # Splunkbase pins + status + MCP verify
 # Splunk Web: https://localhost:8000
 # Cursor: restart after make up (.cursor/mcp.json updated)
@@ -63,7 +63,7 @@ See [CONFIGURATION.md](CONFIGURATION.md#configenv-and-env).
 | Identity | Role |
 | -------- | ---- |
 | **admin** | Splunk Web and REST in bootstrap; password = `SPLUNK_ADMIN_PASSWORD` |
-| **splunker** | Least-privilege user for MCP (role `mcp_user`, capability `mcp_tool_execute`); password provided as `SPLUNK_SPLUNKER_PASSWORD` |
+| **splunker** | Least-privilege user for MCP (roles `user`, `mcp_user` with capabilities `mcp_tool_execute` + `s4r_workshop_control`, and `s4r_user` for the `SA-S4R_*` tools); password provided as `SPLUNK_SPLUNKER_PASSWORD` |
 | **Bearer token** | Minted by `scripts/mint-mcp-token.sh` after **`splunk-init`**; stored only in a mode-600 header file outside the repo; client configs pass its path to `mcp-remote --header-file` |
 
 ## Splunkbase and network (non-negotiable)
@@ -139,7 +139,7 @@ For customer **Splunk Cloud** demos, use Splunk product documentation (e.g. [Abo
 | ----- | --- |
 | Docker running; **8 GB+** RAM free if possible | Splunk + downloads |
 | Splunkbase user/password working in browser | Same creds as in `.env` |
-| Complete `.env` (`chmod 600`) | `make up` must see non-empty `SPLUNK_ADMIN_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS` |
+| Complete `.env` (`chmod 600`) | `make up` must see non-empty `SPLUNK_ADMIN_PASSWORD`, `SPLUNKBASE_USER`, `SPLUNKBASE_PASS`, `SPLUNK_SPLUNKER_PASSWORD` |
 | `node` / `npx` available | MCP clients spawn `npx mcp-remote` |
 | You ran **`make up`** early or have warm volumes | Cold start is multi-minute |
 | **Cursor:** `make up` writes **`.cursor/mcp.json`**; restart or reload MCP after `make up` | Primary demo client |
