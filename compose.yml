@@ -37,7 +37,7 @@ services:
     restart: always
 
   splunk-init:
-    image: alpine:3.21
+    image: alpine:3.24
     container_name: splunk-init
     depends_on:
       so1:
