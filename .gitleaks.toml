@@ -1,7 +1,10 @@
 # Gitleaks config for splunk-mcp (local PoC). Allow documented placeholders only.
 title = "splunk-mcp gitleaks"
 
-[allowlist]
+[extend]
+useDefault = true
+
+[[allowlists]]
 description = "Tracked templates and documented example credentials (not live secrets)"
 paths = [
   '''(?i)\.cursor/mcp\.json\.example$''',
@@ -19,4 +22,36 @@ regexes = [
   '''(?i)password=changeme''',
   '''(?i)password=newpassword''',
   '''ADMIN_PASS="password"''',
+]
+
+# The entries below match only lines in files removed from the tree; they keep full-history
+# scans clean. Each one requires the rule, the path, and the line regex to all match.
+
+# Old update-cursor-config.sh and docs/INSTALLATION.md showed sample curl commands with the
+# placeholders admin:PASSWORD and admin:<password>, not real credentials.
+[[allowlists]]
+description = "Placeholder admin credentials in historical curl examples"
+condition = "AND"
+targetRules = ["curl-auth-user"]
+paths = [
+  '''^scripts/update-cursor-config\.sh$''',
+  '''^docs/INSTALLATION\.md$''',
+]
+regexTarget = "line"
+regexes = [
+  '''curl -(k|skS) -u "?admin:(PASSWORD|<password>)"? ''',
+]
+
+# Old docs/INSTALLATION.md sample output printed a truncated token: part of the JOSE header
+# followed by "...", with no payload or signature segment, so it cannot authenticate.
+[[allowlists]]
+description = "Truncated sample token in historical setup output"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = [
+  '''^docs/INSTALLATION\.md$''',
+]
+regexTarget = "line"
+regexes = [
+  '''^\s*Token: eyJ[A-Za-z0-9_-]+\.\.\.\s*$''',
 ]
