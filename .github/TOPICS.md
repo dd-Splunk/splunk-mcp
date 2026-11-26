@@ -1,55 +1,49 @@
 # Repository description & topics
 
-## GitHub short description (About)
-
-Use this text (or a shortened variant) in **Repository → Settings → General → About**, or via CLI:
+The GitHub **About** description and topics are repository settings, not files, so they can drift from this page. After changing either, update this file too. Check the live values with:
 
 ```bash
-gh repo edit dd-Splunk/splunk-mcp --description "PoC: Splunk Enterprise + Splunk MCP Server in Docker. Splunk4Rookies (SA-S4R) sample data, multi-agent demo, Marp presenter deck. Cursor, Claude Desktop, or Claude Code via npx mcp-remote; secrets in gitignored .env."
+gh repo view dd-Splunk/splunk-mcp --json description,repositoryTopics
 ```
+
+## GitHub short description (About)
+
+Set in **Repository → Settings → General → About**, or via CLI:
+
+```bash
+gh repo edit dd-Splunk/splunk-mcp --description "Local PoC: Splunk Enterprise + Splunk MCP Server in Docker, with Splunk4Rookies (SA-S4R) sample data and an agentic demo. Connects Cursor, Claude Desktop and Claude Code via mcp-remote. Community project, not an official Splunk product."
+```
+
+Keep it free of operational detail (paths, secrets handling): it is public and shown in search results. GitHub allows up to 350 characters.
 
 ## Topics
 
-Suggested topics for discoverability (Splunk, MCP, Splunk4Rookies, Marp):
+GitHub allows **at most 20 topics**. The repo uses these 14:
 
 | Topic | Notes |
 | ----- | ----- |
 | **mcp** | Model Context Protocol |
-| **model-context-protocol** | Long-form MCP label |
+| **mcp-client** | Cursor, Claude Desktop and Claude Code connect through `mcp-remote` |
 | **splunk** | Splunk Enterprise |
 | **splunk-mcp-server** | Splunkbase app for `/services/mcp` |
 | **splunk4rookies** | Workshop / Buttercup Enterprises storyline |
+| **eventgen** | SA-Eventgen sample traffic (SA-S4R) |
 | **marp** | Marp slide deck in `demo-slides/` |
-| **claude** | Anthropic Claude Desktop |
+| **claude** | Claude Desktop |
+| **claude-code** | Claude Code |
 | **cursor** | Cursor IDE MCP client |
 | **llm** | Large language models |
 | **docker** | Container runtime |
 | **docker-compose** | Compose orchestration |
-| **local-development** | Local PoC workflows |
-| **poc** / **proof-of-concept** | Demo / lab use |
-| **eventgen** | SA-Eventgen sample traffic (SA-S4R) |
-| **ai-development** | AI tooling |
-| **integration** | Splunk + LLM integration |
-| **rest-api** | Splunk REST / MCP HTTP |
-| **authentication** | Tokens / Splunk auth |
-| **token-auth** | Bearer tokens for MCP |
-| **ai** | AI / assistants |
+| **proof-of-concept** | Demo / lab use |
 
-### Add or refresh topics (CLI)
+Deliberately left out: vague or overlapping tags (`ai`, `ai-development`, `integration`, `rest-api`, `authentication`, `token-auth`, `local-development`, `poc`, `model-context-protocol`). Add one only if it helps someone find the repo.
 
-GitHub allows **at most 20 topics**. If the repo is full, remove redundant tags first, then add workshop tags:
+### Add or remove a topic (CLI)
 
 ```bash
-gh repo edit dd-Splunk/splunk-mcp \
-  --remove-topic proof-of-concept \
-  --remove-topic model-context-protocol \
-  --remove-topic token-auth \
-  --remove-topic integration
-
-gh repo edit dd-Splunk/splunk-mcp \
-  --add-topic marp \
-  --add-topic splunk4rookies \
-  --add-topic eventgen
+gh repo edit dd-Splunk/splunk-mcp --add-topic <name>
+gh repo edit dd-Splunk/splunk-mcp --remove-topic <name>
 ```
 
-Topics already on the repo (e.g. `claude`, `mcp`, `splunk`, `cursor`) can stay; `--add-topic` is idempotent for existing names.
+`--add-topic` is idempotent for names already on the repo.
