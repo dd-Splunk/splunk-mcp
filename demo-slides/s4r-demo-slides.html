@@ -236,9 +236,9 @@ flowchart LR
   PRIV["Private app SA-S4R_*"]
   MCP["Splunk MCP Server"]
   AI --&gt; MCP
-  NAT --&gt; MCP
-  BASE --&gt; MCP
-  PRIV --&gt; MCP
+  MCP --&gt; NAT
+  MCP --&gt; BASE
+  MCP --&gt; PRIV
 </pre>
 <div class="diagram-table-col">
 <table>
