@@ -126,7 +126,7 @@ All paths are under **`SA-S4R/`** unless noted. MCP/tool packaging lives in **`d
 
 **`splunk-init`** runs **`scripts/setup-splunk.sh`** after **`so1`** is healthy:
 
-1. Create role **`mcp_user`** with **`mcp_tool_execute`** and `srchJobsQuota=5`, then grant **`s4r_workshop_control`**. Create user **`splunker`** with roles `user`, `mcp_user` and `s4r_user` (the last only if SA-S4R defines it).
+1. Create role **`mcp_user`** with **`mcp_tool_execute`** and `srchJobsQuota=5`, then grant **`s4r_workshop_control`** and **`list_introspection`**. Create user **`splunker`** with roles `user`, `mcp_user` and `s4r_user` (the last only if SA-S4R defines it).
 2. **`scripts/register-s4r-mcp-tools.sh`** (same container):
    - `POST https://so1:8089/services/mcp_tools` with `s4r_mcp_tools.json` (batch replace for `external_app_id=SA-S4R`)
    - For each tool: enable `tool_id=SA-S4R:SA-S4R_<name>` with `override: true` (non-2xx **fails init**)

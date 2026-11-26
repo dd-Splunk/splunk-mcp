@@ -1,6 +1,6 @@
 # API Reference & MCP Integration
 
-**This repository** creates Splunk role **`mcp_user`** (capabilities **`mcp_tool_execute`** and **`s4r_workshop_control`**) and user **`splunker`** (default). Clients connect with **`npx mcp-remote`** to `https://localhost:8089/services/mcp`. Tokens are minted by **`scripts/mint-mcp-token.sh`** (after **`splunk-init`**) and stored only in a mode-600 header file that client configs pass to **`mcp-remote --header-file`**.
+**This repository** creates Splunk role **`mcp_user`** (capabilities **`mcp_tool_execute`**, **`s4r_workshop_control`**, and **`list_introspection`**) and user **`splunker`** (default). Clients connect with **`npx mcp-remote`** to `https://localhost:8089/services/mcp`. Tokens are minted by **`scripts/mint-mcp-token.sh`** (after **`splunk-init`**) and stored only in a mode-600 header file that client configs pass to **`mcp-remote --header-file`**.
 
 ## Splunk REST API Endpoints
 
@@ -68,10 +68,11 @@ GET /services/authorization/roles/mcp_user
 POST /services/authorization/roles/mcp_user
 capabilities=mcp_tool_execute
 capabilities=s4r_workshop_control
+capabilities=list_introspection
 srchJobsQuota=5
 ```
 
-`s4r_workshop_control` is defined by SA-S4R, so init grants it after reloading the app.
+`s4r_workshop_control` is defined by SA-S4R, so init grants it after reloading the app. A POST **replaces** the role's capability list, so always send all three; omitting one removes it.
 
 #### 2. Users Management
 
@@ -180,7 +181,7 @@ HOST="https://localhost:8089"
 splunk_curl -k -X POST "$HOST/services/authorization/roles" -d "name=mcp_user" \
   -d "capabilities=mcp_tool_execute" -d "srchJobsQuota=5"
 splunk_curl -k -X POST "$HOST/services/authorization/roles/mcp_user" \
-  -d "capabilities=mcp_tool_execute" -d "capabilities=s4r_workshop_control" -d "srchJobsQuota=5"
+  -d "capabilities=mcp_tool_execute" -d "capabilities=s4r_workshop_control" -d "capabilities=list_introspection" -d "srchJobsQuota=5"
 
 # MCP user: s4r_user is the role the SA-S4R_* tools are limited to (defined by SA-S4R, no capability of its own)
 printf '%s' "$SPLUNK_SPLUNKER_PASSWORD" | splunk_curl -k -X POST "$HOST/services/authentication/users" \
@@ -303,6 +304,7 @@ log stream --predicate 'process == "Claude"' --level debug
 
 - **`mcp_tool_execute`** capability (granted via Splunk role **`mcp_user`** in this repo): MCP tooling (see Splunk MCP Server app docs)
 - **`s4r_workshop_control`** capability (same role): required to change the workshop mode
+- **`list_introspection`** capability (same role): required for `splunk_get_kv_store_collections` (KV Store collection stats); also exposes indexer, search, and queue statistics
 - Workshop write path is limited to **`SA-S4R_apply_nk_demo_state`** (allowlisted Eventgen mode only) — [MCP-TOOLS.md](../s4r/MCP-TOOLS.md)
 - Cannot access other users' data
 - Cannot create/delete other users

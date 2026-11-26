@@ -120,7 +120,7 @@ make up
   │  └─ splunk-init (waits for so1 healthy)
   │     └─ setup-splunk.sh
   │        ├─ Enable Eventgen modinput (required; init fails if still disabled)
-  │        ├─ Create/update role: mcp_user (mcp_tool_execute, s4r_workshop_control, srchJobsQuota=5)
+  │        ├─ Create/update role: mcp_user (mcp_tool_execute, s4r_workshop_control, list_introspection, srchJobsQuota=5)
   │        ├─ Create user: splunker
   │        └─ register-s4r-mcp-tools (wait for KV Store, POST /services/mcp_tools for SA-S4R)
   └─ host (after splunk-init exits 0)
@@ -172,7 +172,7 @@ sequenceDiagram
     DC->>Init: start (depends_on so1 healthy)
     Init->>SO1: enable Eventgen modinput and verify disabled=0
     Init->>SO1: MCP Server ssl_verify=false
-    Init->>SO1: role mcp_user + mcp_tool_execute + s4r_workshop_control, srchJobsQuota=5
+    Init->>SO1: role mcp_user + mcp_tool_execute + s4r_workshop_control + list_introspection, srchJobsQuota=5
     Init->>SO1: user splunker with roles user + mcp_user + s4r_user (skipped if SA-S4R lacks the role)
     loop every 5s, up to 300s
         Init->>SO1: GET /services/kvstore/status
@@ -239,10 +239,10 @@ sequenceDiagram
 
 | User | Role(s) | Auth | Scope | Expiry |
 | ---- | ------- | ---- | ----- | ------ |
-| `splunker` | `user`, `mcp_user` (holds `mcp_tool_execute` and `s4r_workshop_control`), `s4r_user` (allowed role of the `SA-S4R_*` tools) | Bearer token (MCP) | MCP (PoC) | Per Splunk MCP / token policy |
+| `splunker` | `user`, `mcp_user` (holds `mcp_tool_execute`, `s4r_workshop_control`, and `list_introspection`), `s4r_user` (allowed role of the `SA-S4R_*` tools) | Bearer token (MCP) | MCP (PoC) | Per Splunk MCP / token policy |
 | `admin` | Built-in | Password | Full admin | N/A |
 
-The setup script assigns Splunk role **`mcp_user`** with capabilities **`mcp_tool_execute`** and **`s4r_workshop_control`** (init fails if either grant fails) and **`srchJobsQuota=5`**, so parallel S4R agents do not queue. It does **not** grant **`admin`** to the MCP user (add manually in Splunk only if you accept the risk).
+The setup script assigns Splunk role **`mcp_user`** with capabilities **`mcp_tool_execute`**, **`s4r_workshop_control`**, and **`list_introspection`** (init fails if the grant fails) and **`srchJobsQuota=5`**, so parallel S4R agents do not queue. It does **not** grant **`admin`** to the MCP user (add manually in Splunk only if you accept the risk).
 
 ### Environment variables
 
@@ -275,7 +275,7 @@ Claude Desktop
 
 - **Generation**: After **`splunk-init`** exits, the host runs **`scripts/mint-mcp-token.sh`** (admin REST → Splunk MCP Server **`/services/mcp_token`**: create the encryption key pair if missing, then a token for **`splunker`**). **`setup-splunk.sh` does not mint tokens.**
 - **Storage**: Header file only (`SPLUNK_MCP_HEADER_FILE`, default `~/.config/splunk-mcp/headers`, mode 600). Client configs hold its path; neither is in the repo.
-- **Expiry**: Splunk MCP Server 2.1 caps every token at the encryption key's validity (key default 180 days, max 365). When the key expires, **all** tokens stop working until the key is rotated (see **`docs/poc/TROUBLESHOOTING.md`**).
+- **Expiry**: Splunk MCP Server 2.2 gives each token a 30-day default lifetime (up to 365). Every token is also capped at the encryption key's validity (key default 90 days in 2.2, 180 in 2.1; max 365). When the key expires, **all** tokens stop working until the key is rotated (see **`docs/poc/TROUBLESHOOTING.md`**).
 - **Renewal**: Re-run `make update-mcp-clients` to mint a new token; every configured client picks it up from the header file.
 
 ## Configuration Files
@@ -289,7 +289,7 @@ Claude Desktop
 
 ### setup-splunk.sh
 
-- Creates or updates Splunk role **`mcp_user`** with capabilities **`mcp_tool_execute`** and **`s4r_workshop_control`** (after an SA-S4R reload) and **`srchJobsQuota=5`**
+- Creates or updates Splunk role **`mcp_user`** with capabilities **`mcp_tool_execute`**, **`s4r_workshop_control`**, and **`list_introspection`** (after an SA-S4R reload) and **`srchJobsQuota=5`**
 - Creates **`splunker`** with roles **`user`** + **`mcp_user`** + **`s4r_user`** (`s4r_user` comes from SA-S4R 2.0.0+; left out with a warning if the app lacks it)
 - Via **`register-s4r-mcp-tools.sh`**: limits the five **`SA-S4R_*`** tools to **`s4r_user`** with Tool Role Policies, when the role exists and `splunker` holds it
 - Uses `SPLUNK_SPLUNKER_PASSWORD` (env) for the MCP user; the init container writes no password to disk

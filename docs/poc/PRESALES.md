@@ -63,7 +63,7 @@ See [CONFIGURATION.md](CONFIGURATION.md#configenv-and-env).
 | Identity | Role |
 | -------- | ---- |
 | **admin** | Splunk Web and REST in bootstrap; password = `SPLUNK_ADMIN_PASSWORD` |
-| **splunker** | Least-privilege user for MCP (roles `user`, `mcp_user` with capabilities `mcp_tool_execute` + `s4r_workshop_control`, and `s4r_user` for the `SA-S4R_*` tools); password provided as `SPLUNK_SPLUNKER_PASSWORD` |
+| **splunker** | Least-privilege user for MCP (roles `user`, `mcp_user` with capabilities `mcp_tool_execute` + `s4r_workshop_control` + `list_introspection`, and `s4r_user` for the `SA-S4R_*` tools); password provided as `SPLUNK_SPLUNKER_PASSWORD` |
 | **Bearer token** | Minted by `scripts/mint-mcp-token.sh` after **`splunk-init`**; stored only in a mode-600 header file outside the repo; client configs pass its path to `mcp-remote --header-file` |
 
 ## Splunkbase and network (non-negotiable)

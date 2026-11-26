@@ -20,7 +20,7 @@ Provide a self-contained local Splunk environment that demonstrates:
 | User | Role | Use |
 | ---- | ---- | --- |
 | `admin` | `admin` | Bootstrap REST only |
-| `splunker` (default) | `user` + `mcp_user` + `s4r_user` | MCP execution; **`mcp_user`** must include **`mcp_tool_execute`** and **`s4r_workshop_control`** (`srchJobsQuota=5`); **`s4r_user`** (defined by SA-S4R) unlocks the five **`SA-S4R_*`** tools |
+| `splunker` (default) | `user` + `mcp_user` + `s4r_user` | MCP execution; **`mcp_user`** must include **`mcp_tool_execute`**, **`s4r_workshop_control`**, and **`list_introspection`** (`srchJobsQuota=5`); **`s4r_user`** (defined by SA-S4R) unlocks the five **`SA-S4R_*`** tools |
 
 MCP user must **not** be `admin`. The **`ai`** SPL command is available to all users and must not require special role/capability.
 

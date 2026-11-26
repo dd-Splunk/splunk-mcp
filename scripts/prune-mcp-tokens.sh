@@ -4,7 +4,7 @@
 # and delete the rest. Run right after minting.
 #
 # Every mint-mcp-token.sh call creates a new token that stays valid until the
-# encryption key expires (up to 180 days). Callers must have rewritten every client
+# encryption key expires (90 days by default in 2.2; 180 in 2.1). Callers must have rewritten every client
 # config with the newest token first.
 #
 # Usage: ./scripts/prune-mcp-tokens.sh [--dry-run]

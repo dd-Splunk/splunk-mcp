@@ -4,7 +4,7 @@
 # Execution order:
 #   1. Enable SA-Eventgen modinput_eventgen://default (required; init fails if still disabled)
 #   2. Splunk MCP Server: ssl_verify=false (local dev only; uses curl -k)
-#   3. Role mcp_user with mcp_tool_execute and s4r_workshop_control (both required; the latter after SA-S4R load)
+#   3. Role mcp_user with mcp_tool_execute, s4r_workshop_control (required; the latter after SA-S4R load), and list_introspection
 #   4. User splunker: roles user + mcp_user + s4r_user (s4r_user comes from SA-S4R; skipped if the app lacks it)
 #   5. SA-S4R MCP tools: register-s4r-mcp-tools.sh (batch replace, enable, saved-search reload)
 #
@@ -190,7 +190,7 @@ auth_curl -X POST "${SPLUNK_URL}/servicesNS/nobody/Splunk_MCP_Server/configs/con
 # Grant mcp_tool_execute first. Unknown custom capabilities (s4r_workshop_control
 # before SA-S4R authorize.conf is loaded, or a bad stanza) make Splunk reject the
 # entire role POST — then splunker is never created and mcp_token mint hangs.
-echo "👤 Ensuring role 'mcp_user' exists with capability mcp_tool_execute and srchJobsQuota=5..."
+echo "👤 Ensuring role 'mcp_user' exists with srchJobsQuota=5 (full capability list is set below)..."
 ROLE_URL="${SPLUNK_URL}/services/authorization/roles/mcp_user"
 ROLE_COLLECTION="${SPLUNK_URL}/services/authorization/roles"
 
@@ -199,11 +199,14 @@ AUTH_CURL_QUIET=1 auth_curl "${ROLE_URL}?output_mode=json" >/dev/null && role_ex
 cleanup_last_body
 
 if [ "${role_exists}" = "1" ]; then
+  # No capabilities here: a role POST replaces the whole capability list, so sending
+  # mcp_tool_execute alone would strip s4r_workshop_control and list_introspection (breaking
+  # live MCP clients until the grant below, and for good if that grant fails). The grant
+  # below sets the full list.
   must auth_curl -X POST "${ROLE_URL}" \
-    -d "capabilities=mcp_tool_execute" \
     -d "srchJobsQuota=5" \
     -H "Content-Type: application/x-www-form-urlencoded" >/dev/null
-  echo "✅ Updated role mcp_user (mcp_tool_execute, srchJobsQuota=5)"
+  echo "✅ Updated role mcp_user (srchJobsQuota=5; capabilities set below)"
 else
   must auth_curl -X POST "${ROLE_COLLECTION}" \
     -d "name=mcp_user" \
@@ -214,7 +217,10 @@ else
 fi
 cleanup_last_body
 
-echo "👤 Granting s4r_workshop_control on mcp_user (after SA-S4R authorize.conf load)..."
+echo "👤 Granting s4r_workshop_control and list_introspection on mcp_user (after SA-S4R authorize.conf load)..."
+# list_introspection lets splunker call /services/server/introspection/kvstore/collectionstats
+# (splunk_get_kv_store_collections). It also exposes indexer, search, and queue statistics to
+# MCP clients; see docs/poc/TROUBLESHOOTING.md (KV Store 403 entry) before widening this role further.
 AUTH_CURL_QUIET=1 auth_curl -X POST "${SPLUNK_URL}/services/apps/local/SA-S4R/_reload" >/dev/null || true
 cleanup_last_body
 s4r_cap_ok=0
@@ -223,10 +229,11 @@ while [ "$n" -lt 8 ]; do
   if AUTH_CURL_QUIET=1 auth_curl -X POST "${ROLE_URL}" \
     -d "capabilities=mcp_tool_execute" \
     -d "capabilities=s4r_workshop_control" \
+    -d "capabilities=list_introspection" \
     -d "srchJobsQuota=5" \
     -H "Content-Type: application/x-www-form-urlencoded" >/dev/null; then
     s4r_cap_ok=1
-    echo "✅ Granted s4r_workshop_control on mcp_user"
+    echo "✅ Granted s4r_workshop_control and list_introspection on mcp_user"
     break
   fi
   cleanup_last_body
@@ -238,7 +245,7 @@ done
 if [ "${s4r_cap_ok}" = "0" ]; then
   # restmap.conf gates POST s4r_workshop_mode on this capability: without it
   # SA-S4R_apply_nk_demo_state returns 403.
-  echo "error: could not grant s4r_workshop_control on mcp_user. Check SA-S4R/default/authorize.conf stanza [capability::s4r_workshop_control]." >&2
+  echo "error: could not grant s4r_workshop_control and list_introspection on mcp_user. Check SA-S4R/default/authorize.conf stanza [capability::s4r_workshop_control]." >&2
   exit 1
 fi
 cleanup_last_body

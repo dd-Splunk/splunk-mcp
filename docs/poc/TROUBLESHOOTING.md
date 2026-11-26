@@ -293,7 +293,7 @@ On a stack that already finished init without `splunker`, re-run **`docker start
 
 #### Issue: MCP encryption key expired or needs rotation
 
-**Symptom**: every MCP client gets HTTP 401 at once, or `make update-mcp-clients` fails with *encryption key has expired; rotate it before creating tokens*. The key pair that encrypts all MCP tokens is valid for 180 days by default and tokens cannot outlive it.
+**Symptom**: every MCP client gets HTTP 401 at once, or `make update-mcp-clients` fails with *encryption key has expired; rotate it before creating tokens*. The key pair that encrypts all MCP tokens is valid for 90 days by default in Splunk MCP Server 2.2 (180 in 2.1) and tokens cannot outlive it. Tokens minted by this repo also expire after 30 days by default; re-run `make update-mcp-clients` to mint fresh ones. Keys created before the 2.2 upgrade keep their original validity.
 
 **Solution** (admin REST, local PoC; the app refuses to delete the key while any token is active):
 
@@ -366,6 +366,22 @@ For cause 2, add `s4r_user` to the user's roles. For cause 3, `make clean-y && m
 On a fresh install the KV Store can take minutes to start. Registration waits up to 5 minutes for **`/services/kvstore/status`** to report `ready`. If **`docker logs splunk-init`** shows `KV Store not ready after 300s`, run **`make up`** again. If it shows status `failed`, see [KVStore status `failed`](#kvstore-status-failed--mcp-token-mint-fails).
 
 ---
+
+#### Issue: `saia_*` MCP tools fail with `'NoneType' object is not subscriptable`
+
+**Symptom**: `saia_generate_spl`, `saia_explain_spl`, `saia_optimize_spl`, and `saia_ask_splunk_question` return `{"error": "'NoneType' object is not subscriptable"}`. `saia_find_data_source` returns `Agent Mode must be enabled to use /data_discovery`. Of the 33 Splunk MCP tools, 26 work for `splunker`. The other two (`splunk_find_silent_alerts`, `splunk_get_alert_action_status`) are permission-blocked; see [CONFIGURATION.md](CONFIGURATION.md#alert-tools-added-in-mcp-server-21).
+
+**Cause**: the **Splunk AI Assistant** app (7245, pinned in `compose.yml`) has no working connection to Splunk Cloud Services. Its log (`splunk_ai_assistant.log` in `/opt/splunk/var/log/splunk` inside `so1`) shows `SCS configs are not available properly for on-prem stack` and `Unable to load keys for signing Splunk JWT`. The repo does not configure this connection. Found during the Splunk MCP Server 2.2.0 end-to-end test on a fresh stack.
+
+**Solution**: not automated and not verified here. Open the AI Assistant app in Splunk Web and complete its setup, then re-run the `saia_*` calls. Check the log above if they still fail. The rest of the MCP tools do not depend on this app.
+
+#### Issue: `splunk_get_kv_store_collections` returns HTTP 403 for `splunker`
+
+**Symptom**: the tool fails with `The REST request on the endpoint URI /services/server/introspection/kvstore/collectionstats … code=403, Forbidden`.
+
+**Cause**: the endpoint requires the **`list_introspection`** capability (Splunk docs; `admin` and `sc_admin` have it by default). Before this fix, `mcp_user` did not grant it, so `splunker` got 403.
+
+**Solution (in this repo)**: `scripts/setup-splunk.sh` grants **`list_introspection`** to **`mcp_user`** with `s4r_workshop_control`. Re-run `make up`, then check `splunker` can read `/services/server/introspection/kvstore/collectionstats` (HTTP 200). Tradeoff: this capability also exposes indexer, search, and queue statistics to any MCP client that uses `splunker`'s token. The `kvstore_collection_stats_read` capability is a separate path (`/services/storage/collections/stats`) that the MCP tool does not call and this repo does not grant.
 
 #### Issue: Splunk AI Toolkit / Connection Management (out of scope)
 

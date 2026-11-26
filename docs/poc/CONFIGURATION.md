@@ -6,7 +6,7 @@
 | ------ | --- | -------------- |
 | 1924 | SA-Eventgen (sample data / Eventgen modinput) | 8.2.2 |
 | 4353 | Config Explorer (optional UI utility) | 1.8.26 (Splunkbase lists Splunk up to 10.4; runs on 10.6 but not declared) |
-| 7931 | Splunk MCP Server (required for `/services/mcp`) | 2.1.0 (token API changed in 2.1; see [Encrypted bearer token](#encrypted-bearer-token-this-repo)) |
+| 7931 | Splunk MCP Server (required for `/services/mcp`) | 2.2.0 (token API changed in 2.1; 2.2 defaults tokens to 30 days and keys to 90 days; upgraded installs must enable `splunk_submit_query`, `splunk_get_query_results`, and `splunk_cancel_query`; see [Encrypted bearer token](#encrypted-bearer-token-this-repo)) |
 | 7245 | Splunk AI Assistant | 2.3.6 |
 | — | SA-S4R (this repo) | GitHub Release [`latest`](https://github.com/dd-Splunk/splunk-mcp/releases/download/latest/SA-S4R.spl) |
 
@@ -23,6 +23,7 @@ Use this when changing the Splunk Enterprise image, Splunkbase app pins, or the 
    - Run **`make check-splunkbase-pins`** (or open `https://splunkbase.splunk.com/api/v1/app/<id>/release/` — first `name` is latest).
    - Replace only the `/release/VERSION/` segment in **`SPLUNK_APPS_URL`** unless the app ID changes.
    - Keep the comments beside **`SPLUNK_APPS_URL`** current so troubleshooting can map a failed URL back to an app.
+   - A changed pin only applies to an empty **`so1-etc`** volume; an existing volume keeps the app version it first installed. To apply a bump, run **`make clean-y && make up`** (this wipes Splunk data). For a Splunk MCP Server upgrade in place, enable the new tools by hand instead.
    - Keep the pin table in this section in sync with `compose.yml`.
 3. **`mcp-remote`**
    - Change **`MCP_REMOTE_PACKAGE`** only when a client-side bridge update is needed; the default in **`scripts/mcp-client.sh`** is the repo-wide default. The version must support **`--header-file`**.
@@ -183,7 +184,7 @@ Summary of what runs **inside** `splunk-init` with `SPLUNK_HOST=so1`:
 
 1. Enables the **SA-Eventgen** default modular input (**required**; init **exits 1** if the app is missing or the input stays disabled).
 2. Sets MCP server `ssl_verify=false` via REST (dev convenience).
-3. Ensures Splunk role **`mcp_user`** exists with capability **`mcp_tool_execute`** and **`srchJobsQuota=5`** (parallel S4R agent headroom), then grants **`s4r_workshop_control`** after reloading SA-S4R (init fails if it cannot).
+3. Ensures Splunk role **`mcp_user`** exists (created with **`mcp_tool_execute`**; an existing role only gets **`srchJobsQuota=5`**, parallel S4R agent headroom), then sets the full list **`mcp_tool_execute`**, **`s4r_workshop_control`**, and **`list_introspection`** in one POST after reloading SA-S4R (init fails if it cannot). A role POST replaces the capability list, so an existing role is never left with a partial list while init re-runs.
 4. Creates or updates user **`splunker`** with roles **`user`** + **`mcp_user`** + **`s4r_user`**, and clears **`locked-out`** (idempotent unlock on every init). **`s4r_user`** is defined by SA-S4R 2.0.0+. If the installed app is older and lacks it, init warns and leaves it out instead of failing.
 5. Registers SA-S4R MCP tools from `s4r_mcp_tools.json` (`POST /services/mcp_tools`, enable, saved-search reload). Init **exits 1** if that fails.
 6. Uses `SPLUNK_SPLUNKER_PASSWORD` from env; the init container writes no password to disk.
@@ -207,7 +208,7 @@ Official references (product documentation; URLs say “cloud-platform” but ap
 | **How** | Mint encrypted token (MCP app UI or **`scripts/mint-mcp-token.sh`** → `/services/mcp_token/tokens` REST); client sends **`Authorization: Bearer <token>`**, read by **`mcp-remote --header-file`** |
 | **Automation** | **`make update-mcp-clients`** writes the token into the header file (**`SPLUNK_MCP_HEADER_FILE`**, default **`~/.config/splunk-mcp/headers`**, mode 600) and points client configs at it. The token is not in client configs, process arguments, or git |
 | **Splunk side** | User needs **`mcp_tool_execute`**; **`admin`** mints on behalf of **`splunker`** (needs **`mcp_tool_admin`**, which `admin` has), so **`splunker`** needs no token-management capability |
-| **Security** | Encrypted tokens work **only** for MCP (not general Splunk REST). All tokens are encrypted with one administrator-managed **key pair** (180-day validity by default, 365 max); a token never outlives its key. Plaintext and previous-key tokens are rejected. Rotation: [TROUBLESHOOTING.md § MCP encryption key expired](TROUBLESHOOTING.md#issue-mcp-encryption-key-expired-or-needs-rotation) |
+| **Security** | Encrypted tokens work **only** for MCP (not general Splunk REST). All tokens are encrypted with one administrator-managed **key pair** (90-day validity by default in 2.2, 180 in 2.1, 365 max); a token never outlives its key. Tokens minted by the repo use the 2.2 default lifetime of 30 days, so re-run `make update-mcp-clients` (or reboot via `make up`) before they expire. Plaintext and previous-key tokens are rejected. Rotation: [TROUBLESHOOTING.md § MCP encryption key expired](TROUBLESHOOTING.md#issue-mcp-encryption-key-expired-or-needs-rotation) |
 
 Client shape follows Splunk’s 2.0 sample (**`npx mcp-remote`**, streamable HTTP endpoint, bearer header), except the header comes from **`--header-file`** rather than **`--header`**. Process arguments are visible to every local user, so a token passed with **`--header`** would show up in **`ps`**. For self-signed localhost certs, server **`ssl_verify=false`** (setup script) plus client **`NODE_TLS_REJECT_UNAUTHORIZED=0`** when **`SPLUNK_MCP_TLS_INSECURE=1`**.
 
@@ -353,7 +354,7 @@ Secrets come from gitignored **`.env`** or variables already in the environment.
 flowchart TD
   A[Start set -eu] --> B[Enable Eventgen modinput]
   B --> C[MCP app: ssl_verify=false]
-  C --> D[Ensure role mcp_user + mcp_tool_execute + s4r_workshop_control]
+  C --> D[Ensure role mcp_user + mcp_tool_execute + s4r_workshop_control + list_introspection]
   D --> E[Resolve splunker password from env]
   E --> F[Create or update user splunker]
   F --> K[Done]
@@ -367,7 +368,7 @@ The script uses **basic auth** on every `auth_curl` call: **`splunk_curl -k`** (
 | ---- | ------ | ---------------------------------------- | ----- |
 | Eventgen | POST | `/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default/enable` | Fallback: same URL with `disabled=0` |
 | MCP TLS dev | POST | `/servicesNS/nobody/Splunk_MCP_Server/configs/conf-mcp/server` | Body: `ssl_verify=false` |
-| Role | GET/POST | `/services/authorization/roles/mcp_user` | Body: `capabilities=mcp_tool_execute`, `capabilities=s4r_workshop_control`, `srchJobsQuota=5` |
+| Role | GET/POST | `/services/authorization/roles/mcp_user` | Body: `capabilities=mcp_tool_execute`, `capabilities=s4r_workshop_control`, `capabilities=list_introspection`, `srchJobsQuota=5` |
 | User | POST | `/services/authentication/users` or `.../users/splunker` | Bodies: `roles=user`, `roles=mcp_user`, `roles=s4r_user` (only when the role exists), `locked-out=false` |
 
 ### Helper functions
