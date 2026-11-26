@@ -23,6 +23,7 @@ Use this when changing the Splunk Enterprise image, Splunkbase app pins, or the 
    - Run **`make check-splunkbase-pins`** (or open `https://splunkbase.splunk.com/api/v1/app/<id>/release/` — first `name` is latest).
    - Replace only the `/release/VERSION/` segment in **`SPLUNK_APPS_URL`** unless the app ID changes.
    - Keep the comments beside **`SPLUNK_APPS_URL`** current so troubleshooting can map a failed URL back to an app.
+   - A changed pin only applies to an empty **`so1-etc`** volume; an existing volume keeps the app version it first installed. To apply a bump, run **`make clean-y && make up`** (this wipes Splunk data). For a Splunk MCP Server upgrade in place, enable the new tools by hand instead.
    - Keep the pin table in this section in sync with `compose.yml`.
 3. **`mcp-remote`**
    - Change **`MCP_REMOTE_PACKAGE`** only when a client-side bridge update is needed; the default in **`scripts/mcp-client.sh`** is the repo-wide default. The version must support **`--header-file`**.

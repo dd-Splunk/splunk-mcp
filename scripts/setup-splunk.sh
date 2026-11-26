@@ -242,7 +242,7 @@ done
 if [ "${s4r_cap_ok}" = "0" ]; then
   # restmap.conf gates POST s4r_workshop_mode on this capability: without it
   # SA-S4R_apply_nk_demo_state returns 403.
-  echo "error: could not grant s4r_workshop_control on mcp_user. Check SA-S4R/default/authorize.conf stanza [capability::s4r_workshop_control]." >&2
+  echo "error: could not grant s4r_workshop_control and list_introspection on mcp_user. Check SA-S4R/default/authorize.conf stanza [capability::s4r_workshop_control]." >&2
   exit 1
 fi
 cleanup_last_body
