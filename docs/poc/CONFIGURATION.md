@@ -183,7 +183,7 @@ Summary of what runs **inside** `splunk-init` with `SPLUNK_HOST=so1`:
 
 1. Enables the **SA-Eventgen** default modular input (**required**; init **exits 1** if the app is missing or the input stays disabled).
 2. Sets MCP server `ssl_verify=false` via REST (dev convenience).
-3. Ensures Splunk role **`mcp_user`** exists with capability **`mcp_tool_execute`** and **`srchJobsQuota=5`** (parallel S4R agent headroom), then grants **`s4r_workshop_control`** after reloading SA-S4R (init fails if it cannot).
+3. Ensures Splunk role **`mcp_user`** exists with capability **`mcp_tool_execute`** and **`srchJobsQuota=5`** (parallel S4R agent headroom), then grants **`s4r_workshop_control`** and **`list_introspection`** after reloading SA-S4R (init fails if it cannot).
 4. Creates or updates user **`splunker`** with roles **`user`** + **`mcp_user`** + **`s4r_user`**, and clears **`locked-out`** (idempotent unlock on every init). **`s4r_user`** is defined by SA-S4R 2.0.0+. If the installed app is older and lacks it, init warns and leaves it out instead of failing.
 5. Registers SA-S4R MCP tools from `s4r_mcp_tools.json` (`POST /services/mcp_tools`, enable, saved-search reload). Init **exits 1** if that fails.
 6. Uses `SPLUNK_SPLUNKER_PASSWORD` from env; the init container writes no password to disk.
@@ -353,7 +353,7 @@ Secrets come from gitignored **`.env`** or variables already in the environment.
 flowchart TD
   A[Start set -eu] --> B[Enable Eventgen modinput]
   B --> C[MCP app: ssl_verify=false]
-  C --> D[Ensure role mcp_user + mcp_tool_execute + s4r_workshop_control]
+  C --> D[Ensure role mcp_user + mcp_tool_execute + s4r_workshop_control + list_introspection]
   D --> E[Resolve splunker password from env]
   E --> F[Create or update user splunker]
   F --> K[Done]
@@ -367,7 +367,7 @@ The script uses **basic auth** on every `auth_curl` call: **`splunk_curl -k`** (
 | ---- | ------ | ---------------------------------------- | ----- |
 | Eventgen | POST | `/servicesNS/nobody/SA-Eventgen/data/inputs/modinput_eventgen/default/enable` | Fallback: same URL with `disabled=0` |
 | MCP TLS dev | POST | `/servicesNS/nobody/Splunk_MCP_Server/configs/conf-mcp/server` | Body: `ssl_verify=false` |
-| Role | GET/POST | `/services/authorization/roles/mcp_user` | Body: `capabilities=mcp_tool_execute`, `capabilities=s4r_workshop_control`, `srchJobsQuota=5` |
+| Role | GET/POST | `/services/authorization/roles/mcp_user` | Body: `capabilities=mcp_tool_execute`, `capabilities=s4r_workshop_control`, `capabilities=list_introspection`, `srchJobsQuota=5` |
 | User | POST | `/services/authentication/users` or `.../users/splunker` | Bodies: `roles=user`, `roles=mcp_user`, `roles=s4r_user` (only when the role exists), `locked-out=false` |
 
 ### Helper functions

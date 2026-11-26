@@ -1,6 +1,6 @@
 # API Reference & MCP Integration
 
-**This repository** creates Splunk role **`mcp_user`** (capabilities **`mcp_tool_execute`** and **`s4r_workshop_control`**) and user **`splunker`** (default). Clients connect with **`npx mcp-remote`** to `https://localhost:8089/services/mcp`. Tokens are minted by **`scripts/mint-mcp-token.sh`** (after **`splunk-init`**) and stored only in a mode-600 header file that client configs pass to **`mcp-remote --header-file`**.
+**This repository** creates Splunk role **`mcp_user`** (capabilities **`mcp_tool_execute`**, **`s4r_workshop_control`**, and **`list_introspection`**) and user **`splunker`** (default). Clients connect with **`npx mcp-remote`** to `https://localhost:8089/services/mcp`. Tokens are minted by **`scripts/mint-mcp-token.sh`** (after **`splunk-init`**) and stored only in a mode-600 header file that client configs pass to **`mcp-remote --header-file`**.
 
 ## Splunk REST API Endpoints
 

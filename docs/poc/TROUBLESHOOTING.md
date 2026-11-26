@@ -369,7 +369,7 @@ On a fresh install the KV Store can take minutes to start. Registration waits up
 
 #### Issue: `saia_*` MCP tools fail with `'NoneType' object is not subscriptable`
 
-**Symptom**: `saia_generate_spl`, `saia_explain_spl`, `saia_optimize_spl`, and `saia_ask_splunk_question` return `{"error": "'NoneType' object is not subscriptable"}`. `saia_find_data_source` returns `Agent Mode must be enabled to use /data_discovery`. Of the 33 Splunk MCP tools, 25 work for `splunker`. The other three (`splunk_get_kv_store_collections`, `splunk_find_silent_alerts`, `splunk_get_alert_action_status`) are permission-blocked; see the next issue and [CONFIGURATION.md](CONFIGURATION.md#alert-tools-added-in-mcp-server-21).
+**Symptom**: `saia_generate_spl`, `saia_explain_spl`, `saia_optimize_spl`, and `saia_ask_splunk_question` return `{"error": "'NoneType' object is not subscriptable"}`. `saia_find_data_source` returns `Agent Mode must be enabled to use /data_discovery`. Of the 33 Splunk MCP tools, 26 work for `splunker`. The other two (`splunk_find_silent_alerts`, `splunk_get_alert_action_status`) are permission-blocked; see [CONFIGURATION.md](CONFIGURATION.md#alert-tools-added-in-mcp-server-21).
 
 **Cause**: the **Splunk AI Assistant** app (7245, pinned in `compose.yml`) has no working connection to Splunk Cloud Services. Its log (`splunk_ai_assistant.log` in `/opt/splunk/var/log/splunk` inside `so1`) shows `SCS configs are not available properly for on-prem stack` and `Unable to load keys for signing Splunk JWT`. The repo does not configure this connection. Found during the Splunk MCP Server 2.2.0 end-to-end test on a fresh stack.
 
@@ -379,9 +379,9 @@ On a fresh install the KV Store can take minutes to start. Registration waits up
 
 **Symptom**: the tool fails with `The REST request on the endpoint URI /services/server/introspection/kvstore/collectionstats … code=403, Forbidden`.
 
-**Cause**: `splunker` is not allowed to read this introspection endpoint. The exact capability that would grant it was not identified. This repo does not grant `splunker` extra capabilities. Other tools that read KV Store state, such as `splunk_get_info` (which reports `kvStoreStatus`), still work.
+**Cause**: the endpoint requires the **`list_introspection`** capability (Splunk docs; `admin` and `sc_admin` have it by default). Before this fix, `mcp_user` did not grant it, so `splunker` got 403.
 
-**Solution**: expected for `splunker`. Use `admin` REST if you need collection stats, for example `make status` or a direct `splunk_curl` call.
+**Solution (in this repo)**: `scripts/setup-splunk.sh` grants **`list_introspection`** to **`mcp_user`** with `s4r_workshop_control`. Re-run `make up`, then check `splunker` can read `/services/server/introspection/kvstore/collectionstats` (HTTP 200). Tradeoff: this capability also exposes indexer, search, and queue statistics to any MCP client that uses `splunker`'s token. The `kvstore_collection_stats_read` capability is a separate path (`/services/storage/collections/stats`) that the MCP tool does not call and this repo does not grant.
 
 #### Issue: Splunk AI Toolkit / Connection Management (out of scope)
 

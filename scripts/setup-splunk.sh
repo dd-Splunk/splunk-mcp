@@ -4,7 +4,7 @@
 # Execution order:
 #   1. Enable SA-Eventgen modinput_eventgen://default (required; init fails if still disabled)
 #   2. Splunk MCP Server: ssl_verify=false (local dev only; uses curl -k)
-#   3. Role mcp_user with mcp_tool_execute and s4r_workshop_control (both required; the latter after SA-S4R load)
+#   3. Role mcp_user with mcp_tool_execute, s4r_workshop_control (required; the latter after SA-S4R load), and list_introspection
 #   4. User splunker: roles user + mcp_user + s4r_user (s4r_user comes from SA-S4R; skipped if the app lacks it)
 #   5. SA-S4R MCP tools: register-s4r-mcp-tools.sh (batch replace, enable, saved-search reload)
 #
@@ -214,7 +214,10 @@ else
 fi
 cleanup_last_body
 
-echo "👤 Granting s4r_workshop_control on mcp_user (after SA-S4R authorize.conf load)..."
+echo "👤 Granting s4r_workshop_control and list_introspection on mcp_user (after SA-S4R authorize.conf load)..."
+# list_introspection lets splunker call /services/server/introspection/kvstore/collectionstats
+# (splunk_get_kv_store_collections). It also exposes indexer, search, and queue statistics to
+# MCP clients; see docs/poc/TROUBLESHOOTING.md (KV Store 403 entry) before widening this role further.
 AUTH_CURL_QUIET=1 auth_curl -X POST "${SPLUNK_URL}/services/apps/local/SA-S4R/_reload" >/dev/null || true
 cleanup_last_body
 s4r_cap_ok=0
@@ -223,10 +226,11 @@ while [ "$n" -lt 8 ]; do
   if AUTH_CURL_QUIET=1 auth_curl -X POST "${ROLE_URL}" \
     -d "capabilities=mcp_tool_execute" \
     -d "capabilities=s4r_workshop_control" \
+    -d "capabilities=list_introspection" \
     -d "srchJobsQuota=5" \
     -H "Content-Type: application/x-www-form-urlencoded" >/dev/null; then
     s4r_cap_ok=1
-    echo "✅ Granted s4r_workshop_control on mcp_user"
+    echo "✅ Granted s4r_workshop_control and list_introspection on mcp_user"
     break
   fi
   cleanup_last_body
