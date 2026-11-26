@@ -190,7 +190,7 @@ auth_curl -X POST "${SPLUNK_URL}/servicesNS/nobody/Splunk_MCP_Server/configs/con
 # Grant mcp_tool_execute first. Unknown custom capabilities (s4r_workshop_control
 # before SA-S4R authorize.conf is loaded, or a bad stanza) make Splunk reject the
 # entire role POST — then splunker is never created and mcp_token mint hangs.
-echo "👤 Ensuring role 'mcp_user' exists with capability mcp_tool_execute and srchJobsQuota=5..."
+echo "👤 Ensuring role 'mcp_user' exists with srchJobsQuota=5 (full capability list is set below)..."
 ROLE_URL="${SPLUNK_URL}/services/authorization/roles/mcp_user"
 ROLE_COLLECTION="${SPLUNK_URL}/services/authorization/roles"
 
@@ -199,11 +199,14 @@ AUTH_CURL_QUIET=1 auth_curl "${ROLE_URL}?output_mode=json" >/dev/null && role_ex
 cleanup_last_body
 
 if [ "${role_exists}" = "1" ]; then
+  # No capabilities here: a role POST replaces the whole capability list, so sending
+  # mcp_tool_execute alone would strip s4r_workshop_control and list_introspection (breaking
+  # live MCP clients until the grant below, and for good if that grant fails). The grant
+  # below sets the full list.
   must auth_curl -X POST "${ROLE_URL}" \
-    -d "capabilities=mcp_tool_execute" \
     -d "srchJobsQuota=5" \
     -H "Content-Type: application/x-www-form-urlencoded" >/dev/null
-  echo "✅ Updated role mcp_user (mcp_tool_execute, srchJobsQuota=5)"
+  echo "✅ Updated role mcp_user (srchJobsQuota=5; capabilities set below)"
 else
   must auth_curl -X POST "${ROLE_COLLECTION}" \
     -d "name=mcp_user" \
