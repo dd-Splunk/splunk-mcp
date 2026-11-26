@@ -275,7 +275,7 @@ Claude Desktop
 
 - **Generation**: After **`splunk-init`** exits, the host runs **`scripts/mint-mcp-token.sh`** (admin REST → Splunk MCP Server **`/services/mcp_token`**: create the encryption key pair if missing, then a token for **`splunker`**). **`setup-splunk.sh` does not mint tokens.**
 - **Storage**: Header file only (`SPLUNK_MCP_HEADER_FILE`, default `~/.config/splunk-mcp/headers`, mode 600). Client configs hold its path; neither is in the repo.
-- **Expiry**: Splunk MCP Server 2.1 caps every token at the encryption key's validity (key default 180 days, max 365). When the key expires, **all** tokens stop working until the key is rotated (see **`docs/poc/TROUBLESHOOTING.md`**).
+- **Expiry**: Splunk MCP Server 2.2 gives each token a 30-day default lifetime (up to 365). Every token is also capped at the encryption key's validity (key default 90 days in 2.2, 180 in 2.1; max 365). When the key expires, **all** tokens stop working until the key is rotated (see **`docs/poc/TROUBLESHOOTING.md`**).
 - **Renewal**: Re-run `make update-mcp-clients` to mint a new token; every configured client picks it up from the header file.
 
 ## Configuration Files

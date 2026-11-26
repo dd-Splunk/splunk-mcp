@@ -6,7 +6,7 @@
 | ------ | --- | -------------- |
 | 1924 | SA-Eventgen (sample data / Eventgen modinput) | 8.2.2 |
 | 4353 | Config Explorer (optional UI utility) | 1.8.26 (Splunkbase lists Splunk up to 10.4; runs on 10.6 but not declared) |
-| 7931 | Splunk MCP Server (required for `/services/mcp`) | 2.1.0 (token API changed in 2.1; see [Encrypted bearer token](#encrypted-bearer-token-this-repo)) |
+| 7931 | Splunk MCP Server (required for `/services/mcp`) | 2.2.0 (token API changed in 2.1; 2.2 defaults tokens to 30 days and keys to 90 days; upgraded installs must enable `splunk_submit_query`, `splunk_get_query_results`, and `splunk_cancel_query`; see [Encrypted bearer token](#encrypted-bearer-token-this-repo)) |
 | 7245 | Splunk AI Assistant | 2.3.6 |
 | — | SA-S4R (this repo) | GitHub Release [`latest`](https://github.com/dd-Splunk/splunk-mcp/releases/download/latest/SA-S4R.spl) |
 
@@ -207,7 +207,7 @@ Official references (product documentation; URLs say “cloud-platform” but ap
 | **How** | Mint encrypted token (MCP app UI or **`scripts/mint-mcp-token.sh`** → `/services/mcp_token/tokens` REST); client sends **`Authorization: Bearer <token>`**, read by **`mcp-remote --header-file`** |
 | **Automation** | **`make update-mcp-clients`** writes the token into the header file (**`SPLUNK_MCP_HEADER_FILE`**, default **`~/.config/splunk-mcp/headers`**, mode 600) and points client configs at it. The token is not in client configs, process arguments, or git |
 | **Splunk side** | User needs **`mcp_tool_execute`**; **`admin`** mints on behalf of **`splunker`** (needs **`mcp_tool_admin`**, which `admin` has), so **`splunker`** needs no token-management capability |
-| **Security** | Encrypted tokens work **only** for MCP (not general Splunk REST). All tokens are encrypted with one administrator-managed **key pair** (180-day validity by default, 365 max); a token never outlives its key. Plaintext and previous-key tokens are rejected. Rotation: [TROUBLESHOOTING.md § MCP encryption key expired](TROUBLESHOOTING.md#issue-mcp-encryption-key-expired-or-needs-rotation) |
+| **Security** | Encrypted tokens work **only** for MCP (not general Splunk REST). All tokens are encrypted with one administrator-managed **key pair** (90-day validity by default in 2.2, 180 in 2.1, 365 max); a token never outlives its key. Tokens minted by the repo use the 2.2 default lifetime of 30 days, so re-run `make update-mcp-clients` (or reboot via `make up`) before they expire. Plaintext and previous-key tokens are rejected. Rotation: [TROUBLESHOOTING.md § MCP encryption key expired](TROUBLESHOOTING.md#issue-mcp-encryption-key-expired-or-needs-rotation) |
 
 Client shape follows Splunk’s 2.0 sample (**`npx mcp-remote`**, streamable HTTP endpoint, bearer header), except the header comes from **`--header-file`** rather than **`--header`**. Process arguments are visible to every local user, so a token passed with **`--header`** would show up in **`ps`**. For self-signed localhost certs, server **`ssl_verify=false`** (setup script) plus client **`NODE_TLS_REJECT_UNAUTHORIZED=0`** when **`SPLUNK_MCP_TLS_INSECURE=1`**.
 
