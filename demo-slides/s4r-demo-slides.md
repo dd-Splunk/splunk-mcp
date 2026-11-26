@@ -181,16 +181,17 @@ make up POSTs s4r_mcp_tools.json and enables each SA-S4R tool.
 <div class="diagram-table-row">
 
 <pre class="mermaid">
-flowchart TB
+%%{init: {'flowchart': {'nodeSpacing': 70, 'rankSpacing': 170}}}%%
+flowchart LR
   AI["AI chat or Agent"]
-  MCP["Splunk MCP Server"]
   NAT["Native tools splunk_run_query"]
   BASE["Splunkbase app tools"]
   PRIV["Private app SA-S4R_*"]
+  MCP["Splunk MCP Server"]
   AI --> MCP
-  MCP --> NAT
-  MCP --> BASE
-  MCP --> PRIV
+  NAT --> MCP
+  BASE --> MCP
+  PRIV --> MCP
 </pre>
 
 <div class="diagram-table-col">
